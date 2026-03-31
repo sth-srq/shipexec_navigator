@@ -1,0 +1,50 @@
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: transparent;
+}
+
+main {
+    flex: 1;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+article {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#blazor-error-ui {
+    background: #fff5f5;
+    border-top: 1px solid #e53e3e;
+    bottom: 0;
+    box-shadow: 0 -2px 12px rgba(229, 62, 62, 0.15);
+    color: #c53030;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+@media (prefers-color-scheme: dark) {
+    #blazor-error-ui {
+        background: #1e293b;
+        border-top-color: #ef4444;
+        color: #f87171;
+        box-shadow: 0 -2px 12px rgba(239, 68, 68, 0.15);
+    }
+}

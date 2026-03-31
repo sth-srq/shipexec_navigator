@@ -1,0 +1,417 @@
+@inject IShipExecService ShipExecService
+
+@if (IsVisible && Result is not null)
+{
+    <div class="diff-backdrop" @onclick="HandleClose">
+        <div class="diff-dlg" @onclick:stopPropagation>
+
+            <div class="dlg-header">
+                <div class="dlg-title">
+                    &#x1F4CA; Variances
+                    <span class="diff-stat @(Result.HasChanges ? "diff-stat--changes" : "diff-stat--none")">
+                        @Result.Variances.Count variance@(Result.Variances.Count == 1 ? "" : "s")
+                    </span>
+                </div>
+                <button class="dlg-close" @onclick="HandleClose" disabled="@_isApplying">&#x2715;</button>
+            </div>
+
+            <div class="diff-body">
+
+                @if (!Result.HasChanges)
+                {
+                    <div class="diff-empty">
+                        <span class="diff-empty-icon">&#x2714;</span>
+                        <span>No changes detected between the original and current state.</span>
+                    </div>
+                }
+                else
+                {
+                    @* ── Select-all bar ── *@
+                    <div class="diff-sel-bar">
+                        <label class="diff-sel-all" @onclick:stopPropagation>
+                            <input type="checkbox"
+                                   checked="@AllChecked"
+                                   @onchange="ToggleSelectAll" />
+                        </label>
+                        <span class="diff-sel-count">@_checkedVarianceIndices.Count of @_allVarianceIndices.Count selected</span>
+                    </div>
+
+                    @* ── Variances ── *@
+                    @foreach (var v in Result.Variances)
+                    {
+                        var key    = $"v-{v.EntityName}-{v.ChangeType}-{v.GetHashCode()}";
+                        var fields = FieldDiffHelper.BuildFieldDiff(v.ChangeType, v.OriginalXML, v.NewXML);
+                        <div class="diff-item">
+                            <div class="diff-item-header @(fields.Count > 0 ? "diff-item-header--expandable" : "")"
+                                 @onclick="() => { if (fields.Count > 0) ToggleExpanded(key); }">
+                                    <label class="diff-item-cb" @onclick:stopPropagation>
+                                        <input type="checkbox"
+                                               checked="@_checkedVarianceIndices.Contains(v.VarianceIndex)"
+                                               disabled="@(_isApplying || _applyResults is not null)"
+                                               @onchange="() => ToggleVariance(v.VarianceIndex)" />
+                                    </label>
+                                    <span class="diff-entity-badge">@v.EntityName</span>
+                                    <span class="diff-change-badge diff-change-badge--@v.ChangeType.ToLower()">@v.ChangeType</span>
+                                    @if (!string.IsNullOrEmpty(v.ParentContext))
+                                    {
+                                        <span class="diff-parent-badge">@v.ParentContext</span>
+                                    }
+                                    @if (fields.Count > 0)
+                                    {
+                                        <span class="diff-expand-icon">@(_expanded.Contains(key) ? "▲" : "▼")</span>
+                                    }
+                                </div>
+                            @if (_expanded.Contains(key) && fields.Count > 0)
+                            {
+                                <div class="diff-item-body">
+                                    <div class="diff-field-list">
+                                        @foreach (var f in fields)
+                                        {
+                                            <div class="diff-field-row @(f.IsChanged ? "" : "diff-field-row--unchanged")">
+                                                <span class="diff-field-name">@f.Name</span>
+                                                <div class="diff-field-vals">
+                                                    @if (f.IsChanged)
+                                                    {
+                                                        @if (!string.IsNullOrEmpty(f.OrigVal))
+                                                        {
+                                                            <span class="diff-val diff-val--orig">@f.OrigVal</span>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(f.OrigVal) && !string.IsNullOrEmpty(f.NewVal))
+                                                        {
+                                                            <span class="diff-val-arrow">&#x2192;</span>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(f.NewVal))
+                                                        {
+                                                            <span class="diff-val diff-val--new">@f.NewVal</span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="diff-val diff-val--plain">@(f.NewVal ?? f.OrigVal)</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    }
+
+                @* ── Apply results ── *@
+                @if (_applyResults is not null)
+                {
+                    <hr class="dlg-divider" />
+                    <div class="diff-section-title">Results</div>
+                    @foreach (var item in _applyResults)
+                    {
+                        <div class="dlg-result-item dlg-result-item--@(item.Success ? "success" : "error")">
+                            <span class="dlg-result-badge">@item.Operation</span>
+                            <span class="dlg-result-entity">@item.EntityName</span>
+                            <span class="dlg-result-endpoint">@item.Endpoint</span>
+                            @if (!string.IsNullOrEmpty(item.Message))
+                            {
+                                <span class="dlg-result-msg">@item.Message</span>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (_error is not null)
+                {
+                    <div class="dlg-error-banner">@_error</div>
+                }
+
+                @* ── Inline connect / confirm panels ── *@
+                @if (_applyPhase == ApplyPhase.Connect)
+                {
+                    <hr class="dlg-divider" />
+                    <div class="dlg-ap-panel">
+                        <div class="dlg-ap-title">&#x1F50C; Connect to ShipExec</div>
+                        <p class="dlg-ap-notice">To apply these changes you must connect to a live ShipExec instance.</p>
+                        <div class="dlg-ap-fields">
+                            <div class="dlg-ap-field">
+                                <label class="dlg-ap-label">Admin URL</label>
+                                <input class="dlg-ap-input" @bind="_connectAdminUrl" @bind:event="oninput" />
+                            </div>
+                            <div class="dlg-ap-field">
+                                <label class="dlg-ap-label">JWT JSON</label>
+                                <textarea class="dlg-ap-input dlg-ap-jwt" rows="3"
+                                          @bind="_connectJwt" @bind:event="oninput"
+                                          placeholder='{"access_token":"...","refresh_token":"...",...}'></textarea>
+                            </div>
+                        </div>
+                        @if (_connectError is not null)
+                        {
+                            <div class="dlg-ap-error">&#9888; @_connectError</div>
+                        }
+                    </div>
+                }
+                else if (_applyPhase == ApplyPhase.SelectCompany)
+                {
+                    <hr class="dlg-divider" />
+                    <div class="dlg-ap-panel">
+                        <div class="dlg-ap-title dlg-ap-title--ok">&#x2705; Connected</div>
+                        <p class="dlg-ap-notice">Select the company to apply changes to:</p>
+                        <div class="dlg-ap-fields">
+                            <div class="dlg-ap-field">
+                                <select class="dlg-ap-input" @bind="_connectSelectedIdx">
+                                    <option value="-1">— select a company —</option>
+                                    @for (int i = 0; i < _connectCompanies.Count; i++)
+                                    {
+                                        var ci = i;
+                                        <option value="@ci">@_connectCompanies[ci].DisplayName</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (_applyPhase == ApplyPhase.Confirm)
+                {
+                    <hr class="dlg-divider" />
+                    <div class="dlg-ap-panel dlg-ap-panel--confirm">
+                        <span class="dlg-ap-confirm-icon">&#x26A0;&#xFE0F;</span>
+                        <span class="dlg-ap-confirm-msg">
+                            Apply <strong>@_checkedVarianceIndices.Count change@(_checkedVarianceIndices.Count == 1 ? "" : "s")</strong>
+                            to <strong>@_companyDisplayName</strong>?
+                        </span>
+                    </div>
+                    <div class="dlg-ap-field dlg-ap-comments">
+                        <label class="dlg-ap-label">Comments <span class="dlg-required">*</span></label>
+                        <textarea class="dlg-ap-input" rows="3"
+                                  placeholder="Describe the reason for these changes…"
+                                  @bind="_comments" @bind:event="oninput"></textarea>
+                    </div>
+                }
+
+            </div>
+
+            <div class="dlg-footer">
+                @if (_applyPhase == ApplyPhase.Connect)
+                {
+                    <button class="dlg-btn-secondary" @onclick="CancelApplyFlow" disabled="@_isConnecting">Cancel</button>
+                    <button class="dlg-btn-primary" @onclick="DoConnectAsync"
+                            disabled="@(string.IsNullOrWhiteSpace(_connectJwt) || _isConnecting)">
+                        @if (_isConnecting) { <span class="dlg-spinner"></span> }
+                        Connect
+                    </button>
+                }
+                else if (_applyPhase == ApplyPhase.SelectCompany)
+                {
+                    <button class="dlg-btn-secondary" @onclick="() => _applyPhase = ApplyPhase.Connect">&#x2190; Back</button>
+                    <button class="dlg-btn-primary" @onclick="DoSelectCompany"
+                            disabled="@(_connectSelectedIdx < 0)">
+                        Continue
+                    </button>
+                }
+                else if (_applyPhase == ApplyPhase.Confirm)
+                {
+                    <button class="dlg-btn-secondary" @onclick="CancelApplyFlow">Cancel</button>
+                    <button class="dlg-btn-danger" @onclick="DoApplyAsync"
+                            disabled="@(string.IsNullOrWhiteSpace(_comments))">
+                        &#x2714; Apply
+                    </button>
+                }
+                else
+                {
+                    <button class="dlg-apply-btn"
+                            @onclick="HandleApplyChanges"
+                            disabled="@(_isApplying || _applyResults is not null || !Result!.HasChanges || _checkedVarianceIndices.Count == 0)">
+                        @if (_isApplying)
+                        {
+                            <span class="dlg-spinner"></span>
+                            <span>Applying&#x2026;</span>
+                        }
+                        else if (_applyResults is not null)
+                        {
+                            <span>&#x2713; Applied</span>
+                        }
+                        else
+                        {
+                            <span>Apply Changes</span>
+                        }
+                    </button>
+                }
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public DiffResult? Result { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public bool CanApply { get; set; } = true;
+
+    private enum ApplyPhase { Idle, Connect, SelectCompany, Confirm }
+
+    private readonly HashSet<string> _expanded = [];
+    private List<ApplyResultItem>? _applyResults;
+    private bool _isApplying;
+    private string? _error;
+
+    // ── Selection state ───────────────────────────────────────────────────────
+    private DiffResult? _lastSeenResult;
+    private HashSet<int> _checkedVarianceIndices = [];
+    private HashSet<int> _allVarianceIndices     = [];
+
+    private bool AllChecked => _allVarianceIndices.Count > 0
+                            && _checkedVarianceIndices.SetEquals(_allVarianceIndices);
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(Result, _lastSeenResult))
+        {
+            _lastSeenResult         = Result;
+            _allVarianceIndices     = Result?.Variances.Select(v => v.VarianceIndex).ToHashSet() ?? [];
+            _checkedVarianceIndices = [.._allVarianceIndices];
+        }
+    }
+
+    private void ToggleSelectAll()
+    {
+        if (AllChecked)
+            _checkedVarianceIndices.Clear();
+        else
+            _checkedVarianceIndices = [.._allVarianceIndices];
+    }
+
+    private void ToggleVariance(int varianceIndex)
+    {
+        if (!_checkedVarianceIndices.Remove(varianceIndex))
+            _checkedVarianceIndices.Add(varianceIndex);
+    }
+
+    // ── Connect / confirm state ───────────────────────────────────────────────
+    private ApplyPhase _applyPhase = ApplyPhase.Idle;
+    private string _connectAdminUrl = DebugConfig.AdminUrl;
+    private string _connectJwt      = DebugConfig.JwtToken;
+    private List<CompanyInfo> _connectCompanies = [];
+    private int _connectSelectedIdx = -1;
+    private string? _connectError;
+    private bool _isConnecting;
+    private string _companyDisplayName = string.Empty;
+    private string _comments           = string.Empty;
+
+    private void ToggleExpanded(string key)
+    {
+        if (!_expanded.Add(key))
+            _expanded.Remove(key);
+    }
+
+    private void HandleClose()
+    {
+        _expanded.Clear();
+        _applyResults = null;
+        _error = null;
+        ResetApplyFlow();
+        OnClose.InvokeAsync();
+    }
+
+    private void HandleApplyChanges()
+    {
+        _error = null;
+        if (CanApply)
+        {
+            var company = ShipExecService.GetCurrentCompany();
+            _companyDisplayName = company?.DisplayName ?? company?.Name ?? "the connected company";
+            _applyPhase = ApplyPhase.Confirm;
+        }
+        else
+        {
+            _connectError = null;
+            _applyPhase = ApplyPhase.Connect;
+        }
+    }
+
+    private void CancelApplyFlow() => ResetApplyFlow();
+
+    private void ResetApplyFlow()
+    {
+        _applyPhase          = ApplyPhase.Idle;
+        _connectError        = null;
+        _connectCompanies    = [];
+        _connectSelectedIdx  = -1;
+        _companyDisplayName  = string.Empty;
+        _comments            = string.Empty;
+        _lastSeenResult      = null; // force checkbox reinit on next open
+    }
+
+    private async Task DoConnectAsync()
+    {
+        _isConnecting = true;
+        _connectError = null;
+        try
+        {
+            _connectCompanies = await ShipExecService.GetCompaniesAsync(_connectJwt, _connectAdminUrl);
+            if (_connectCompanies.Count == 0)
+            {
+                _connectError = "No companies returned.";
+                return;
+            }
+
+            // Try to auto-match by name / symbol from the local XML
+            var current = ShipExecService.GetCurrentCompany();
+            if (current is not null)
+            {
+                var match = _connectCompanies.FindIndex(c =>
+                    string.Equals(c.Name,   current.Name,   StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Symbol, current.Symbol, StringComparison.OrdinalIgnoreCase));
+                if (match >= 0)
+                {
+                    _connectSelectedIdx = match;
+                    DoSelectCompany();
+                    return;
+                }
+            }
+
+            // If only one company exists, pre-select it
+            _connectSelectedIdx = _connectCompanies.Count == 1 ? 0 : -1;
+            _applyPhase = ApplyPhase.SelectCompany;
+        }
+        catch (Exception ex)
+        {
+            _connectError = $"Connection failed: {ex.Message}";
+        }
+        finally
+        {
+            _isConnecting = false;
+        }
+    }
+
+    private void DoSelectCompany()
+    {
+        if (_connectSelectedIdx < 0 || _connectSelectedIdx >= _connectCompanies.Count) return;
+        var company = _connectCompanies[_connectSelectedIdx];
+        ShipExecService.PrepareForApply(company.Id, company.Name);
+        _companyDisplayName = company.DisplayName;
+        _applyPhase = ApplyPhase.Confirm;
+    }
+
+    private async Task DoApplyAsync()
+    {
+        _applyPhase = ApplyPhase.Idle;
+        _isApplying = true;
+        _error = null;
+        try
+        {
+            var selectedIndices = _checkedVarianceIndices.OrderBy(x => x).ToList();
+            _applyResults = await ShipExecService.ApplyChangesAsync(selectedIndices, _comments);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to apply changes: {ex.Message}";
+        }
+        finally
+        {
+            _isApplying = false;
+        }
+    }
+
+    private static string GetJsonString(System.Text.Json.JsonElement elem)
+        => FieldDiffHelper.GetJsonString(elem);
+}

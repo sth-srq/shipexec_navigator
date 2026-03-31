@@ -1,0 +1,92 @@
+using Dapper;
+using ShipExecNavigator.DAL.Entities;
+
+namespace ShipExecNavigator.DAL.Managers;
+
+public class VarianceManager(IDbConnectionFactory connectionFactory)
+{
+    public async Task<Variance?> GetByIdAsync(long id)
+    {
+        using var conn = connectionFactory.CreateConnection();
+        return await conn.QuerySingleOrDefaultAsync<Variance>(
+            "SELECT * FROM dbo.Variances WHERE Id = @Id",
+            new { Id = id });
+    }
+
+    public async Task<IEnumerable<Variance>> GetAllAsync()
+    {
+        using var conn = connectionFactory.CreateConnection();
+        return await conn.QueryAsync<Variance>(
+            "SELECT * FROM dbo.Variances ORDER BY CreatedOn DESC");
+    }
+
+    public async Task<IEnumerable<Variance>> GetByCompanyAsync(Guid companyId)
+    {
+        using var conn = connectionFactory.CreateConnection();
+        return await conn.QueryAsync<Variance>(
+            "SELECT * FROM dbo.Variances WHERE CompanyId = @CompanyId ORDER BY CreatedOn DESC",
+            new { CompanyId = companyId });
+    }
+
+    public async Task<IEnumerable<Variance>> GetActiveByCompanyAsync(Guid companyId)
+    {
+        using var conn = connectionFactory.CreateConnection();
+        return await conn.QueryAsync<Variance>(
+            "SELECT * FROM dbo.Variances WHERE CompanyId = @CompanyId AND IsActive = 1 ORDER BY CreatedOn DESC",
+            new { CompanyId = companyId });
+    }
+
+    public async Task<long> InsertAsync(Variance variance)
+    {
+        variance.CreatedOn = DateTime.UtcNow;
+        variance.IsActive  = true;
+
+        using var conn = connectionFactory.CreateConnection();
+        variance.Id = await conn.QuerySingleAsync<long>(
+            """
+            INSERT INTO dbo.Variances
+                   (BatchId, CompanyId, UserId, NewEntity, OriginalEntity, VarianceData, Comments, Endpoint, CreatedOn, IsActive)
+            VALUES (@BatchId, @CompanyId, @UserId, @NewEntity, @OriginalEntity, @VarianceData, @Comments, @Endpoint, @CreatedOn, @IsActive);
+            SELECT CAST(SCOPE_IDENTITY() AS BIGINT);
+            """,
+            variance);
+
+        return variance.Id;
+    }
+
+    public async Task UpdateAsync(Variance variance)
+    {
+        using var conn = connectionFactory.CreateConnection();
+        await conn.ExecuteAsync(
+            """
+            UPDATE dbo.Variances
+            SET    BatchId        = @BatchId,
+                   CompanyId      = @CompanyId,
+                   UserId         = @UserId,
+                   NewEntity      = @NewEntity,
+                   OriginalEntity = @OriginalEntity,
+                   VarianceData   = @VarianceData,
+                   Comments       = @Comments,
+                   Endpoint       = @Endpoint,
+                   IsActive       = @IsActive
+            WHERE  Id = @Id
+            """,
+            variance);
+    }
+
+    public async Task DeactivateAsync(long id)
+    {
+        using var conn = connectionFactory.CreateConnection();
+        await conn.ExecuteAsync(
+            "UPDATE dbo.Variances SET IsActive = 0 WHERE Id = @Id",
+            new { Id = id });
+    }
+
+    public async Task DeleteAsync(long id)
+    {
+        using var conn = connectionFactory.CreateConnection();
+        await conn.ExecuteAsync(
+            "DELETE FROM dbo.Variances WHERE Id = @Id",
+            new { Id = id });
+    }
+}

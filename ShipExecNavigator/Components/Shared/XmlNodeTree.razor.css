@@ -1,0 +1,547 @@
+.xml-node {
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    font-size: 0.845rem;
+    line-height: 1.8;
+}
+
+/* Indent guide — depth-tinted via inline CSS var */
+.xml-children {
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--depth-color, rgba(58, 123, 213, 0.15));
+    margin-left: 0.65rem;
+    /* smooth expand / collapse */
+    animation: children-enter 0.22s ease-out;
+}
+
+@keyframes children-enter {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Node line */
+.xml-node-line {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding: 1px 6px 1px 2px;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 0;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+    .xml-node-line.clickable {
+        cursor: pointer;
+    }
+
+    .xml-node-line.clickable:hover {
+        background-color: rgba(91, 179, 247, 0.08);
+        box-shadow: 0 1px 4px rgba(58, 123, 213, 0.08);
+    }
+
+    .xml-node-line.clickable:active {
+        background-color: rgba(91, 179, 247, 0.15);
+        transform: scale(0.998);
+    }
+
+    .xml-node-line:focus-visible {
+        outline: 2px solid rgba(58, 123, 213, 0.5);
+        outline-offset: -1px;
+        border-radius: 4px;
+    }
+
+/* Expand toggle */
+.expand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1rem;
+    color: #adb5bd;
+    font-size: 0.58rem;
+    user-select: none;
+    flex-shrink: 0;
+    margin-right: 3px;
+    transition: color 0.15s, transform 0.2s ease;
+}
+
+.xml-node-line.clickable:hover .expand-icon {
+    color: #6c757d;
+    transform: scale(1.15);
+}
+
+/* Node type icon — container, leaf, lazy */
+.node-type-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    margin-right: 0.25rem;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+
+.xml-node-line:hover .node-type-icon {
+    opacity: 1;
+}
+
+/* Close tag removed – indent guides show nesting */
+
+/* -- Syntax colours ---------------------------------------- */
+.xml-punct {
+    color: #8b95a5;
+}
+
+.node-label {
+    color: #2563eb;
+    font-weight: 600;
+    transition: color 0.12s;
+}
+
+.xml-node-line.clickable:hover .node-label {
+    color: #1d4ed8;
+}
+
+.xml-elem {
+    color: #2563eb;
+    font-weight: 500;
+}
+
+.attr-dot {
+    color: #c4c9d2;
+    font-size: 0.7rem;
+}
+
+.attr-eq {
+    color: #8b95a5;
+}
+
+.node-sep {
+    color: #8b95a5;
+}
+
+.node-empty {
+    color: #b0b8c4;
+    font-style: italic;
+}
+
+.node-hint {
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 0.82rem;
+    animation: hint-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hint-pulse {
+    0%, 100% { opacity: 0.7; }
+    50%      { opacity: 1; }
+}
+
+.node-summary {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.node-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 0.68rem;
+    font-weight: 600;
+    background-color: rgba(58, 123, 213, 0.08);
+    border-radius: 999px;
+    padding: 0 0.38rem;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 0.3rem;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.xml-node-line.clickable:hover .node-count {
+    background-color: rgba(58, 123, 213, 0.16);
+    color: #3a7bd5;
+}
+
+.node-info {
+    color: #6c757d;
+    font-size: 0.84rem;
+}
+
+.xml-attr-name {
+    color: #7c3aed;
+}
+
+.xml-attr-val {
+    color: #059669;
+}
+
+.xml-val {
+    color: #b45309;
+}
+
+.xml-val--ref {
+    font-style: italic;
+    color: #92400e;
+}
+
+.xml-ellipsis, .node-hint {
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 0.78rem;
+}
+
+/* -- Editable spans -------------------------------------------------------- */
+.editable {
+    cursor: text;
+    border-radius: 3px;
+    padding: 0 2px;
+    transition: background-color 0.15s, outline 0.15s, transform 0.1s;
+    position: relative;
+}
+
+    .editable:hover {
+        background-color: rgba(154, 103, 0, 0.1);
+        outline: 1px dashed rgba(154, 103, 0, 0.3);
+    }
+
+    /* pencil icon tooltip on editable hover */
+    .editable::after {
+        content: '\270E';
+        position: absolute;
+        top: -0.5rem;
+        right: -0.6rem;
+        font-size: 0.6rem;
+        color: rgba(154, 103, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.15s;
+        pointer-events: none;
+    }
+
+    .editable:hover::after {
+        opacity: 1;
+    }
+
+.xml-attr-val.editable:hover {
+    background-color: rgba(25, 135, 84, 0.08);
+    outline: 1px dashed rgba(25, 135, 84, 0.3);
+}
+
+.xml-attr-val.editable::after {
+    color: rgba(25, 135, 84, 0.5);
+}
+
+/* -- Inline edit input ----------------------------------------------------- */
+.inline-edit {
+    background-color: #ffffff;
+    color: #b45309;
+    border: 1px solid #3a7bd5;
+    border-radius: 4px;
+    padding: 0 5px;
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    font-size: inherit;
+    line-height: inherit;
+    outline: none;
+    min-width: 80px;
+    width: auto;
+    box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.2);
+    vertical-align: baseline;
+    animation: edit-appear 0.18s ease-out;
+}
+
+@keyframes edit-appear {
+    from { opacity: 0.5; transform: scaleX(0.95); }
+    to   { opacity: 1;   transform: scaleX(1); }
+}
+
+.inline-edit--attr {
+    color: #059669;
+}
+
+.inline-edit--select {
+    cursor: pointer;
+    padding: 0 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236c757d'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+}
+
+    .inline-edit--select option {
+        background-color: #ffffff;
+        color: #212529;
+    }
+
+/* -- Node highlight flash -------------------------------------------------- */
+@keyframes node-flash {
+    0%   { background-color: rgba(255, 200, 0, 0.5); box-shadow: 0 0 12px rgba(255, 200, 0, 0.3); }
+    40%  { background-color: rgba(255, 200, 0, 0.35); box-shadow: 0 0 6px rgba(255, 200, 0, 0.15); }
+    100% { background-color: transparent; box-shadow: none; }
+}
+
+.xml-node.node--highlighted > .xml-node-line {
+    animation: node-flash 1.8s ease-out forwards;
+}
+
+/* -- Spinner rotate for lazy loading -------------------------------------- */
+.xml-node .spinner-border {
+    animation: spinner-border 0.65s linear infinite;
+}
+
+/* -- Changed node line highlights ------------------------------------------ */
+/* Direct change: value or attribute on this exact line was edited */
+.xml-node-line--changed {
+    background-color: rgba(210, 153, 34, 0.11);
+    box-shadow: inset 3px 0 0 rgba(210, 153, 34, 0.7);
+}
+
+/* Ancestor of a changed node — subtle left stripe guides navigation */
+.xml-node-line--has-change {
+    box-shadow: inset 3px 0 0 rgba(210, 153, 34, 0.32);
+}
+
+/* -- Modified value highlights (current value = green) --------------------- */
+.xml-val--changed {
+    background-color: rgba(25, 135, 84, 0.13);
+    outline: 1px dashed rgba(25, 135, 84, 0.5);
+    border-radius: 3px;
+}
+
+    .xml-val--changed.editable:hover {
+        background-color: rgba(25, 135, 84, 0.22);
+        outline: 1px solid rgba(25, 135, 84, 0.7);
+    }
+
+.xml-attr-val--changed {
+    background-color: rgba(25, 135, 84, 0.13);
+    outline: 1px dashed rgba(25, 135, 84, 0.5);
+    border-radius: 3px;
+}
+
+    .xml-attr-val--changed.editable:hover {
+        background-color: rgba(25, 135, 84, 0.22);
+        outline: 1px solid rgba(25, 135, 84, 0.7);
+    }
+
+/* -- Depth colour palette (set via inline style --depth-color) ------------- */
+/* depth 0 */ .xml-children[style*="--depth-color: #3b82f6"] { border-left-color: rgba(59, 130, 246, 0.25); }
+/* depth 1 */ .xml-children[style*="--depth-color: #8b5cf6"] { border-left-color: rgba(139, 92, 246, 0.25); }
+/* depth 2 */ .xml-children[style*="--depth-color: #06b6d4"] { border-left-color: rgba(6, 182, 212, 0.25); }
+/* depth 3 */ .xml-children[style*="--depth-color: #10b981"] { border-left-color: rgba(16, 185, 129, 0.25); }
+/* depth 4 */ .xml-children[style*="--depth-color: #f59e0b"] { border-left-color: rgba(245, 158, 11, 0.25); }
+
+/* -- Original value row (below the node line, red + strikethrough) --------- */
+.xml-orig-line {
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    font-size: 0.82rem;
+    line-height: 1.8;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0;
+    padding: 0 4px 0 calc(0.65rem + 1rem + 3px);
+}
+
+.xml-val--orig {
+    color: #b45309;
+    background-color: rgba(220, 38, 38, 0.08);
+    outline: 1px dashed rgba(220, 38, 38, 0.35);
+    border-radius: 3px;
+    padding: 0 2px;
+    text-decoration: line-through;
+    text-decoration-color: rgba(220, 38, 38, 0.55);
+}
+
+.xml-attr-val--orig {
+    color: #059669;
+    background-color: rgba(220, 38, 38, 0.08);
+    outline: 1px dashed rgba(220, 38, 38, 0.35);
+    border-radius: 3px;
+    padding: 0 2px;
+    text-decoration: line-through;
+    text-decoration-color: rgba(220, 38, 38, 0.55);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  DARK THEME support — auto-detects OS preference                         */
+/* ══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+    .xml-node {
+        color: #e2e8f0;
+    }
+
+    .node-label {
+        color: #60a5fa;
+    }
+
+    .xml-node-line.clickable:hover .node-label {
+        color: #93bbfd;
+    }
+
+    .xml-elem {
+        color: #60a5fa;
+    }
+
+    .xml-attr-name {
+        color: #a78bfa;
+    }
+
+    .xml-attr-val {
+        color: #34d399;
+    }
+
+    .xml-val {
+        color: #fbbf24;
+    }
+
+    .xml-val--ref {
+        color: #fcd34d;
+    }
+
+    .xml-punct, .attr-eq, .node-sep {
+        color: #64748b;
+    }
+
+    .attr-dot {
+        color: #475569;
+    }
+
+    .node-empty {
+        color: #64748b;
+    }
+
+    .node-hint, .xml-ellipsis {
+        color: #64748b;
+    }
+
+    .node-info, .node-summary {
+        color: #94a3b8;
+    }
+
+    .node-count {
+        color: #94a3b8;
+        background-color: rgba(96, 165, 250, 0.12);
+    }
+
+    .xml-node-line.clickable:hover .node-count {
+        background-color: rgba(96, 165, 250, 0.22);
+        color: #60a5fa;
+    }
+
+    .expand-icon {
+        color: #475569;
+    }
+
+    .xml-node-line.clickable:hover .expand-icon {
+        color: #94a3b8;
+    }
+
+    .node-type-icon {
+        opacity: 0.6;
+    }
+
+    .xml-node-line.clickable:hover {
+        background-color: rgba(96, 165, 250, 0.06);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .xml-node-line.clickable:active {
+        background-color: rgba(96, 165, 250, 0.12);
+    }
+
+    .xml-node-line:focus-visible {
+        outline-color: rgba(96, 165, 250, 0.5);
+    }
+
+    .xml-children {
+        border-left-color: rgba(96, 165, 250, 0.12);
+    }
+
+    .editable:hover {
+        background-color: rgba(251, 191, 36, 0.1);
+        outline-color: rgba(251, 191, 36, 0.3);
+    }
+
+    .editable::after {
+        color: rgba(251, 191, 36, 0.5);
+    }
+
+    .xml-attr-val.editable:hover {
+        background-color: rgba(52, 211, 153, 0.08);
+        outline-color: rgba(52, 211, 153, 0.3);
+    }
+
+    .xml-attr-val.editable::after {
+        color: rgba(52, 211, 153, 0.5);
+    }
+
+    .inline-edit {
+        background-color: #1e293b;
+        color: #fbbf24;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .inline-edit--attr {
+        color: #34d399;
+    }
+
+    .inline-edit--select option {
+        background-color: #1e293b;
+        color: #e2e8f0;
+    }
+
+    .xml-node-line--changed {
+        background-color: rgba(251, 191, 36, 0.08);
+        box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.6);
+    }
+
+    .xml-node-line--has-change {
+        box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.25);
+    }
+
+    .xml-val--changed {
+        background-color: rgba(52, 211, 153, 0.1);
+        outline-color: rgba(52, 211, 153, 0.4);
+    }
+
+    .xml-val--changed.editable:hover {
+        background-color: rgba(52, 211, 153, 0.18);
+        outline-color: rgba(52, 211, 153, 0.6);
+    }
+
+    .xml-attr-val--changed {
+        background-color: rgba(52, 211, 153, 0.1);
+        outline-color: rgba(52, 211, 153, 0.4);
+    }
+
+    .xml-attr-val--changed.editable:hover {
+        background-color: rgba(52, 211, 153, 0.18);
+        outline-color: rgba(52, 211, 153, 0.6);
+    }
+
+    .xml-orig-line {
+        color: #94a3b8;
+    }
+
+    .xml-val--orig {
+        color: #fbbf24;
+        background-color: rgba(248, 113, 113, 0.08);
+        outline-color: rgba(248, 113, 113, 0.3);
+        text-decoration-color: rgba(248, 113, 113, 0.5);
+    }
+
+    .xml-attr-val--orig {
+        color: #34d399;
+        background-color: rgba(248, 113, 113, 0.08);
+        outline-color: rgba(248, 113, 113, 0.3);
+        text-decoration-color: rgba(248, 113, 113, 0.5);
+    }
+
+    @keyframes node-flash {
+        0%   { background-color: rgba(251, 191, 36, 0.35); box-shadow: 0 0 12px rgba(251, 191, 36, 0.2); }
+        40%  { background-color: rgba(251, 191, 36, 0.2);  box-shadow: 0 0 6px rgba(251, 191, 36, 0.1); }
+        100% { background-color: transparent; box-shadow: none; }
+    }
+}

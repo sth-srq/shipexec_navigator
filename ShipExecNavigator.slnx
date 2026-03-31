@@ -1,0 +1,42 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="Docs/LogViewer.html" />
+    <File Path="Docs/getlogsrequest.json" />
+    <File Path="Docs/getlogsresponse.json" />
+    <File Path="Docs/getsecuritylogsrequest.json" />
+    <File Path="Docs/getsecuritylogsresponse.json" />
+    <File Path="Docs/UserTemplate.csv" />
+    <File Path="Docs/UserTemplateWithValues.csv" />
+    <File Path="Docs/WesbancoExport.xml" />
+    <File Path="Docs/WesbancoInc_17397359-aac5-4991-b858-d27f7c096314_20260320154656_461556.xml" />
+  </Folder>
+  <Folder Name="/Docs/Logon/">
+    <File Path="Docs/Logon/loginpage.html" />
+    <File Path="Docs/Logon/passwordpage.html" />
+  </Folder>
+  <Folder Name="/Downloads/">
+    <File Path="Downloads/ShipExecSupportClientChecker.html" />
+  </Folder>
+  <Folder Name="/RAGDocuments/" />
+  <Folder Name="/References/">
+    <File Path="References/PSI.Sox.Configuration.dll" />
+    <File Path="References/PSI.Sox.dll" />
+    <File Path="References/PSI.Sox.Wcf.dll" />
+  </Folder>
+  <Project Path="ShipExecNavigator.AppLogic/ShipExecNavigator.AppLogic.csproj" />
+  <Project Path="ShipExecNavigator.BusinessLogic/ShipExecNavigator.BusinessLogic.csproj" Id="a6c2d097-1a30-488c-b95d-91514c3d1238" />
+  <Project Path="ShipExecNavigator.ClientSpecificLogic/ShipExecNavigator.ClientSpecificLogic.csproj" Id="5d6f584e-cfd3-487b-bb3a-28bcd979df6d" />
+  <Project Path="ShipExecNavigator.CompanyXMLViewer/ShipExecNavigator.CompanyXMLViewer.csproj" />
+  <Project Path="ShipExecNavigator.Console/ShipExecNavigator.Console.csproj" Id="a413cabf-b33c-445a-9d10-891cb9a9be68" />
+  <Project Path="ShipExecNavigator.DAL/ShipExecNavigator.DAL.csproj" />
+  <Project Path="ShipExecNavigator.DesktopClient/ShipExecNavigator.DesktopClient.csproj" />
+  <Project Path="ShipExecNavigator.MAUI/ShipExecNavigator.MAUI.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+  <Project Path="ShipExecNavigator.Model/ShipExecNavigator.Model.csproj" Id="b899a241-66b1-47ea-be52-6556a6746c09" />
+  <Project Path="ShipExecNavigator.RAGLoader/ShipExecNavigator.RAGLoader.csproj" />
+  <Project Path="ShipExecNavigator.Shared/ShipExecNavigator.Shared.csproj" />
+  <Project Path="ShipExecNavigator.SK/ShipExecNavigator.SK.csproj" />
+  <Project Path="ShipExecNavigator.WinForm/ShipExecNavigator.WinForm.csproj" Id="d3c73c6d-20bb-48b8-a9ee-0caea122e8cb" />
+  <Project Path="ShipExecNavigator/ShipExecNavigator.csproj" />
+</Solution>

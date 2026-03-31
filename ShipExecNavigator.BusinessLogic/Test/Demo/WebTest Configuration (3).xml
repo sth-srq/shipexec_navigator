@@ -1,0 +1,517 @@
+<?xml version="1.0"?>
+<CompanyConfiguration xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  Guid="b1322c23-db1a-4a77-8123-f9ae6ce4ce56" Symbol="WBT" LicenseId="12345" Name="WebTest" Enabled="false">
+  <ScaleDefinitions />
+  <ScaleConfigurations />
+  <PrinterDefinitions>
+    <PrinterDefinition><Id>1134</Id>
+      <Alias>LP1</Alias>
+      <StockSymbol>LETTER</StockSymbol>
+      <ModelSymbol>Generic.PCLPrinter</ModelSymbol>
+      <PrintDirection>BottomFirst</PrintDirection>
+      <PrintActions>Raw</PrintActions>
+      <PrinterSettings />
+      <ImageType>None</ImageType>
+    </PrinterDefinition>
+  </PrinterDefinitions>
+  <DocumentConfigurations>
+    <DocumentConfiguration>
+      <Name>main</Name>
+      <DocumentMappings>
+        <DocumentMapping>
+          <CarrierSymbol>CONNECTSHIP_GLOBAL.DEFAULT</CarrierSymbol>
+          <PrinterAlias>LP1</PrinterAlias>
+          <Copies>1</Copies>
+          <PassThrough>false</PassThrough>
+          <DocumentSymbol>TANDATA_CANADA_CUSTOMS_INVOICE.STANDARD</DocumentSymbol>
+        </DocumentMapping>
+      </DocumentMappings>
+    </DocumentConfiguration>
+  </DocumentConfigurations>
+  <PrinterConfigurations />
+  <Shippers>
+    <Shipper>
+      <Name>ExistingShipper_UNCHANGED</Name>
+      <Symbol>UNC</Symbol>
+      <Address1>Unchanged</Address1>
+      <Address2>ADDRESS2_CHANGED!</Address2>
+      <City>Bradenton</City>
+      <Company>Unchanged</Company>
+      <Contact>Unchanged</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+    <Shipper>
+      <Name>ExistingShipper_TO_BE_MODIFIED</Name>
+      <Symbol>MOD</Symbol>
+      <Address1>Changed in code</Address1>
+      <Address2>ADDRESS2_CHANGED!</Address2>
+      <City>Bradenton</City>
+      <Company>MOD</Company>
+      <Contact>MOD</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+    <Shipper>
+      <Name>ExistingShipper_TO_BE_DELETED</Name>
+      <Symbol>DEL</Symbol>
+      <Address1>DEL</Address1>
+      <Address2>ADDRESS2_CHANGED!</Address2>
+      <City>Bradenton</City>
+      <Company>DEL</Company>
+      <Contact>DEL</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+    <Shipper>
+      <Name>Test</Name>
+      <Symbol>TST</Symbol>
+      <CustomData>
+        <CustomData>
+          <Key>test</Key>
+          <Value>test</Value>
+        </CustomData>
+      </CustomData>
+      <Address1>101 Street</Address1>
+      <City>Bradenton</City>
+      <Company>Test</Company>
+      <Contact>Shipping</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <Email>testuser@odp.com</Email>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+  </Shippers>
+  <Templates>
+    <Template>
+      <TemplateName>Test</TemplateName>
+      <TemplateHtml>PGRpdiBjbGFzcz0icm93Ij4NCiAgICA8ZGl2IGNsYXNzPSJwYW5lbCBwYW5lbC1wcmltYXJ5Ij4NCiAgICAgICAgPGRpdiBjbGFzcz0icGFuZWwtaGVhZGluZyBwYW5lbC1oZWFkaW5nLXBhZGRpbmciPg0KICAgICAgICAgICAgPGRpdiBjbGFzcz0icm93Ij4NCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtc20tMTIiPg0KICAgICAgICAgICAgICAgICAgICA8aDUgY2xhc3M9ImN1c3RvbS10aXRsZS1oNSI+e3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLkJhdGNoRGV0YWlsc319PC9oNT4NCiAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICA8L2Rpdj4NCiAgICAgICAgPGRpdiBjbGFzcz0icGFuZWwtYm9keSI+DQogICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3cgZGl2QmF0Y2hNYW5hZ2VyVG9wIj4NCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtc20tMTIgbm8tbGVmdC1yaWdodC1wYWRkaW5nIj4NCiAgICAgICAgICAgICAgICAgICAgPGEgaHJlZj0iIyFiYXRjaG1hbmFnZXIiIHRpdGxlPSJHbyBiYWNrIHRvIGJhdGNoIG1hbmFnZXIgcGFnZSIgY2xhc3M9ImJ0biBidG4tc20gYnRuLWRlZmF1bHQiPjxlbSBjbGFzcz0iZ2x5cGhpY29uIGdseXBoaWNvbi1hcnJvdy1sZWZ0IiBzdHlsZT0ibWFyZ2luLXJpZ2h0OjVweDsiPjwvZW0+e3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLkJhdGNoTWFuYWdlcn19PC9hPg0KICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyBuby1sZWZ0LXJpZ2h0LXBhZGRpbmciPg0KICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjb2wtc20tNCByb3cgbm8tbGVmdC1yaWdodC1wYWRkaW5nIj4NCiAgICAgICAgICAgICAgICAgICAgICAgIDxoNT57e3ZtLnRyYW5zbGF0aW9ucy5UaGluQ2xpZW50LkJhdGNoUmVmZXJlbmNlfX06IDxhIHRpdGxlPSJWaWV3IGJhdGNoIGhpc3RvcnkiIGhyZWY9IiIgbmctY2xpY2s9InZtLmxpbmtUb0JhdGNoSGlzdG9yeSh2bS5iYXRjaFJlZmVyZW5jZSkiIG5nLWRpc2FibGVkPSJ2bS5pc0JhdGNoQnVzeSI+e3t2bS5iYXRjaFJlZmVyZW5jZX19PC9hPjwvaDU+DQogICAgICAgICAgICAgICAgICAgICAgICA8aDUgbmctZGlhYmxlZD0idm0uaXNCYXRjaEJ1c3kiPnt7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5TdGF0dXN9fTombmJzcDt7e3ZtLmJhdGNoLkRldGFpbC5CYXRjaFN0YXR1cyB8IEJhdGNoU3RhdHVzfX08L2g1Pg0KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY29sLXNtLTQiPg0KDQogICAgICAgICAgICAgICAgICAgICAgICA8c3BhbiBjbGFzcz0ic29ydC1pbmRpY2F0b3IiIG5nLXNob3c9InZtLmlzQmF0Y2hCdXN5Ij4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aDQ+IHt7dm0uY3VycmVudEJhdGNoU3RhdHVzfX0gPGltZyBzcmM9IkNvbnRlbnQvaW1nL2FqYXhfbG9hZGVyLmdpZiIgYWx0PSJXb3JraW5nIiAvPjwvaDQ+DQogICAgICAgICAgICAgICAgICAgICAgICA8L3NwYW4+DQoNCiAgICAgICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImNvbC1zbS00Ij4NCg0KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCg0KICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImNvbC1zbS02IG5vLWxlZnQtcmlnaHQtcGFkZGluZyI+DQogICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJjaGVja2JveCIgbmctbW9kZWw9InZtLnNob3dFcnJvcnNPbmx5IiBuZy1jaGFuZ2U9InZtLmZpbHRlcigpIiBuZy1kaXNhYmxlZD0idm0uaXNCYXRjaEJ1c3kiIC8+e3t2bS50cmFuc2xhdGlvbnMuVGhpbkNsaWVudC5TaG93RXJyb3JzT25seX19DQogICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY29sLXNtLTYgbm8tbGVmdC1yaWdodC1wYWRkaW5nIHRleHQtcmlnaHQiPg0KICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdGl0bGU9IlNoaXAgdGhlIGVudGlyZSBiYXRjaCIgdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiB2YWx1ZT0ie3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLlNoaXB9fSB7e3ZtLnRyYW5zbGF0aW9ucy5Db21tb24uQWxsfX0iIG5nLWNsaWNrPSJ2bS5zaGlwQmF0Y2godm0uYmF0Y2gpIiBuZy1kaXNhYmxlZD0iIXZtLmJhdGNoLkNhblNoaXBBbGwoKSB8fCB2bS5pc0JhdGNoQnVzeSIgLz4NCiAgICAgICAgICAgICAgICAgICAgPGlucHV0IHRpdGxlPSJQcmludCB0aGUgZW50aXJlIGJhdGNoIiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLXN1Y2Nlc3MiIHZhbHVlPSJ7e3ZtLnRyYW5zbGF0aW9ucy5Db21tb24uUHJpbnR9fSB7e3ZtLnRyYW5zbGF0aW9ucy5Db21tb24uQWxsfX0iIG5nLWNsaWNrPSJ2bS5wcmludEJhdGNoKHZtLmJhdGNoKSIgbmctZGlzYWJsZWQ9IiF2bS5iYXRjaC5DYW5QcmludEFsbCgpIHx8IHZtLmlzQmF0Y2hCdXN5IiAvPg0KICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdGl0bGU9IlZvaWQgdGhlIGVudGlyZSBiYXRjaCIgdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi13YXJuaW5nIiB2YWx1ZT0ie3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLlZvaWR9fSB7e3ZtLnRyYW5zbGF0aW9ucy5Db21tb24uQWxsfX0iIG5nLWNsaWNrPSJ2bS52b2lkQmF0Y2godm0uYmF0Y2gpIiBuZy1kaXNhYmxlZD0iIXZtLmJhdGNoLkNhblZvaWRBbGwoKSB8fCB2bS5pc0JhdGNoQnVzeSIgLz4NCiAgICAgICAgICAgICAgICAgICAgPGlucHV0IHRpdGxlPSJEZWxldGUgdGhlIGVudGlyZSBiYXRjaCIgdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1kYW5nZXIiIHZhbHVlPSJ7e3ZtLnRyYW5zbGF0aW9ucy5Db21tb24uRGVsZXRlfX0ge3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLkFsbH19IiBuZy1jbGljaz0idm0uZGVsZXRlQmF0Y2godm0uYmF0Y2gpIiBuZy1kaXNhYmxlZD0iIXZtLmJhdGNoLkNhbkRlbGV0ZUFsbCgpIHx8IHZtLmlzQmF0Y2hCdXN5IiAvPg0KDQogICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICA8L2Rpdj4NCg0KDQogICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPg0KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImNvbC1zbS0zIG5vLWxlZnQtcGFkZGluZyI+DQogICAgICAgICAgICAgICAgICAgIDxoNT48c3Ryb25nPnt7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5CYXRjaERldGFpbHN9fTwvc3Ryb25nPjwvaDU+DQogICAgICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY29sLXNtLTkgbm8tcmlnaHQtcGFkZGluZyI+DQogICAgICAgICAgICAgICAgICAgIDx1bCBjbGFzcz0icGFnaW5hdGlvbiB6ZXJvTWFyZ2luIHB1bGwtcmlnaHQiPg0KICAgICAgICAgICAgICAgICAgICAgICAgPGxpPjxhIG5nLW1vZGVsPSJ2bS5pdGVtc1BlclBhZ2UiIG5nLWNsYXNzPSJ7ICdidG4tYWN0aXZlJzoodm0uaXRlbXNQZXJQYWdlID09ICcxMCcpfSIgbmctY2xpY2s9InZtLml0ZW1QZXJQYWdlQ2hhbmdlZCgxMCkiIGhyZWY9ImphdmFzY3JpcHQ6dm9pZCgwKSI+MTA8L2E+PC9saT4NCiAgICAgICAgICAgICAgICAgICAgICAgIDxsaT48YSBuZy1tb2RlbD0idm0uaXRlbXNQZXJQYWdlIiBuZy1jbGFzcz0ieyAnYnRuLWFjdGl2ZSc6KHZtLml0ZW1zUGVyUGFnZSA9PSAnMjUnKX0iIG5nLWNsaWNrPSJ2bS5pdGVtUGVyUGFnZUNoYW5nZWQoMjUpIiBocmVmPSJqYXZhc2NyaXB0OnZvaWQoMCkiPjI1PC9hPjwvbGk+DQogICAgICAgICAgICAgICAgICAgICAgICA8bGk+PGEgbmctbW9kZWw9InZtLml0ZW1zUGVyUGFnZSIgbmctY2xhc3M9InsgJ2J0bi1hY3RpdmUnOih2bS5pdGVtc1BlclBhZ2UgPT0gJzUwJyl9IiBuZy1jbGljaz0idm0uaXRlbVBlclBhZ2VDaGFuZ2VkKDUwKSIgaHJlZj0iamF2YXNjcmlwdDp2b2lkKDApIj41MDwvYT48L2xpPg0KICAgICAgICAgICAgICAgICAgICAgICAgPGxpPjxhIG5nLW1vZGVsPSJ2bS5pdGVtc1BlclBhZ2UiIG5nLWNsYXNzPSJ7ICdidG4tYWN0aXZlJzoodm0uaXRlbXNQZXJQYWdlID09ICcwJyl9IiBuZy1jbGljaz0idm0uaXRlbVBlclBhZ2VDaGFuZ2VkKDApIiBocmVmPSJqYXZhc2NyaXB0OnZvaWQoMCkiPnt7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5BbGx9fTwvYT48L2xpPg0KICAgICAgICAgICAgICAgICAgICA8L3VsPg0KICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgPC9kaXY+DQogICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPg0KICAgICAgICAgICAgICAgIDx0YWJsZSBjbGFzcz0idGFibGUgdGFibGUtYm9yZGVyZWQgdGFibGUtc3RyaXBlZCBuZy10YWJsZSIgYXJpYS1kZXNjcmliZWRieT0iQmF0Y2giPg0KICAgICAgICAgICAgICAgICAgICA8dGhlYWQ+DQogICAgICAgICAgICAgICAgICAgICAgICA8dHI+DQoNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGggc2NvcGU9ImNvbCIgc3R5bGU9InRleHQtYWxpZ246IGxlZnQiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8ZGl2Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9InNvcnQtaW5kaWNhdG9yIiBuZy1kaXNhYmxlZD0idm0uaXNCYXRjaEJ1c3kiPnt7dm0udHJhbnNsYXRpb25zLlRoaW5DbGllbnQuQmF0Y2hJdGVtUmVmZXJlbmNlfX08L3NwYW4+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvdGg+DQoNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGggc2NvcGU9ImNvbCIgIHN0eWxlPSJ0ZXh0LWFsaWduOiBsZWZ0Ij4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGRpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzb3J0LWluZGljYXRvciI+e3t2bS50cmFuc2xhdGlvbnMuVGhpbkNsaWVudC5TZXF1ZW5jZU51bWJlcn19PC9zcGFuPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3RoPg0KDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRoIHNjb3BlPSJjb2wiIHN0eWxlPSJ0ZXh0LWFsaWduOiBsZWZ0Ij4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGRpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzb3J0LWluZGljYXRvciI+e3t2bS50cmFuc2xhdGlvbnMuVGhpbkNsaWVudC5UcmFja2luZ051bWJlcn19PC9zcGFuPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3RoPg0KDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRoIHNjb3BlPSJjb2wiIHN0eWxlPSJ0ZXh0LWFsaWduOiBsZWZ0Ij4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGRpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzb3J0LWluZGljYXRvciI+e3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLkVycm9yQ29kZX19PC9zcGFuPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3RoPg0KDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPHRoIHNjb3BlPSJjb2wiIHN0eWxlPSJ0ZXh0LWFsaWduOiBsZWZ0Ij4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGRpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzb3J0LWluZGljYXRvciI+e3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLkVycm9yTWVzc2FnZX19PC9zcGFuPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3RoPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDx0aCBzY29wZT0iY29sIj48L3RoPg0KICAgICAgICAgICAgICAgICAgICAgICAgPC90cj4NCiAgICAgICAgICAgICAgICAgICAgPC90aGVhZD4NCg0KICAgICAgICAgICAgICAgICAgICA8dHIgbmctcmVwZWF0PSJiYXRjaEl0ZW0gaW4gdm0uYmF0Y2hEZXRhaWwiPg0KICAgICAgICAgICAgICAgICAgICAgICAgPHRkIG5nLWlmPSJiYXRjaEl0ZW0uSXNTaGlwcGVkIj48YSBocmVmPSIiIG5nLWNsaWNrPSJ2bS5saW5rVG9CYXRjaEl0ZW1IaXN0b3J5KGJhdGNoSXRlbSkiPnt7YmF0Y2hJdGVtLkJhdGNoSXRlbVJlZmVyZW5jZX19PC9hPjwvdGQ+DQogICAgICAgICAgICAgICAgICAgICAgICA8dGQgbmctaWY9IiFiYXRjaEl0ZW0uSXNTaGlwcGVkIiAgbmctZGlzYWJsZWQ9InZtLmlzQmF0Y2hCdXN5Ij57e2JhdGNoSXRlbS5CYXRjaEl0ZW1SZWZlcmVuY2V9fTwvdGQ+DQogICAgICAgICAgICAgICAgICAgICAgICA8dGQ+e3tiYXRjaEl0ZW0uU2VxdWVuY2VOdW1iZXJ9fTwvdGQ+DQogICAgICAgICAgICAgICAgICAgICAgICA8dGQgbmctY2xhc3M9IntzdHJpa2U6YmF0Y2hJdGVtLlBhY2thZ2VzWzBdLlZvaWRlZH0iPnt7YmF0Y2hJdGVtLlBhY2thZ2VzWzBdLlRyYWNraW5nTnVtYmVyfX08L3RkPg0KICAgICAgICAgICAgICAgICAgICAgICAgPHRkPnt7YmF0Y2hJdGVtLkVycm9yQ29kZX19PC90ZD4NCiAgICAgICAgICAgICAgICAgICAgICAgIDx0ZD57e2JhdGNoSXRlbS5FcnJvck1lc3NhZ2V9fTwvdGQ+DQogICAgICAgICAgICAgICAgICAgICAgICA8dGQgY2xhc3M9InRleHQtY2VudGVyIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1zbSBidG4tcHJpbWFyeSIgdmFsdWU9Int7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5TaGlwfX0iIG5nLWNsaWNrPSJ2bS5zaGlwSXRlbShiYXRjaEl0ZW0pIiBuZy1kaXNhYmxlZD0iYmF0Y2hJdGVtLklzU2hpcHBlZCB8fCB2bS5pc0JhdGNoQnVzeSIgLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1zbSBidG4tc3VjY2VzcyIgdmFsdWU9Int7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5QcmludH19IiBuZy1jbGljaz0idm0ucHJpbnRJdGVtKGJhdGNoSXRlbSkiIG5nLWRpc2FibGVkPSIhYmF0Y2hJdGVtLklzU2hpcHBlZCB8fCB2bS5pc0JhdGNoQnVzeSIgLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1zbSBidG4td2FybmluZyIgdmFsdWU9Int7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5Wb2lkfX0iIG5nLWNsaWNrPSJ2bS52b2lkSXRlbShiYXRjaEl0ZW0pIiBuZy1kaXNhYmxlZD0iIWJhdGNoSXRlbS5Jc1NoaXBwZWQgfHwgdm0uaXNCYXRjaEJ1c3kiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9ImJ1dHRvbiIgY2xhc3M9ImJ0biBidG4tc20gYnRuLWRhbmdlciIgdmFsdWU9Int7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5EZWxldGV9fSIgbmctY2xpY2s9InZtLmRlbGV0ZUl0ZW0oYmF0Y2hJdGVtKSIgbmctZGlzYWJsZWQ9ImJhdGNoSXRlbS5Jc1NoaXBwZWQgfHwgdm0uaXNCYXRjaEJ1c3kiIC8+DQogICAgICAgICAgICAgICAgICAgICAgICA8L3RkPg0KICAgICAgICAgICAgICAgICAgICA8L3RyPg0KICAgICAgICAgICAgICAgIDwvdGFibGU+DQogICAgICAgICAgICA8L2Rpdj4NCiAgICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyI+DQogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY29sLW1kLTciPjx1bCB1aWItcGFnaW5hdGlvbiBkaXJlY3Rpb24tbGlua3M9InRydWUiIGNsYXNzPSJwYWdpbmF0aW9uIiB0b3RhbC1pdGVtcz0idm0udG90YWxJdGVtcyIgaXRlbXMtcGVyLXBhZ2U9InZtLml0ZW1zUGVyUGFnZSIgbmctbW9kZWw9InZtLmN1cnJlbnRQYWdlIiBuZy1jaGFuZ2U9InZtLnBhZ2VDaGFuZ2VkKCkiPjwvdWw+PC9kaXY+DQogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY29sLW1kLTEiPjwvZGl2Pg0KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImNvbC1tZC00IG5nLXByaXN0aW5lIG5nLXVudG91Y2hlZCBuZy12YWxpZCBuZy1pc29sYXRlLXNjb3BlIHBhZ2luYXRpb24gbmctbm90LWVtcHR5IiBzdHlsZT0idGV4dC1hbGlnbjpyaWdodCI+DQogICAgICAgICAgICAgICAgICAgIHt7dm0udHJhbnNsYXRpb25zLkNvbW1vbi5TaG93aW5nfX0ge3t2bS5za2lwTnVtKzF9fSB7e3ZtLnRyYW5zbGF0aW9ucy5Db21tb24udG99fSB7e3ZtLnRvUmVjb3JkfX0ge3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLk9mfX0ge3t2bS50b3RhbEl0ZW1zfX0ge3t2bS50cmFuc2xhdGlvbnMuQ29tbW9uLmVudHJpZXN9fQ0KICAgICAgICAgICAgICAgIDwvZGl2Pg0KICAgICAgICAgICAgPC9kaXY+DQoNCiAgICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyIgc3R5bGU9Im92ZXJmbG93OiBoaWRkZW47IHdoaXRlLXNwYWNlOiBub3dyYXA7IiBuZy1jbGFzcz0ieydFcnJvck1lc3NhZ2UnOiB2bS5zdGF0dXMuaXNFcnJvcn0iPg0KICAgICAgICAgICAgICAgIDxpbWcgbmctc2hvdz0iaXNCdXN5IiBzcmM9IkNvbnRlbnQvaW1nL2FqYXhfbG9hZGVyLmdpZiIgYWx0PSJXb3JraW5nIiAvPnt7dm0uc3RhdHVzLm1lc3NhZ2V9fQ0KICAgICAgICAgICAgPC9kaXY+DQogICAgICAgIDwvZGl2Pg0KICAgIDwvZGl2Pg0KPC9kaXY+DQo=</TemplateHtml>
+      <TemplateType>BatchDetails</TemplateType>
+    </Template>
+  </Templates>
+  <BoxTypes />
+  <Validations />
+  <CommodityContents />
+  <SourceConfigurations />
+  <DataConfigurationMappings />
+  <Schedules />
+  <HazmatContents />
+  <AddressBooks />
+  <AddressGroups />
+  <DistributionLists />
+  <Clients>
+    <Client>
+      <Name>Test1</Name>
+      <AccessKey>cabca283-9ec8-498f-94a3-2c4c0ff7f706</AccessKey>
+    </Client>
+    <Client>
+      <Name>Test2</Name>
+      <AccessKey>f857282d-f110-48f7-86f4-a17bc7a5051a</AccessKey>
+    </Client>
+    <Client>
+      <Name>Test3</Name>
+      <AccessKey>48bf0eb9-8718-4e6b-a4ef-1f1ebc5dd9d7</AccessKey>
+    </Client>
+    <Client>
+      <Name>Test4</Name>
+      <AccessKey>c3ad0d93-f5b5-4158-a06d-eb56be17277c</AccessKey>
+    </Client>
+  </Clients>
+  <Notifications>
+    <Notification>
+      <Message>Test</Message>
+      <CreateDate>2026-02-27T16:12:09</CreateDate>
+      <CreatedBy>a3101a85-6a1a-472a-bdab-f81153d04de8</CreatedBy>
+      <ExpirationDate_Year>2026</ExpirationDate_Year>
+      <ExpirationDate_Month>2</ExpirationDate_Month>
+      <ExpirationDate_Day>27</ExpirationDate_Day>
+      <Title>Test</Title>
+    </Notification>
+  </Notifications>
+  <Reports />
+  <Machines>
+    <Machine>
+      <Name>asd</Name>
+      <ProfileName>default</ProfileName>
+    </Machine>
+    <Machine>
+      <Name>o</Name>
+      <ProfileName>other</ProfileName>
+    </Machine>
+  </Machines>
+  <Profiles>
+    <Profile>
+      <Name>default</Name>
+      <Shippers>
+        <Shipper>TST</Shipper>
+      </Shippers>
+      <Carriers>
+        <Carrier>CONNECTSHIP_UPS.UPS</Carrier>
+      </Carriers>
+      <Services>
+        <Service>CONNECTSHIP_UPS.UPS.GND</Service>
+      </Services>
+      <Countries>
+        <Country>US</Country>
+      </Countries>
+      <BoxTypes />
+      <PackageTypes>
+        <PackageType>
+          <OriginalName>Customer Packaging</OriginalName>
+          <CustomName>Customer Packaging</CustomName>
+          <Symbol>CUSTOM</Symbol>
+          <Sequence>1</Sequence>
+        </PackageType>
+      </PackageTypes>
+      <ServerBusinessRuleOptions>
+        <UsePreCloseManifest>false</UsePreCloseManifest>
+        <UseCloseManifest>false</UseCloseManifest>
+        <UsePostCloseManifest>false</UsePostCloseManifest>
+        <UsePreProcessBatch>false</UsePreProcessBatch>
+        <UsePostProcessBatch>false</UsePostProcessBatch>
+        <UsePrePrint>false</UsePrePrint>
+        <UsePrint>false</UsePrint>
+        <UsePostPrint>false</UsePostPrint>
+        <UsePreRate>false</UsePreRate>
+        <UseRate>false</UseRate>
+        <UsePostRate>false</UsePostRate>
+        <UsePreShip>false</UsePreShip>
+        <UseShip>false</UseShip>
+        <UsePostShip>false</UsePostShip>
+        <UsePreTransmit>false</UsePreTransmit>
+        <UseTransmit>false</UseTransmit>
+        <UsePostTransmit>false</UsePostTransmit>
+        <UsePreVoid>false</UsePreVoid>
+        <UseVoidPackage>false</UseVoidPackage>
+        <UsePostVoid>false</UsePostVoid>
+        <UsePreAddressValidation>false</UsePreAddressValidation>
+        <UseAddressValidation>false</UseAddressValidation>
+        <UsePostAddressValidation>false</UsePostAddressValidation>
+        <UsePrePack>false</UsePrePack>
+        <UsePostPack>false</UsePostPack>
+        <UsePrePackRate>false</UsePrePackRate>
+        <UsePostPackRate>false</UsePostPackRate>
+        <UsePreReprocess>false</UsePreReprocess>
+        <UsePostReprocess>false</UsePostReprocess>
+        <UsePreModifyPackageList>false</UsePreModifyPackageList>
+        <UsePostModifyPackageList>false</UsePostModifyPackageList>
+        <UsePreCreateGroup>false</UsePreCreateGroup>
+        <UseCreateGroup>false</UseCreateGroup>
+        <UsePostCreateGroup>false</UsePostCreateGroup>
+        <UsePreModifyGroup>false</UsePreModifyGroup>
+        <UseModifyGroup>false</UseModifyGroup>
+        <UsePostModifyGroup>false</UsePostModifyGroup>
+        <UsePreCloseGroup>false</UsePreCloseGroup>
+        <UseCloseGroup>false</UseCloseGroup>
+        <UsePostCloseGroup>false</UsePostCloseGroup>
+        <UseModifyPrint>false</UseModifyPrint>
+      </ServerBusinessRuleOptions>
+      <ClientBusinessRuleName>Test</ClientBusinessRuleName>
+      <ClientBusinessRuleOptions>
+        <UsePostTransmit>false</UsePostTransmit>
+        <UsePreShip>true</UsePreShip>
+      </ClientBusinessRuleOptions>
+      <ProfileSettings />
+      <Templates />
+      <FieldOptions>
+        <FieldOption>
+          <PropertyName>BrokerageThirdPartyBillingAddress.PhoneFaxTab</PropertyName>
+          <Caption>123456789</Caption>
+          <CarryForward />
+          <ValidationType>None</ValidationType>
+        </FieldOption>
+        <FieldOption>
+          <PropertyName>BrokerageThirdPartyBillingAddress.TaxId</PropertyName>
+          <CarryForward />
+          <IsDisabled>true</IsDisabled>
+          <ValidationType>None</ValidationType>
+        </FieldOption>
+      </FieldOptions>
+      <Pickups />
+      <PaymentTerms>
+        <PaymentTerm>
+          <OriginalName>Prepaid (DDP)</OriginalName>
+          <CustomName>Prepaid (DDP)</CustomName>
+          <Symbol>SHIPPER</Symbol>
+          <Sequence>1</Sequence>
+        </PaymentTerm>
+      </PaymentTerms>
+    </Profile>
+    <Profile>
+      <Name>other</Name>
+      <Shippers />
+      <Carriers />
+      <Services />
+      <Countries />
+      <BoxTypes />
+      <PackageTypes />
+      <ProfileSettings />
+      <Templates />
+      <FieldOptions />
+      <Pickups />
+      <PaymentTerms />
+    </Profile>
+    <Profile>
+      <Name>Site1</Name>
+      <Shippers />
+      <Carriers />
+      <Services />
+      <Countries />
+      <BoxTypes />
+      <PackageTypes />
+      <ProfileSettings />
+      <Templates />
+      <FieldOptions />
+      <Pickups />
+      <PaymentTerms />
+    </Profile>
+  </Profiles>
+  <Users />
+  <SingleSignOnConfigurations />
+  <AdapterRegistrations>
+    <AdapterRegistration>
+      <AdapterDefinitionGuid>f7d56223-ab4d-402b-a695-733ae0740e8d</AdapterDefinitionGuid>
+      <AdapterShipperMappings>
+        <AdapterShipperMappingConfiguration>
+          <AdapterShipperSymbol>TST</AdapterShipperSymbol>
+          <ShipExecShipperSymbol>TST</ShipExecShipperSymbol>
+          <ShipperSettings />
+        </AdapterShipperMappingConfiguration>
+      </AdapterShipperMappings>
+      <AdapterSettings>
+        <AdapterSettingConfiguration>
+          <Value>http://localhost/amp/adminxml</Value>
+          <Symbol>AMP_ADMIN_URL</Symbol>
+        </AdapterSettingConfiguration>
+        <AdapterSettingConfiguration>
+          <Value>http://localhost/amp/xml</Value>
+          <Symbol>AMP_URL</Symbol>
+        </AdapterSettingConfiguration>
+        <AdapterSettingConfiguration>
+          <Value>false</Value>
+          <Symbol>WORLD_EASE_SHIP_MODE</Symbol>
+        </AdapterSettingConfiguration>
+      </AdapterSettings>
+    </AdapterRegistration>
+  </AdapterRegistrations>
+  <ShippingRoutes />
+  <TrackingRoutes />
+  <ClientBusinessRules>
+    <ClientBusinessRule>
+      <AuthorEmail>testuser@odp.com</AuthorEmail>
+      <Name>Test</Name>
+      <Script>function ClientBusinessRules() {
+    this.PageLoaded = function(location) {              
+    }
+
+    this.Keystroke = function (shipmentRequest, event) {
+    }
+
+    this.PreShip = function(shipmentRequest, userParams) {       
+    }
+
+    this.PostShip = function(shipmentRequest, shipmentResponse) {
+    }
+
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+    this.PostVoid = function(pkg) {
+    }
+
+    this.PrePrint = function(document, localPort) {
+    }
+
+    this.PostPrint = function(document) {
+    }
+
+    this.PreLoad = function(loadValue, shipmentRequest, userParams) {  
+    }
+
+    this.PostLoad = function(loadValue, shipmentRequest) {
+    }
+
+    this.PreRate = function(shipmentRequest, userParams) {
+    }
+
+    this.PostRate = function (shipmentRequest, rateResults) {
+    }
+
+    this.PreCloseManifest = function(manifestItem, userParams) {
+    }
+
+    this.PostCloseManifest = function(manifestItem) {
+    }
+
+    this.PreTransmit = function(transmitItem, userParams) {
+    }
+
+    this.PostTransmit = function(transmitItem) {
+    }
+
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+    this.PostSearchHistory = function(packages) {
+    }
+
+    this.NewShipment = function(shipmentRequest) { 
+    }
+
+    this.PreBuildShipment = function(shipmentRequest) {
+    }
+
+    this.PostBuildShipment = function(shipmentRequest) {
+    }
+
+    this.RepeatShipment = function(currentShipment) {
+    }
+
+    this.PreCreateGroup = function(group, userParams) {
+    }
+
+    this.PostCreateGroup = function(group) {
+    }
+
+    this.PreModifyGroup = function(group, userParams) {
+    }
+
+    this.PostModifyGroup = function(group) {
+    }
+
+    this.PreCloseGroup = function(group, userParams) {
+    }
+
+    this.PostCloseGroup = function(group) {
+    }
+
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+    }
+
+    this.CopyPackage = function(shipmentRequest, packageIndex) {
+    }
+
+    this.RemovePackage = function(shipmentRequest, packageIndex) {
+    }
+
+    this.PreviousPackage = function(shipmentRequest, packageIndex) {		        
+    }
+
+    this.NextPackage = function(shipmentRequest, packageIndex) {        
+    }
+
+    this.PostSelectAddressBook = function (shipmentRequest, nameaddress) {
+    }
+
+    this.PreShipOrder = function(value, shipmentRequest, userParams) {
+    }
+
+    this.PostShipOrder = function(shipmentRequest, shipmentResponse) {
+    }
+
+    var thinClientApiRequest = function (method, data, isAsync) {
+        $.getJSON('config.json', function (config) {
+            var shipExecServiceUrl = config.ShipExecServiceUrl;
+            var authorizationToken = shipExecServiceUrl.startsWith('http') ? { 'Authorization': 'Bearer ' + JSON.parse(window.localStorage.getItem("TCToken")).access_token } : '';
+            return $.post({ url: shipExecServiceUrl + '/' + method, data: data, async: isAsync, headers: authorizationToken });
+        });
+    }
+}</Script>
+    </ClientBusinessRule>
+  </ClientBusinessRules>
+  <ServerBusinessRules />
+  <Sites>
+    <Site Id="c3ed8658-f322-4dd7-9dbd-b813f6128ce8" Name="site1">
+      <ScaleDefinitions />
+      <ScaleConfigurations />
+      <PrinterDefinitions />
+      <DocumentConfigurations />
+      <PrinterConfigurations />
+      <Shippers />
+      <Templates />
+      <BoxTypes />
+      <Validations />
+      <CommodityContents />
+      <SourceConfigurations />
+      <DataConfigurationMappings />
+      <Schedules />
+      <HazmatContents />
+      <AddressBooks />
+      <AddressGroups />
+      <DistributionLists />
+      <Clients />
+      <Notifications />
+      <Reports />
+      <Machines>
+        <Machine>
+          <Name>Site1Machine</Name>
+          <ProfileName>Site1Sub</ProfileName>
+        </Machine>
+      </Machines>
+      <Profiles>
+        <Profile>
+          <Name>Site1Sub</Name>
+          <Shippers />
+          <Carriers />
+          <Services />
+          <Countries />
+          <BoxTypes />
+          <PackageTypes />
+          <ProfileSettings />
+          <Templates />
+          <FieldOptions />
+          <Pickups />
+          <PaymentTerms />
+        </Profile>
+      </Profiles>
+      <Users>
+        <User>
+          <Id>31618a68-753d-4fe3-a865-afde1124011b</Id>
+          <UserName>site1@site.com</UserName>
+          <Email>site1@site.com</Email>
+          <Claims />
+          <Permissions>
+            <Permission>CanViewCloseout</Permission>
+            <Permission>CanViewAddressBook</Permission>
+            <Permission>CanViewDistributionList</Permission>
+          </Permissions>
+          <ProfileName>Site1</ProfileName>
+          <PasswordExpired>true</PasswordExpired>
+          <NameAddress>
+            <CustomData>
+              <CustomData>
+                <Key>C1</Key>
+                <Value>1</Value>
+              </CustomData>
+            </CustomData>
+            <Address1>101 Street</Address1>
+            <City>Bradenton</City>
+            <Company>Test</Company>
+            <Country>US</Country>
+            <Phone>1234567890</Phone>
+            <PostalCode>34212</PostalCode>
+            <StateProvince>FL</StateProvince>
+          </NameAddress>
+          <DefaultConfiguration>
+            <ExportFileDelimiter>Comma</ExportFileDelimiter>
+            <ExportFileQualifier>DoubleQuotes</ExportFileQualifier>
+            <ExportFileGroupSeparator>Comma</ExportFileGroupSeparator>
+            <ExportFileDecimalSeparator>Period</ExportFileDecimalSeparator>
+          </DefaultConfiguration>
+        </User>
+      </Users>
+    </Site>
+  </Sites>
+</CompanyConfiguration>
