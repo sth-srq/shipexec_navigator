@@ -1,0 +1,342 @@
+/* ── Backdrop ────────────────────────────────────────────────────────────── */
+.au-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+/* ── Dialog shell ────────────────────────────────────────────────────────── */
+.au-dlg {
+    background: #fff;
+    border: 1px solid rgba(43, 63, 107, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
+    width: 600px;
+    max-width: 96vw;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.au-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem 0.75rem;
+    border-bottom: 1px solid rgba(43, 63, 107, 0.08);
+    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    flex-shrink: 0;
+}
+
+.au-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.au-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+    .au-close:hover {
+        background: #e9ecef;
+        color: #212529;
+    }
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.au-body {
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* ── Upload area ─────────────────────────────────────────────────────────── */
+.au-upload-area {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1.5px dashed #ced4da;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.au-btn-choose {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #fff;
+    color: #2e6da4;
+    border: 1px solid #2e6da4;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+    .au-btn-choose:hover {
+        background: rgba(46, 109, 164, 0.08);
+    }
+
+.au-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.au-file-name {
+    font-size: 0.825rem;
+    font-weight: 500;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.au-file-size {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.au-file-hint {
+    font-size: 0.8rem;
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* ── Template download row ───────────────────────────────────────────────── */
+.au-template-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.au-template-link {
+    font-size: 0.8rem;
+    color: #2e6da4;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+    .au-template-link:hover {
+        text-decoration: underline;
+    }
+
+/* ── Preview / Results summary bar ──────────────────────────────────────── */
+.au-preview-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+}
+
+.au-summary-valid {
+    color: #198754;
+    font-weight: 600;
+}
+
+.au-summary-invalid {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.au-summary-file {
+    color: #6c757d;
+    margin-left: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+/* ── Table wrapper ───────────────────────────────────────────────────────── */
+.au-table-wrap {
+    overflow-y: auto;
+    max-height: 340px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+/* ── Preview / Results table ─────────────────────────────────────────────── */
+.au-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+    .au-preview-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 1px solid #dee2e6;
+        white-space: nowrap;
+    }
+
+    .au-preview-table tbody tr {
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .au-preview-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .au-preview-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+    .au-preview-table td {
+        padding: 0.4rem 0.6rem;
+        vertical-align: middle;
+        color: #212529;
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+.au-row-invalid td {
+    background: #fff8f8;
+}
+
+.au-cell-num {
+    color: #6c757d;
+    font-size: 0.75rem;
+    width: 40px;
+}
+
+.au-cell-roles {
+    color: #6c757d;
+}
+
+/* ── Status badges ───────────────────────────────────────────────────────── */
+.au-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+    cursor: default;
+}
+
+.au-badge--ok {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.au-badge--err {
+    background: #f8d7da;
+    color: #842029;
+}
+
+/* ── Error message ───────────────────────────────────────────────────────── */
+.au-error {
+    font-size: 0.8rem;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.au-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid rgba(43, 63, 107, 0.08);
+    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    flex-shrink: 0;
+}
+
+.au-btn-primary {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #2b5ea7 0%, #2e6da4 50%, #3a7bd5 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+    .au-btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(46, 109, 164, 0.35);
+    }
+
+    .au-btn-primary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+.au-btn-secondary {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: #fff;
+    color: #495057;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .au-btn-secondary:hover:not(:disabled) {
+        background: #f0f0f0;
+    }
+
+    .au-btn-secondary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+.au-spinner {
+    display: inline-block;
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: au-spin 0.7s linear infinite;
+}
+
+@keyframes au-spin {
+    to { transform: rotate(360deg); }
+}

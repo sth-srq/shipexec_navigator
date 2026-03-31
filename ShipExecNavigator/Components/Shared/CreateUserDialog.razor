@@ -1,0 +1,548 @@
+@using PSI.Sox
+@inject IShipExecService ShipExecService
+
+@if (IsVisible)
+{
+    <div class="au-backdrop" @onclick="HandleClose">
+        <div class="au-dlg" @onclick:stopPropagation>
+
+            <div class="au-header">
+                <span class="au-title">&#x2795; Create User</span>
+                <button class="au-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            <div class="au-body">
+
+                <div class="au-field">
+                    <label class="au-label">Company</label>
+                    <input class="au-input au-input--readonly" value="@CompanyName" readonly />
+                </div>
+
+                <div class="au-field">
+                    <label class="au-label">Campus</label>
+                    @if (_loadingSites)
+                    {
+                        <span class="au-loading-inline">Loading&hellip;</span>
+                    }
+                    else
+                    {
+                        <select class="au-select" @bind="_siteId">
+                            <option value="">— None —</option>
+                            @foreach (var site in _availableSites)
+                            {
+                                <option value="@site.Id">@site.Name</option>
+                            }
+                        </select>
+                    }
+                </div>
+
+                <div class="au-field">
+                    <label class="au-label">Email <span class="au-required">*</span></label>
+                    <input class="au-input" type="email" @bind="_email" @bind:event="oninput" placeholder="Enter email" />
+                </div>
+
+                <div class="au-field">
+                    <label class="au-label">Password <span class="au-required">*</span></label>
+                    <input class="au-input" type="password" @bind="_password" @bind:event="oninput" placeholder="Enter password" />
+                </div>
+
+                <div class="au-tab-bar">
+                    <button class='au-tab @(_activeTab == "address" ? "au-tab--active" : "")' @onclick='() => _activeTab = "address"'>Address</button>
+                    <button class='au-tab @(_activeTab == "roles" ? "au-tab--active" : "")' @onclick='() => _activeTab = "roles"'>Roles</button>
+                    <button class='au-tab @(_activeTab == "permissions" ? "au-tab--active" : "")' @onclick='() => _activeTab = "permissions"'>Permissions</button>
+                    <button class='au-tab @(_activeTab == "config" ? "au-tab--active" : "")' @onclick='() => _activeTab = "config"'>Default Config</button>
+                </div>
+
+                <div class="au-tab-content">
+
+                    <div class='au-tab-panel @(_activeTab != "address" ? "au-tab-hidden" : "")'>
+                        <div class="au-form-grid">
+                            <label class="au-label">Company</label>
+                            <input class="au-input" @bind="_address.Company" @bind:event="oninput" placeholder="Company" />
+                            <label class="au-label">Contact</label>
+                            <input class="au-input" @bind="_address.Contact" @bind:event="oninput" placeholder="Contact" />
+                            <label class="au-label">Address 1</label>
+                            <input class="au-input" @bind="_address.Address1" @bind:event="oninput" placeholder="Address 1" />
+                            <label class="au-label">Address 2</label>
+                            <input class="au-input" @bind="_address.Address2" @bind:event="oninput" placeholder="Address 2" />
+                            <label class="au-label">Address 3</label>
+                            <input class="au-input" @bind="_address.Address3" @bind:event="oninput" placeholder="Address 3" />
+                            <label class="au-label">City</label>
+                            <input class="au-input" @bind="_address.City" @bind:event="oninput" placeholder="City" />
+                            <label class="au-label">State / Province</label>
+                            <input class="au-input" @bind="_address.StateProvince" @bind:event="oninput" placeholder="State / Province" />
+                            <label class="au-label">Postal Code</label>
+                            <input class="au-input" @bind="_address.PostalCode" @bind:event="oninput" placeholder="Postal Code" />
+                            <label class="au-label">Country</label>
+                            <select class="au-select" @bind="_address.Country">
+                                <option value="">— Select country —</option>
+                                @foreach (var (isoCode, countryName) in _countries)
+                                {
+                                    <option value="@isoCode">@countryName</option>
+                                }
+                            </select>
+                            <label class="au-label">Phone</label>
+                            <input class="au-input" @bind="_address.Phone" @bind:event="oninput" placeholder="Phone" />
+                            <label class="au-label">Fax</label>
+                            <input class="au-input" @bind="_address.Fax" @bind:event="oninput" placeholder="Fax" />
+                            <label class="au-label">Email</label>
+                            <input class="au-input" @bind="_address.Email" @bind:event="oninput" placeholder="Email" />
+                        </div>
+                    </div>
+
+                    <div class='au-tab-panel @(_activeTab != "roles" ? "au-tab-hidden" : "")'>
+                        @if (_loadingRoles)
+                        {
+                            <div class="au-loading">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Loading roles&hellip;
+                            </div>
+                        }
+                        else if (_availableRoles.Count == 0)
+                        {
+                            <span class="au-empty">No roles available.</span>
+                        }
+                        else
+                        {
+                            <div class="au-check-grid">
+                                @foreach (var role in _availableRoles.OrderBy(r => r.Name))
+                                {
+                                    <label class="au-check-item">
+                                        <input type="checkbox"
+                                               checked="@_selectedRoleIds.Contains(role.Id)"
+                                               @onchange="e => ToggleRole(role.Id, (bool)e.Value!)" />
+                                        @role.Name
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class='au-tab-panel @(_activeTab != "permissions" ? "au-tab-hidden" : "")'>
+                        @if (_loadingPerms)
+                        {
+                            <div class="au-loading">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Loading permissions&hellip;
+                            </div>
+                        }
+                        else if (_availablePerms.Count == 0)
+                        {
+                            <span class="au-empty">No permissions available.</span>
+                        }
+                        else
+                        {
+                            <div class="au-check-grid">
+                                @foreach (var perm in _availablePerms.OrderBy(p => p.Name))
+                                {
+                                    <label class="au-check-item">
+                                        <input type="checkbox"
+                                               checked="@_selectedPermIds.Contains(perm.Id)"
+                                               @onchange="e => TogglePerm(perm.Id, (bool)e.Value!)" />
+                                        @perm.Name
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class='au-tab-panel @(_activeTab != "config" ? "au-tab-hidden" : "")'>
+                        <div class="au-form-grid">
+                            <label class="au-label">Delimiter</label>
+                            <select class="au-select" @bind="_defaultConfig.ExportFileDelimiter">
+                                @foreach (var v in Enum.GetValues<Delimiter>())
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                            </select>
+                            <label class="au-label">Qualifier</label>
+                            <select class="au-select" @bind="_defaultConfig.ExportFileQualifier">
+                                @foreach (var v in Enum.GetValues<Qualifier>())
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                            </select>
+                            <label class="au-label">Group Separator</label>
+                            <select class="au-select" @bind="_defaultConfig.ExportFileGroupSeparator">
+                                @foreach (var v in Enum.GetValues<GroupSeparator>())
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                            </select>
+                            <label class="au-label">Decimal Separator</label>
+                            <select class="au-select" @bind="_defaultConfig.ExportFileDecimalSeparator">
+                                @foreach (var v in Enum.GetValues<DecimalSeparator>())
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="au-error">&#9888; @_errorMessage</div>
+                }
+
+            </div>
+
+            <div class="au-footer">
+                <button class="au-btn-secondary" @onclick="HandleClose" disabled="@_isSaving">Cancel</button>
+                <button class="au-btn-primary" @onclick="CreateUserAsync"
+                        disabled="@(!IsValid || _isSaving)">
+                    @if (_isSaving)
+                    {
+                        <span class="au-spinner"></span>
+                    }
+                    Create User
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<Guid> OnUserCreated { get; set; }
+    [Parameter] public string CompanyName { get; set; } = string.Empty;
+    [Parameter] public Guid CompanyId { get; set; }
+
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private bool _isSaving;
+    private string _errorMessage = string.Empty;
+    private string _activeTab = "address";
+
+    private NameAddress _address = new();
+    private DefaultConfiguration _defaultConfig = new();
+    private List<Role> _availableRoles = [];
+    private List<Permission> _availablePerms = [];
+    private List<PSI.Sox.Site> _availableSites = [];
+    private HashSet<Guid> _selectedRoleIds = [];
+    private HashSet<Guid> _selectedPermIds = [];
+    private Guid? _siteId;
+    private bool _loadingRoles;
+    private bool _loadingPerms;
+    private bool _loadingSites;
+    private bool _wasVisible;
+
+    private static readonly (string Code, string Name)[] _countries =
+    [
+        ("US", "United States"),
+        ("CA", "Canada"),
+        ("MX", "Mexico"),
+        ("GB", "United Kingdom"),
+        ("AU", "Australia"),
+        ("NZ", "New Zealand"),
+        ("AF", "Afghanistan"),
+        ("AL", "Albania"),
+        ("DZ", "Algeria"),
+        ("AD", "Andorra"),
+        ("AO", "Angola"),
+        ("AG", "Antigua and Barbuda"),
+        ("AR", "Argentina"),
+        ("AM", "Armenia"),
+        ("AT", "Austria"),
+        ("AZ", "Azerbaijan"),
+        ("BS", "Bahamas"),
+        ("BH", "Bahrain"),
+        ("BD", "Bangladesh"),
+        ("BB", "Barbados"),
+        ("BY", "Belarus"),
+        ("BE", "Belgium"),
+        ("BZ", "Belize"),
+        ("BJ", "Benin"),
+        ("BT", "Bhutan"),
+        ("BO", "Bolivia"),
+        ("BA", "Bosnia and Herzegovina"),
+        ("BW", "Botswana"),
+        ("BR", "Brazil"),
+        ("BN", "Brunei"),
+        ("BG", "Bulgaria"),
+        ("BF", "Burkina Faso"),
+        ("BI", "Burundi"),
+        ("CV", "Cabo Verde"),
+        ("KH", "Cambodia"),
+        ("CM", "Cameroon"),
+        ("CF", "Central African Republic"),
+        ("TD", "Chad"),
+        ("CL", "Chile"),
+        ("CN", "China"),
+        ("CO", "Colombia"),
+        ("KM", "Comoros"),
+        ("CG", "Congo"),
+        ("CD", "Congo (DRC)"),
+        ("CR", "Costa Rica"),
+        ("HR", "Croatia"),
+        ("CU", "Cuba"),
+        ("CY", "Cyprus"),
+        ("CZ", "Czech Republic"),
+        ("DK", "Denmark"),
+        ("DJ", "Djibouti"),
+        ("DM", "Dominica"),
+        ("DO", "Dominican Republic"),
+        ("EC", "Ecuador"),
+        ("EG", "Egypt"),
+        ("SV", "El Salvador"),
+        ("GQ", "Equatorial Guinea"),
+        ("ER", "Eritrea"),
+        ("EE", "Estonia"),
+        ("SZ", "Eswatini"),
+        ("ET", "Ethiopia"),
+        ("FJ", "Fiji"),
+        ("FI", "Finland"),
+        ("FR", "France"),
+        ("GA", "Gabon"),
+        ("GM", "Gambia"),
+        ("GE", "Georgia"),
+        ("DE", "Germany"),
+        ("GH", "Ghana"),
+        ("GR", "Greece"),
+        ("GD", "Grenada"),
+        ("GT", "Guatemala"),
+        ("GN", "Guinea"),
+        ("GW", "Guinea-Bissau"),
+        ("GY", "Guyana"),
+        ("HT", "Haiti"),
+        ("HN", "Honduras"),
+        ("HU", "Hungary"),
+        ("IS", "Iceland"),
+        ("IN", "India"),
+        ("ID", "Indonesia"),
+        ("IR", "Iran"),
+        ("IQ", "Iraq"),
+        ("IE", "Ireland"),
+        ("IL", "Israel"),
+        ("IT", "Italy"),
+        ("JM", "Jamaica"),
+        ("JP", "Japan"),
+        ("JO", "Jordan"),
+        ("KZ", "Kazakhstan"),
+        ("KE", "Kenya"),
+        ("KI", "Kiribati"),
+        ("KW", "Kuwait"),
+        ("KG", "Kyrgyzstan"),
+        ("LA", "Laos"),
+        ("LV", "Latvia"),
+        ("LB", "Lebanon"),
+        ("LS", "Lesotho"),
+        ("LR", "Liberia"),
+        ("LY", "Libya"),
+        ("LI", "Liechtenstein"),
+        ("LT", "Lithuania"),
+        ("LU", "Luxembourg"),
+        ("MG", "Madagascar"),
+        ("MW", "Malawi"),
+        ("MY", "Malaysia"),
+        ("MV", "Maldives"),
+        ("ML", "Mali"),
+        ("MT", "Malta"),
+        ("MH", "Marshall Islands"),
+        ("MR", "Mauritania"),
+        ("MU", "Mauritius"),
+        ("FM", "Micronesia"),
+        ("MD", "Moldova"),
+        ("MC", "Monaco"),
+        ("MN", "Mongolia"),
+        ("ME", "Montenegro"),
+        ("MA", "Morocco"),
+        ("MZ", "Mozambique"),
+        ("MM", "Myanmar"),
+        ("NA", "Namibia"),
+        ("NR", "Nauru"),
+        ("NP", "Nepal"),
+        ("NL", "Netherlands"),
+        ("NI", "Nicaragua"),
+        ("NE", "Niger"),
+        ("NG", "Nigeria"),
+        ("NO", "Norway"),
+        ("OM", "Oman"),
+        ("PK", "Pakistan"),
+        ("PW", "Palau"),
+        ("PA", "Panama"),
+        ("PG", "Papua New Guinea"),
+        ("PY", "Paraguay"),
+        ("PE", "Peru"),
+        ("PH", "Philippines"),
+        ("PL", "Poland"),
+        ("PT", "Portugal"),
+        ("QA", "Qatar"),
+        ("RO", "Romania"),
+        ("RU", "Russia"),
+        ("RW", "Rwanda"),
+        ("KN", "Saint Kitts and Nevis"),
+        ("LC", "Saint Lucia"),
+        ("VC", "Saint Vincent and the Grenadines"),
+        ("WS", "Samoa"),
+        ("SM", "San Marino"),
+        ("ST", "Sao Tome and Principe"),
+        ("SA", "Saudi Arabia"),
+        ("SN", "Senegal"),
+        ("RS", "Serbia"),
+        ("SC", "Seychelles"),
+        ("SL", "Sierra Leone"),
+        ("SG", "Singapore"),
+        ("SK", "Slovakia"),
+        ("SI", "Slovenia"),
+        ("SB", "Solomon Islands"),
+        ("SO", "Somalia"),
+        ("ZA", "South Africa"),
+        ("SS", "South Sudan"),
+        ("ES", "Spain"),
+        ("LK", "Sri Lanka"),
+        ("SD", "Sudan"),
+        ("SR", "Suriname"),
+        ("SE", "Sweden"),
+        ("CH", "Switzerland"),
+        ("SY", "Syria"),
+        ("TW", "Taiwan"),
+        ("TJ", "Tajikistan"),
+        ("TZ", "Tanzania"),
+        ("TH", "Thailand"),
+        ("TL", "Timor-Leste"),
+        ("TG", "Togo"),
+        ("TO", "Tonga"),
+        ("TT", "Trinidad and Tobago"),
+        ("TN", "Tunisia"),
+        ("TR", "Turkey"),
+        ("TM", "Turkmenistan"),
+        ("TV", "Tuvalu"),
+        ("UG", "Uganda"),
+        ("UA", "Ukraine"),
+        ("AE", "United Arab Emirates"),
+        ("UY", "Uruguay"),
+        ("UZ", "Uzbekistan"),
+        ("VU", "Vanuatu"),
+        ("VE", "Venezuela"),
+        ("VN", "Vietnam"),
+        ("YE", "Yemen"),
+        ("ZM", "Zambia"),
+        ("ZW", "Zimbabwe"),
+    ];
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(_email) &&
+        !string.IsNullOrWhiteSpace(_password);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible && !_wasVisible)
+        {
+            _wasVisible = true;
+            await LoadRolesAndPermsAsync();
+        }
+        else if (!IsVisible)
+        {
+            _wasVisible = false;
+        }
+    }
+
+    private async Task LoadRolesAndPermsAsync()
+    {
+        _loadingRoles = true;
+        _loadingPerms = true;
+        _loadingSites = true;
+        try
+        {
+            _availableRoles = await ShipExecService.GetRolesAsync();
+        }
+        catch
+        {
+            _availableRoles = [];
+        }
+        finally
+        {
+            _loadingRoles = false;
+        }
+
+        try
+        {
+            _availableSites = await ShipExecService.GetSitesAsync();
+        }
+        catch
+        {
+            _availableSites = [];
+        }
+        finally
+        {
+            _loadingSites = false;
+        }
+
+        try
+        {
+            _availablePerms = await ShipExecService.GetPermissionsAsync(Guid.Empty);
+        }
+        catch
+        {
+            _availablePerms = [];
+        }
+        finally
+        {
+            _loadingPerms = false;
+        }
+    }
+
+    private void ToggleRole(Guid id, bool on)
+    {
+        if (on) _selectedRoleIds.Add(id);
+        else _selectedRoleIds.Remove(id);
+    }
+
+    private void TogglePerm(Guid id, bool on)
+    {
+        if (on) _selectedPermIds.Add(id);
+        else _selectedPermIds.Remove(id);
+    }
+
+    private void HandleClose()
+    {
+        _email = string.Empty;
+        _password = string.Empty;
+        _errorMessage = string.Empty;
+        _activeTab = "address";
+        _address = new();
+        _defaultConfig = new();
+        _selectedRoleIds = [];
+        _selectedPermIds = [];
+        _siteId = null;
+        OnClose.InvokeAsync();
+    }
+
+    private async Task CreateUserAsync()
+    {
+        if (!IsValid) return;
+
+        _isSaving = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            var user = new User
+            {
+                UserName = _email.Trim(),
+                Email = _email.Trim(),
+                PasswordHash = _password,
+                CompanyId = CompanyId,
+                SiteId = _siteId,
+                Address = _address,
+                DefaultConfiguration = _defaultConfig,
+                Permissions = _availablePerms.Where(p => _selectedPermIds.Contains(p.Id)).ToList(),
+                Roles = _availableRoles.Where(r => _selectedRoleIds.Contains(r.Id)).ToList(),
+            };
+            var newId = await ShipExecService.CreateUserAsync(user);
+            await OnUserCreated.InvokeAsync(newId);
+            HandleClose();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

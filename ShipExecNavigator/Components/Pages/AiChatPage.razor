@@ -1,0 +1,239 @@
+@page "/"
+@page "/ask"
+@layout ChatLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+@using ShipExecNavigator.Shared.Interfaces
+@inject IAiChatService AiChat
+@inject IJSRuntime JS
+
+<PageTitle>Ask AI — Management Studio Pro</PageTitle>
+
+<div class="chat-page">
+    <div class="page-tab-bar">
+        <span class="page-tab page-tab--active">&#x1F916; ShipExec Copilot</span>
+        <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
+        <a class="page-tab" href="/tools">&#x1F9F0; Tools</a>
+        <a class="page-tab" href="/debug">&#x1F41B; Debug</a>
+        @if (_messages.Count > 0)
+        {
+            <button class="chat-clear-btn" @onclick="ClearChat" title="Clear conversation">&#x1F5D1; Clear</button>
+        }
+    </div>
+
+    <div class="chat-messages" id="chat-messages-scroll">
+        @foreach (var msg in _messages)
+        {
+            <div class="chat-bubble chat-bubble--@msg.Role">
+                <div class="chat-bubble-label">@(msg.Role == "user" ? "You" : "AI")</div>
+                <div class="chat-bubble-body">@((MarkupString)FormatMessage(msg.Content))</div>
+            </div>
+        }
+        @if (_thinking)
+        {
+            <div class="chat-bubble chat-bubble--assistant">
+                <div class="chat-bubble-label">AI</div>
+                <div class="chat-bubble-body chat-thinking">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-input-row">
+        <button class="chat-rag-btn @(_useRag ? "chat-rag-btn--on" : "")"
+                @onclick="() => _useRag = !_useRag"
+                title="@(_useRag ? "RAG document search ON — click to disable" : "RAG document search OFF — click to enable")"
+                disabled="@_thinking">
+            &#x1F4DA; RAG
+        </button>
+        <textarea class="chat-textarea"
+                  id="chat-textarea"
+                  rows="2"
+                  placeholder="Type your message… (Enter to send, Shift+Enter for new line)"
+                  @bind="_input"
+                  @bind:event="oninput"
+                  @onkeydown="HandleKeyDown"
+                  disabled="@_thinking" />
+        <button class="chat-send-btn" @onclick="SendAsync" disabled="@(string.IsNullOrWhiteSpace(_input) || _thinking)">
+            &#x27A4; Send
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="chat-error">&#9888; @_error</div>
+    }
+</div>
+
+@code {
+    private readonly List<ChatMessage> _messages = [];
+    private readonly List<string> _inputHistory = [];
+    private string _input = string.Empty;
+    private bool _thinking = true;
+    private bool _useRag = true;
+    private string? _error;
+    private int _historyIndex = -1;
+    private string _historyDraft = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initChatInputHistory", "chat-textarea", DotNetObjectReference.Create(this));
+            await GreetAsync();
+        }
+    }
+
+    private async Task GreetAsync()
+    {
+        _error    = null;
+        _thinking = true;
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        try
+        {
+            var reply = await AiChat.SendMessageAsync(
+                [],
+                "greet yourself",
+                useRag: false);
+            _messages.Add(new ChatMessage("assistant", reply));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _thinking = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        var text = _input.Trim();
+        if (string.IsNullOrEmpty(text) || _thinking) return;
+
+        _input   = string.Empty;
+        _error   = null;
+        _thinking = true;
+
+        if (_inputHistory.Count == 0 || _inputHistory[^1] != text)
+            _inputHistory.Add(text);
+        if (_inputHistory.Count > 50)
+            _inputHistory.RemoveAt(0);
+        _historyIndex = -1;
+        _historyDraft = string.Empty;
+
+        _messages.Add(new ChatMessage("user", text));
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        try
+        {
+            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, useRag: _useRag);
+            _messages.Add(new ChatMessage("assistant", reply));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _thinking = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendAsync();
+    }
+
+    [JSInvokable]
+    public string? HandleHistoryKey(string key)
+    {
+        if (key == "ArrowUp")
+        {
+            if (_inputHistory.Count == 0) return null;
+            if (_historyIndex == -1)
+            {
+                _historyDraft  = _input;
+                _historyIndex  = _inputHistory.Count - 1;
+            }
+            else if (_historyIndex > 0)
+            {
+                _historyIndex--;
+            }
+            else
+            {
+                return null;
+            }
+            _input = _inputHistory[_historyIndex];
+            StateHasChanged();
+            return _input;
+        }
+
+        if (key == "ArrowDown")
+        {
+            if (_historyIndex == -1) return null;
+            if (_historyIndex < _inputHistory.Count - 1)
+            {
+                _historyIndex++;
+                _input = _inputHistory[_historyIndex];
+            }
+            else
+            {
+                _historyIndex = -1;
+                _input        = _historyDraft;
+                _historyDraft = string.Empty;
+            }
+            StateHasChanged();
+            return _input;
+        }
+
+        return null;
+    }
+
+    private async Task ClearChat()
+    {
+        _messages.Clear();
+        _error = null;
+        await GreetAsync();
+    }
+
+    private async Task ScrollToBottomAsync()
+    {
+        await JS.InvokeVoidAsync("eval",
+            "var el=document.getElementById('chat-messages-scroll');if(el)el.scrollTop=el.scrollHeight;");
+    }
+
+    private static string FormatMessage(string text)
+    {
+        // Basic: escape HTML, convert newlines to <br>, wrap code blocks
+        var escaped = System.Net.WebUtility.HtmlEncode(text);
+
+        // Convert ```...``` code blocks
+        escaped = System.Text.RegularExpressions.Regex.Replace(
+            escaped,
+            @"```[\w]*\n?([\s\S]*?)```",
+            m => $"<pre class=\"chat-code\">{m.Groups[1].Value.Trim()}</pre>",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // Inline `code`
+        escaped = System.Text.RegularExpressions.Regex.Replace(
+            escaped,
+            @"`([^`]+)`",
+            m => $"<code class=\"chat-inline-code\">{m.Groups[1].Value}</code>");
+
+        // Newlines outside pre blocks → <br>
+        escaped = escaped.Replace("\n", "<br />");
+
+        return escaped;
+    }
+}
