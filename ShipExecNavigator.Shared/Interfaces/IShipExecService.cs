@@ -50,6 +50,7 @@ public interface IShipExecService
 
     // ── Shippers ─────────────────────────────────────────────────────────────
     Task<List<PSI.Sox.Shipper>> GetShippersAsync();
+    Task<string> ExportShippersCsvAsync();
     Task<List<Variance>> GetShipperVariancesAsync(List<PSI.Sox.Shipper> incoming);
     Task<List<ApplyResultItem>> ApplyShipperVariancesAsync(List<Variance> variances);
     /// <summary>

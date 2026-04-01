@@ -23,5 +23,9 @@ namespace ShipExecNavigator.ClientSpecificLogic
 
             return null;
         }
+
+        public IReadOnlyList<string> GetShipperExportExtraHeaders() => [];
+
+        public IReadOnlyList<string> GetShipperExportExtraValues(Shipper shipper) => [];
     }
 }

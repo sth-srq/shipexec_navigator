@@ -32,16 +32,16 @@ public sealed class ShipperXmlPlugin
         // Kernel is injected automatically by SK when the function is invoked.
         var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
-        var chatHistory = new ChatHistory(
-            "Use this XML: " + _xmlContent +
-            " and return a JSON object with properties: " +
-            "1. confidenceLevel 2. reasoning 3. changesToBeApplied 4. textToDisplayToUser");
+        var chatHistory = new ChatHistory();
+            //"Use this XML: " + _xmlContent +
+            //" and return a JSON object with properties: " +
+            //"1. confidenceLevel 2. reasoning 3. changesToBeApplied 4. textToDisplayToUser");
 
-        chatHistory.AddUserMessage("Process this request: " + userRequest + ".  Think hard.");
+        chatHistory.AddUserMessage("Process this request: " + userRequest + ". Using: " + _xmlContent + " --- Think hard.");
 
         var executionSettings = new AzureOpenAIPromptExecutionSettings
         {
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+            FunctionChoiceBehavior = FunctionChoiceBehavior.None()
         };
 
         var result = await chatService.GetChatMessageContentAsync(
@@ -49,11 +49,11 @@ public sealed class ShipperXmlPlugin
 
 
 
-        var q = "Why isn't shipper with id 17778 in this list?";
-        chatHistory.AddDeveloperMessage(q);
+        //var q = "Why isn't shipper with id 17778 in this list?";
+        //chatHistory.AddDeveloperMessage(q);
 
-        var result2 = await chatService.GetChatMessageContentAsync(
-            chatHistory, new AzureOpenAIPromptExecutionSettings(), kernel);
+        //var result2 = await chatService.GetChatMessageContentAsync(
+        //    chatHistory, new AzureOpenAIPromptExecutionSettings(), kernel);
 
         return result.Content ?? "(empty response)";
     }
