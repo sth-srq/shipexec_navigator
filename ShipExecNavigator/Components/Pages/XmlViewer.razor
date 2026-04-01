@@ -106,6 +106,7 @@
                         &#x1F4CA; View Changes
                     </button>
                     <button class="btn-action" @onclick="() => _showImportShippersDialog = true">&#x1F69A; Import Shippers</button>
+                    <button class="btn-action" @onclick="ExportShippersAsync" disabled="@_isExportingShippers">&#x2B07; Export Shippers</button>
                     <button class="btn-action" @onclick="() => _showCompareProfilesDialog = true">&#x1F4CA; Compare Profiles</button>
                     <button class="btn-action" @onclick="ExpandAll">Expand All</button>
                     <button class="btn-action" @onclick="CollapseAll">Collapse All</button>
@@ -393,6 +394,7 @@
 
     // ── Import Shippers dialog state ──────────────────────────────────────────
     private bool _showImportShippersDialog;
+    private bool _isExportingShippers;
     private readonly List<Variance> _pendingShipperVariances = [];
 
     // ── Compare Profiles dialog state ─────────────────────────────────────────
@@ -523,6 +525,26 @@
         finally
         {
             _logsSearching = false;
+        }
+    }
+
+    private async Task ExportShippersAsync()
+    {
+        _isExportingShippers = true;
+        try
+        {
+            var csv = await ShipExecService.ExportShippersCsvAsync();
+            var companySlug = (ShipExecService.GetCurrentCompany()?.Name ?? "shippers").Replace(" ", "_");
+            var filename = $"{companySlug}_shippers_{DateTime.Now:yyyyMMdd}.csv";
+            await JSRuntime.InvokeVoidAsync("downloadFile", filename, csv, "text/csv");
+        }
+        catch (Exception ex)
+        {
+            await AlertService.ShowAlertAsync($"Export failed: {ex.Message}");
+        }
+        finally
+        {
+            _isExportingShippers = false;
         }
     }
 

@@ -581,6 +581,98 @@ public sealed class ShipExecService(VarianceManager varianceManager, TemplateMan
         return Task.Run(() => _appManager.GetShippers());
     }
 
+    public Task<string> ExportShippersCsvAsync()
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var shippers    = _appManager.GetShippers();
+            var sites       = _appManager.GetSites(_appManager.GetCurrentCompanyId());
+            var clientLogic = ShipExecNavigator.ClientSpecificLogic.ClientLogicResolver.Resolve(GetCurrentCompany()?.Name);
+
+            var siteNames = sites
+                .Where(s => s.Id != Guid.Empty && !string.IsNullOrEmpty(s.Name))
+                .ToDictionary(s => s.Id, s => s.Name ?? string.Empty);
+
+            // Collect all unique CustomData keys across all shippers (preserve first-seen order)
+            var customKeys = new List<string>();
+            var customKeySet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var sh in shippers)
+            {
+                foreach (var cd in sh.CustomData ?? [])
+                {
+                    if (!string.IsNullOrEmpty(cd.Key) && customKeySet.Add(cd.Key))
+                        customKeys.Add(cd.Key);
+                }
+            }
+
+            var sb = new System.Text.StringBuilder();
+
+            // Header — matches the field names used by ImportShippersDialog so the file can be re-imported
+            var headerFields = new List<string>
+            {
+                "Name", "Symbol", "Code",
+                "Address1", "Address2", "Address3", "City", "StateProvince", "PostalCode", "Country",
+                "Company", "Contact", "Phone", "Fax", "Email", "Sms",
+                "PoBox", "Residential",
+                "SiteName",
+            };
+            foreach (var key in customKeys)
+                headerFields.Add($"CustomData:{key}");
+            foreach (var extraHeader in clientLogic.GetShipperExportExtraHeaders())
+                headerFields.Add(extraHeader);
+
+            sb.AppendLine(string.Join(",", headerFields.Select(EscapeCsv)));
+
+            foreach (var sh in shippers)
+            {
+                siteNames.TryGetValue(sh.SiteId ?? Guid.Empty, out var siteName);
+
+                var fields = new List<string>
+                {
+                    EscapeCsv(sh.Name          ?? string.Empty),
+                    EscapeCsv(sh.Symbol        ?? string.Empty),
+                    EscapeCsv(sh.Code          ?? string.Empty),
+                    EscapeCsv(sh.Address1      ?? string.Empty),
+                    EscapeCsv(sh.Address2      ?? string.Empty),
+                    EscapeCsv(sh.Address3      ?? string.Empty),
+                    EscapeCsv(sh.City          ?? string.Empty),
+                    EscapeCsv(sh.StateProvince ?? string.Empty),
+                    EscapeCsv(sh.PostalCode    ?? string.Empty),
+                    EscapeCsv(sh.Country       ?? string.Empty),
+                    EscapeCsv(sh.Company       ?? string.Empty),
+                    EscapeCsv(sh.Contact       ?? string.Empty),
+                    EscapeCsv(sh.Phone         ?? string.Empty),
+                    EscapeCsv(sh.Fax           ?? string.Empty),
+                    EscapeCsv(sh.Email         ?? string.Empty),
+                    EscapeCsv(sh.Sms           ?? string.Empty),
+                    EscapeCsv(sh.PoBox       ? "1" : "0"),
+                    EscapeCsv(sh.Residential ? "1" : "0"),
+                    EscapeCsv(siteName         ?? string.Empty),
+                };
+
+                var cdLookup = (sh.CustomData ?? [])
+                    .Where(c => !string.IsNullOrEmpty(c.Key))
+                    .ToDictionary(c => c.Key!, c => c.Value ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var key in customKeys)
+                {
+                    cdLookup.TryGetValue(key, out var cdVal);
+                    fields.Add(EscapeCsv(cdVal ?? string.Empty));
+                }
+
+                foreach (var extraVal in clientLogic.GetShipperExportExtraValues(sh))
+                    fields.Add(EscapeCsv(extraVal));
+
+                sb.AppendLine(string.Join(",", fields));
+            }
+
+            return sb.ToString();
+        });
+    }
+
     public async Task<List<Variance>> GetShipperVariancesAsync(List<PSI.Sox.Shipper> incoming)
     {
         var existing = await GetShippersAsync();
