@@ -1,0 +1,1906 @@
+{
+  "settings": {
+    "components": {
+      "code": true,
+      "binaries": false
+    },
+    "targetId": "net10.0",
+    "targetDisplayName": ".NETCoreApp,Version=v10.0"
+  },
+  "analysisStartTime": "2026-04-01T19:11:35.3348621Z",
+  "analysisEndTime": "2026-04-01T19:11:37.0236078Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 10,
+      "issues": 4,
+      "incidents": 59,
+      "effort": 59
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 8,
+        "Optional": 0,
+        "Potential": 51,
+        "Information": 0
+      },
+      "category": {
+        "NuGet": 2,
+        "Project": 6,
+        "Api": 51
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "ShipExecNavigator.AppLogic\\ShipExecNavigator.AppLogic.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator.AppLogic",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 1,
+        "numberOfCodeFiles": 1,
+        "linesTotal": 205,
+        "linesOfCode": 205,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+      "startingProject": true,
+      "issues": 4,
+      "storyPoints": 54,
+      "properties": {
+        "appName": "ShipExecNavigator.BusinessLogic",
+        "projectKind": "ClassicClassLibrary",
+        "frameworks": [
+          "net48"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": false,
+        "numberOfFiles": 21,
+        "numberOfCodeFiles": 18,
+        "linesTotal": 5868,
+        "linesOfCode": 5868,
+        "totalApiScanned": 8575,
+        "minLinesOfCodeToChange": 51,
+        "maxLinesOfCodeToChange": 51
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "a2fa2472-10d3-420a-9dba-44f183c45385",
+          "ruleId": "NuGet.0001",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found",
+              "protected": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+            "snippet": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found",
+            "protectedSnippet": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found",
+            "label": "Microsoft.AspNet.Identity.Core 2.2.4",
+            "properties": {
+              "PackageId": "Microsoft.AspNet.Identity.Core",
+              "PackageVersion": "2.2.4",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "6da6bab3-f162-4e98-a797-4738d180d6de",
+          "ruleId": "Project.0001",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj"
+          }
+        },
+        {
+          "incidentId": "9295e985-0a9a-4cd7-a7ea-3d4828122fdf",
+          "ruleId": "Project.0002",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+              "protected": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+            "snippet": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": ".NETFramework,Version=v4.8",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "6b69777e-658d-413e-965e-aa6df64a9f82",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: XmlSerializer no longer ignores properties marked with ObsoleteAttribute ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));",
+              "protected": "T:System.Xml.Serialization.XmlSerializer"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\CompanyBuilder\\CompanyBuilderManager.cs",
+            "snippet": "var serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));",
+            "protectedSnippet": "T:System.Xml.Serialization.XmlSerializer",
+            "label": "T:System.Xml.Serialization.XmlSerializer",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/10/xmlserializer-obsolete-properties.md",
+                "isCustom": false
+              }
+            ],
+            "line": 637,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "2e80cb96-41e8-4689-9d21-4fbb69aafd2a",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: XmlSerializer no longer ignores properties marked with ObsoleteAttribute ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "XmlSerializer serializer = new XmlSerializer(typeof(CompanyConfiguration));",
+              "protected": "T:System.Xml.Serialization.XmlSerializer"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\CompanyBuilder\\CompanyExtractor.cs",
+            "snippet": "XmlSerializer serializer = new XmlSerializer(typeof(CompanyConfiguration));",
+            "protectedSnippet": "T:System.Xml.Serialization.XmlSerializer",
+            "label": "T:System.Xml.Serialization.XmlSerializer",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/10/xmlserializer-obsolete-properties.md",
+                "isCustom": false
+              }
+            ],
+            "line": 193,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "70c1fe3e-0e13-4658-a9b2-7f395a3c29f3",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: XmlSerializer no longer ignores properties marked with ObsoleteAttribute ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "XmlSerializer serializer = new XmlSerializer(typeof(Company));",
+              "protected": "T:System.Xml.Serialization.XmlSerializer"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\CompanyBuilder\\CompanyExtractor.cs",
+            "snippet": "XmlSerializer serializer = new XmlSerializer(typeof(Company));",
+            "protectedSnippet": "T:System.Xml.Serialization.XmlSerializer",
+            "label": "T:System.Xml.Serialization.XmlSerializer",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/10/xmlserializer-obsolete-properties.md",
+                "isCustom": false
+              }
+            ],
+            "line": 41,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "cd0fdf54-181f-4992-bf38-1b20ebaa230c",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 161,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "f28a038c-cf91-489b-bfc1-334720e276f8",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 157,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "5e47c9bd-4871-4bed-9f9b-33b0fa3885c2",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 145,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "1eabedd3-bf4c-41f4-8f3c-7140a1c7399b",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 141,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "b48014bf-329f-450e-87f4-a7141b4442d1",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 129,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "a9959e5e-e08f-4bc2-b61b-26a3ead49d14",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 125,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "409b6ca3-73a4-477f-914e-f2780011de2f",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 111,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "d5f2a51e-0dac-4809-b62b-a63c77e06035",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 108,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "39f968c2-63a1-4ed0-adc2-682b0f00f88d",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 89,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "83afc210-005a-440a-b410-5058da7ee875",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\RequestGenerationBase.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 86,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "6c6b1af0-6271-4d62-a346-1067e952c4c1",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyRequestGenerator.cs",
+            "snippet": "string resultContent = webResult.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 44,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "72893db7-3508-4f59-a803-33926584b723",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyRequestGenerator.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 41,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "0f517192-b78d-4c29-b30d-5c1046dbf803",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\EntityFetcher.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 71,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "6d26c681-b43d-4228-ad4d-3a77fc87d13d",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\EntityFetcher.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 65,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "1c5f335e-c8a0-4ed5-8bac-116833207c70",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: XmlSerializer no longer ignores properties marked with ObsoleteAttribute ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "XmlSerializer xsSubmit = new XmlSerializer(typeof(Company));",
+              "protected": "T:System.Xml.Serialization.XmlSerializer"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyExportRequestGenerator.cs",
+            "snippet": "XmlSerializer xsSubmit = new XmlSerializer(typeof(Company));",
+            "protectedSnippet": "T:System.Xml.Serialization.XmlSerializer",
+            "label": "T:System.Xml.Serialization.XmlSerializer",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/10/xmlserializer-obsolete-properties.md",
+                "isCustom": false
+              }
+            ],
+            "line": 128,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "2c643bd3-ab9b-4403-8910-f81e8d331ce5",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyExportRequestGenerator.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 97,
+            "column": 20
+          }
+        },
+        {
+          "incidentId": "7fc4fdb5-ce8f-42e8-a352-cf1e19058ea3",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyExportRequestGenerator.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 92,
+            "column": 20
+          }
+        },
+        {
+          "incidentId": "4a265c0f-a4a0-4e5a-bdda-6ba8cb7ca126",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyExportRequestGenerator.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 72,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "bb55b142-064c-4261-a666-f9e686d1ecd4",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\RequestGeneration\\CompanyExportRequestGenerator.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 67,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "749adea5-5566-4209-8553-2792f3762282",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 678,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "8f94106d-a7ff-4bb4-be01-e6c99233e8ca",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 673,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "fa82c0c4-f9dc-4509-89f0-c5938fcf0a23",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "return httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 631,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "ddc4b207-c494-4f0e-97d9-72db16ee048a",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(requestJson, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(requestJson, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 627,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "efe2f3e8-c446-46af-a0f3-ed3cabdff97c",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "return httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 603,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "fdfb11f7-45b4-4c0a-b68e-978d1daf7ceb",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(requestJson, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(requestJson, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 599,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "3c283bd3-e550-4284-9316-d0af1f1b7238",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 573,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "72f05e06-09ed-4f6f-aa2e-91890c2cff2e",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 568,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "ed984e48-6557-41b8-bedb-221dfaf39109",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 534,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "a8d9fec1-7b92-4d5a-9208-31629c83138f",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 529,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "c8050be0-ff70-49b3-98f6-e4f986f1e9a7",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 505,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "ebc38255-dc26-4c16-b521-f26ef76171b3",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 500,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "2a9462ac-66e2-4c27-9216-2bb08b5ecd5e",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 451,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "802425ae-6e7c-403a-9045-1e73caa1f870",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 446,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "024befb9-2288-467e-81a5-071bd6022834",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 278,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "4b8590ba-06dc-4f7a-8089-c683612fd540",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 260,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "eb6b4538-7960-47bc-9536-abae868d9857",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 242,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "40eb162a-a219-41e0-9b7b-3e0c44f5b143",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 237,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "47a72116-467b-43e3-b859-5da4858aadd8",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 217,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "7a29c2bb-7b65-4889-b248-2964b5d484cd",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 212,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "8963941d-96ab-4d19-9d91-b28882893260",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 191,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "9473d039-2175-4cdf-843c-552a826d8cb2",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 173,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "112e0ce1-8903-4ca2-80d0-997bcd4d5a3c",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 168,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "b9c317fa-356d-4542-a220-f49d26a32174",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 148,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "518f37ba-402f-4aaf-9480-2f69d6ad6315",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 143,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "928835bf-36e3-45d6-8757-2c43750f9164",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 95,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "8238135f-00dc-4277-b817-e4a57fdcb596",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 90,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "3d2c41b0-58bf-4c44-808d-2d0401ac1128",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "string content = httpResponse.Content.ReadAsStringAsync().Result;",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 74,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "e0f57e42-8244-46f0-93df-cb8c8dd9f609",
+          "ruleId": "Api.0003",
+          "description": "Breaking change - Streaming HTTP responses enabled by default in browser HTTP clients ",
+          "projectPath": "ShipExecNavigator.BusinessLogic\\ShipExecNavigator.BusinessLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+              "protected": "T:System.Net.Http.HttpContent"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.BusinessLogic\\AppManager.cs",
+            "snippet": "requestMessage.Content = new StringContent(json, Encoding.UTF8, \u0022application/json\u0022);",
+            "protectedSnippet": "T:System.Net.Http.HttpContent",
+            "label": "T:System.Net.Http.HttpContent",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/default-http-streaming.md",
+                "isCustom": false
+              }
+            ],
+            "line": 69,
+            "column": 16
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.ClientSpecificLogic\\ShipExecNavigator.ClientSpecificLogic.csproj",
+      "startingProject": true,
+      "issues": 2,
+      "storyPoints": 2,
+      "properties": {
+        "appName": "ShipExecNavigator.ClientSpecificLogic",
+        "projectKind": "ClassicClassLibrary",
+        "frameworks": [
+          "net48"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": false,
+        "numberOfFiles": 6,
+        "numberOfCodeFiles": 6,
+        "linesTotal": 141,
+        "linesOfCode": 141,
+        "totalApiScanned": 112,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "ec121121-d11f-484c-ba1d-2d3520dedcfd",
+          "ruleId": "Project.0001",
+          "projectPath": "ShipExecNavigator.ClientSpecificLogic\\ShipExecNavigator.ClientSpecificLogic.csproj",
+          "state": "Active",
+          "location": {
+            "kind": "File",
+            "path": "ShipExecNavigator.ClientSpecificLogic\\ShipExecNavigator.ClientSpecificLogic.csproj"
+          }
+        },
+        {
+          "incidentId": "239a6c2a-17de-4280-9a0b-64467719d34b",
+          "ruleId": "Project.0002",
+          "projectPath": "ShipExecNavigator.ClientSpecificLogic\\ShipExecNavigator.ClientSpecificLogic.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+              "protected": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.ClientSpecificLogic\\ShipExecNavigator.ClientSpecificLogic.csproj",
+            "snippet": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": ".NETFramework,Version=v4.8",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator\\ShipExecNavigator.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator",
+        "projectKind": "AspNetCore",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 45,
+        "numberOfCodeFiles": 9,
+        "linesTotal": 10529,
+        "linesOfCode": 1902,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.DAL\\ShipExecNavigator.DAL.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator.DAL",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 8,
+        "numberOfCodeFiles": 8,
+        "linesTotal": 451,
+        "linesOfCode": 451,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.DesktopClient\\ShipExecNavigator.DesktopClient.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator.DesktopClient",
+        "projectKind": "Wpf",
+        "frameworks": [
+          "net10.0-windows"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 2,
+        "numberOfCodeFiles": 2,
+        "linesTotal": 56,
+        "linesOfCode": 56,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 3,
+      "properties": {
+        "appName": "ShipExecNavigator.Model",
+        "projectKind": "ClassicClassLibrary",
+        "frameworks": [
+          "net48"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": false,
+        "numberOfFiles": 2,
+        "numberOfCodeFiles": 2,
+        "linesTotal": 55,
+        "linesOfCode": 55,
+        "totalApiScanned": 16,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "84b151b6-6d92-4a74-897e-60e82212c4ed",
+          "ruleId": "NuGet.0001",
+          "projectPath": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found",
+              "protected": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj",
+            "snippet": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found",
+            "protectedSnippet": "Microsoft.AspNet.Identity.Core, 2.2.4\n\nRecommendation:\n\nNo supported version found",
+            "label": "Microsoft.AspNet.Identity.Core 2.2.4",
+            "properties": {
+              "PackageId": "Microsoft.AspNet.Identity.Core",
+              "PackageVersion": "2.2.4",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "9066352d-f29e-4ec4-b082-c89b191d3294",
+          "ruleId": "Project.0001",
+          "projectPath": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj",
+          "state": "Active",
+          "location": {
+            "kind": "File",
+            "path": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj"
+          }
+        },
+        {
+          "incidentId": "acdd21d7-bb39-4857-8cab-973dd7e0bd91",
+          "ruleId": "Project.0002",
+          "projectPath": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+              "protected": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "ShipExecNavigator.Model\\ShipExecNavigator.Model.csproj",
+            "snippet": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: .NETFramework,Version=v4.8\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": ".NETFramework,Version=v4.8",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.RAGLoader\\ShipExecNavigator.RAGLoader.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator.RAGLoader",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 4,
+        "numberOfCodeFiles": 3,
+        "linesTotal": 306,
+        "linesOfCode": 298,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.Shared\\ShipExecNavigator.Shared.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator.Shared",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 29,
+        "numberOfCodeFiles": 29,
+        "linesTotal": 940,
+        "linesOfCode": 940,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ShipExecNavigator.SK\\ShipExecNavigator.SK.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ShipExecNavigator.SK",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 6,
+        "numberOfCodeFiles": 6,
+        "linesTotal": 430,
+        "linesOfCode": 430,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    }
+  ],
+  "rules": {
+    "NuGet.0001": {
+      "id": "NuGet.0001",
+      "isFeature": false,
+      "description": "NuGet package is incompatible with selected target framework.\n\nPackage needs to be upgraded to a version supporting selected project target framework. If there no new package versions supporting new target framework, different package needs to be used and all code needs to be upgraded to new API.",
+      "label": "NuGet package is incompatible",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262529",
+          "isCustom": false
+        }
+      ]
+    },
+    "Project.0001": {
+      "id": "Project.0001",
+      "isFeature": false,
+      "description": "Project file needs to be converted to SDK-style. Modern .NET framework projects require a change in the project file format and use SDK corresponding to project flavor and functionality.",
+      "label": "Project file needs to be converted to SDK-style",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Overview of porting from .NET Framework to .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": ".NET project SDKs",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "Project.0002": {
+      "id": "Project.0002",
+      "isFeature": false,
+      "description": "Project\u0027s target framework(s) needs to be changed to the new target framework that you selected for this upgrade.\n\nDuring upgrade target framework will be adjusted to corresponding platform when applicable. In some cases project would result in multiple target frameworks after the upgrade if it was using features that now have their own platforms in modern .NET frameworks (windows, iOS, Android etc).",
+      "label": "Project\u0027s target framework(s) needs to be changed",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Overview of porting from .NET Framework to .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": ".NET project SDKs",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0003": {
+      "id": "Api.0003",
+      "isFeature": false,
+      "description": "API has a behavioral change in selected .NET version: code and binaries may behave differently at runtime without needing recompilation, but the new behavior might be undesirable and require updates.",
+      "label": "Behavioral change in selected .NET version",
+      "severity": "Potential",
+      "effort": 1
+    }
+  }
+}
