@@ -447,6 +447,30 @@ namespace ShipExecNavigator.BusinessLogic
             }
         }
 
+        public void DeleteUser(Guid userId)
+        {
+            _logger.LogTrace(">> DeleteUser({UserId})", userId);
+            var accessToken = GetAccessToken();
+            var request = new PSI.Sox.Wcf.Authentication.RemoveUserRequest
+            {
+                Id = userId,
+                UserContext = new PSI.Sox.UserContext { CompanyId = _companyId }
+            };
+            var userManagerUrl = _adminUrl.Replace("AdministrationService", "UserManagerService");
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, userManagerUrl + "RemoveUser"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+                _logger.LogTrace("<< DeleteUser({UserId})", userId);
+            }
+        }
+
         /// <summary>
         /// Computes the set of entity-level differences between two XML documents and
         /// converts those differences into typed API request objects ready to be applied.

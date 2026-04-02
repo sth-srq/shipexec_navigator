@@ -82,6 +82,12 @@
     [Parameter] public EventCallback<List<ShipperDeleteItem>> OnDeleteShippers { get; set; }
     [Parameter] public EventCallback<List<ShipperEditItem>> OnEditShippers { get; set; }
     [Parameter] public EventCallback<ShipperAddItem> OnAddShipper { get; set; }
+    [Parameter] public string? UsersJson { get; set; }
+    [Parameter] public string? UsersMetaJson { get; set; }
+    [Parameter] public EventCallback<List<UserFindItem>> OnFindUsers { get; set; }
+    [Parameter] public EventCallback<List<UserDeleteItem>> OnDeleteUsers { get; set; }
+    [Parameter] public EventCallback<List<UserEditItem>> OnEditUsers { get; set; }
+    [Parameter] public EventCallback<UserAddItem> OnAddUser { get; set; }
 
     private readonly List<ChatMessage> _messages = [];
     private readonly List<string> _inputHistory = [];
@@ -167,7 +173,7 @@
             if (XmlRoot is not null)
                 xmlContext = await XmlViewerService.SerializeAsync(XmlRoot);
 
-            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag);
+            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag, usersContext: UsersJson, userMetaContext: UsersMetaJson);
             _messages.Add(new ChatMessage("assistant", reply));
             await TryExecuteJsFromResponseAsync(reply);
         }
@@ -283,6 +289,38 @@
             return;
         }
 
+        // Handle user-find blocks
+        var findUsers = ExtractUserFind(response);
+        if (findUsers is { Count: > 0 })
+        {
+            await OnFindUsers.InvokeAsync(findUsers);
+            return;
+        }
+
+        // Handle user-add blocks (opens Create User dialog pre-populated)
+        var addUser = ExtractUserAdd(response);
+        if (addUser is not null)
+        {
+            await OnAddUser.InvokeAsync(addUser);
+            return;
+        }
+
+        // Handle user-edit blocks
+        var editUsers = ExtractUserEdit(response);
+        if (editUsers is { Count: > 0 })
+        {
+            await OnEditUsers.InvokeAsync(editUsers);
+            return;
+        }
+
+        // Handle user-delete blocks
+        var deleteUsers = ExtractUserDelete(response);
+        if (deleteUsers is { Count: > 0 })
+        {
+            await OnDeleteUsers.InvokeAsync(deleteUsers);
+            return;
+        }
+
         var jsCode = ExtractJavaScript(response);
         if (jsCode is null) return;
         try
@@ -336,6 +374,70 @@
         try
         {
             return System.Text.Json.JsonSerializer.Deserialize<List<ShipperEditItem>>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
+    }
+
+    private static List<UserFindItem>? ExtractUserFind(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```user-find\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<UserFindItem>>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
+    }
+
+    private static UserAddItem? ExtractUserAdd(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```user-add\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<UserAddItem>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
+    }
+
+    private static List<UserEditItem>? ExtractUserEdit(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```user-edit\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<UserEditItem>>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
+    }
+
+    private static List<UserDeleteItem>? ExtractUserDelete(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```user-delete\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<UserDeleteItem>>(
                 m.Groups[1].Value.Trim(),
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }

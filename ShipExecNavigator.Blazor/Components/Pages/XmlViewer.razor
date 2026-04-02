@@ -238,7 +238,16 @@
         @if (_activeMainTab == "users")
         {
             <div class="um-tab-content">
-                <UserManagementDialog />
+                <UserManagementDialog OnUsersJson="HandleUsersJson"
+                                      OnUsersMetaJson="HandleUsersMetaJson"
+                                      FoundUserIds="_foundUserIds"
+                                      OnClearFound="HandleClearFoundUsers"
+                                      AiPendingDeletes="_pendingUserDeletes"
+                                      OnDeletesHandled="HandleUserDeletesHandled"
+                                      AiPendingEdits="_pendingUserEdits"
+                                      OnEditsHandled="HandleUserEditsHandled"
+                                      AiCreatePrefill="_addUserPrefill"
+                                      OnCreateHandled="HandleUserCreateHandled" />
             </div>
         }
         @if (_activeMainTab == "logs")
@@ -422,7 +431,7 @@
     }
 
     @* ── Studio chat panel ── *@
-    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" />
+    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" UsersJson="@_usersJson" UsersMetaJson="@_usersMetaJson" OnFindUsers="HandleAiFindUsers" OnDeleteUsers="HandleAiUserDeletions" OnEditUsers="HandleAiUserEdits" OnAddUser="HandleAiUserAdd" />
 
 </div>
 
@@ -514,6 +523,14 @@
 
     // ── Chat panel state ──────────────────────────────────────────────────────
     private bool _chatVisible = true;
+
+    // ── Users AI state ────────────────────────────────────────────────────────
+    private string? _usersJson;
+    private string? _usersMetaJson;
+    private List<Guid>? _foundUserIds;
+    private List<UserDeleteItem>? _pendingUserDeletes;
+    private List<UserEditItem>? _pendingUserEdits;
+    private UserAddItem? _addUserPrefill;
 
     private async Task HandleGoToProfileAsync(string profileName)
     {
@@ -828,6 +845,12 @@
         _shippers = [];
         _shippersLoaded = false;
         _shippersError = null;
+        _usersJson = null;
+        _usersMetaJson = null;
+        _foundUserIds = null;
+        _pendingUserDeletes = null;
+        _pendingUserEdits = null;
+        _addUserPrefill = null;
         try
         {
             rootNode = await ShipExecService.BuildCompanySkeletonAsync();
@@ -1093,6 +1116,75 @@
     {
         _addShipperPrefill = item;
         _showAddShipperDialog = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUsersJson(string json)
+    {
+        _usersJson = json;
+    }
+
+    private void HandleUsersMetaJson(string json)
+    {
+        _usersMetaJson = json;
+    }
+
+    private void HandleAiFindUsers(List<UserFindItem> items)
+    {
+        _foundUserIds = items
+            .Select(u => Guid.TryParse(u.Id, out var g) ? g : Guid.Empty)
+            .Where(g => g != Guid.Empty)
+            .ToList();
+        if (_activeMainTab != "users")
+            _activeMainTab = "users";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleClearFoundUsers()
+    {
+        _foundUserIds = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiUserDeletions(List<UserDeleteItem> items)
+    {
+        _pendingUserDeletes = items;
+        if (_activeMainTab != "users")
+            _activeMainTab = "users";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUserDeletesHandled()
+    {
+        _pendingUserDeletes = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiUserEdits(List<UserEditItem> items)
+    {
+        _pendingUserEdits = items;
+        if (_activeMainTab != "users")
+            _activeMainTab = "users";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUserEditsHandled()
+    {
+        _pendingUserEdits = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiUserAdd(UserAddItem item)
+    {
+        _addUserPrefill = item;
+        if (_activeMainTab != "users")
+            _activeMainTab = "users";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUserCreateHandled()
+    {
+        _addUserPrefill = null;
         InvokeAsync(StateHasChanged);
     }
 

@@ -71,6 +71,8 @@ public sealed class SemanticKernelChatService : IAiChatService
         string userMessage,
         string? xmlContext = null,
         bool useRag = true,
+        string? usersContext = null,
+        string? userMetaContext = null,
         CancellationToken ct = default)
     {
         var endpoint   = _configuration["AzureOpenAI:Endpoint"]        ?? string.Empty;
@@ -83,11 +85,12 @@ public sealed class SemanticKernelChatService : IAiChatService
         var sw      = System.Diagnostics.Stopwatch.StartNew();
         var preview = userMessage.Length > 200 ? userMessage[..200] + "..." : userMessage;
         var hasXml  = !string.IsNullOrWhiteSpace(xmlContext);
-        _logger.LogTrace(">> SendMessageAsync | Deployment={Deployment} UseRag={UseRag} HasXml={HasXml} History={History}",
-            deployment, useRag, hasXml, history.Count);
+        var hasUsers = !string.IsNullOrWhiteSpace(usersContext);
+        _logger.LogTrace(">> SendMessageAsync | Deployment={Deployment} UseRag={UseRag} HasXml={HasXml} HasUsers={HasUsers} History={History}",
+            deployment, useRag, hasXml, hasUsers, history.Count);
         _logger.LogInformation(
-            "AzureOpenAI request | Deployment={Deployment} UseRag={UseRag} HasXmlContext={HasXml} HistoryCount={History} MessagePreview={Preview}",
-            deployment, useRag, hasXml, history.Count, preview);
+            "AzureOpenAI request | Deployment={Deployment} UseRag={UseRag} HasXmlContext={HasXml} HasUsersContext={HasUsers} HistoryCount={History} MessagePreview={Preview}",
+            deployment, useRag, hasXml, hasUsers, history.Count, preview);
 
         var systemPrompt =
             "You are a helpful assistant for ShipExec Navigator, a tool for managing ShipExec " +
@@ -129,12 +132,52 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "Do NOT include any JavaScript — the Navigator will process the shipper-edit block directly.\n" +
                 NavigatorDomCheatSheet.Content;
 
+        if (hasUsers)
+            systemPrompt +=
+                "\n\n**Finding users:** The user has a ShipExec company loaded with users available. " +
+                "When the user asks to FIND, SEARCH, or FILTER users, call the `find_users` function. " +
+                "After receiving the user list, filter it to match the user's condition, then respond with:\n" +
+                "1. **Reasoning:** Explain which users matched and why.\n" +
+                "2. A ```user-find code block containing a JSON array of the matching entries " +
+                "(each object must have `id`, `username`, and `email` string fields, exactly as returned by the plugin). " +
+                "Do NOT include any JavaScript — the Navigator will highlight those users directly.\n\n" +
+                "**Editing users:** When the user asks to UPDATE, EDIT, SET, or CHANGE ANY field on " +
+                "users (including address fields, configuration, permissions, or roles), " +
+                "call the `edit_users` function. The function returns the user list AND the full list of " +
+                "available permissions and roles for the company. Filter the user list to match the " +
+                "user's condition, then respond with:\n" +
+                "1. **Reasoning:** Explain which users matched and what fields will be changed.\n" +
+                "2. A ```user-edit code block containing a JSON array where each object has " +
+                "`id` (string), `username` (string), `email` (string), and `edits` (an object). " +
+                "Supported edit fields:\n" +
+                "  - Top-level: `Email`, `UserName`, `PhoneNumber`, `PasswordExpired` (bool), `LockoutEnabled` (bool), `EmailConfirmed` (bool), `PhoneNumberConfirmed` (bool)\n" +
+                "  - Address: `Address.Company`, `Address.Contact`, `Address.Address1`, `Address.Address2`, `Address.Address3`, `Address.City`, `Address.StateProvince`, `Address.PostalCode`, `Address.Country`, `Address.Phone`, `Address.Fax`, `Address.Email`, `Address.Sms`, `Address.Account`, `Address.TaxId`, `Address.Code`, `Address.Group`, `Address.PoBox` (bool), `Address.Residential` (bool)\n" +
+                "  - Config: `Config.ExportFileDelimiter` (Comma/Semicolon/Tab), `Config.ExportFileQualifier` (None/DoubleQuotes/SingleQuote), `Config.ExportFileGroupSeparator` (Comma/Period), `Config.ExportFileDecimalSeparator` (Comma/Period)\n" +
+                "  - Permissions: `Permissions.Add` (permission name string), `Permissions.Remove` (permission name string) — use exact names from the availablePermissions list returned by edit_users\n" +
+                "  - Roles: `Roles.Add` (role name string), `Roles.Remove` (role name string) — use exact names from the availableRoles list returned by edit_users\n" +
+                "Do NOT include any JavaScript — the Navigator will apply the edits directly.\n\n" +
+                "**Deleting users:** When the user asks to DELETE or REMOVE users, call the `delete_users` function. " +
+                "After receiving the user list, filter it to match the user's condition, then respond with:\n" +
+                "1. **Reasoning:** Explain which users matched and will be deleted.\n" +
+                "2. A ```user-delete code block containing a JSON array of the matching entries " +
+                "(each object must have `id`, `username`, and `email` string fields, exactly as returned by the plugin). " +
+                "Do NOT include any JavaScript — the Navigator will delete those users directly.\n\n" +
+                "**Adding users:** When the user asks to ADD or CREATE a new user, do NOT call any plugin function. " +
+                "Respond with a ```user-add code block containing a JSON object with the user's details. " +
+                "Required field: `email` (string, used as both username and email). " +
+                "Optional fields: `company`, `contact`, `address1`, `address2`, `address3`, `city`, `stateProvince`, `postalCode`, `country`, `phone`, `fax` (all strings). " +
+                "Do NOT include a password — the user must enter it manually. " +
+                "Do NOT include any JavaScript — the Navigator will open the Create User dialog pre-populated with these values.";
+
         var kernel = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(deployment, endpoint, apiKey)
             .Build();
 
         if (hasXml)
             kernel.ImportPluginFromObject(new ShipperXmlPlugin(xmlContext!), "ShipperXml");
+
+        if (hasUsers)
+            kernel.ImportPluginFromObject(new UserXmlPlugin(usersContext!, userMetaContext ?? "{}"), "UserXml");
 
         if (useRag)
             kernel.ImportPluginFromObject(
@@ -154,7 +197,7 @@ public sealed class SemanticKernelChatService : IAiChatService
         chatHistory.AddUserMessage(userMessage);
 
         var executionSettings = new AzureOpenAIPromptExecutionSettings();
-        if (hasXml || useRag)
+        if (hasXml || hasUsers || useRag)
             executionSettings.FunctionChoiceBehavior = FunctionChoiceBehavior.Auto();
 
         try

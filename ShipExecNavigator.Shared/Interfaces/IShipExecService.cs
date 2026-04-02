@@ -31,6 +31,7 @@ public interface IShipExecService
     Task UpdateUserAsync(User user);
     void EnqueueUserUpdate(User user);
     Task<Guid> CreateUserAsync(User user);
+    Task DeleteUserAsync(Guid userId);
     Task<List<CsvUserRow>> ParseCsvAsync(string csvContent);
     Task<List<CsvUserCreateResult>> CreateUsersFromCsvAsync(List<CsvUserRow> rows);
     Task<string> ExportUsersCsvAsync();

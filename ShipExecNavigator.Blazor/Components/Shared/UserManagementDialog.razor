@@ -15,9 +15,48 @@
         </button>
     </div>
 
+    @if (FoundUserIds is { Count: > 0 })
+    {
+        <div class="um-find-banner">
+            <span>&#x1F50D; AI found @FoundUserIds.Count user@(FoundUserIds.Count == 1 ? "" : "s")</span>
+            <button class="um-find-clear-btn" @onclick="OnClearFound">&#x2715; Clear</button>
+        </div>
+    }
+
+    @if (_isAiDeleting)
+    {
+        <div class="um-delete-banner um-delete-banner--progress">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Deleting users&hellip;</span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_aiDeleteError))
+    {
+        <div class="um-delete-banner um-delete-banner--error">
+            <span>&#9888; @_aiDeleteError</span>
+            <button class="um-find-clear-btn" @onclick="() => _aiDeleteError = null">&#x2715;</button>
+        </div>
+    }
+
+    @if (_isAiEditing)
+    {
+        <div class="um-delete-banner um-delete-banner--progress">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Updating users&hellip;</span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_aiEditError))
+    {
+        <div class="um-delete-banner um-delete-banner--error">
+            <span>&#9888; @_aiEditError</span>
+            <button class="um-find-clear-btn" @onclick="() => _aiEditError = null">&#x2715;</button>
+        </div>
+    }
+
     <CreateUserDialog IsVisible="_showCreateUserDialog"
                    CompanyName="@_companyInfo?.DisplayName"
                    CompanyId="@(_companyInfo?.Id ?? Guid.Empty)"
+                   Prefill="@_createPrefill"
                    OnClose="() => _showCreateUserDialog = false"
                    OnUserCreated="HandleUserCreated" />
 
@@ -53,7 +92,8 @@
                             @foreach (var (user, idx) in _users.Select((u, i) => (u, i)))
                             {
                                 var isExpanded = _expandedUserIds.Contains(user.Id);
-                                <tr class='um-user-row @(idx % 2 == 0 ? "um-row--even" : "")' @onclick="() => ToggleUserAsync(user.Id)">
+                                var isFound = FoundUserIds?.Contains(user.Id) == true;
+                                <tr class='um-user-row @(idx % 2 == 0 ? "um-row--even" : "") @(isFound ? "um-row--found" : "")' @onclick="() => ToggleUserAsync(user.Id)">
                                     <td class="um-col-toggle">
                                         <span class="um-toggle-icon">@(isExpanded ? "▲" : "▼")</span>
                                     </td>
@@ -375,11 +415,30 @@
 </div>
 
 @code {
+    [Parameter] public EventCallback<string> OnUsersJson { get; set; }
+    [Parameter] public List<Guid>? FoundUserIds { get; set; }
+    [Parameter] public EventCallback OnClearFound { get; set; }
+    [Parameter] public List<UserDeleteItem>? AiPendingDeletes { get; set; }
+    [Parameter] public EventCallback OnDeletesHandled { get; set; }
+    [Parameter] public List<UserEditItem>? AiPendingEdits { get; set; }
+    [Parameter] public EventCallback OnEditsHandled { get; set; }
+    [Parameter] public EventCallback<string> OnUsersMetaJson { get; set; }
+    [Parameter] public UserAddItem? AiCreatePrefill { get; set; }
+    [Parameter] public EventCallback OnCreateHandled { get; set; }
+
     private List<User> _users = [];
     private bool _isLoading;
     private bool _showCreateUserDialog;
     private bool _showUploadDialog;
     private bool _isExporting;
+    private bool _isAiDeleting;
+    private string? _aiDeleteError;
+    private List<UserDeleteItem>? _lastProcessedDeletes;
+    private List<UserEditItem>? _lastProcessedEdits;
+    private UserAddItem? _createPrefill;
+    private UserAddItem? _lastProcessedCreatePrefill;
+    private bool _isAiEditing;
+    private string? _aiEditError;
     private CompanyInfo? _companyInfo;
     private string _errorMessage = string.Empty;
     private readonly HashSet<Guid> _expandedUserIds = [];
@@ -392,6 +451,8 @@
     private readonly HashSet<Guid> _savingIds = [];
     private readonly Dictionary<Guid, string> _saveErrors = [];
     private readonly Dictionary<Guid, List<Role>> _roles = [];
+    private List<Role> _allRoles = [];
+    private List<Permission> _allPermissions = [];
     private readonly Dictionary<Guid, HashSet<Guid>> _roleChecked = [];
     private readonly HashSet<Guid> _roleDirty = [];
     private readonly HashSet<Guid> _roleSavingIds = [];
@@ -412,7 +473,247 @@
     protected override async Task OnInitializedAsync()
     {
         _companyInfo = ShipExecService.GetCurrentCompany();
-        await LoadUsersAsync();
+        var rolesTask = ShipExecService.GetRolesAsync();
+        await Task.WhenAll(LoadUsersAsync(), rolesTask);
+        _allRoles = await rolesTask;
+
+        // Permissions require a valid user context; use the first user if available
+        if (_users.Count > 0)
+        {
+            try { _allPermissions = await ShipExecService.GetPermissionsAsync(_users[0].Id); }
+            catch { /* non-fatal: AI edit of permissions will just have an empty list */ }
+        }
+
+        await EmitUsersMetaJsonAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AiPendingDeletes is { Count: > 0 } && !ReferenceEquals(AiPendingDeletes, _lastProcessedDeletes))
+        {
+            _lastProcessedDeletes = AiPendingDeletes;
+            await ExecuteAiDeletesAsync(AiPendingDeletes);
+        }
+
+        if (AiPendingEdits is { Count: > 0 } && !ReferenceEquals(AiPendingEdits, _lastProcessedEdits))
+        {
+            _lastProcessedEdits = AiPendingEdits;
+            await ExecuteAiEditsAsync(AiPendingEdits);
+        }
+
+        if (AiCreatePrefill is not null && !ReferenceEquals(AiCreatePrefill, _lastProcessedCreatePrefill))
+        {
+            _lastProcessedCreatePrefill = AiCreatePrefill;
+            _createPrefill = AiCreatePrefill;
+            _showCreateUserDialog = true;
+            if (OnCreateHandled.HasDelegate)
+                await OnCreateHandled.InvokeAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExecuteAiDeletesAsync(List<UserDeleteItem> items)
+    {
+        _isAiDeleting = true;
+        _aiDeleteError = null;
+        StateHasChanged();
+        var errors = new List<string>();
+        foreach (var item in items)
+        {
+            if (!Guid.TryParse(item.Id, out var userId)) continue;
+            try
+            {
+                await ShipExecService.DeleteUserAsync(userId);
+                _users.RemoveAll(u => u.Id == userId);
+                _expandedUserIds.Remove(userId);
+                _userDetails.Remove(userId);
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"{item.Username}: {ex.Message}");
+            }
+        }
+        _isAiDeleting = false;
+        if (errors.Count > 0)
+            _aiDeleteError = string.Join("; ", errors);
+
+        // Refresh the users JSON context so the AI has an up-to-date list
+        if (OnUsersJson.HasDelegate)
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(_users,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            await OnUsersJson.InvokeAsync(json);
+        }
+
+        if (OnDeletesHandled.HasDelegate)
+            await OnDeletesHandled.InvokeAsync();
+
+        StateHasChanged();
+    }
+
+    private async Task ExecuteAiEditsAsync(List<UserEditItem> items)
+    {
+        _isAiEditing = true;
+        _aiEditError = null;
+        StateHasChanged();
+        var errors = new List<string>();
+        foreach (var item in items)
+        {
+            if (!Guid.TryParse(item.Id, out var userId)) continue;
+            try
+            {
+                // Fetch full user detail so we have a complete object to pass to UpdateUserAsync
+                var user = await ShipExecService.GetUserDetailAsync(userId);
+                if (user is null)
+                {
+                    errors.Add($"{item.Username}: user not found");
+                    continue;
+                }
+                user.Address              ??= new NameAddress();
+                user.DefaultConfiguration ??= new DefaultConfiguration();
+                user.Permissions          ??= [];
+                user.Roles                ??= [];
+
+                foreach (var (field, value) in item.Edits)
+                {
+                    switch (field.ToLowerInvariant())
+                    {
+                        // ── Top-level user fields ────────────────────────────
+                        case "email":
+                            user.Email = value; break;
+                        case "username":
+                            user.UserName = value; break;
+                        case "phonenumber":
+                            user.PhoneNumber = value; break;
+                        case "passwordexpired":
+                            if (bool.TryParse(value, out var pe)) user.PasswordExpired = pe; break;
+                        case "lockoutenabled":
+                            if (bool.TryParse(value, out var le)) user.LockoutEnabled = le; break;
+                        case "emailconfirmed":
+                            if (bool.TryParse(value, out var ec)) user.EmailConfirmed = ec; break;
+                        case "phonenumberconfirmed":
+                            if (bool.TryParse(value, out var pnc)) user.PhoneNumberConfirmed = pnc; break;
+
+                        // ── Address fields ───────────────────────────────────
+                        case "address.company":     user.Address.Company       = value; break;
+                        case "address.contact":     user.Address.Contact       = value; break;
+                        case "address.address1":    user.Address.Address1      = value; break;
+                        case "address.address2":    user.Address.Address2      = value; break;
+                        case "address.address3":    user.Address.Address3      = value; break;
+                        case "address.city":        user.Address.City          = value; break;
+                        case "address.stateprovince": user.Address.StateProvince = value; break;
+                        case "address.postalcode":  user.Address.PostalCode    = value; break;
+                        case "address.country":     user.Address.Country       = value; break;
+                        case "address.phone":       user.Address.Phone         = value; break;
+                        case "address.fax":         user.Address.Fax           = value; break;
+                        case "address.email":       user.Address.Email         = value; break;
+                        case "address.sms":         user.Address.Sms           = value; break;
+                        case "address.account":     user.Address.Account       = value; break;
+                        case "address.taxid":       user.Address.TaxId         = value; break;
+                        case "address.code":        user.Address.Code          = value; break;
+                        case "address.group":       user.Address.Group         = value; break;
+                        case "address.pobox":
+                            if (bool.TryParse(value, out var pb)) user.Address.PoBox = pb; break;
+                        case "address.residential":
+                            if (bool.TryParse(value, out var res)) user.Address.Residential = res; break;
+
+                        // ── Backwards-compat: unqualified address shorthands ─
+                        case "company":     user.Address.Company       = value; break;
+                        case "contact":     user.Address.Contact       = value; break;
+                        case "address1":    user.Address.Address1      = value; break;
+                        case "address2":    user.Address.Address2      = value; break;
+                        case "address3":    user.Address.Address3      = value; break;
+                        case "city":        user.Address.City          = value; break;
+                        case "stateprovince": user.Address.StateProvince = value; break;
+                        case "postalcode":  user.Address.PostalCode    = value; break;
+                        case "country":     user.Address.Country       = value; break;
+                        case "phone":       user.Address.Phone         = value; break;
+                        case "fax":         user.Address.Fax           = value; break;
+
+                        // ── DefaultConfiguration fields ──────────────────────
+                        case "config.exportfiledelimiter":
+                            if (Enum.TryParse<Delimiter>(value, true, out var delim))
+                                user.DefaultConfiguration.ExportFileDelimiter = delim; break;
+                        case "config.exportfilequalifier":
+                            if (Enum.TryParse<Qualifier>(value, true, out var qual))
+                                user.DefaultConfiguration.ExportFileQualifier = qual; break;
+                        case "config.exportfilegroupseparator":
+                            if (Enum.TryParse<GroupSeparator>(value, true, out var gs))
+                                user.DefaultConfiguration.ExportFileGroupSeparator = gs; break;
+                        case "config.exportfiledecimalseparator":
+                            if (Enum.TryParse<DecimalSeparator>(value, true, out var ds))
+                                user.DefaultConfiguration.ExportFileDecimalSeparator = ds; break;
+
+                        // ── Permissions ──────────────────────────────────────
+                        case "permissions.add":
+                        {
+                            var perm = _allPermissions.FirstOrDefault(p =>
+                                string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
+                            if (perm is not null && !user.Permissions.Any(p => p.Id == perm.Id))
+                                user.Permissions.Add(perm);
+                            else if (perm is null)
+                                errors.Add($"{item.Username}: permission '{value}' not found");
+                            break;
+                        }
+                        case "permissions.remove":
+                        {
+                            user.Permissions.RemoveAll(p =>
+                                string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
+                            break;
+                        }
+
+                        // ── Roles ────────────────────────────────────────────
+                        case "roles.add":
+                        {
+                            var role = _allRoles.FirstOrDefault(r =>
+                                string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
+                            if (role is not null && !user.Roles.Any(r => r.Id == role.Id))
+                                user.Roles.Add(role);
+                            else if (role is null)
+                                errors.Add($"{item.Username}: role '{value}' not found");
+                            break;
+                        }
+                        case "roles.remove":
+                        {
+                            user.Roles.RemoveAll(r =>
+                                string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
+                            break;
+                        }
+                    }
+                }
+
+                await ShipExecService.UpdateUserAsync(user);
+
+                // Update the cached detail if the row is already expanded
+                if (_userDetails.ContainsKey(userId))
+                    _userDetails[userId] = user;
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"{item.Username}: {ex.Message}");
+            }
+        }
+        _isAiEditing = false;
+        if (errors.Count > 0)
+            _aiEditError = string.Join("; ", errors);
+
+        if (OnEditsHandled.HasDelegate)
+            await OnEditsHandled.InvokeAsync();
+
+        StateHasChanged();
+    }
+
+    private async Task EmitUsersMetaJsonAsync()
+    {
+        if (!OnUsersMetaJson.HasDelegate) return;
+        var meta = new
+        {
+            availablePermissions = _allPermissions.Select(p => new { id = p.Id, name = p.Name }),
+            availableRoles       = _allRoles.Select(r => new { id = r.Id, name = r.Name }),
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(meta,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await OnUsersMetaJson.InvokeAsync(json);
     }
 
     private async Task HandleUserCreated(Guid newUserId)
@@ -454,6 +755,8 @@
                 new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             await JS.InvokeVoidAsync("console.log", $"[Response] {_users.Count} user(s):", json);
             await JS.InvokeVoidAsync("console.groupEnd");
+            if (OnUsersJson.HasDelegate)
+                await OnUsersJson.InvokeAsync(json);
         }
         catch (Exception ex)
         {

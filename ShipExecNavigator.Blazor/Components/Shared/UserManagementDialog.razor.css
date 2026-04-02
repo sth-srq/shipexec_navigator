@@ -11,6 +11,67 @@
     margin-bottom: 0.75rem;
 }
 
+/* ── AI find banner ─────────────────────────────────────────────────────── */
+.um-find-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: linear-gradient(135deg, #e8f0fb 0%, #dceafe 100%);
+    border: 1px solid rgba(58, 123, 213, 0.3);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    color: #2b5ea7;
+    font-weight: 500;
+}
+
+.um-find-clear-btn {
+    margin-left: auto;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    background: rgba(43, 94, 167, 0.1);
+    color: #2b5ea7;
+    border: 1px solid rgba(43, 94, 167, 0.25);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .um-find-clear-btn:hover {
+        background: rgba(43, 94, 167, 0.2);
+    }
+
+/* ── Found user row highlight ────────────────────────────────────────────── */
+.um-row--found {
+    background-color: rgba(58, 123, 213, 0.12) !important;
+    outline: 1px solid rgba(58, 123, 213, 0.35);
+}
+
+/* ── AI delete banner ───────────────────────────────────────────────────── */
+.um-delete-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.um-delete-banner--progress {
+    background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+    border: 1px solid rgba(133, 100, 4, 0.3);
+    color: #856404;
+}
+
+.um-delete-banner--error {
+    background: linear-gradient(135deg, #fff0f0 0%, #ffe0e0 100%);
+    border: 1px solid rgba(197, 48, 48, 0.3);
+    color: #c53030;
+}
+
 .um-create-user-btn {
     padding: 0.4rem 0.9rem;
     font-size: 0.8rem;

@@ -13,7 +13,7 @@ public sealed class AiChatService(
 {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
-    public async Task<string> SendMessageAsync(IReadOnlyList<ChatMessage> history, string userMessage, string? xmlContext = null, bool useRag = true, CancellationToken ct = default)
+    public async Task<string> SendMessageAsync(IReadOnlyList<ChatMessage> history, string userMessage, string? xmlContext = null, bool useRag = true, string? usersContext = null, string? userMetaContext = null, CancellationToken ct = default)
     {
         var apiKey  = configuration["AiChat:ApiKey"]  ?? string.Empty;
         var baseUrl = configuration["AiChat:BaseUrl"]  ?? "https://api.openai.com/v1/";

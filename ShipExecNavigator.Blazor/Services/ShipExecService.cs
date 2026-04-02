@@ -1079,6 +1079,14 @@ public sealed class ShipExecService(
         return Task.Run(() => _appManager.CreateUser(user));
     }
 
+    public Task DeleteUserAsync(Guid userId)
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() => _appManager.DeleteUser(userId));
+    }
+
     public Task<List<CsvUserRow>> ParseCsvAsync(string csvContent)
     {
         return Task.FromResult(CsvUserParser.Parse(csvContent));

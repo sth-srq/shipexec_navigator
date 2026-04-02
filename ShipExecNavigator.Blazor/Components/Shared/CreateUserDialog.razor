@@ -210,6 +210,7 @@
     [Parameter] public EventCallback<Guid> OnUserCreated { get; set; }
     [Parameter] public string CompanyName { get; set; } = string.Empty;
     [Parameter] public Guid CompanyId { get; set; }
+    [Parameter] public UserAddItem? Prefill { get; set; }
 
     private string _email = string.Empty;
     private string _password = string.Empty;
@@ -433,6 +434,21 @@
         if (IsVisible && !_wasVisible)
         {
             _wasVisible = true;
+            if (Prefill is not null)
+            {
+                _email                 = Prefill.Email;
+                _address.Company       = Prefill.Company;
+                _address.Contact       = Prefill.Contact;
+                _address.Address1      = Prefill.Address1;
+                _address.Address2      = Prefill.Address2;
+                _address.Address3      = Prefill.Address3;
+                _address.City          = Prefill.City;
+                _address.StateProvince = Prefill.StateProvince;
+                _address.PostalCode    = Prefill.PostalCode;
+                _address.Country       = Prefill.Country;
+                _address.Phone         = Prefill.Phone;
+                _address.Fax           = Prefill.Fax;
+            }
             await LoadRolesAndPermsAsync();
         }
         else if (!IsVisible)
