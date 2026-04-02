@@ -25,7 +25,7 @@
             </button>
             <button class="scp-btn-clear" @onclick="ClearChatAsync" title="Clear conversation"
                     disabled="@(_messages.Count == 0)">&#x1F5D1;</button>
-            <button class="scp-btn-minimize" @onclick="() => _minimized = !_minimized"
+            <button class="scp-btn-minimize" @onclick="ToggleMinimize"
                     title="@(_minimized ? "Expand chat" : "Minimise chat")">@(_minimized ? "▲" : "▼")</button>
             <button class="scp-btn-collapse" @onclick="OnToggle" title="Hide panel">&#x2715;</button>
         </div>
@@ -92,24 +92,47 @@
     private int _historyIndex = -1;
     private string _historyDraft = string.Empty;
 
+    private bool _prevVisible;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible != _prevVisible)
+        {
+            _prevVisible = IsVisible;
+            await SyncPanelHeightCssVarAsync();
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            _prevVisible = IsVisible;
             await JS.InvokeVoidAsync("initChatPanelDrag", "studio-chat-resize-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
-            await JS.InvokeVoidAsync("eval",
-                $"document.documentElement.style.setProperty('--scp-panel-height','{_panelHeight}px')");
+            await SyncPanelHeightCssVarAsync();
             await JS.InvokeVoidAsync("initChatInputHistory", "scp-textarea", DotNetObjectReference.Create(this));
         }
     }
 
     [JSInvokable]
-    public void SetPanelHeight(int height)
+    public async void SetPanelHeight(int height)
     {
         _panelHeight = Math.Clamp(height, 140, 700);
-        _ = JS.InvokeVoidAsync("eval",
-            $"document.documentElement.style.setProperty('--scp-panel-height','{_panelHeight}px')");
+        await SyncPanelHeightCssVarAsync();
         StateHasChanged();
+    }
+
+    private async Task ToggleMinimize()
+    {
+        _minimized = !_minimized;
+        await SyncPanelHeightCssVarAsync();
+    }
+
+    private async Task SyncPanelHeightCssVarAsync()
+    {
+        var effectiveHeight = (!IsVisible || _minimized) ? 0 : _panelHeight;
+        await JS.InvokeVoidAsync("eval",
+            $"document.documentElement.style.setProperty('--scp-panel-height','{effectiveHeight}px')");
     }
 
     private async Task SendAsync()

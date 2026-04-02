@@ -7,7 +7,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 200px;
-    max-height: calc(100dvh - 220px);
+    max-height: calc(100dvh - var(--scp-panel-height, 0px) - 220px);
     overflow: hidden;
     box-shadow: 0 3px 16px rgba(43,63,107,0.08);
 }
@@ -647,7 +647,7 @@
     flex: 1;
     padding: 0.75rem 1rem;
     background-color: #ffffff;
-    max-height: calc(100dvh - var(--scp-panel-height, 280px) - 270px);
+    max-height: calc(100dvh - var(--scp-panel-height, 0px) - 270px);
     min-height: 200px;
 }
 
@@ -815,7 +815,7 @@
     overflow-y: auto;
     flex: 1;
     min-height: 200px;
-    max-height: calc(100dvh - 220px);
+    max-height: calc(100dvh - var(--scp-panel-height, 0px) - 220px);
     box-shadow: 0 3px 16px rgba(43,63,107,0.08);
 }
 
@@ -828,7 +828,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 200px;
-    max-height: calc(100dvh - 220px);
+    max-height: calc(100dvh - var(--scp-panel-height, 0px) - 220px);
     overflow: hidden;
     box-shadow: 0 3px 16px rgba(43,63,107,0.08);
 }
