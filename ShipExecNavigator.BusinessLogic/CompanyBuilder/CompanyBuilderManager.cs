@@ -1,7 +1,9 @@
 using PSI.Sox;
 using PSI.Sox.Wcf;
 using PSI.Sox.Wcf.Administration;
+using Microsoft.Extensions.Logging;
 using ShipExecNavigator.BusinessLogic.EntityComparison;
+using ShipExecNavigator.BusinessLogic.Logging;
 using ShipExecNavigator.BusinessLogic.RequestGeneration;
 using ShipExecNavigator.BusinessLogic.Tools;
 using System;
@@ -14,44 +16,68 @@ using System.Threading.Tasks;
 
 namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
 {
+    /// <summary>
+    /// Orchestrates entity-level diff detection and API request generation for a single company.
+    /// <para>
+    /// <see cref="CompanyBuilderManager"/> sits between <see cref="AppManager"/> and the
+    /// individual per-entity request generators (e.g. <c>ShipperRequestGenerator</c>).
+    /// Its two primary responsibilities are:
+    /// </para>
+    /// <list type="number">
+    ///   <item>
+    ///     <term>Variance detection</term>
+    ///     <description>
+    ///       <see cref="GetVariances"/> compares two fully-hydrated <c>Company</c> object graphs
+    ///       (before / after editing) across all entity collections — Shippers, Clients,
+    ///       Profiles, Sites (including nested site-level entities), AdapterRegistrations,
+    ///       CarrierRoutes, DataConfigurationMappings, DocumentConfigurations, Machines,
+    ///       PrinterConfigurations, PrinterDefinitions, ScaleConfigurations, Schedules,
+    ///       SourceConfigurations, and top-level company properties.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term>Request generation &amp; application</term>
+    ///     <description>
+    ///       <see cref="GetRequests"/> converts each <see cref="Variance"/> into a typed
+    ///       HTTP request payload (<see cref="RequestBaseWithURL"/>).
+    ///       <see cref="ApplyRequests"/> executes those requests against the live
+    ///       Management Studio API and returns per-request success/failure responses.
+    ///     </description>
+    ///   </item>
+    /// </list>
+    /// <para>
+    /// One <see cref="CompanyBuilderManager"/> instance is created per diff/apply cycle inside
+    /// <see cref="AppManager.GetVariancesAndRequests"/> and <see cref="AppManager.ApplyChanges"/>.
+    /// It is not reused across requests.
+    /// </para>
+    /// </summary>
     public class CompanyBuilderManager
     {
+        private readonly ILogger<CompanyBuilderManager> _logger = LoggerProvider.CreateLogger<CompanyBuilderManager>();
+
+        // ── Per-entity request generators ────────────────────────────────────────
+        // Each generator encapsulates the CRUD endpoints for one PSI.Sox entity type.
         private ClientRequestGenerator _clientRequestGenerator { get; set; }
-
         private ShipperRequestGenerator _shipperRequestGenerator { get; set; }
-
         private AdapterRegistrationRequestGenerator _adapterRegistrationRequestGenerator { get; set; }
-
         private CarrierRouteRequestGenerator _carrierRouteRequestGenerator { get; set; }
-
         private DataConfigurationMappingRequestGenerator _dataConfigurationMappingRequestGenerator { get; set; }
-
         private DocumentConfigurationRequestGenerator _documentConfigurationRequestGenerator { get; set; }
-
         private MachineRequestGenerator _machineRequestGenerator { get; set; }
-
         private PrinterConfigurationRequestGenerator _printerConfigurationRequestGenerator { get; set; }
-
         private PrinterDefinitionRequestGenerator _printerDefinitionRequestGenerator { get; set; }
-
         private ProfileRequestGenerator _profileRequestGenerator { get; set; }
-
         private ScaleConfigurationRequestGenerator _scaleConfigurationRequestGenerator { get; set; }
-
         private ScheduleRequestGenerator _scheduleRequestGenerator { get; set; }
-
         private SourceConfigurationRequestGenerator _sourceConfigurationRequestGenerator { get; set; }
-
         private SiteRequestGenerator _siteRequestGenerator { get; set; }
-
         private CompanyRequestGenerator _companyRequestGenerator { get; set; }
 
         private Guid _companyGuid { get; set; }
-
         private string _jwt { get; set; }
-
         private string _adminUrl { get; set; }
 
+        /// <summary>The in-progress company being built or compared.</summary>
         private Company _company { get; set; }
 
         public CompanyBuilderManager(String adminUrl, Guid companyGuid, string jwt)
@@ -87,6 +113,7 @@ namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
 
         public List<Variance> GetVariances(Company existingCompany, Company modifiedCompany)
         {
+            _logger.LogTrace(">> GetVariances");
             var result = new List<Variance>();
 
             result.AddRange(_clientRequestGenerator.GetVariances(existingCompany.Clients, modifiedCompany.Clients));
@@ -148,12 +175,14 @@ namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
                 }
             }
 
+            _logger.LogTrace("<< GetVariances → {Count} variances", result.Count);
             return result;
         }
 
 
         public List<RequestBaseWithURL> GetRequests(Company existingCompany, List<Variance> variances)
         {
+            _logger.LogTrace(">> GetRequests | VarianceCount={Count}", variances?.Count ?? 0);
             var result = new List<RequestBaseWithURL>();
             
             result.AddRange(_clientRequestGenerator.GetScripts(variances.Where(x => x.EntityName == "Client").ToList(), existingCompany.Clients));
@@ -189,12 +218,14 @@ namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
                 });
             }
 
+            _logger.LogTrace("<< GetRequests → {Count} requests", result.Count);
             return result;
         }
 
 
         public List<ResponseBase> ApplyRequests(List<RequestBaseWithURL> requests)
         {
+            _logger.LogTrace(">> ApplyRequests | RequestCount={Count}", requests?.Count ?? 0);
             var result = new List<ResponseBase>();
 
 
@@ -463,6 +494,7 @@ namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
                     result.Add(_companyRequestGenerator.Update(ucr.Company));
             }
 
+            _logger.LogTrace("<< ApplyRequests → {Count} responses", result.Count);
             return result;
         }
 

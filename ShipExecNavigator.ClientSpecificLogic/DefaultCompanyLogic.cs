@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using PSI.Sox;
+using ShipExecNavigator.ClientSpecificLogic.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,25 +9,38 @@ namespace ShipExecNavigator.ClientSpecificLogic
 {
     public class DefaultCompanyLogic : IClientSpecificLogic
     {
+        private readonly ILogger<DefaultCompanyLogic> _logger = LoggerProvider.CreateLogger<DefaultCompanyLogic>();
+
         public Shipper? FindMatchingShipper(List<Shipper> existing, Shipper incoming)
         {
+            _logger.LogTrace(">> FindMatchingShipper | Incoming={Symbol} ExistingCount={Count}",
+                incoming.Symbol, existing.Count);
+            Shipper? result = null;
             if (incoming.Id != 0)
             {
-                var byId = existing.FirstOrDefault(e => e.Id == incoming.Id);
-                if (byId is not null) return byId;
+                result = existing.FirstOrDefault(e => e.Id == incoming.Id);
+                if (result is not null) { _logger.LogTrace("<< FindMatchingShipper → matched by Id"); return result; }
             }
 
             if (!string.IsNullOrEmpty(incoming.Symbol))
-            {
-                return existing.FirstOrDefault(e =>
+                result = existing.FirstOrDefault(e =>
                     string.Equals(e.Symbol, incoming.Symbol, StringComparison.OrdinalIgnoreCase));
-            }
 
-            return null;
+            _logger.LogTrace("<< FindMatchingShipper → {Result}",
+                result is not null ? result.Symbol : "null");
+            return result;
         }
 
-        public IReadOnlyList<string> GetShipperExportExtraHeaders() => [];
+        public IReadOnlyList<string> GetShipperExportExtraHeaders()
+        {
+            _logger.LogTrace(">> GetShipperExportExtraHeaders");
+            return [];
+        }
 
-        public IReadOnlyList<string> GetShipperExportExtraValues(Shipper shipper) => [];
+        public IReadOnlyList<string> GetShipperExportExtraValues(Shipper shipper)
+        {
+            _logger.LogTrace(">> GetShipperExportExtraValues | Shipper={Symbol}", shipper.Symbol);
+            return [];
+        }
     }
 }

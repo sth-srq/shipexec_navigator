@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Embeddings;
 using Qdrant.Client;
@@ -7,19 +8,16 @@ using ShipExecNavigator.Shared.Interfaces;
 
 namespace ShipExecNavigator.SK;
 
-/// <summary>
-/// Encodes a query with Azure OpenAI text-embedding-ada-002 and retrieves
-/// the top-K matching document chunks from Qdrant.
-/// Returns an empty list (gracefully) when Qdrant is unavailable.
-/// </summary>
 public sealed class QdrantSearchService : IVectorSearchService, IDisposable
 {
     private readonly QdrantClient _qdrant;
     private readonly ITextEmbeddingGenerationService _embeddings;
     private readonly string _collection;
+    private readonly ILogger<QdrantSearchService> _logger;
 
-    public QdrantSearchService(IConfiguration configuration)
+    public QdrantSearchService(IConfiguration configuration, ILogger<QdrantSearchService> logger)
     {
+        _logger = logger;
         var endpoint         = configuration["AzureOpenAI:Endpoint"]           ?? string.Empty;
         var apiKey           = configuration["AzureOpenAI:ApiKey"]              ?? string.Empty;
         var embeddingModel   = configuration["AzureOpenAI:EmbeddingDeployment"] ?? "text-embedding-ada-002";
@@ -42,6 +40,8 @@ public sealed class QdrantSearchService : IVectorSearchService, IDisposable
     public async Task<IReadOnlyList<string>> SearchAsync(
         string query, int topK = 5, CancellationToken ct = default)
     {
+        _logger.LogTrace(">> SearchAsync(Qdrant) | Query={Query} TopK={TopK} Collection={Collection}",
+            query.Length > 100 ? query[..100] : query, topK, _collection);
         try
         {
             var embedding = await _embeddings.GenerateEmbeddingAsync(query, cancellationToken: ct);

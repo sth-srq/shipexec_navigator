@@ -15,6 +15,7 @@
     <File Path="Docs/Logon/passwordpage.html" />
   </Folder>
   <Folder Name="/Downloads/">
+    <File Path="Docs/LogViewer.html" />
     <File Path="Downloads/ShipExecSupportClientChecker.html" />
   </Folder>
   <Folder Name="/RAGDocuments/" />
@@ -24,6 +25,7 @@
     <File Path="References/PSI.Sox.Wcf.dll" />
   </Folder>
   <Project Path="ShipExecNavigator.AppLogic/ShipExecNavigator.AppLogic.csproj" />
+  <Project Path="ShipExecNavigator.Blazor/ShipExecNavigator.Blazor.csproj" />
   <Project Path="ShipExecNavigator.BusinessLogic/ShipExecNavigator.BusinessLogic.csproj" Id="a6c2d097-1a30-488c-b95d-91514c3d1238" />
   <Project Path="ShipExecNavigator.ClientSpecificLogic/ShipExecNavigator.ClientSpecificLogic.csproj" Id="5d6f584e-cfd3-487b-bb3a-28bcd979df6d" />
   <Project Path="ShipExecNavigator.DAL/ShipExecNavigator.DAL.csproj" />
@@ -32,5 +34,5 @@
   <Project Path="ShipExecNavigator.RAGLoader/ShipExecNavigator.RAGLoader.csproj" />
   <Project Path="ShipExecNavigator.Shared/ShipExecNavigator.Shared.csproj" />
   <Project Path="ShipExecNavigator.SK/ShipExecNavigator.SK.csproj" />
-  <Project Path="ShipExecNavigator/ShipExecNavigator.csproj" />
+  <Project Path="ShipExecNavigator.Tests/ShipExecNavigator.Tests.csproj" />
 </Solution>

@@ -1,16 +1,43 @@
 using Dapper;
+using Microsoft.Extensions.Logging;
 using ShipExecNavigator.DAL.Entities;
 
 namespace ShipExecNavigator.DAL.Managers;
 
-public class VarianceManager(IDbConnectionFactory connectionFactory)
+/// <summary>
+/// Data-access manager for the <c>dbo.Variances</c> table — the audit log that records
+/// every entity change applied through ShipExec Navigator.
+/// <para>
+/// Each row in <c>dbo.Variances</c> corresponds to one entity change within a single
+/// "apply" operation.  Related changes are grouped by a shared <c>BatchId</c> GUID so
+/// the full set of changes from one "Apply" button click can be queried together.
+/// </para>
+/// <para>
+/// <b>Key columns:</b>
+/// <list type="table">
+///   <listheader><term>Column</term><description>Purpose</description></listheader>
+///   <item><term>BatchId</term><description>Groups all changes from a single apply operation.</description></item>
+///   <item><term>CompanyId</term><description>Target company GUID.</description></item>
+///   <item><term>OriginalEntity / NewEntity</term><description>JSON snapshots for before/after comparison.</description></item>
+///   <item><term>VarianceData</term><description>Full serialised <c>Variance</c> object for deep inspection.</description></item>
+///   <item><term>IsActive</term><description>Soft-delete flag; <see cref="DeactivateAsync"/> sets it to 0.</description></item>
+/// </list>
+/// </para>
+/// <para>
+/// All queries use Dapper with parameterised SQL to prevent injection.
+/// </para>
+/// </summary>
+public class VarianceManager(IDbConnectionFactory connectionFactory, ILogger<VarianceManager> logger)
 {
     public async Task<Variance?> GetByIdAsync(long id)
     {
+        logger.LogTrace(">> GetByIdAsync({Id})", id);
         using var conn = connectionFactory.CreateConnection();
-        return await conn.QuerySingleOrDefaultAsync<Variance>(
+        var result = await conn.QuerySingleOrDefaultAsync<Variance>(
             "SELECT * FROM dbo.Variances WHERE Id = @Id",
             new { Id = id });
+        logger.LogTrace("<< GetByIdAsync → {Found}", result is not null ? "found" : "null");
+        return result;
     }
 
     public async Task<IEnumerable<Variance>> GetAllAsync()
@@ -38,6 +65,8 @@ public class VarianceManager(IDbConnectionFactory connectionFactory)
 
     public async Task<long> InsertAsync(Variance variance)
     {
+        logger.LogTrace(">> InsertAsync | BatchId={BatchId} CompanyId={CompanyId}",
+            variance.BatchId, variance.CompanyId);
         variance.CreatedOn = DateTime.UtcNow;
         variance.IsActive  = true;
 

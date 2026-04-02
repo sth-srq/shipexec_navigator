@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ShipExecNavigator.Shared\ShipExecNavigator.Shared.csproj" />
+    <ProjectReference Include="..\ShipExecNavigator.BusinessLogic\ShipExecNavigator.BusinessLogic.csproj" />
+    <ProjectReference Include="..\ShipExecNavigator.ClientSpecificLogic\ShipExecNavigator.ClientSpecificLogic.csproj" />
+    <ProjectReference Include="..\ShipExecNavigator.DAL\ShipExecNavigator.DAL.csproj" />
+    <ProjectReference Include="..\ShipExecNavigator.Model\ShipExecNavigator.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PSI.Sox">
+      <HintPath>..\References\PSI.Sox.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

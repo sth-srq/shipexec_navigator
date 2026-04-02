@@ -1,9 +1,10 @@
 using Dapper;
+using Microsoft.Extensions.Logging;
 using ShipExecNavigator.DAL.Entities;
 
 namespace ShipExecNavigator.DAL.Managers;
 
-public class TemplateManager(IDbConnectionFactory connectionFactory)
+public class TemplateManager(IDbConnectionFactory connectionFactory, ILogger<TemplateManager> logger)
 {
     public async Task<CompanyTemplate?> GetByIdAsync(long id)
     {
@@ -45,6 +46,8 @@ public class TemplateManager(IDbConnectionFactory connectionFactory)
     /// </summary>
     public async Task<long> UpsertAsync(CompanyTemplate template)
     {
+        logger.LogTrace(">> UpsertAsync | CompanyId={CompanyId} TemplateId={TemplateId}",
+            template.CompanyId, template.TemplateId);
         template.FetchedOn = DateTime.UtcNow;
 
         using var conn = connectionFactory.CreateConnection();

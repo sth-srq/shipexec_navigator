@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using PSI.Sox;
+using ShipExecNavigator.ClientSpecificLogic.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,44 +10,47 @@ namespace ShipExecNavigator.ClientSpecificLogic
 {
     public class WesbancoClientSpecificLogic : IClientSpecificLogic
     {
-        /// <summary>
-        /// Matches an incoming shipper to an existing one by extracting the identifier
-        /// in parentheses from the incoming name — e.g. "(429739)" — and finding an
-        /// existing shipper whose Name contains that same text.
-        /// Example: incoming "North ILLINOIS Street 140 (429739)" matches
-        ///          existing "10201 N ILLINOIS ST 140  (429739)".
-        /// </summary>
+        private readonly ILogger<WesbancoClientSpecificLogic> _logger =
+            LoggerProvider.CreateLogger<WesbancoClientSpecificLogic>();
+
         public Shipper? FindMatchingShipper(List<Shipper> existing, Shipper incoming)
         {
-            if (string.IsNullOrWhiteSpace(incoming.Name)) return null;
+            _logger.LogTrace(">> FindMatchingShipper | Incoming={Name}", incoming.Name);
+            if (string.IsNullOrWhiteSpace(incoming.Name)) { _logger.LogTrace("<< FindMatchingShipper → null (no name)"); return null; }
 
             var m = Regex.Match(incoming.Name, @"\(([^)]+)\)");
-            if (!m.Success) return null;
+            if (!m.Success) { _logger.LogTrace("<< FindMatchingShipper → null (no key in parens)"); return null; }
 
             var key = m.Groups[1].Value.Trim();
-            if (string.IsNullOrWhiteSpace(key)) return null;
+            if (string.IsNullOrWhiteSpace(key)) { _logger.LogTrace("<< FindMatchingShipper → null (empty key)"); return null; }
 
-            return existing.FirstOrDefault(e =>
+            var result = existing.FirstOrDefault(e =>
                 !string.IsNullOrEmpty(e.Name) &&
                 e.Name.IndexOf(key, StringComparison.OrdinalIgnoreCase) >= 0);
+            _logger.LogTrace("<< FindMatchingShipper → {Result}", result?.Name ?? "null");
+            return result;
         }
 
-        /// <summary>
-        /// Adds a <c>BankId</c> column to the shipper export containing the identifier
-        /// extracted from the parenthesised portion of each shipper's name
-        /// (e.g. "10201 N ILLINOIS ST 140  (429739)" → "429739").
-        /// </summary>
-        public IReadOnlyList<string> GetShipperExportExtraHeaders() => ["BankId"];
+        public IReadOnlyList<string> GetShipperExportExtraHeaders()
+        {
+            _logger.LogTrace(">> GetShipperExportExtraHeaders → [BankId]");
+            return ["BankId"];
+        }
 
         public IReadOnlyList<string> GetShipperExportExtraValues(Shipper shipper)
         {
+            _logger.LogTrace(">> GetShipperExportExtraValues | Shipper={Name}", shipper.Name);
             if (!string.IsNullOrEmpty(shipper.Name))
             {
                 var m = Regex.Match(shipper.Name, @"\(([^)]+)\)");
                 if (m.Success)
-                    return [m.Groups[1].Value.Trim()];
+                {
+                    var val = m.Groups[1].Value.Trim();
+                    _logger.LogTrace("<< GetShipperExportExtraValues → {Val}", val);
+                    return [val];
+                }
             }
-
+            _logger.LogTrace("<< GetShipperExportExtraValues → (empty)");
             return [string.Empty];
         }
     }
