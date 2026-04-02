@@ -8,7 +8,6 @@
     <File Path="Docs/UserTemplate.csv" />
     <File Path="Docs/UserTemplateWithValues.csv" />
     <File Path="Docs/WesbancoExport.xml" />
-    <File Path="Docs/WesbancoInc_17397359-aac5-4991-b858-d27f7c096314_20260320154656_461556.xml" />
   </Folder>
   <Folder Name="/Docs/Logon/">
     <File Path="Docs/Logon/loginpage.html" />
@@ -16,6 +15,7 @@
   </Folder>
   <Folder Name="/Downloads/">
     <File Path="Docs/LogViewer.html" />
+    <File Path="Downloads/shipexec-code_standards-se2.zip" />
     <File Path="Downloads/ShipExecSupportClientChecker.html" />
   </Folder>
   <Folder Name="/RAGDocuments/" />
