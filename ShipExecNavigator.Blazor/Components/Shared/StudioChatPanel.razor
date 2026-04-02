@@ -79,6 +79,7 @@
     [Parameter] public EventCallback OnToggle { get; set; }
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public XmlNodeViewModel? XmlRoot { get; set; }
+    [Parameter] public EventCallback<List<ShipperDeleteItem>> OnDeleteShippers { get; set; }
 
     private readonly List<ChatMessage> _messages = [];
     private readonly List<string> _inputHistory = [];
@@ -93,13 +94,15 @@
     private string _historyDraft = string.Empty;
 
     private bool _prevVisible;
+    private bool _hasRendered;
 
     protected override async Task OnParametersSetAsync()
     {
         if (IsVisible != _prevVisible)
         {
             _prevVisible = IsVisible;
-            await SyncPanelHeightCssVarAsync();
+            if (_hasRendered)
+                await SyncPanelHeightCssVarAsync();
         }
     }
 
@@ -107,6 +110,7 @@
     {
         if (firstRender)
         {
+            _hasRendered = true;
             _prevVisible = IsVisible;
             await JS.InvokeVoidAsync("initChatPanelDrag", "studio-chat-resize-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
             await SyncPanelHeightCssVarAsync();
@@ -253,6 +257,14 @@
 
     private async Task TryExecuteJsFromResponseAsync(string response)
     {
+        // Handle shipper-delete blocks first
+        var deleteItems = ExtractShipperDelete(response);
+        if (deleteItems is { Count: > 0 })
+        {
+            await OnDeleteShippers.InvokeAsync(deleteItems);
+            return;
+        }
+
         var jsCode = ExtractJavaScript(response);
         if (jsCode is null) return;
         try
@@ -262,6 +274,22 @@
                 _undoIds.AddRange(ids);
         }
         catch { /* execution errors are non-fatal */ }
+    }
+
+    private static List<ShipperDeleteItem>? ExtractShipperDelete(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```shipper-delete\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<ShipperDeleteItem>>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
     }
 
     private static string? ExtractJavaScript(string response)

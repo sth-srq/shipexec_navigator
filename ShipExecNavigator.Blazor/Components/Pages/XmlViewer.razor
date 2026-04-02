@@ -420,7 +420,7 @@
     }
 
     @* ── Studio chat panel ── *@
-    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" />
+    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" />
 
 </div>
 
@@ -903,6 +903,106 @@
         _version++;
     }
 
+    private void HandleAiShipperDeletions(List<ShipperDeleteItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+        var shippersNode = rootNode.Children
+            .FirstOrDefault(c => c.NodeName.Equals("Shippers", StringComparison.OrdinalIgnoreCase));
+        if (shippersNode is null) return;
+
+        var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+        foreach (var item in items)
+        {
+            // Find the shipper tree node by symbol first, fall back to name
+            var shipperNode = shippersNode.Children.FirstOrDefault(c =>
+                c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase) &&
+                c.Children.Any(gc =>
+                    gc.NodeName.Equals("Symbol", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(gc.NodeValue, item.Symbol, StringComparison.OrdinalIgnoreCase)));
+
+            if (shipperNode is null && !string.IsNullOrEmpty(item.Name))
+            {
+                shipperNode = shippersNode.Children.FirstOrDefault(c =>
+                    c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase) &&
+                    c.Children.Any(gc =>
+                        gc.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(gc.NodeValue, item.Name, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            if (shipperNode is null) continue;
+
+            // Build a PSI.Sox.Shipper from the tree node fields
+            var shipper = BuildShipperFromTreeNode(shipperNode);
+
+            // Create variance for the pending deletion
+            var deleteVariance = new Variance
+            {
+                EntityName     = "Shipper",
+                OriginalObject = shipper,
+                IsRemove       = true,
+                CompanyId      = shipper.CompanyId
+            };
+            _pendingShipperVariances.Add(deleteVariance);
+
+            // Create a display variance entry
+            var removePath = $"Shippers \u203a {shipper.Symbol}";
+            var parentId = shippersNode.Id;
+            var snapshotIndex = shippersNode.Children.IndexOf(shipperNode);
+
+            _varianceEntries.Insert(0, new Variance
+            {
+                NodeId           = parentId,
+                PathDescription  = removePath,
+                Description      = $"AI Delete: {shipper.Name}",
+                ChangeType       = "Removed",
+                SnapshotNode     = shipperNode,
+                SnapshotParentId = parentId,
+                SnapshotIndex    = snapshotIndex,
+                OriginalXML      = System.Text.Json.JsonSerializer.Serialize(shipper, opts),
+            });
+
+            // Remove from the tree
+            XmlViewerService.RemoveNode(shipperNode);
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static PSI.Sox.Shipper BuildShipperFromTreeNode(XmlNodeViewModel shipperNode)
+    {
+        string? Field(string name) =>
+            shipperNode.Children
+                .FirstOrDefault(c => c.NodeName.Equals(name, StringComparison.OrdinalIgnoreCase))
+                ?.NodeValue;
+
+        var shipper = new PSI.Sox.Shipper();
+        if (int.TryParse(Field("Id"), out var id)) shipper.Id = id;
+        shipper.Symbol        = Field("Symbol");
+        shipper.Name          = Field("Name");
+        shipper.Code          = Field("Code");
+        shipper.Address1      = Field("Address1");
+        shipper.Address2      = Field("Address2");
+        shipper.Address3      = Field("Address3");
+        shipper.City          = Field("City");
+        shipper.StateProvince = Field("StateProvince");
+        shipper.PostalCode    = Field("PostalCode");
+        shipper.Country       = Field("Country");
+        shipper.Company       = Field("Company");
+        shipper.Contact       = Field("Contact");
+        shipper.Phone         = Field("Phone");
+        shipper.Fax           = Field("Fax");
+        shipper.Email         = Field("Email");
+        shipper.Sms           = Field("Sms");
+        if (Guid.TryParse(Field("CompanyId"), out var companyId)) shipper.CompanyId = companyId;
+        if (Guid.TryParse(Field("SiteId"), out var siteId)) shipper.SiteId = siteId;
+        if (bool.TryParse(Field("PoBox"), out var poBox)) shipper.PoBox = poBox;
+        if (bool.TryParse(Field("Residential"), out var res)) shipper.Residential = res;
+        return shipper;
+    }
+
     private void ApplyShipperToTree(Variance v)
     {
         if (rootNode is null || v.NewObject is not PSI.Sox.Shipper shipper) return;
@@ -1085,23 +1185,36 @@
                 // Register the pending shipper variances into _lastVariances so that
                 // ApplyChangesAsync(selectedIndices) can look them up by index.
                 var pendingList = _pendingShipperVariances
-                    .Where(v => v.NewObject is PSI.Sox.Shipper)
+                    .Where(v => v.NewObject is PSI.Sox.Shipper || (v.IsRemove && v.OriginalObject is PSI.Sox.Shipper))
                     .ToList();
                 var startIndex = ShipExecService.AppendPendingVariances(pendingList);
 
                 foreach (var (v, offset) in pendingList.Select((v, i) => (v, i)))
                 {
-                    if (v.NewObject is not PSI.Sox.Shipper incoming) continue;
-                    _diffResult.Variances.Add(new VarianceInfo
+                    if (v.IsRemove && v.OriginalObject is PSI.Sox.Shipper removedShipper)
                     {
-                        VarianceIndex = startIndex + offset,
-                        EntityName    = "Shipper",
-                        ChangeType    = v.IsAdd ? "Add" : "Update",
-                        OriginalXML   = v.OriginalObject is PSI.Sox.Shipper orig
-                            ? System.Text.Json.JsonSerializer.Serialize(orig, opts)
-                            : string.Empty,
-                        NewXML        = System.Text.Json.JsonSerializer.Serialize(incoming, opts),
-                    });
+                        _diffResult.Variances.Add(new VarianceInfo
+                        {
+                            VarianceIndex = startIndex + offset,
+                            EntityName    = "Shipper",
+                            ChangeType    = "Remove",
+                            OriginalXML   = System.Text.Json.JsonSerializer.Serialize(removedShipper, opts),
+                            NewXML        = string.Empty,
+                        });
+                    }
+                    else if (v.NewObject is PSI.Sox.Shipper incoming)
+                    {
+                        _diffResult.Variances.Add(new VarianceInfo
+                        {
+                            VarianceIndex = startIndex + offset,
+                            EntityName    = "Shipper",
+                            ChangeType    = v.IsAdd ? "Add" : "Update",
+                            OriginalXML   = v.OriginalObject is PSI.Sox.Shipper orig
+                                ? System.Text.Json.JsonSerializer.Serialize(orig, opts)
+                                : string.Empty,
+                            NewXML        = System.Text.Json.JsonSerializer.Serialize(incoming, opts),
+                        });
+                    }
                 }
             }
 

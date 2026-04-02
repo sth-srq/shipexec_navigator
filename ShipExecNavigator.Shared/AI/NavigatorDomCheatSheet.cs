@@ -241,6 +241,26 @@ public static class NavigatorDomCheatSheet
         6. Always place `debugger;` as the very first statement inside the function body.
         7. Functions must be named (not arrow / IIFE) so the runner can call them by name.
         8. Return nothing — side-effects on `style.display` are automatically tracked for Undo.
+
+        ---
+        ### Deleting shippers (model-level removal)
+        When the user asks to **delete** or **remove** shippers (not just hide), call the
+        `delete_shippers` plugin function. It returns a JSON list of all shippers with
+        `id`, `symbol`, and `name`. Filter the list to match the user's condition, then
+        respond with a ```shipper-delete code block containing ONLY the matching entries
+        as a JSON array. Example:
+
+        ```shipper-delete
+        [
+          { "id": "123", "symbol": "TST", "name": "Test Shipper" }
+        ]
+        ```
+
+        The Navigator will remove those shippers from the XML tree, create trackable
+        variance entries (visible in the Variance panel), and stage them as pending
+        Remove operations that can be pushed to the live server via "View Changes".
+        Do NOT include JavaScript when performing a deletion — the ```shipper-delete
+        block is all that is needed.
         ---
         """;
 }

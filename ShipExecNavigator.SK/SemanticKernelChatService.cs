@@ -108,7 +108,14 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "After receiving the plugin result always respond with exactly two sections:\n" +
                 "1. **Reasoning:** Explain which items were found and why they match the criteria.\n" +
                 "2. **JavaScript Method:** Provide a self-contained JavaScript function the user " +
-                "can paste into the browser console to hide those elements in the Navigator tree view.\n" +
+                "can paste into the browser console to hide those elements in the Navigator tree view.\n\n" +
+                "**Deleting shippers:** When the user asks to DELETE or REMOVE shippers (not just hide), " +
+                "call the `delete_shippers` function. After receiving the shipper list, filter it to match " +
+                "the user's condition, then respond with:\n" +
+                "1. **Reasoning:** Explain which shippers matched and will be deleted.\n" +
+                "2. A ```shipper-delete code block containing a JSON array of the matching entries " +
+                "(each object must have `id`, `symbol`, and `name` string fields, exactly as returned by the plugin). " +
+                "Do NOT include any JavaScript for deletion — the Navigator will process the shipper-delete block directly.\n" +
                 NavigatorDomCheatSheet.Content;
 
         var kernel = Kernel.CreateBuilder()
