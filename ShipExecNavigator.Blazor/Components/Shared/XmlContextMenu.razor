@@ -1,0 +1,58 @@
+@using ShipExecNavigator.Shared.Models
+
+@if (IsVisible && Node is not null)
+{
+    <div class="ctx-backdrop" @onclick="HandleClose"></div>
+
+    <div class="ctx-menu" style="left:@(X)px; top:@(Y)px" @onclick:stopPropagation>
+
+        <button class="ctx-item" @onclick="HandleAdd">
+            <span class="ctx-icon">&#xFF0B;</span>
+            Add
+        </button>
+
+        <div class="ctx-sep"></div>
+
+        <button class="ctx-item" @onclick="HandleCopy">
+            <span class="ctx-icon">&#x2398;</span>
+            Copy
+        </button>
+
+        @if (CanPaste)
+        {
+            <button class="ctx-item" @onclick="HandlePaste">
+                <span class="ctx-icon">&#x2399;</span>
+                Paste
+            </button>
+        }
+
+        @if (Node.Parent is not null)
+        {
+            <div class="ctx-sep"></div>
+
+            <button class="ctx-item ctx-item--danger" @onclick="HandleDelete">
+                <span class="ctx-icon">&#x2715;</span>
+                Delete
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public XmlNodeViewModel? Node { get; set; }
+    [Parameter] public double X { get; set; }
+    [Parameter] public double Y { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public bool CanPaste { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<XmlNodeViewModel> OnAdd { get; set; }
+    [Parameter] public EventCallback<XmlNodeViewModel> OnRemove { get; set; }
+    [Parameter] public EventCallback<XmlNodeViewModel> OnCopy { get; set; }
+    [Parameter] public EventCallback<XmlNodeViewModel> OnPaste { get; set; }
+
+    private Task HandleClose() => OnClose.InvokeAsync();
+    private Task HandleAdd() => OnAdd.InvokeAsync(Node);
+    private Task HandleCopy() => OnCopy.InvokeAsync(Node);
+    private Task HandlePaste() => OnPaste.InvokeAsync(Node);
+    private Task HandleDelete() => OnRemove.InvokeAsync(Node);
+}

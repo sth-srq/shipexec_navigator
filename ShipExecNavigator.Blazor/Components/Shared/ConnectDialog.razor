@@ -1,0 +1,193 @@
+@inject IShipExecService ShipExecService
+@inject IJSRuntime JS
+
+@if (IsVisible)
+{
+    <div class="connect-backdrop" @onclick="HandleClose">
+        <div class="connect-dlg" @onclick:stopPropagation>
+
+            <div class="dlg-header">
+                <div class="dlg-title">&#x1F517; Connect to ShipExec</div>
+                <button class="dlg-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            <div class="dlg-body">
+
+                @if (_phase == Phase.Credentials)
+                {
+                    <div class="dlg-field">
+                        <label class="dlg-label">Admin URL</label>
+                        <input class="dlg-input" @bind="_adminUrl" @bind:event="oninput" />
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">JWT JSON</label>
+                        <textarea class="dlg-input connect-jwt" @bind="_jwtJson"
+                                  @bind:event="oninput"
+                                  placeholder='{"access_token":"...","refresh_token":"...",...}'></textarea>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="connect-error">&#9888; @_errorMessage</div>
+                    }
+
+                    <div class="dlg-footer">
+                        <button class="connect-btn-primary" @onclick="ConnectAsync"
+                                disabled="@(string.IsNullOrWhiteSpace(_jwtJson) || _isBusy)">
+                            @if (_isBusy)
+                            {
+                                <span class="connect-spinner"></span>
+                            }
+                            Connect
+                        </button>
+                    </div>
+                }
+                else if (_phase == Phase.SelectCompany)
+                {
+                    <div class="dlg-field">
+                        <label class="dlg-label">Select Company</label>
+                        <select class="dlg-input" @bind="_selectedIndex">
+                            <option value="-1">— select a company —</option>
+                            @for (int i = 0; i < _companies.Count; i++)
+                            {
+                                var idx = i;
+                                <option value="@idx">@_companies[idx].DisplayName</option>
+                            }
+                        </select>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="connect-error">&#9888; @_errorMessage</div>
+                    }
+
+                    <div class="dlg-footer">
+                        <button class="connect-btn-secondary" @onclick="GoBack" disabled="@_isBusy">
+                            &#x2190; Back
+                        </button>
+                        <button class="connect-btn-primary" @onclick="LoadCompanyAsync"
+                                disabled="@(_selectedIndex < 0 || _isBusy)">
+                            @if (_isBusy)
+                            {
+                                <span class="connect-spinner"></span>
+                            }
+                            Load Company
+                        </button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<(Guid Id, string Name)> OnCompanyConnected { get; set; }
+
+    private enum Phase { Credentials, SelectCompany }
+    private Phase _phase = Phase.Credentials;
+
+    private string _adminUrl  = "https://BLACKBOX23/ShipExecManagementStudioApi/api/AdministrationService/";
+    private string _jwtJson   = string.Empty;
+    private List<CompanyInfo> _companies = [];
+    private int _selectedIndex = -1;
+    private bool _isBusy;
+    private string _errorMessage = string.Empty;
+    private bool _autoConnectFired;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (DebugConfig.AutoConnect && IsVisible && !_autoConnectFired)
+        {
+            _autoConnectFired = true;
+            _adminUrl = DebugConfig.AdminUrl;
+            _jwtJson  = DebugConfig.JwtToken;
+            if (!string.IsNullOrWhiteSpace(_jwtJson))
+                await ConnectAsync();
+        }
+    }
+
+    private async Task ConnectAsync()
+    {
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            _companies = await ShipExecService.GetCompaniesAsync(_jwtJson, _adminUrl);
+            if (_companies.Count == 0)
+            {
+                _errorMessage = "No companies returned.";
+                return;
+            }
+            _selectedIndex = -1;
+            _phase = Phase.SelectCompany;
+
+            if (DebugConfig.AutoConnect)
+                await AutoSelectCompanyAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Connection failed: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task LoadCompanyAsync()
+    {
+        if (_selectedIndex < 0 || _selectedIndex >= _companies.Count) return;
+        var company = _companies[_selectedIndex];
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            await ShipExecService.SetupCompanyAsync(company.Id, company.Name);
+            await OnCompanyConnected.InvokeAsync((company.Id, company.Name));
+            Reset();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load company: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        _errorMessage = string.Empty;
+        _phase = Phase.Credentials;
+    }
+
+    private async Task AutoSelectCompanyAsync()
+    {
+        var idx = _companies.FindIndex(c =>
+            c.Name.Equals(DebugConfig.AutoSelectCompany, StringComparison.OrdinalIgnoreCase) ||
+            c.DisplayName.Equals(DebugConfig.AutoSelectCompany, StringComparison.OrdinalIgnoreCase));
+
+        if (idx >= 0)
+        {
+            _selectedIndex = idx;
+            await LoadCompanyAsync();
+        }
+    }
+
+    private void HandleClose() => OnClose.InvokeAsync();
+
+    private void Reset()
+    {
+        _phase         = Phase.Credentials;
+        _jwtJson       = string.Empty;
+        _companies     = [];
+        _selectedIndex = -1;
+        _errorMessage  = string.Empty;
+        _autoConnectFired = false;
+    }
+}

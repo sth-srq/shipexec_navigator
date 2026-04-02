@@ -1,0 +1,245 @@
+@using ShipExecNavigator.BusinessLogic.EntityComparison
+@if (!IsVisible)
+{
+    <div class="vp-strip">
+        <button class="vp-toggle-btn" @onclick="Show" title="Show changes panel">
+            <span class="vp-toggle-icon">&#x276F;</span>
+            @if (Entries.Count > 0)
+            {
+                <span class="vp-badge">@(Entries.Count > 99 ? "99+" : Entries.Count.ToString())</span>
+            }
+        </button>
+    </div>
+}
+else
+{
+    <div class="vp-panel">
+        <div class="vp-header">
+            <span class="vp-title">&#x1F4CB; Changes</span>
+            <div class="vp-header-actions">
+                @if (Entries.Count > 0)
+                {
+                    <span class="vp-count">@Entries.Count</span>
+                    <button class="vp-clear-btn" @onclick="ClearAll" title="Clear all entries">&#x2715;</button>
+                }
+                <button class="vp-history-btn @(_isLoadingHistory ? "vp-history-btn--loading" : "")"
+                        @onclick="HandleLoadHistory"
+                        disabled="@((_isLoadingHistory || !CanLoadHistory) ? "disabled" : null)"
+                        title="@(CanLoadHistory ? "Load historical variances for this company" : "Connect to a live company to load history")">
+                    @if (_isLoadingHistory)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <span>&#x1F553;</span>
+                    }
+                </button>
+                <button class="vp-toggle-btn vp-toggle-btn--in-header" @onclick="Hide" title="Hide panel">
+                    <span class="vp-toggle-icon">&#x276E;</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="vp-body">
+            @if (!string.IsNullOrEmpty(HistoryError))
+            {
+                <div class="vp-history-error">
+                    <span>&#x26A0;&#xFE0F;</span> @HistoryError
+                </div>
+            }
+            @if (Entries.Count == 0)
+            {
+                <div class="vp-empty">
+                    <span class="vp-empty-icon">&#x2713;</span>
+                    <span>No changes yet</span>
+                </div>
+            }
+            else
+            {
+                @foreach (var entry in Entries)
+                {
+                    <div class="vp-entry vp-entry--@entry.ChangeType.ToLowerInvariant() @(HasDetail(entry) ? "vp-entry--expandable" : "") @(entry.IsHistorical ? "vp-entry--historical" : "") @(entry.IsUndone ? "vp-entry--undone" : "") @(entry.IsRevert ? "vp-entry--reverted" : "")"
+                         @onclick="() => HandleEntryClick(entry)"
+                         title="@(HasDetail(entry) ? "Click to view changes" : "Click to navigate to this change")">
+                        <div class="vp-entry-icon">@ChangeTypeIcon(entry.ChangeType)</div>
+                        <div class="vp-entry-content">
+                            <div class="vp-entry-path">@entry.PathDescription</div>
+                            <div class="vp-entry-desc">
+                                @entry.Description
+                                @if (entry.IsUndone)
+                                {
+                                    <span class="vp-undone-badge">undone</span>
+                                }
+                                @if (HasDetail(entry))
+                                {
+                                    <span class="vp-expand-icon">@(_expandedIds.Contains(entry.Id) ? "▲" : "▼")</span>
+                                }
+                            </div>
+                        </div>
+                        @if (!entry.IsUndone && !entry.IsRevert)
+                        {
+                            <button class="vp-undo-btn"
+                                    @onclick="() => OnEntryUndo.InvokeAsync(entry)"
+                                    @onclick:stopPropagation
+                                    title="Undo this change">&#x21A9;</button>
+                        }
+                        @if (entry.IsHistorical)
+                        {
+                            <button class="vp-details-btn"
+                                    @onclick="() => ShowDetails(entry)"
+                                    @onclick:stopPropagation
+                                    title="View details">&#x1F4CB;</button>
+                            <span class="vp-historical-badge" title="Historical record">&#x1F553;</span>
+                        }
+                    </div>
+                    @if (HasDetail(entry) && _expandedIds.Contains(entry.Id))
+                    {
+                        var panelFields = FieldDiffHelper.BuildFieldDiff(entry.ChangeType, entry.OriginalXML, entry.NewXML);
+                        <div class="vp-field-list">
+                            @if (panelFields.Count == 0)
+                            {
+                                <span class="vp-field-empty">No changes to display.</span>
+                            }
+                            else
+                            {
+                                @foreach (var f in panelFields)
+                                {
+                                    <div class="vp-field-row">
+                                        <span class="vp-field-name">@f.Name</span>
+                                        <div class="vp-field-vals">
+                                            @if (!string.IsNullOrEmpty(f.OrigVal))
+                                            {
+                                                <span class="vp-val vp-val--orig">@f.OrigVal</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(f.OrigVal) && !string.IsNullOrEmpty(f.NewVal))
+                                            {
+                                                <span class="vp-val-arrow">&#x2192;</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(f.NewVal))
+                                            {
+                                                <span class="vp-val vp-val--new">@f.NewVal</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+}
+
+@if (_detailEntry is not null)
+{
+    <div class="vp-detail-backdrop" @onclick="CloseDetails">
+        <div class="vp-detail-modal" @onclick:stopPropagation>
+            <div class="vp-detail-header">
+                <span class="vp-detail-title">&#x1F4CB; Variance Details</span>
+                <button class="vp-detail-close" @onclick="CloseDetails">&#x2715;</button>
+            </div>
+            <div class="vp-detail-body">
+                <div class="vp-detail-row">
+                    <span class="vp-detail-label">User</span>
+                    <span class="vp-detail-value">admin</span>
+                </div>
+                <div class="vp-detail-row">
+                    <span class="vp-detail-label">Time</span>
+                    <span class="vp-detail-value">@_detailEntry.Timestamp.ToString("g")</span>
+                </div>
+                <div class="vp-detail-row">
+                    <span class="vp-detail-label">Type</span>
+                    <span class="vp-detail-value">@_detailEntry.ChangeType</span>
+                </div>
+                <div class="vp-detail-row">
+                    <span class="vp-detail-label">Comment</span>
+                    <span class="vp-detail-value vp-detail-value--comment">
+                        @(string.IsNullOrWhiteSpace(_detailEntry.Comments) ? "—" : _detailEntry.Comments)
+                    </span>
+                </div>
+                <div class="vp-detail-section-label">Change Details</div>
+                <pre class="vp-detail-json">@(string.IsNullOrWhiteSpace(_detailEntry.VarianceJson) ? "No data" : _detailEntry.VarianceJson)</pre>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public List<Variance> Entries { get; set; } = default!;
+
+    [Parameter]
+    public bool IsVisible { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnEntryClicked { get; set; }
+
+    [Parameter]
+    public EventCallback<Variance> OnEntryUndo { get; set; }
+
+    [Parameter]
+    public EventCallback OnLoadHistory { get; set; }
+
+    [Parameter]
+    public string? HistoryError { get; set; }
+
+    [Parameter]
+    public bool CanLoadHistory { get; set; }
+
+    private readonly HashSet<Guid> _expandedIds = [];
+    private bool _isLoadingHistory;
+    private Variance? _detailEntry;
+
+    private void ShowDetails(Variance entry) => _detailEntry = entry;
+    private void CloseDetails() => _detailEntry = null;
+
+    private static bool HasDetail(Variance entry) =>
+        !string.IsNullOrEmpty(entry.OriginalXML) || !string.IsNullOrEmpty(entry.NewXML);
+
+    private async Task HandleLoadHistory()
+    {
+        _isLoadingHistory = true;
+        try
+        {
+            await OnLoadHistory.InvokeAsync();
+        }
+        finally
+        {
+            _isLoadingHistory = false;
+        }
+    }
+
+    private void HandleEntryClick(Variance entry)
+    {
+        if (HasDetail(entry))
+        {
+            if (!_expandedIds.Remove(entry.Id))
+                _expandedIds.Add(entry.Id);
+        }
+        else
+        {
+            OnEntryClicked.InvokeAsync(entry.NodeId);
+        }
+    }
+
+    private Task Show() => IsVisibleChanged.InvokeAsync(true);
+    private Task Hide() => IsVisibleChanged.InvokeAsync(false);
+    private void ClearAll()
+    {
+        Entries.Clear();
+        _expandedIds.Clear();
+    }
+
+    private static string ChangeTypeIcon(string type) => type switch
+    {
+        "Added"    => "+",
+        "Removed"  => "−",
+        "Reverted" => "↩",
+        _          => "~"
+    };
+}

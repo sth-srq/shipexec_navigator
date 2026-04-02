@@ -1,0 +1,283 @@
+@using ShipExecNavigator.Shared.Models
+@inject IXmlEnumService XmlEnumService
+@inject IXmlSchemaService XmlSchemaService
+@inject IXmlRefLookupService XmlRefLookupService
+
+@if (IsVisible && ParentNode is not null)
+{
+    <div class="dlg-backdrop" @onclick="HandleClose">
+        <div class="dlg" @onclick:stopPropagation>
+
+            <div class="dlg-header">
+                <div class="dlg-title">
+                    @if (_useTemplate)
+                    {
+                        <span>Add&nbsp;<span class="dlg-tag">@_elementName</span>&nbsp;to&nbsp;<span class="dlg-tag">@ParentNode.NodeName</span></span>
+                    }
+                    else
+                    {
+                        <span>Add item to&nbsp;<span class="dlg-tag">@ParentNode.NodeName</span></span>
+                    }
+                </div>
+                <button class="dlg-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            <div class="dlg-body">
+
+                @* ── Element name (free-form mode only) ── *@
+                @if (!_useTemplate)
+                {
+                    <div class="dlg-field">
+                        <label class="dlg-label">Name</label>
+                        <input class="dlg-input" @bind="_elementName"
+                               list="el-name-list"
+                               placeholder="item name" />
+                        <datalist id="el-name-list">
+                            @foreach (var s in _suggestions)
+                            {
+                                <option value="@s" />
+                            }
+                        </datalist>
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">Value <span class="dlg-optional">(optional — leave blank for a group item)</span></label>
+                        @if (XmlEnumService.GetAllowedValues(_elementName) is { Count: > 0 } valueOpts)
+                        {
+                            <select class="dlg-input" @bind="_value">
+                                @foreach (var opt in valueOpts)
+                                {
+                                    <option value="@opt.Value">@opt.Display</option>
+                                }
+                            </select>
+                        }
+                        else if (XmlRefLookupService.GetRefOptions(_elementName) is { Count: > 0 } refOpts)
+                        {
+                            <select class="dlg-input" @bind="_value">
+                                @foreach (var opt in refOpts)
+                                {
+                                    <option value="@opt.Value">@opt.Display</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input class="dlg-input" @bind="_value" placeholder="text value" />
+                        }
+                    </div>
+                }
+
+                @* ── Attributes ── *@
+                @if (_attributes.Count > 0)
+                {
+                    <div class="dlg-section">Attributes</div>
+                    @foreach (var field in _attributes)
+                    {
+                        <div class="dlg-attr-row">
+                            @if (_useTemplate)
+                            {
+                                <span class="dlg-attr-name">@field.Name</span>
+                            }
+                            else
+                            {
+                                <input class="dlg-input dlg-input--name" @bind="field.Name" placeholder="name" />
+                            }
+                            <span class="dlg-attr-eq">=</span>
+                            @if (field.AllowedValues is { Count: > 0 })
+                            {
+                                <select class="dlg-input dlg-input--val" @bind="field.Value">
+                                        @foreach (var opt in field.AllowedValues)
+                                        {
+                                            <option value="@opt.Value">@opt.Display</option>
+                                        }
+                                    </select>
+                            }
+                            else
+                            {
+                                <input class="dlg-input dlg-input--val" @bind="field.Value" placeholder="value" />
+                            }
+                            @if (!_useTemplate)
+                            {
+                                <button class="dlg-rm-attr" @onclick="() => _attributes.Remove(field)" title="Remove">&#x2715;</button>
+                            }
+                        </div>
+                    }
+                }
+
+                @if (!_useTemplate)
+                {
+                    <button class="dlg-add-attr" @onclick="AddAttributeField">&#xFF0B; Add Property</button>
+                }
+
+                @* ── Child element fields (template mode) ── *@
+                @if (_childFields.Count > 0)
+                {
+                    <div class="dlg-section">Fields</div>
+                    @foreach (var field in _childFields)
+                    {
+                        <div class="dlg-field">
+                            <label class="dlg-label">@field.Name</label>
+                            @if (field.AllowedValues is { Count: > 0 })
+                            {
+                                <select class="dlg-input" @bind="field.Value">
+                                        @foreach (var opt in field.AllowedValues)
+                                        {
+                                            <option value="@opt.Value">@opt.Display</option>
+                                        }
+                                    </select>
+                            }
+                            else
+                            {
+                                <input class="dlg-input" @bind="field.Value" placeholder="value" />
+                            }
+                        </div>
+                    }
+                }
+
+            </div>
+
+            <div class="dlg-footer">
+                <button class="dlg-btn-cancel" @onclick="HandleClose">Cancel</button>
+                <button class="dlg-btn-add" @onclick="HandleAdd" disabled="@(!CanAdd)">
+                    Add Item
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    // ── Public data contract ──────────────────────────────────────────────────
+
+    public class FieldEntry
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+        public IReadOnlyList<EnumOption>? AllowedValues { get; set; }
+    }
+
+    public class AddChildData
+    {
+        public string ElementName { get; set; } = string.Empty;
+        public List<FieldEntry> Attributes { get; set; } = [];
+        public string? Value { get; set; }
+        public List<FieldEntry> ChildElements { get; set; } = [];
+    }
+
+    // ── Parameters ───────────────────────────────────────────────────────────
+
+    [Parameter] public XmlNodeViewModel? ParentNode { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<AddChildData> OnAdd { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    // ── Internal state ───────────────────────────────────────────────────────
+
+    private bool _wasVisible;
+    private bool _useTemplate;
+    private string _elementName = string.Empty;
+    private string _value = string.Empty;
+    private List<FieldEntry> _attributes = [];
+    private List<FieldEntry> _childFields = [];
+    private List<string> _suggestions = [];
+
+    private bool CanAdd => !string.IsNullOrWhiteSpace(_elementName);
+
+    protected override void OnParametersSet()
+    {
+        if (IsVisible && !_wasVisible)
+            InitializeForm();
+        _wasVisible = IsVisible;
+    }
+
+    private void InitializeForm()
+    {
+        if (ParentNode is null) return;
+
+        _attributes = [];
+        _childFields = [];
+        _value = string.Empty;
+
+        // ── Schema service: highest priority ──────────────────────────────────
+        var schema = XmlSchemaService.GetChildTemplate(ParentNode.NodeName);
+        if (schema is not null)
+        {
+            _useTemplate = true;
+            _elementName = schema.ElementName;
+            _childFields = schema.Fields
+                .Select(f => new FieldEntry { Name = f.Name, AllowedValues = f.AllowedValues })
+                .ToList();
+            ResolveRefOptions(_childFields);
+            _suggestions = [schema.ElementName];
+            return;
+        }
+
+        // ── Sibling template: derive fields from first existing child ─────────
+        var template = ParentNode.Children.FirstOrDefault();
+
+        if (template is not null)
+        {
+            // Template mode: base the form on the first existing sibling
+            _useTemplate = true;
+            _elementName = template.NodeName;
+
+            _attributes = template.DisplayAttributes
+                .Where(a => !a.Name.Equals("id", StringComparison.OrdinalIgnoreCase))
+                .Select(a => new FieldEntry { Name = a.Name, AllowedValues = XmlEnumService.GetAllowedValues(a.Name) })
+                .ToList();
+
+            // Leaf children become form fields; empty/complex children are added automatically
+            _childFields = template.Children
+                .Where(c => !c.NodeName.Equals("id", StringComparison.OrdinalIgnoreCase))
+                .Select(c => new FieldEntry { Name = c.NodeName, AllowedValues = XmlEnumService.GetAllowedValues(c.NodeName) })
+                .ToList();
+            ResolveRefOptions(_childFields);
+            ResolveRefOptions(_attributes);
+
+            _suggestions = [template.NodeName];
+        }
+        else
+        {
+            // Free-form mode
+            _useTemplate = false;
+            _elementName = SuggestChildName(ParentNode.NodeName);
+            _suggestions = [_elementName];
+        }
+    }
+
+    private static string SuggestChildName(string parentName)
+    {
+        if (parentName.EndsWith("ies", StringComparison.OrdinalIgnoreCase))
+            return parentName[..^3] + "y";
+        if (parentName.EndsWith("s", StringComparison.OrdinalIgnoreCase) && parentName.Length > 2)
+            return parentName[..^1];
+        return parentName + "Item";
+    }
+
+    private void AddAttributeField() => _attributes.Add(new FieldEntry());
+
+    private void ResolveRefOptions(IEnumerable<FieldEntry> fields)
+    {
+        foreach (var f in fields.Where(f => f.AllowedValues is null or { Count: 0 }))
+        {
+            var r = XmlRefLookupService.GetRefOptions(f.Name);
+            if (r is { Count: > 0 }) f.AllowedValues = r;
+        }
+    }
+
+    private Task HandleClose() => OnClose.InvokeAsync();
+
+    private async Task HandleAdd()
+    {
+        if (string.IsNullOrWhiteSpace(_elementName)) return;
+
+        await OnAdd.InvokeAsync(new AddChildData
+        {
+            ElementName = _elementName.Trim(),
+            Attributes = _attributes.Where(a => !string.IsNullOrWhiteSpace(a.Name)).ToList(),
+            Value = string.IsNullOrWhiteSpace(_value) ? null : _value,
+            ChildElements = _childFields
+        });
+    }
+}

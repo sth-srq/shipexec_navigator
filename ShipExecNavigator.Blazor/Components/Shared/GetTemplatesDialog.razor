@@ -1,0 +1,276 @@
+@inject IShipExecService ShipExecService
+@inject IJSRuntime JS
+
+@if (IsVisible)
+{
+    <div class="gt-backdrop" @onclick="HandleClose">
+        <div class="gt-dlg" @onclick:stopPropagation>
+
+            <div class="dlg-header">
+                <div class="dlg-title">&#x1F4CB; Get Templates</div>
+                <button class="dlg-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            <div class="dlg-body">
+
+                @if (_phase == Phase.Credentials)
+                {
+                    <div class="dlg-field">
+                        <label class="dlg-label">Admin URL</label>
+                        <input class="dlg-input" @bind="_adminUrl" @bind:event="oninput" />
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">JWT JSON</label>
+                        <textarea class="dlg-input gt-jwt" @bind="_jwtJson"
+                                  @bind:event="oninput"
+                                  placeholder='{"access_token":"...","refresh_token":"...",...}'></textarea>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="gt-error">&#9888; @_errorMessage</div>
+                    }
+
+                    <div class="dlg-footer">
+                        <button class="gt-btn-secondary" @onclick="HandleClose" disabled="@_isBusy">
+                            Cancel
+                        </button>
+                        <button class="gt-btn-primary" @onclick="FetchCompaniesAsync"
+                                disabled="@(string.IsNullOrWhiteSpace(_jwtJson) || _isBusy)">
+                            @if (_isBusy)
+                            {
+                                <span class="gt-spinner"></span>
+                            }
+                            Fetch
+                        </button>
+                    </div>
+                }
+                else if (_phase == Phase.CompanyList)
+                {
+                    <div class="gt-summary-row">
+                        <span class="gt-count-pill">
+                            @_companies.Count @(_companies.Count == 1 ? "company" : "companies")
+                        </span>
+                        @if (_templateLoadPending > 0)
+                        {
+                            <span class="gt-loading-note">
+                                <span class="gt-spinner-dark"></span>
+                                Loading templates for @_templateLoadPending @(_templateLoadPending == 1 ? "company" : "companies")&hellip;
+                            </span>
+                        }
+                    </div>
+
+                    <div class="gt-companies">
+                        @foreach (var company in _companies)
+                        {
+                            var companyId      = company.Id;
+                            var isExpanded     = _expandedCompanies.Contains(companyId);
+                            var isSkipped      = _skippedCompanies.Contains(companyId);
+                            var templatesLoaded = _templatesByCompany.TryGetValue(companyId, out var templates);
+                            var hasError       = _templateErrorsByCompany.TryGetValue(companyId, out var templateError);
+                            var isLoading      = !templatesLoaded && !hasError && !isSkipped;
+
+                            <div class="gt-company">
+                                <button class="gt-company-header" @onclick="() => ToggleCompany(companyId)">
+                                    <span class="gt-chevron @(isExpanded ? "gt-chevron--open" : "")">&#x25B6;</span>
+                                    <span class="gt-company-name">@company.DisplayName</span>
+                                    @if (isLoading)
+                                    {
+                                        <span class="gt-spinner-sm"></span>
+                                    }
+                                    else if (isSkipped)
+                                    {
+                                        <span class="gt-skipped-badge">already stored</span>
+                                    }
+                                    else if (hasError)
+                                    {
+                                        <span class="gt-error-badge" title="@templateError">!</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="gt-template-badge">@templates!.Count</span>
+                                    }
+                                </button>
+
+                                @if (isExpanded)
+                                {
+                                    <div class="gt-company-body">
+                                        @if (isSkipped)
+                                        {
+                                            <div class="gt-template-empty">Already stored — skipped</div>
+                                        }
+                                        else if (hasError)
+                                        {
+                                            <div class="gt-template-error">&#9888; @templateError</div>
+                                        }
+                                        else if (isLoading)
+                                        {
+                                            <div class="gt-template-loading">Loading templates&hellip;</div>
+                                        }
+                                        else if (templates!.Count == 0)
+                                        {
+                                            <div class="gt-template-empty">No custom templates</div>
+                                        }
+                                        else
+                                        {
+                                            <ul class="gt-template-list">
+                                                @foreach (var t in templates!)
+                                                {
+                                                    <li class="gt-template-item">
+                                                        <span class="gt-template-name">@t.TemplateName</span>
+                                                        <span class="gt-template-type">@t.TemplateType</span>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="dlg-footer">
+                        <button class="gt-btn-secondary" @onclick='() => _phase = Phase.Credentials'>
+                            &#x2190; Back
+                        </button>
+                        <button class="gt-btn-secondary" @onclick="HandleClose">
+                            Close
+                        </button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private enum Phase { Credentials, CompanyList }
+    private Phase _phase = Phase.Credentials;
+
+    private string _adminUrl = "https://BLACKBOX23/ShipExecManagementStudioApi/api/AdministrationService/";
+    private string _jwtJson  = string.Empty;
+    private List<CompanyInfo> _companies = [];
+    private Dictionary<Guid, List<TemplateInfo>> _templatesByCompany = new();
+    private Dictionary<Guid, string> _templateErrorsByCompany = new();
+    private HashSet<Guid> _expandedCompanies = new();
+    private HashSet<Guid> _skippedCompanies  = new();
+    private int _templateLoadPending;
+    private bool _isBusy;
+    private string _errorMessage = string.Empty;
+
+    private async Task FetchCompaniesAsync()
+    {
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            _companies = await ShipExecService.GetCompaniesAsync(_jwtJson, _adminUrl);
+            _expandedCompanies        = new HashSet<Guid>(_companies.Select(c => c.Id));
+            _templatesByCompany       = new();
+            _templateErrorsByCompany  = new();
+            _skippedCompanies         = new();
+            _templateLoadPending      = _companies.Count;
+            _phase = Phase.CompanyList;
+
+            await JS.InvokeVoidAsync("console.log",
+                $"[GetTemplates] {_companies.Count} company/companies fetched from {_adminUrl}:");
+            foreach (var c in _companies)
+                await JS.InvokeVoidAsync("console.log", $"  company › {c.DisplayName}  ({c.Id})");
+
+            foreach (var company in _companies)
+                _ = await LoadTemplatesForCompanyAsync(company.Id);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to fetch companies: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task<bool> LoadTemplatesForCompanyAsync(Guid companyId)
+    {
+        var companyName = _companies.FirstOrDefault(c => c.Id == companyId)?.DisplayName
+                          ?? companyId.ToString();
+        try
+        {
+            if (await ShipExecService.CompanyHasStoredTemplatesAsync(companyId))
+            {
+                await JS.InvokeVoidAsync("console.log",
+                    $"[GetTemplates] ⏭ Skipping {companyName} — already has entries in CompanyTemplates");
+                await InvokeAsync(() =>
+                {
+                    _skippedCompanies.Add(companyId);
+                    _templateLoadPending = Math.Max(0, _templateLoadPending - 1);
+                    StateHasChanged();
+                });
+                return true;
+            }
+
+            await JS.InvokeVoidAsync("console.log",
+                $"[GetTemplates] ▶ Fetching templates for company: {companyName}");
+
+            var templates = await ShipExecService.GetCompanyTemplatesAsync(companyId, _jwtJson, _adminUrl);
+
+            await JS.InvokeVoidAsync("console.log",
+                $"[GetTemplates] ✔ {templates.Count} template(s) for {companyName}:");
+            foreach (var t in templates)
+                await JS.InvokeVoidAsync("console.log",
+                    $"  template › [{t.TemplateType}] {t.TemplateName}  (templateId={t.Id})");
+
+            await InvokeAsync(() =>
+            {
+                _templatesByCompany[companyId] = templates;
+                _templateLoadPending = Math.Max(0, _templateLoadPending - 1);
+                StateHasChanged();
+            });
+
+            // Persist to database — failures are intentionally silent so the UI is never blocked
+            try { await ShipExecService.StoreCompanyTemplatesAsync(companyId, templates, _adminUrl, companyName); }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                _templateErrorsByCompany[companyId] = ex.Message;
+                _templateLoadPending = Math.Max(0, _templateLoadPending - 1);
+                StateHasChanged();
+            });
+        }
+        return true;
+    }
+
+    private void ToggleCompany(Guid companyId)
+    {
+        if (!_expandedCompanies.Remove(companyId))
+            _expandedCompanies.Add(companyId);
+    }
+
+    private void HandleClose()
+    {
+        Reset();
+        OnClose.InvokeAsync();
+    }
+
+    private void Reset()
+    {
+        _phase                   = Phase.Credentials;
+        _jwtJson                 = string.Empty;
+        _companies               = [];
+        _templatesByCompany      = new();
+        _templateErrorsByCompany = new();
+        _expandedCompanies       = new();
+        _skippedCompanies        = new();
+        _templateLoadPending     = 0;
+        _errorMessage            = string.Empty;
+    }
+}
+}
