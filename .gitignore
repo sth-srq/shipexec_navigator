@@ -224,3 +224,4 @@ AppPackages/
 #####
 # End of core ignore list, below put you custom 'per project' settings (patterns or path)
 #####
+/ShipExecNavigator.Blazor/Logs/shipexec-navigator-json-20260402.json
