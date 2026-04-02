@@ -3,7 +3,7 @@
 @inject IXmlEnumService XmlEnumService
 @inject IXmlRefLookupService XmlRefLookupService
 
-<div id="node-@Node.Id" class="xml-node @(HighlightedNodeId == Node.Id ? "node--highlighted" : "")" data-nodepath="@_plainNodePath">
+<div id="node-@Node.Id" class="xml-node @(HighlightedNodeId == Node.Id ? "node--highlighted" : "") @(_isNonEditable && !Node.HasChildren ? "node--readonly" : "")" data-nodepath="@_plainNodePath">
     <div class="@NodeLineClass"
          @onclick="ToggleExpand"
          @oncontextmenu="HandleContextMenu"
@@ -26,6 +26,10 @@
         </span>
 
         <span class="node-label">@Node.NodeName</span>
+        @if (_isNonEditableRoot)
+        {
+            <span class="readonly-badge" title="Values are managed at the Company level">&#x1F512; read-only</span>
+        }
 
         @* ── Attributes ── *@
         @foreach (var attr in Node.DisplayAttributes)
@@ -241,6 +245,7 @@
     private ElementReference _editRef;
 
     private bool _isNonEditable;
+    private bool _isNonEditableRoot; // true only on the node that matches the configured path, not descendants
     private string _plainNodePath = string.Empty;
 
     protected override void OnParametersSet()
@@ -249,6 +254,29 @@
         _isNonEditable = NonEditableNodes.IsNonEditable(_plainNodePath)
             || (ParentEntityType is not null
                 && !Node.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase));
+
+        // Determine if this node is the root of a non-editable region
+        // (i.e. it matches a configured path, but its parent does NOT).
+        _isNonEditableRoot = _isNonEditable && !IsParentNonEditable();
+    }
+
+    private bool IsParentNonEditable()
+    {
+        if (Node.Parent is null) return false;
+        var parentPath = BuildPlainNodePath(Node.Parent);
+        return NonEditableNodes.IsNonEditable(parentPath);
+    }
+
+    private static string BuildPlainNodePath(XmlNodeViewModel node)
+    {
+        var parts = new List<string>();
+        var current = node;
+        while (current is not null)
+        {
+            parts.Insert(0, current.NodeName);
+            current = current.Parent;
+        }
+        return string.Join(".", parts);
     }
 
     private string NodeLineClass

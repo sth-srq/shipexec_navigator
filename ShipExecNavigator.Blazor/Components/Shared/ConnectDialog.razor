@@ -117,6 +117,7 @@
         try
         {
             _companies = await ShipExecService.GetCompaniesAsync(_jwtJson, _adminUrl);
+            _companies.Sort((a, b) => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase));
             if (_companies.Count == 0)
             {
                 _errorMessage = "No companies returned.";

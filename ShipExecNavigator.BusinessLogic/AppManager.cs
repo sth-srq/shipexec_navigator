@@ -752,6 +752,34 @@ namespace ShipExecNavigator.BusinessLogic
             }
         }
 
+        /// <summary>
+        /// Returns fully-hydrated profiles (including nested collections like Shippers,
+        /// Carriers, etc.). Gets the profile list first, then fetches full detail for each.
+        /// </summary>
+        public List<Profile> GetFullProfiles()
+        {
+            _logger.LogTrace(">> GetFullProfiles | CompanyId={CompanyId}", _companyId);
+            var summaryProfiles = GetProfiles();
+            var result = new List<Profile>(summaryProfiles.Count);
+
+            foreach (var summary in summaryProfiles)
+            {
+                try
+                {
+                    var full = GetFullProfile(summary.Id);
+                    result.Add(full ?? summary);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "GetFullProfiles: failed to load detail for Profile {ProfileId}, using summary", summary.Id);
+                    result.Add(summary);
+                }
+            }
+
+            _logger.LogTrace("<< GetFullProfiles → {Count} profiles", result.Count);
+            return result;
+        }
+
         public Profile GetFullProfile(int profileId)
         {
             _logger.LogTrace(">> GetFullProfile({ProfileId})", profileId);

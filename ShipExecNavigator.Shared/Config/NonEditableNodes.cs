@@ -26,9 +26,21 @@ public static class NonEditableNodes
 {
     public static readonly HashSet<string> Paths = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Profile.Shipper",
-        "Profile.PaymentTerms",
-        "Profile.Client",
+        // ── Profile → Shipper references ─────────────────────────────────────
+        // The actual shipper data lives at Company → Shippers.
+        "Profile.Shippers",          // container
+        "Profile.Shipper",           // individual items
+
+        // ── Profile → Carrier references ─────────────────────────────────────
+        // The actual carrier data lives at Company → Carriers.
+        "Profile.Carriers",          // container
+        "Profile.Carrier",           // individual items
+
+        // ── Profile → singular configuration references ──────────────────────
+        // These reference entities managed at Company level.
+        "Profile.DocumentConfiguration",
+        "Profile.PrinterConfiguration",
+        "Profile.ScaleConfiguration",
     };
 
     /// <summary>

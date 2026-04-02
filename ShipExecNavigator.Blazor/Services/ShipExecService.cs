@@ -228,7 +228,7 @@ public sealed class ShipExecService(
 
                 case "Profiles":
                     PopulateCategory(categoryNode, "Profile",
-                        _appManager.GetProfiles());
+                        _appManager.GetFullProfiles());
                     break;
 
                 case "Sites":

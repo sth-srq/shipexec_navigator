@@ -230,6 +230,40 @@
     color: rgba(25, 135, 84, 0.5);
 }
 
+/* -- Read-only (non-editable) node styling --------------------------------- */
+/* Only values are dimmed; labels, icons, and expand controls stay normal
+   so the tree remains clearly navigable. */
+.node--readonly > .xml-node-line .xml-val {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.node--readonly > .xml-node-line .xml-attr-val {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.node--readonly > .xml-node-line .node-empty {
+    color: #c4c9d2;
+}
+
+/* Small "read-only" badge after the node label */
+.readonly-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #9ca3af;
+    background-color: rgba(156, 163, 175, 0.12);
+    border: 1px solid rgba(156, 163, 175, 0.25);
+    border-radius: 3px;
+    padding: 0 0.3rem;
+    margin-left: 0.35rem;
+    line-height: 1.4;
+    user-select: none;
+    vertical-align: middle;
+}
+
 /* -- Inline edit input ----------------------------------------------------- */
 .inline-edit {
     background-color: #ffffff;
@@ -474,6 +508,25 @@
 
     .xml-attr-val.editable::after {
         color: rgba(52, 211, 153, 0.5);
+    }
+
+    /* Read-only nodes in dark theme */
+    .node--readonly > .xml-node-line .xml-val {
+        color: #6b7280;
+    }
+
+    .node--readonly > .xml-node-line .xml-attr-val {
+        color: #6b7280;
+    }
+
+    .node--readonly > .xml-node-line .node-empty {
+        color: #4b5563;
+    }
+
+    .readonly-badge {
+        color: #6b7280;
+        background-color: rgba(107, 114, 128, 0.15);
+        border-color: rgba(107, 114, 128, 0.3);
     }
 
     .inline-edit {
