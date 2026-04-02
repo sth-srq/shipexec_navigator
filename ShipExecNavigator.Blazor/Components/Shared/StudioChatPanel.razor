@@ -80,6 +80,7 @@
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public XmlNodeViewModel? XmlRoot { get; set; }
     [Parameter] public EventCallback<List<ShipperDeleteItem>> OnDeleteShippers { get; set; }
+    [Parameter] public EventCallback<List<ShipperEditItem>> OnEditShippers { get; set; }
 
     private readonly List<ChatMessage> _messages = [];
     private readonly List<string> _inputHistory = [];
@@ -265,6 +266,14 @@
             return;
         }
 
+        // Handle shipper-edit blocks
+        var editItems = ExtractShipperEdit(response);
+        if (editItems is { Count: > 0 })
+        {
+            await OnEditShippers.InvokeAsync(editItems);
+            return;
+        }
+
         var jsCode = ExtractJavaScript(response);
         if (jsCode is null) return;
         try
@@ -286,6 +295,22 @@
         try
         {
             return System.Text.Json.JsonSerializer.Deserialize<List<ShipperDeleteItem>>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
+    }
+
+    private static List<ShipperEditItem>? ExtractShipperEdit(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```shipper-edit\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<ShipperEditItem>>(
                 m.Groups[1].Value.Trim(),
                 new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }

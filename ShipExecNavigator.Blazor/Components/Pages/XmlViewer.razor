@@ -420,7 +420,7 @@
     }
 
     @* ── Studio chat panel ── *@
-    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" />
+    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" />
 
 </div>
 
@@ -1001,6 +1001,80 @@
         if (bool.TryParse(Field("PoBox"), out var poBox)) shipper.PoBox = poBox;
         if (bool.TryParse(Field("Residential"), out var res)) shipper.Residential = res;
         return shipper;
+    }
+
+    private void HandleAiShipperEdits(List<ShipperEditItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+        var shippersNode = rootNode.Children
+            .FirstOrDefault(c => c.NodeName.Equals("Shippers", StringComparison.OrdinalIgnoreCase));
+        if (shippersNode is null) return;
+
+        var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+        foreach (var item in items)
+        {
+            if (item.Edits is null || item.Edits.Count == 0) continue;
+
+            // Find the shipper tree node by symbol first, fall back to name
+            var shipperNode = shippersNode.Children.FirstOrDefault(c =>
+                c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase) &&
+                c.Children.Any(gc =>
+                    gc.NodeName.Equals("Symbol", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(gc.NodeValue, item.Symbol, StringComparison.OrdinalIgnoreCase)));
+
+            if (shipperNode is null && !string.IsNullOrEmpty(item.Name))
+            {
+                shipperNode = shippersNode.Children.FirstOrDefault(c =>
+                    c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase) &&
+                    c.Children.Any(gc =>
+                        gc.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(gc.NodeValue, item.Name, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            if (shipperNode is null) continue;
+
+            // Snapshot the original shipper before changes
+            var originalShipper = BuildShipperFromTreeNode(shipperNode);
+
+            // Apply each field edit to the tree node
+            foreach (var (field, value) in item.Edits)
+            {
+                UpdateShipperFieldInTree(shipperNode, field, value);
+            }
+
+            // Build the modified shipper after changes
+            var modifiedShipper = BuildShipperFromTreeNode(shipperNode);
+
+            // Create a BL variance for the edit
+            var editVariance = new Variance
+            {
+                EntityName     = "Shipper",
+                OriginalObject = originalShipper,
+                NewObject      = modifiedShipper,
+                IsUpdated      = true,
+                CompanyId      = originalShipper.CompanyId,
+            };
+            _pendingShipperVariances.Add(editVariance);
+
+            // Build a description of the changes
+            var changedFields = string.Join(", ", item.Edits.Select(e => $"{e.Key}=\"{e.Value}\""));
+            var editPath = $"Shippers \u203a {originalShipper.Symbol}";
+
+            _varianceEntries.Insert(0, new Variance
+            {
+                NodeId          = Guid.Empty,
+                PathDescription = editPath,
+                Description     = $"AI Edit: {changedFields}",
+                ChangeType      = "Modified",
+                OriginalXML     = System.Text.Json.JsonSerializer.Serialize(originalShipper, opts),
+                NewXML          = System.Text.Json.JsonSerializer.Serialize(modifiedShipper, opts),
+            });
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
     }
 
     private void ApplyShipperToTree(Variance v)

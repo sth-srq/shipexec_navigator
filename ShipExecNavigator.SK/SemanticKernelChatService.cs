@@ -115,7 +115,18 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "1. **Reasoning:** Explain which shippers matched and will be deleted.\n" +
                 "2. A ```shipper-delete code block containing a JSON array of the matching entries " +
                 "(each object must have `id`, `symbol`, and `name` string fields, exactly as returned by the plugin). " +
-                "Do NOT include any JavaScript for deletion — the Navigator will process the shipper-delete block directly.\n" +
+                "Do NOT include any JavaScript for deletion — the Navigator will process the shipper-delete block directly.\n\n" +
+                "**Editing shippers:** When the user asks to UPDATE, EDIT, SET, or CHANGE field values on " +
+                "shippers (with optional conditions like 'for all shippers that start with T'), " +
+                "call the `edit_shippers` function. After receiving the full shipper list, filter it to match " +
+                "the user's condition, then respond with:\n" +
+                "1. **Reasoning:** Explain which shippers matched and what fields will be changed.\n" +
+                "2. A ```shipper-edit code block containing a JSON array where each object has " +
+                "`id` (string), `symbol` (string), `name` (string), and `edits` (an object mapping " +
+                "field names to new string values). Valid field names: Name, Symbol, Code, Address1, " +
+                "Address2, Address3, City, StateProvince, PostalCode, Country, Company, Contact, Phone, " +
+                "Fax, Email, Sms, PoBox, Residential. " +
+                "Do NOT include any JavaScript — the Navigator will process the shipper-edit block directly.\n" +
                 NavigatorDomCheatSheet.Content;
 
         var kernel = Kernel.CreateBuilder()
