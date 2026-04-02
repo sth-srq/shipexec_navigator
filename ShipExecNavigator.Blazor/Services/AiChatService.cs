@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using ShipExecNavigator.Shared.AI;
 using ShipExecNavigator.Shared.Interfaces;
 
 namespace ShipExecNavigator.Services;
@@ -28,10 +29,24 @@ public sealed class AiChatService(
             "OpenAI request | Model={Model} BaseUrl={BaseUrl} HistoryCount={History} MessagePreview={Preview}",
             model, baseUrl, history.Count, preview);
 
-        var messages = history
-            .Select(m => new { role = m.Role, content = m.Content })
-            .Concat([new { role = "user", content = userMessage }])
-            .ToList();
+        var messages = new List<object>();
+
+        if (!string.IsNullOrWhiteSpace(xmlContext))
+        {
+            messages.Add(new
+            {
+                role    = "system",
+                content = "You are a helpful assistant for ShipExec Navigator. " +
+                          "The user has a ShipExec XML configuration loaded. " +
+                          "When writing JavaScript to manipulate the Navigator tree view, " +
+                          "use only the class names and IDs documented in the DOM reference below." +
+                          NavigatorDomCheatSheet.Content
+            });
+        }
+
+        messages.AddRange(history
+            .Select(m => (object)new { role = m.Role, content = m.Content }));
+        messages.Add(new { role = "user", content = userMessage });
 
         var body = JsonSerializer.Serialize(new { model, messages }, _json);
 

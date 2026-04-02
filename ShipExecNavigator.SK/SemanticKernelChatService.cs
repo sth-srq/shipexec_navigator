@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using ShipExecNavigator.SK.Plugins;
+using ShipExecNavigator.Shared.AI;
 using ShipExecNavigator.Shared.Interfaces;
 using ShipExecNavigator.Shared.Logging;
 using AppChatMessage = ShipExecNavigator.Shared.Interfaces.ChatMessage;
@@ -107,7 +108,8 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "After receiving the plugin result always respond with exactly two sections:\n" +
                 "1. **Reasoning:** Explain which items were found and why they match the criteria.\n" +
                 "2. **JavaScript Method:** Provide a self-contained JavaScript function the user " +
-                "can paste into the browser console to hide those elements in the Navigator tree view.";
+                "can paste into the browser console to hide those elements in the Navigator tree view.\n" +
+                NavigatorDomCheatSheet.Content;
 
         var kernel = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(deployment, endpoint, apiKey)
