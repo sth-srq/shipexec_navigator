@@ -12,6 +12,40 @@ using System.Text;
 
 namespace ShipExecNavigator.BusinessLogic.RequestGeneration
 {
+    /// <summary>
+    /// Generic base class that provides synchronous CRUD HTTP operations against a single
+    /// ShipExec Management Studio API entity endpoint.
+    /// <para>
+    /// Each concrete subclass (e.g. <c>ShipperRequestGenerator</c>,
+    /// <c>ClientRequestGenerator</c>) specialises this base for one PSI.Sox entity type
+    /// by supplying the six type parameters and configuring the endpoint strings in
+    /// the constructor.
+    /// </para>
+    /// <para>
+    /// <b>HTTP model:</b> every operation POSTs a JSON-serialised request DTO to the
+    /// corresponding endpoint using a short-lived <see cref="System.Net.Http.HttpClient"/>
+    /// with a Bearer token header.  Responses are deserialised with
+    /// <see cref="JsonHelper"/>.
+    /// </para>
+    /// <para>
+    /// <b>Variance model:</b> <see cref="GetVariances"/> performs a symmetric diff
+    /// between two entity lists: items missing from the modified list become
+    /// <em>Remove</em> variances; new items become <em>Add</em> variances;
+    /// items whose identity matches but whose content differs (per
+    /// <see cref="ShouldUpdate"/>) become <em>Update</em> variances.
+    /// </para>
+    /// </summary>
+    /// <typeparam name="GetAllResponse">API response type for the "get all" endpoint.</typeparam>
+    /// <typeparam name="GetAllRequest">API request type for the "get all" endpoint.</typeparam>
+    /// <typeparam name="GetRequest">API request type for retrieving a single entity by ID.</typeparam>
+    /// <typeparam name="GetResponse">API response type for a single-entity get.</typeparam>
+    /// <typeparam name="AddRequest">API request type for creating a new entity.</typeparam>
+    /// <typeparam name="AddResponse">API response type for a create operation.</typeparam>
+    /// <typeparam name="UpdateRequest">API request type for updating an existing entity.</typeparam>
+    /// <typeparam name="UpdateResponse">API response type for an update operation.</typeparam>
+    /// <typeparam name="RemoveRequest">API request type for deleting an entity.</typeparam>
+    /// <typeparam name="RemoveResponse">API response type for a delete operation.</typeparam>
+    /// <typeparam name="EntityModel">The strongly-typed domain model (e.g. <c>PSI.Sox.Shipper</c>).</typeparam>
     public class RequestGenerationBase<GetAllResponse, GetAllRequest, GetRequest, GetResponse, AddRequest, AddResponse, UpdateRequest, UpdateResponse, RemoveRequest, RemoveResponse, EntityModel>
         where GetAllResponse : new()
         where GetAllRequest : RequestBase, new()

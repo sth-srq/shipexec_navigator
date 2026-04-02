@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using ShipExecNavigator.Shared.Interfaces;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -6,29 +7,73 @@ using System.Text.Json.Serialization;
 namespace ShipExecNavigator.SK;
 
 /// <summary>
-/// Loads the RAG index produced by ShipExecNavigator.RAGLoader from a local JSON file
-/// and answers similarity queries entirely in memory using the same local hash-projection
-/// embeddings used to build the index — no external API or vector store required.
+/// In-process Retrieval-Augmented Generation (RAG) search service backed by a
+/// pre-built JSON vector index produced by the <c>ShipExecNavigator.RAGLoader</c> tool.
+/// <para>
+/// <b>How it works:</b>
+/// <list type="number">
+///   <item>
+///     At startup, <see cref="InMemoryRagService"/> locates and loads the
+///     <c>rag_index.json</c> file (a list of <see cref="RagChunk"/> objects each containing
+///     a text excerpt and a pre-computed 384-dimensional embedding vector).
+///   </item>
+///   <item>
+///     When <see cref="SearchAsync"/> is called, the query string is converted to an
+///     embedding by <see cref="LocalEmbeddingGenerator.Embed"/> (a lightweight local
+///     hash-projection — no network call required).
+///   </item>
+///   <item>
+///     Cosine similarity is computed in a single LINQ pass over all chunks and the
+///     top-<paramref name="topK"/> results are returned as plain text strings ready for
+///     inclusion in an LLM system prompt.
+///   </item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>Index discovery order:</b>
+/// <list type="number">
+///   <item>Alongside the running binary (primary — populated by <c>CopyToOutputDirectory</c>).</item>
+///   <item>Configured path relative to the binary directory.</item>
+///   <item>Configured path relative to the current working directory.</item>
+///   <item>Configured path as an absolute path.</item>
+/// </list>
+/// A warning is logged when no index file is found; the service returns empty results
+/// rather than throwing, so the AI assistant degrades gracefully to "no docs found".
+/// </para>
+/// <para>
+/// <b>Performance:</b> the entire index is held in memory after first load.
+/// For typical ShipExec documentation corpora (a few thousand chunks) this is negligible.
+/// For very large corpora, consider replacing this service with a
+/// <see cref="QdrantSearchService"/> backed by a vector database.
+/// </para>
 /// </summary>
 public sealed class InMemoryRagService : IVectorSearchService
 {
     private readonly IReadOnlyList<RagChunk> _chunks;
+    private readonly ILogger<InMemoryRagService> _logger;
 
-    public InMemoryRagService(IConfiguration configuration)
+    public InMemoryRagService(IConfiguration configuration, ILogger<InMemoryRagService> logger)
     {
+        _logger = logger;
         var indexPath = ResolveIndexPath(configuration["RAGLoader:IndexPath"]);
         _chunks = LoadIndex(indexPath);
-
-        Console.WriteLine(_chunks.Count > 0
-            ? $"[RAG] Loaded {_chunks.Count} chunks from {indexPath}"
-            : $"[RAG] No chunks loaded — index not found or empty at: {indexPath}");
+        _logger.LogInformation(_chunks.Count > 0
+            ? "[RAG] Loaded {Count} chunks from {Path}"
+            : "[RAG] No chunks loaded — index not found or empty at: {Path}",
+            _chunks.Count, indexPath);
     }
 
     public Task<IReadOnlyList<string>> SearchAsync(
         string query, int topK = 5, CancellationToken ct = default)
     {
+        _logger.LogTrace(">> SearchAsync | Query={Query} TopK={TopK} ChunkCount={Chunks}",
+            query.Length > 100 ? query[..100] : query, topK, _chunks.Count);
+
         if (_chunks.Count == 0)
+        {
+            _logger.LogTrace("<< SearchAsync → 0 results (no chunks)");
             return Task.FromResult<IReadOnlyList<string>>([]);
+        }
 
         var queryVec = LocalEmbeddingGenerator.Embed(query);
 
@@ -39,6 +84,7 @@ public sealed class InMemoryRagService : IVectorSearchService
             .Select(x => x.Text)
             .ToList();
 
+        _logger.LogTrace("<< SearchAsync → {Count} results", results.Count);
         return Task.FromResult(results);
     }
 

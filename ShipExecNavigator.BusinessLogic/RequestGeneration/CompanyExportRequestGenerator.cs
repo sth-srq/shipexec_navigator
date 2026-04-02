@@ -16,6 +16,36 @@ using System.Xml.Serialization;
 
 namespace ShipExecNavigator.BusinessLogic.RequestGeneration
 {
+    /// <summary>
+    /// Assembles a complete <c>Company</c> XML document by calling every relevant
+    /// ShipExec Management Studio API endpoint in sequence and stitching the results
+    /// into a single serialised XML file.
+    /// <para>
+    /// The generator is created per-request inside <see cref="AppManager"/> with fresh
+    /// API credentials.  It does <em>not</em> cache results; each call hits the live API.
+    /// </para>
+    /// <para>
+    /// <b>Export flow:</b>
+    /// <list type="number">
+    ///   <item>Call <c>GetCompany</c> to obtain the root company record and basic properties.</item>
+    ///   <item>Call <c>GetCompanyProfiles</c> and attach the result to <c>Company.Profiles</c>.</item>
+    ///   <item>Call <see cref="PopulateCompany"/> (or
+    ///         <see cref="PopulateCompanySelective"/> for partial loads) to fetch every
+    ///         remaining sub-entity collection (Shippers, Clients, Sites, Machines, etc.).</item>
+    ///   <item>Serialise the <c>Company</c> object graph to XML using
+    ///         <see cref="System.Xml.Serialization.XmlSerializer"/> and format with
+    ///         <see cref="System.Xml.Linq.XDocument"/>.</item>
+    ///   <item>Write the formatted XML to a temporary file and return the path or content
+    ///         to the caller.</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// <b>Selective loading:</b> pass a <see cref="HashSet{T}"/> of section names
+    /// (e.g. <c>{"Shippers","Clients"}</c>) to <see cref="GetLatestCompanyXmlString"/>
+    /// to skip entity collections that the caller has not yet expanded in the Navigator UI,
+    /// significantly reducing network overhead for large companies.
+    /// </para>
+    /// </summary>
     public class CompanyExportRequestGenerator
     {
         private string _adminUrl { get; set; }

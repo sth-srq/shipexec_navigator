@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipExecNavigator.MAUI", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipExecNavigator.RAGLoader", "ShipExecNavigator.RAGLoader\ShipExecNavigator.RAGLoader.csproj", "{A521A7ED-84DA-4353-A84E-0552AC3724EC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipExecNavigator.Tests", "ShipExecNavigator.Tests\ShipExecNavigator.Tests.csproj", "{28925913-934C-461B-B400-66EBEBB1BA5B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -186,6 +188,18 @@ Global
 		{A521A7ED-84DA-4353-A84E-0552AC3724EC}.Release|x64.Build.0 = Release|Any CPU
 		{A521A7ED-84DA-4353-A84E-0552AC3724EC}.Release|x86.ActiveCfg = Release|Any CPU
 		{A521A7ED-84DA-4353-A84E-0552AC3724EC}.Release|x86.Build.0 = Release|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Debug|x64.Build.0 = Debug|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Debug|x86.Build.0 = Debug|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Release|x64.ActiveCfg = Release|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Release|x64.Build.0 = Release|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Release|x86.ActiveCfg = Release|Any CPU
+		{28925913-934C-461B-B400-66EBEBB1BA5B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

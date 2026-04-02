@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using ShipExecNavigator.Shared.Interfaces;
 using ShipExecNavigator.Shared.Models;
 
@@ -6,34 +7,48 @@ namespace ShipExecNavigator.AppLogic;
 public class XmlViewerService : IXmlViewerService
 {
     private readonly IXmlRepository _repository;
+    private readonly ILogger<XmlViewerService> _logger;
     private XmlNodeViewModel? _clipboard;
 
-    public XmlViewerService(IXmlRepository repository) => _repository = repository;
+    public XmlViewerService(IXmlRepository repository, ILogger<XmlViewerService> logger)
+    {
+        _repository = repository;
+        _logger = logger;
+    }
 
     // ── Load ─────────────────────────────────────────────────────────────────
 
     public Task<XmlNodeViewModel> LoadFileAsync(string filePath)
-        => _repository.LoadFromFileAsync(filePath);
+    {
+        _logger.LogTrace(">> LoadFileAsync({FilePath})", filePath);
+        return _repository.LoadFromFileAsync(filePath);
+    }
 
     public Task<XmlNodeViewModel> LoadStreamAsync(Stream stream, string? fileName = null)
-        => _repository.LoadFromStreamAsync(stream);
+    {
+        _logger.LogTrace(">> LoadStreamAsync({FileName})", fileName);
+        return _repository.LoadFromStreamAsync(stream);
+    }
 
     // ── Tree navigation ───────────────────────────────────────────────────────
 
     public void ExpandAll(XmlNodeViewModel node)
     {
+        _logger.LogTrace(">> ExpandAll | root={Root}", node.NodeName);
         node.IsExpanded = true;
         foreach (var child in node.Children) ExpandAll(child);
     }
 
     public void CollapseAll(XmlNodeViewModel node)
     {
+        _logger.LogTrace(">> CollapseAll | root={Root}", node.NodeName);
         node.IsExpanded = false;
         foreach (var child in node.Children) CollapseAll(child);
     }
 
     public void ExpandToDepth(XmlNodeViewModel node, int maxDepth)
     {
+        _logger.LogTrace(">> ExpandToDepth | root={Root} maxDepth={MaxDepth}", node.NodeName, maxDepth);
         node.IsExpanded = node.Depth < maxDepth;
         foreach (var child in node.Children) ExpandToDepth(child, maxDepth);
     }
@@ -45,6 +60,7 @@ public class XmlViewerService : IXmlViewerService
                          string? value,
                          IEnumerable<(string ChildName, string ChildValue)> childElements)
     {
+        _logger.LogTrace(">> AddChild | parent={Parent} element={Element}", parent.NodeName, elementName);
         var depth = parent.Depth + 1;
         var newNode = new XmlNodeViewModel
         {
@@ -91,13 +107,17 @@ public class XmlViewerService : IXmlViewerService
 
     public bool RemoveNode(XmlNodeViewModel nodeToRemove)
     {
+        _logger.LogTrace(">> RemoveNode({Node})", nodeToRemove.NodeName);
         var parent = nodeToRemove.Parent;
-        if (parent is null) return false;
-        return parent.Children.Remove(nodeToRemove);
+        if (parent is null) { _logger.LogTrace("<< RemoveNode → false (no parent)"); return false; }
+        var removed = parent.Children.Remove(nodeToRemove);
+        _logger.LogTrace("<< RemoveNode → {Removed}", removed);
+        return removed;
     }
 
     public void UpdateNodeValue(XmlNodeViewModel node, string newValue)
     {
+        _logger.LogTrace(">> UpdateNodeValue | node={Node} value={Value}", node.NodeName, newValue);
         var trimmedValue = string.IsNullOrWhiteSpace(newValue) ? null : newValue.Trim();
         node.NodeValue = trimmedValue;
         node.IsModified = true;
@@ -154,12 +174,14 @@ public class XmlViewerService : IXmlViewerService
 
     public void SetClipboard(XmlNodeViewModel node)
     {
+        _logger.LogTrace(">> SetClipboard | node={Node}", node.NodeName);
         _clipboard = DeepClone(node, null, 0);
     }
 
     public void PasteAsChild(XmlNodeViewModel parent)
     {
-        if (_clipboard is null) return;
+        _logger.LogTrace(">> PasteAsChild | parent={Parent}", parent.NodeName);
+        if (_clipboard is null) { _logger.LogTrace("<< PasteAsChild → skipped (clipboard empty)"); return; }
         var pasted = DeepClone(_clipboard, parent, parent.Depth + 1);
         SetDepths(pasted, parent.Depth + 1);
         parent.NodeValue = null;
