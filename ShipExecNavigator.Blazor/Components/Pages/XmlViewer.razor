@@ -4,6 +4,7 @@
 @implements IDisposable
 
 @using ShipExecNavigator.BusinessLogic.EntityComparison
+@using ShipExecNavigator.Shared.Models
 @using System.Xml.Linq
 @inject IXmlViewerService XmlViewerService
 @inject IXmlSchemaService XmlSchemaService
@@ -145,6 +146,7 @@
         {
             <div class="shippers-panel">
                 <div class="shippers-toolbar">
+                    <button class="btn-action" @onclick="OpenAddShipperDialog">&#x2795; Add Shipper</button>
                     <button class="btn-action" @onclick="() => _showImportShippersDialog = true">&#x1F69A; Import Shippers</button>
                     <button class="btn-action" @onclick="ExportShippersAsync" disabled="@_isExportingShippers">
                         @if (_isExportingShippers)
@@ -420,7 +422,7 @@
     }
 
     @* ── Studio chat panel ── *@
-    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" />
+    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" />
 
 </div>
 
@@ -430,6 +432,12 @@
                       OnClose="() => _showImportShippersDialog = false"
                       OnShippersApplied="HandleShippersAppliedAsync"
                       OnAddToVarianceList="HandleShipperVariancesForPanel" />
+
+@* ── Add Shipper dialog ── *@
+<AddShipperDialog IsVisible="_showAddShipperDialog"
+                  Prefill="_addShipperPrefill"
+                  OnClose="CloseAddShipperDialog"
+                  OnShipperAdded="HandleNewShipperAdded" />
 
 @* ── Compare Profiles dialog ── *@
 <CompareProfilesDialog IsVisible="_showCompareProfilesDialog"
@@ -490,6 +498,10 @@
     private bool _showImportShippersDialog;
     private bool _isExportingShippers;
     private readonly List<Variance> _pendingShipperVariances = [];
+
+    // ── Add Shipper dialog state ──────────────────────────────────────────────
+    private bool _showAddShipperDialog;
+    private ShipperAddItem? _addShipperPrefill;
 
     // ── Shippers tab state ────────────────────────────────────────────────────
     private List<PSI.Sox.Shipper> _shippers = [];
@@ -1075,6 +1087,60 @@
         MarkDirty();
         _version++;
         InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiShipperAdd(ShipperAddItem item)
+    {
+        _addShipperPrefill = item;
+        _showAddShipperDialog = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenAddShipperDialog()
+    {
+        _addShipperPrefill = null;
+        _showAddShipperDialog = true;
+    }
+
+    private void CloseAddShipperDialog()
+    {
+        _showAddShipperDialog = false;
+        _addShipperPrefill = null;
+    }
+
+    private void HandleNewShipperAdded(PSI.Sox.Shipper shipper)
+    {
+        var addVariance = new Variance
+        {
+            EntityName = "Shipper",
+            NewObject  = shipper,
+            IsAdd      = true,
+        };
+        _pendingShipperVariances.Add(addVariance);
+
+        var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+        _varianceEntries.Insert(0, new Variance
+        {
+            NodeId          = Guid.Empty,
+            PathDescription = $"Shippers \u203a {shipper.Symbol}",
+            Description     = $"Add Shipper: {shipper.Name}",
+            ChangeType      = "Added",
+            NewXML          = System.Text.Json.JsonSerializer.Serialize(shipper, opts),
+        });
+
+        ApplyShipperToTree(addVariance);
+
+        if (rootNode is not null)
+            XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        CloseAddShipperDialog();
+
+        // Refresh shipper list if on the Shippers tab
+        if (_shippersLoaded)
+        {
+            _shippers.Add(shipper);
+        }
     }
 
     private void ApplyShipperToTree(Variance v)

@@ -81,6 +81,7 @@
     [Parameter] public XmlNodeViewModel? XmlRoot { get; set; }
     [Parameter] public EventCallback<List<ShipperDeleteItem>> OnDeleteShippers { get; set; }
     [Parameter] public EventCallback<List<ShipperEditItem>> OnEditShippers { get; set; }
+    [Parameter] public EventCallback<ShipperAddItem> OnAddShipper { get; set; }
 
     private readonly List<ChatMessage> _messages = [];
     private readonly List<string> _inputHistory = [];
@@ -258,7 +259,15 @@
 
     private async Task TryExecuteJsFromResponseAsync(string response)
     {
-        // Handle shipper-delete blocks first
+        // Handle shipper-add blocks first (opens the Add Shipper dialog)
+        var addItem = ExtractShipperAdd(response);
+        if (addItem is not null)
+        {
+            await OnAddShipper.InvokeAsync(addItem);
+            return;
+        }
+
+        // Handle shipper-delete blocks
         var deleteItems = ExtractShipperDelete(response);
         if (deleteItems is { Count: > 0 })
         {
@@ -283,6 +292,22 @@
                 _undoIds.AddRange(ids);
         }
         catch { /* execution errors are non-fatal */ }
+    }
+
+    private static ShipperAddItem? ExtractShipperAdd(string response)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(
+            response,
+            @"```shipper-add\s*\n?([\s\S]*?)```",
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        if (!m.Success) return null;
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<ShipperAddItem>(
+                m.Groups[1].Value.Trim(),
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch { return null; }
     }
 
     private static List<ShipperDeleteItem>? ExtractShipperDelete(string response)

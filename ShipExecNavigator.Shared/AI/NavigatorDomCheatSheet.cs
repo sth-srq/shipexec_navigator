@@ -262,5 +262,31 @@ public static class NavigatorDomCheatSheet
         Do NOT include JavaScript when performing a deletion — the ```shipper-delete
         block is all that is needed.
         ---
+        ### Adding a new shipper (model-level creation)
+        When the user asks to **add** or **create** a new shipper, respond with a
+        ```shipper-add code block containing a single JSON object with any fields the
+        user provided. The Navigator will open an **Add Shipper** dialog pre-populated
+        with those values so the user can review and confirm. Example:
+
+        ```shipper-add
+        {
+          "symbol": "NEWWH",
+          "name": "New Warehouse",
+          "address1": "123 Main St",
+          "city": "Chicago",
+          "stateProvince": "IL",
+          "postalCode": "60601",
+          "country": "US",
+          "phone": "555-1234",
+          "email": "ship@example.com"
+        }
+        ```
+
+        Supported fields: symbol, name, code, address1, address2, address3, city,
+        stateProvince, postalCode, country, company, contact, phone, fax, email,
+        sms, poBox (bool), residential (bool).
+        Do NOT include JavaScript when adding a shipper — the ```shipper-add block
+        is all that is needed.
+        ---
         """;
 }
