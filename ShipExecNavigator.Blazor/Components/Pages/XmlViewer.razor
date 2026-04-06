@@ -61,8 +61,6 @@
         <div class="viewer-tabs">
             <button class='viewer-tab @(_activeMainTab == "company" ? "viewer-tab--active" : "")'
                     @onclick='() => _activeMainTab = "company"'>&#x1F3E2; Company</button>
-            <button class='viewer-tab @(_activeMainTab == "shippers" ? "viewer-tab--active" : "")'
-                    @onclick="ActivateShippersTab">&#x1F69A; Shippers</button>
             <button class='viewer-tab @(_activeMainTab == "users" ? "viewer-tab--active" : "")'
                     @onclick='() => _activeMainTab = "users"'>&#x1F464; Users</button>
             <button class='viewer-tab @(_activeMainTab == "logs" ? "viewer-tab--active" : "")'
@@ -142,99 +140,6 @@
             </div>
         </div>
         </div>
-        @if (_activeMainTab == "shippers")
-        {
-            <div class="shippers-panel">
-                <div class="shippers-toolbar">
-                    <button class="btn-action" @onclick="OpenAddShipperDialog">&#x2795; Add Shipper</button>
-                    <button class="btn-action" @onclick="() => _showImportShippersDialog = true">&#x1F69A; Import Shippers</button>
-                    <button class="btn-action" @onclick="ExportShippersAsync" disabled="@_isExportingShippers">
-                        @if (_isExportingShippers)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        }
-                        &#x2B07; Export Shippers
-                    </button>
-                    <button class="btn-action" @onclick="RefreshShippersAsync" disabled="@_shippersLoading">
-                        @if (_shippersLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        }
-                        &#x1F504; Refresh
-                    </button>
-                    @if (_shippersLoaded && !_shippersLoading)
-                    {
-                        var rootCount = _shippers.Count(s => s.SiteId == null || s.SiteId == Guid.Empty);
-                        <span class="stat-pill">@rootCount shipper@(rootCount == 1 ? "" : "s")</span>
-                    }
-                </div>
-
-                @if (!string.IsNullOrEmpty(_shippersError))
-                {
-                    <div class="error-banner" role="alert">
-                        <span class="error-icon">&#9888;</span>
-                        <span>@_shippersError</span>
-                    </div>
-                }
-
-                @if (_shippersLoading)
-                {
-                    <div class="shippers-loading">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Loading shippers&hellip;
-                    </div>
-                }
-                else
-                {
-                    var rootShippers = _shippers
-                        .Where(s => s.SiteId == null || s.SiteId == Guid.Empty)
-                        .OrderBy(s => s.Id)
-                        .ToList();
-                    @if (rootShippers.Count == 0 && _shippersLoaded)
-                    {
-                        <div class="shippers-empty">No root-level shippers found for this company.</div>
-                    }
-                    else if (rootShippers.Count > 0)
-                    {
-                        <div class="shippers-table-wrap">
-                            <table class="shippers-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Symbol</th>
-                                        <th>Name</th>
-                                        <th>Code</th>
-                                        <th>City</th>
-                                        <th>State</th>
-                                        <th>Postal Code</th>
-                                        <th>Country</th>
-                                        <th>Phone</th>
-                                        <th>Email</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var shipper in rootShippers)
-                                    {
-                                        <tr>
-                                            <td class="shipper-id">@shipper.Id</td>
-                                            <td class="shipper-symbol">@shipper.Symbol</td>
-                                            <td class="shipper-name">@shipper.Name</td>
-                                            <td>@shipper.Code</td>
-                                            <td>@shipper.City</td>
-                                            <td>@shipper.StateProvince</td>
-                                            <td>@shipper.PostalCode</td>
-                                            <td>@shipper.Country</td>
-                                            <td>@shipper.Phone</td>
-                                            <td>@shipper.Email</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                }
-            </div>
-        }
         @if (_activeMainTab == "users")
         {
             <div class="um-tab-content">
@@ -512,13 +417,7 @@
     private bool _showAddShipperDialog;
     private ShipperAddItem? _addShipperPrefill;
 
-    // ── Shippers tab state ────────────────────────────────────────────────────
-    private List<PSI.Sox.Shipper> _shippers = [];
-    private bool _shippersLoading;
-    private bool _shippersLoaded;
-    private string? _shippersError;
-
-    // ── Compare Profiles dialog state ─────────────────────────────────────────
+    // ── Compare Profiles dialog state
     private bool _showCompareProfilesDialog;
 
     // ── Chat panel state ──────────────────────────────────────────────────────
@@ -677,38 +576,6 @@
         }
     }
 
-    private async Task ActivateShippersTab()
-    {
-        _activeMainTab = "shippers";
-        if (!_shippersLoaded)
-            await LoadShippersAsync();
-    }
-
-    private async Task LoadShippersAsync()
-    {
-        _shippersLoading = true;
-        _shippersError = null;
-        try
-        {
-            _shippers = await ShipExecService.GetShippersAsync();
-            _shippersLoaded = true;
-        }
-        catch (Exception ex)
-        {
-            _shippersError = $"Failed to load shippers: {ex.Message}";
-        }
-        finally
-        {
-            _shippersLoading = false;
-        }
-    }
-
-    private async Task RefreshShippersAsync()
-    {
-        _shippersLoaded = false;
-        await LoadShippersAsync();
-    }
-
     private async Task ExportLogsCsvAsync()
     {
         _logsExporting = true;
@@ -842,9 +709,6 @@
         rootNode = null;
         _isDirty = false;
         _activeMainTab = "company";
-        _shippers = [];
-        _shippersLoaded = false;
-        _shippersError = null;
         _usersJson = null;
         _usersMetaJson = null;
         _foundUserIds = null;
@@ -1227,12 +1091,6 @@
         MarkDirty();
         _version++;
         CloseAddShipperDialog();
-
-        // Refresh shipper list if on the Shippers tab
-        if (_shippersLoaded)
-        {
-            _shippers.Add(shipper);
-        }
     }
 
     private void ApplyShipperToTree(Variance v)

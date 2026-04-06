@@ -129,9 +129,9 @@
             if (DebugConfig.AutoConnect)
                 await AutoSelectCompanyAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errorMessage = $"Connection failed: {ex.Message}";
+            _errorMessage = "Connection failed. Please check your URL and credentials.";
         }
         finally
         {
@@ -151,9 +151,9 @@
             await OnCompanyConnected.InvokeAsync((company.Id, company.Name));
             Reset();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errorMessage = $"Failed to load company: {ex.Message}";
+            _errorMessage = "Failed to load company. Please try again.";
         }
         finally
         {

@@ -7,49 +7,58 @@
 
 <div class="um-panel">
     <div class="um-panel-toolbar">
-        <button class="um-create-user-btn" @onclick="() => _showCreateUserDialog = true">&#x2795; Create User</button>
+        <button class="um-create-user-btn" @onclick="EnqueueCreateVariance">&#x2795; Create User</button>
         <button class="um-upload-btn" @onclick="() => _showUploadDialog = true">&#x2B06; Upload</button>
         <button class="um-export-btn" @onclick="HandleExportAsync" disabled="@_isExporting">
             @if (_isExporting) { <span class="um-export-spinner"></span> }
             &#x2B07; Export
         </button>
+        @if (_pendingVariances.Count > 0)
+        {
+            <button class="um-apply-btn" @onclick="ApplyVariancesAsync" disabled="@_isApplying">
+                @if (_isApplying)
+                {
+                    <span class="um-export-spinner"></span>
+                }
+                &#x2705; Apply Changes (@_pendingVariances.Count)
+            </button>
+            <button class="um-discard-btn" @onclick="DiscardVariances" disabled="@_isApplying">
+                &#x1F5D1; Discard
+            </button>
+        }
     </div>
+
+    @if (_pendingVariances.Count > 0)
+    {
+        <div class="um-pending-panel">
+            <div class="um-pending-header">
+                <span>&#x23F3; Pending changes — not yet saved to ShipExec</span>
+            </div>
+            <ul class="um-pending-list">
+                @foreach (var v in _pendingVariances)
+                {
+                    <li class="um-pending-item um-pending-item--@(v.Kind.ToString().ToLower())">
+                        <span class="um-pending-kind">@v.Kind</span>
+                        <span class="um-pending-desc">@v.Description</span>
+                        <button class="um-pending-remove" title="Remove this change" @onclick="() => RemoveVariance(v.Id)">&#x2715;</button>
+                    </li>
+                }
+            </ul>
+            @if (!string.IsNullOrEmpty(_applyError))
+            {
+                <div class="um-delete-banner um-delete-banner--error" style="margin:0.4rem 0 0">
+                    <span>&#9888; @_applyError</span>
+                    <button class="um-find-clear-btn" @onclick="() => _applyError = null">&#x2715;</button>
+                </div>
+            }
+        </div>
+    }
 
     @if (FoundUserIds is { Count: > 0 })
     {
         <div class="um-find-banner">
             <span>&#x1F50D; AI found @FoundUserIds.Count user@(FoundUserIds.Count == 1 ? "" : "s")</span>
             <button class="um-find-clear-btn" @onclick="OnClearFound">&#x2715; Clear</button>
-        </div>
-    }
-
-    @if (_isAiDeleting)
-    {
-        <div class="um-delete-banner um-delete-banner--progress">
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>Deleting users&hellip;</span>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(_aiDeleteError))
-    {
-        <div class="um-delete-banner um-delete-banner--error">
-            <span>&#9888; @_aiDeleteError</span>
-            <button class="um-find-clear-btn" @onclick="() => _aiDeleteError = null">&#x2715;</button>
-        </div>
-    }
-
-    @if (_isAiEditing)
-    {
-        <div class="um-delete-banner um-delete-banner--progress">
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>Updating users&hellip;</span>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(_aiEditError))
-    {
-        <div class="um-delete-banner um-delete-banner--error">
-            <span>&#9888; @_aiEditError</span>
-            <button class="um-find-clear-btn" @onclick="() => _aiEditError = null">&#x2715;</button>
         </div>
     }
 
@@ -63,32 +72,32 @@
     <UploadDialog IsVisible="_showUploadDialog"
                   OnClose="() => _showUploadDialog = false" />
 
-                @if (_isLoading)
-                {
-                    <div class="um-loading">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <span>Loading users&hellip;</span>
-                    </div>
-                }
-                else if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <div class="um-error">&#9888; @_errorMessage</div>
-                }
-                else if (_users.Count == 0)
-                {
-                    <div class="um-empty">No users found for this company.</div>
-                }
-                else
-                {
-                    <table class="um-table">
-                        <thead>
-                            <tr>
-                                <th class="um-col-toggle"></th>
-                                <th>Username</th>
-                                <th>Email</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+    @if (_isLoading)
+    {
+        <div class="um-loading">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Loading users&hellip;</span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="um-error">&#9888; @_errorMessage</div>
+    }
+    else if (_users.Count == 0)
+    {
+        <div class="um-empty">No users found for this company.</div>
+    }
+    else
+    {
+        <table class="um-table">
+            <thead>
+                <tr>
+                    <th class="um-col-toggle"></th>
+                    <th>Username</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
                             @foreach (var (user, idx) in _users.Select((u, i) => (u, i)))
                             {
                                 var isExpanded = _expandedUserIds.Contains(user.Id);
@@ -409,9 +418,9 @@
                                     </tr>
                                 }
                             }
-                        </tbody>
-                    </table>
-                }
+            </tbody>
+        </table>
+    }
 </div>
 
 @code {
@@ -439,6 +448,10 @@
     private UserAddItem? _lastProcessedCreatePrefill;
     private bool _isAiEditing;
     private string? _aiEditError;
+    private readonly List<UserVariance> _pendingVariances = [];
+    private bool _isApplying;
+    private string? _applyError;
+    private Guid? _activeCreateVarianceId;
     private CompanyInfo? _companyInfo;
     private string _errorMessage = string.Empty;
     private readonly HashSet<Guid> _expandedUserIds = [];
@@ -504,8 +517,15 @@
         if (AiCreatePrefill is not null && !ReferenceEquals(AiCreatePrefill, _lastProcessedCreatePrefill))
         {
             _lastProcessedCreatePrefill = AiCreatePrefill;
-            _createPrefill = AiCreatePrefill;
-            _showCreateUserDialog = true;
+            var label = !string.IsNullOrWhiteSpace(AiCreatePrefill.Email) ? AiCreatePrefill.Email : "new user";
+            _pendingVariances.Add(new UserVariance
+            {
+                Kind        = UserVarianceKind.Create,
+                Email       = AiCreatePrefill.Email,
+                Username    = AiCreatePrefill.Email,
+                CreatePrefill = AiCreatePrefill,
+                Description = $"Create user '{label}'",
+            });
             if (OnCreateHandled.HasDelegate)
                 await OnCreateHandled.InvokeAsync();
             StateHasChanged();
@@ -514,35 +534,19 @@
 
     private async Task ExecuteAiDeletesAsync(List<UserDeleteItem> items)
     {
-        _isAiDeleting = true;
-        _aiDeleteError = null;
-        StateHasChanged();
-        var errors = new List<string>();
         foreach (var item in items)
         {
             if (!Guid.TryParse(item.Id, out var userId)) continue;
-            try
+            if (_pendingVariances.Any(v => v.Kind == UserVarianceKind.Delete && v.UserId == userId))
+                continue; // already queued
+            _pendingVariances.Add(new UserVariance
             {
-                await ShipExecService.DeleteUserAsync(userId);
-                _users.RemoveAll(u => u.Id == userId);
-                _expandedUserIds.Remove(userId);
-                _userDetails.Remove(userId);
-            }
-            catch (Exception ex)
-            {
-                errors.Add($"{item.Username}: {ex.Message}");
-            }
-        }
-        _isAiDeleting = false;
-        if (errors.Count > 0)
-            _aiDeleteError = string.Join("; ", errors);
-
-        // Refresh the users JSON context so the AI has an up-to-date list
-        if (OnUsersJson.HasDelegate)
-        {
-            var json = System.Text.Json.JsonSerializer.Serialize(_users,
-                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            await OnUsersJson.InvokeAsync(json);
+                Kind        = UserVarianceKind.Delete,
+                UserId      = userId,
+                Username    = item.Username,
+                Email       = item.Email,
+                Description = $"Delete user '{item.Username}' ({item.Email})",
+            });
         }
 
         if (OnDeletesHandled.HasDelegate)
@@ -553,149 +557,20 @@
 
     private async Task ExecuteAiEditsAsync(List<UserEditItem> items)
     {
-        _isAiEditing = true;
-        _aiEditError = null;
-        StateHasChanged();
-        var errors = new List<string>();
         foreach (var item in items)
         {
             if (!Guid.TryParse(item.Id, out var userId)) continue;
-            try
+            var changedFields = string.Join(", ", item.Edits.Select(e => $"{e.Key}={e.Value}"));
+            _pendingVariances.Add(new UserVariance
             {
-                // Fetch full user detail so we have a complete object to pass to UpdateUserAsync
-                var user = await ShipExecService.GetUserDetailAsync(userId);
-                if (user is null)
-                {
-                    errors.Add($"{item.Username}: user not found");
-                    continue;
-                }
-                user.Address              ??= new NameAddress();
-                user.DefaultConfiguration ??= new DefaultConfiguration();
-                user.Permissions          ??= [];
-                user.Roles                ??= [];
-
-                foreach (var (field, value) in item.Edits)
-                {
-                    switch (field.ToLowerInvariant())
-                    {
-                        // ── Top-level user fields ────────────────────────────
-                        case "email":
-                            user.Email = value; break;
-                        case "username":
-                            user.UserName = value; break;
-                        case "phonenumber":
-                            user.PhoneNumber = value; break;
-                        case "passwordexpired":
-                            if (bool.TryParse(value, out var pe)) user.PasswordExpired = pe; break;
-                        case "lockoutenabled":
-                            if (bool.TryParse(value, out var le)) user.LockoutEnabled = le; break;
-                        case "emailconfirmed":
-                            if (bool.TryParse(value, out var ec)) user.EmailConfirmed = ec; break;
-                        case "phonenumberconfirmed":
-                            if (bool.TryParse(value, out var pnc)) user.PhoneNumberConfirmed = pnc; break;
-
-                        // ── Address fields ───────────────────────────────────
-                        case "address.company":     user.Address.Company       = value; break;
-                        case "address.contact":     user.Address.Contact       = value; break;
-                        case "address.address1":    user.Address.Address1      = value; break;
-                        case "address.address2":    user.Address.Address2      = value; break;
-                        case "address.address3":    user.Address.Address3      = value; break;
-                        case "address.city":        user.Address.City          = value; break;
-                        case "address.stateprovince": user.Address.StateProvince = value; break;
-                        case "address.postalcode":  user.Address.PostalCode    = value; break;
-                        case "address.country":     user.Address.Country       = value; break;
-                        case "address.phone":       user.Address.Phone         = value; break;
-                        case "address.fax":         user.Address.Fax           = value; break;
-                        case "address.email":       user.Address.Email         = value; break;
-                        case "address.sms":         user.Address.Sms           = value; break;
-                        case "address.account":     user.Address.Account       = value; break;
-                        case "address.taxid":       user.Address.TaxId         = value; break;
-                        case "address.code":        user.Address.Code          = value; break;
-                        case "address.group":       user.Address.Group         = value; break;
-                        case "address.pobox":
-                            if (bool.TryParse(value, out var pb)) user.Address.PoBox = pb; break;
-                        case "address.residential":
-                            if (bool.TryParse(value, out var res)) user.Address.Residential = res; break;
-
-                        // ── Backwards-compat: unqualified address shorthands ─
-                        case "company":     user.Address.Company       = value; break;
-                        case "contact":     user.Address.Contact       = value; break;
-                        case "address1":    user.Address.Address1      = value; break;
-                        case "address2":    user.Address.Address2      = value; break;
-                        case "address3":    user.Address.Address3      = value; break;
-                        case "city":        user.Address.City          = value; break;
-                        case "stateprovince": user.Address.StateProvince = value; break;
-                        case "postalcode":  user.Address.PostalCode    = value; break;
-                        case "country":     user.Address.Country       = value; break;
-                        case "phone":       user.Address.Phone         = value; break;
-                        case "fax":         user.Address.Fax           = value; break;
-
-                        // ── DefaultConfiguration fields ──────────────────────
-                        case "config.exportfiledelimiter":
-                            if (Enum.TryParse<Delimiter>(value, true, out var delim))
-                                user.DefaultConfiguration.ExportFileDelimiter = delim; break;
-                        case "config.exportfilequalifier":
-                            if (Enum.TryParse<Qualifier>(value, true, out var qual))
-                                user.DefaultConfiguration.ExportFileQualifier = qual; break;
-                        case "config.exportfilegroupseparator":
-                            if (Enum.TryParse<GroupSeparator>(value, true, out var gs))
-                                user.DefaultConfiguration.ExportFileGroupSeparator = gs; break;
-                        case "config.exportfiledecimalseparator":
-                            if (Enum.TryParse<DecimalSeparator>(value, true, out var ds))
-                                user.DefaultConfiguration.ExportFileDecimalSeparator = ds; break;
-
-                        // ── Permissions ──────────────────────────────────────
-                        case "permissions.add":
-                        {
-                            var perm = _allPermissions.FirstOrDefault(p =>
-                                string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
-                            if (perm is not null && !user.Permissions.Any(p => p.Id == perm.Id))
-                                user.Permissions.Add(perm);
-                            else if (perm is null)
-                                errors.Add($"{item.Username}: permission '{value}' not found");
-                            break;
-                        }
-                        case "permissions.remove":
-                        {
-                            user.Permissions.RemoveAll(p =>
-                                string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
-                            break;
-                        }
-
-                        // ── Roles ────────────────────────────────────────────
-                        case "roles.add":
-                        {
-                            var role = _allRoles.FirstOrDefault(r =>
-                                string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
-                            if (role is not null && !user.Roles.Any(r => r.Id == role.Id))
-                                user.Roles.Add(role);
-                            else if (role is null)
-                                errors.Add($"{item.Username}: role '{value}' not found");
-                            break;
-                        }
-                        case "roles.remove":
-                        {
-                            user.Roles.RemoveAll(r =>
-                                string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
-                            break;
-                        }
-                    }
-                }
-
-                await ShipExecService.UpdateUserAsync(user);
-
-                // Update the cached detail if the row is already expanded
-                if (_userDetails.ContainsKey(userId))
-                    _userDetails[userId] = user;
-            }
-            catch (Exception ex)
-            {
-                errors.Add($"{item.Username}: {ex.Message}");
-            }
+                Kind        = UserVarianceKind.Edit,
+                UserId      = userId,
+                Username    = item.Username,
+                Email       = item.Email,
+                EditItem    = item,
+                Description = $"Edit '{item.Username}': {changedFields}",
+            });
         }
-        _isAiEditing = false;
-        if (errors.Count > 0)
-            _aiEditError = string.Join("; ", errors);
 
         if (OnEditsHandled.HasDelegate)
             await OnEditsHandled.InvokeAsync();
@@ -703,9 +578,79 @@
         StateHasChanged();
     }
 
+    private async Task ApplyVariancesAsync()
+    {
+        if (_pendingVariances.Count == 0) return;
+
+        // Handle Create variances one-at-a-time via the dialog (password required).
+        var firstCreate = _pendingVariances.FirstOrDefault(v => v.Kind == UserVarianceKind.Create);
+        if (firstCreate is not null)
+        {
+            _activeCreateVarianceId = firstCreate.Id;
+            _createPrefill = firstCreate.CreatePrefill;
+            _showCreateUserDialog = true;
+            StateHasChanged();
+            return;
+        }
+
+        // Apply Delete and Edit variances via the service.
+        _isApplying = true;
+        _applyError = null;
+        StateHasChanged();
+        try
+        {
+            var results = await ShipExecService.ApplyUserVariancesAsync([.._pendingVariances]);
+            var failed = results.Where(r => !r.Success).ToList();
+            if (failed.Count > 0)
+                _applyError = string.Join("; ", failed.Select(r => $"{r.EntityName}: {r.Message}"));
+            if (failed.Count == 0)
+                _pendingVariances.Clear();
+            else
+                _pendingVariances.RemoveAll(v =>
+                    !failed.Any(f => string.Equals(f.EntityName, v.Username, StringComparison.OrdinalIgnoreCase)));
+            await LoadUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _applyError = ex.Message;
+        }
+        finally
+        {
+            _isApplying = false;
+            StateHasChanged();
+        }
+    }
+
+    private void EnqueueCreateVariance()
+    {
+        _pendingVariances.Add(new UserVariance
+        {
+            Kind        = UserVarianceKind.Create,
+            Description = "Create new user",
+        });
+        StateHasChanged();
+    }
+
+    private void DiscardVariances()
+    {
+        _pendingVariances.Clear();
+        _activeCreateVarianceId = null;
+        _createPrefill = null;
+        _showCreateUserDialog = false;
+        _applyError = null;
+        StateHasChanged();
+    }
+
+    private void RemoveVariance(Guid id)
+    {
+        _pendingVariances.RemoveAll(v => v.Id == id);
+        StateHasChanged();
+    }
+
     private async Task EmitUsersMetaJsonAsync()
     {
         if (!OnUsersMetaJson.HasDelegate) return;
+
         var meta = new
         {
             availablePermissions = _allPermissions.Select(p => new { id = p.Id, name = p.Name }),
@@ -718,7 +663,25 @@
 
     private async Task HandleUserCreated(Guid newUserId)
     {
+        // Remove the variance that was just fulfilled via the dialog.
+        if (_activeCreateVarianceId.HasValue)
+        {
+            _pendingVariances.RemoveAll(v => v.Id == _activeCreateVarianceId.Value);
+            _activeCreateVarianceId = null;
+            _createPrefill = null;
+        }
+        _showCreateUserDialog = false;
         await LoadUsersAsync();
+
+        // If more Create variances remain, open the dialog for the next one.
+        var nextCreate = _pendingVariances.FirstOrDefault(v => v.Kind == UserVarianceKind.Create);
+        if (nextCreate is not null)
+        {
+            _activeCreateVarianceId = nextCreate.Id;
+            _createPrefill = nextCreate.CreatePrefill;
+            _showCreateUserDialog = true;
+            StateHasChanged();
+        }
     }
 
     private async Task HandleExportAsync()

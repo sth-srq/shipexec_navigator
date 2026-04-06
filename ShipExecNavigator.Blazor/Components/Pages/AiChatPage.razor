@@ -47,14 +47,14 @@
                 disabled="@_thinking">
             &#x1F4DA; RAG
         </button>
-        <textarea class="chat-textarea"
-                  id="chat-textarea"
-                  rows="2"
-                  placeholder="Type your message… (Enter to send, Shift+Enter for new line)"
-                  @bind="_input"
-                  @bind:event="oninput"
-                  @onkeydown="HandleKeyDown"
-                  disabled="@_thinking" />
+        <input type="text"
+               class="chat-textarea"
+               id="chat-textarea"
+               placeholder="Type your message…"
+               @bind="_input"
+               @bind:event="oninput"
+               @onkeydown="HandleKeyDown"
+               disabled="@_thinking" />
         <button class="chat-send-btn" @onclick="SendAsync" disabled="@(string.IsNullOrWhiteSpace(_input) || _thinking)">
             &#x27A4; Send
         </button>
@@ -98,7 +98,7 @@
                 [],
                 "greet yourself",
                 useRag: false);
-            _messages.Add(new ChatMessage("assistant", reply));
+            _messages.Add(new ChatMessage("assistant", reply.Message));
         }
         catch (Exception ex)
         {
@@ -109,6 +109,7 @@
             _thinking = false;
             StateHasChanged();
             await ScrollToBottomAsync();
+            await JS.InvokeVoidAsync("eval", "document.getElementById('chat-textarea')?.focus()");
         }
     }
 
@@ -135,7 +136,7 @@
         try
         {
             var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, useRag: _useRag);
-            _messages.Add(new ChatMessage("assistant", reply));
+            _messages.Add(new ChatMessage("assistant", reply.Message));
         }
         catch (Exception ex)
         {
@@ -146,12 +147,13 @@
             _thinking = false;
             StateHasChanged();
             await ScrollToBottomAsync();
+            await JS.InvokeVoidAsync("eval", "document.getElementById('chat-textarea')?.focus()");
         }
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !e.ShiftKey)
+        if (e.Key == "Enter")
             await SendAsync();
     }
 

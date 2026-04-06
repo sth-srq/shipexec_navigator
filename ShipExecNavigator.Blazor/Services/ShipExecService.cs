@@ -1087,6 +1087,177 @@ public sealed class ShipExecService(
         return Task.Run(() => _appManager.DeleteUser(userId));
     }
 
+    public async Task<List<ApplyResultItem>> ApplyUserVariancesAsync(List<UserVariance> variances)
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        var results = new List<ApplyResultItem>();
+        foreach (var v in variances)
+        {
+            try
+            {
+                switch (v.Kind)
+                {
+                    case UserVarianceKind.Delete:
+                        await Task.Run(() => _appManager.DeleteUser(v.UserId));
+                        results.Add(new ApplyResultItem
+                        {
+                            EntityName = v.Username,
+                            Operation  = "Remove",
+                            Endpoint   = "RemoveUser",
+                            Success    = true,
+                        });
+                        break;
+
+                    case UserVarianceKind.Edit:
+                        if (v.EditItem is null) break;
+                        var user = await Task.Run(() => _appManager.GetUserDetail(v.UserId));
+                        if (user is null)
+                        {
+                            results.Add(new ApplyResultItem
+                            {
+                                EntityName = v.Username,
+                                Operation  = "Update",
+                                Endpoint   = "UpdateUser",
+                                Success    = false,
+                                Message    = "User not found",
+                            });
+                            break;
+                        }
+                        user.Address              ??= new PSI.Sox.NameAddress();
+                        user.DefaultConfiguration ??= new PSI.Sox.DefaultConfiguration();
+                        user.Permissions          ??= [];
+                        user.Roles                ??= [];
+                        ApplyUserEditFields(user, v.EditItem.Edits, [], []);
+                        await Task.Run(() => _appManager.UpdateUser(user));
+                        results.Add(new ApplyResultItem
+                        {
+                            EntityName = v.Username,
+                            Operation  = "Update",
+                            Endpoint   = "UpdateUser",
+                            Success    = true,
+                        });
+                        break;
+
+                    case UserVarianceKind.Create:
+                        // Create variances are handled by the dialog in the UI; skip here.
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                results.Add(new ApplyResultItem
+                {
+                    EntityName = v.Username,
+                    Operation  = v.Kind.ToString(),
+                    Endpoint   = v.Kind == UserVarianceKind.Delete ? "RemoveUser" : "UpdateUser",
+                    Success    = false,
+                    Message    = ex.Message,
+                });
+            }
+        }
+        return results;
+    }
+
+    /// <summary>
+    /// Applies a flat string-keyed edit dictionary to a fully-hydrated User object.
+    /// <paramref name="allPermissions"/> and <paramref name="allRoles"/> are used for
+    /// Permissions.Add / Roles.Add lookups; pass empty lists if not available.
+    /// </summary>
+    internal static void ApplyUserEditFields(
+        PSI.Sox.User user,
+        Dictionary<string, string> edits,
+        IReadOnlyList<PSI.Sox.Permission> allPermissions,
+        IReadOnlyList<PSI.Sox.Role> allRoles)
+    {
+        foreach (var (field, value) in edits)
+        {
+            switch (field.ToLowerInvariant())
+            {
+                case "email":       user.Email       = value; break;
+                case "username":    user.UserName    = value; break;
+                case "phonenumber": user.PhoneNumber = value; break;
+                case "passwordexpired":       if (bool.TryParse(value, out var pe))  user.PasswordExpired       = pe;  break;
+                case "lockoutenabled":        if (bool.TryParse(value, out var le))  user.LockoutEnabled        = le;  break;
+                case "emailconfirmed":        if (bool.TryParse(value, out var ec))  user.EmailConfirmed        = ec;  break;
+                case "phonenumberconfirmed":  if (bool.TryParse(value, out var pnc)) user.PhoneNumberConfirmed  = pnc; break;
+
+                case "address.company":        user.Address!.Company       = value; break;
+                case "address.contact":        user.Address!.Contact       = value; break;
+                case "address.address1":       user.Address!.Address1      = value; break;
+                case "address.address2":       user.Address!.Address2      = value; break;
+                case "address.address3":       user.Address!.Address3      = value; break;
+                case "address.city":           user.Address!.City          = value; break;
+                case "address.stateprovince":  user.Address!.StateProvince = value; break;
+                case "address.postalcode":     user.Address!.PostalCode    = value; break;
+                case "address.country":        user.Address!.Country       = value; break;
+                case "address.phone":          user.Address!.Phone         = value; break;
+                case "address.fax":            user.Address!.Fax           = value; break;
+                case "address.email":          user.Address!.Email         = value; break;
+                case "address.sms":            user.Address!.Sms           = value; break;
+                case "address.account":        user.Address!.Account       = value; break;
+                case "address.taxid":          user.Address!.TaxId         = value; break;
+                case "address.code":           user.Address!.Code          = value; break;
+                case "address.group":          user.Address!.Group         = value; break;
+                case "address.pobox":          if (bool.TryParse(value, out var pb))  user.Address!.PoBox       = pb;  break;
+                case "address.residential":    if (bool.TryParse(value, out var rb))  user.Address!.Residential = rb;  break;
+
+                // unqualified shorthands
+                case "company":        user.Address!.Company       = value; break;
+                case "contact":        user.Address!.Contact       = value; break;
+                case "address1":       user.Address!.Address1      = value; break;
+                case "address2":       user.Address!.Address2      = value; break;
+                case "address3":       user.Address!.Address3      = value; break;
+                case "city":           user.Address!.City          = value; break;
+                case "stateprovince":  user.Address!.StateProvince = value; break;
+                case "postalcode":     user.Address!.PostalCode    = value; break;
+                case "country":        user.Address!.Country       = value; break;
+                case "phone":          user.Address!.Phone         = value; break;
+                case "fax":            user.Address!.Fax           = value; break;
+
+                case "config.exportfiledelimiter":
+                    if (Enum.TryParse<PSI.Sox.Delimiter>(value, true, out var delim))
+                        user.DefaultConfiguration!.ExportFileDelimiter = delim; break;
+                case "config.exportfilequalifier":
+                    if (Enum.TryParse<PSI.Sox.Qualifier>(value, true, out var qual))
+                        user.DefaultConfiguration!.ExportFileQualifier = qual; break;
+                case "config.exportfilegroupseparator":
+                    if (Enum.TryParse<PSI.Sox.GroupSeparator>(value, true, out var gs))
+                        user.DefaultConfiguration!.ExportFileGroupSeparator = gs; break;
+                case "config.exportfiledecimalseparator":
+                    if (Enum.TryParse<PSI.Sox.DecimalSeparator>(value, true, out var ds))
+                        user.DefaultConfiguration!.ExportFileDecimalSeparator = ds; break;
+
+                case "permissions.add":
+                {
+                    var perm = allPermissions.FirstOrDefault(p =>
+                        string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
+                    if (perm is not null && !(user.Permissions?.Any(p => p.Id == perm.Id) ?? false))
+                        user.Permissions!.Add(perm);
+                    break;
+                }
+                case "permissions.remove":
+                    user.Permissions?.RemoveAll(p =>
+                        string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
+                    break;
+
+                case "roles.add":
+                {
+                    var role = allRoles.FirstOrDefault(r =>
+                        string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
+                    if (role is not null && !(user.Roles?.Any(r => r.Id == role.Id) ?? false))
+                        user.Roles!.Add(role);
+                    break;
+                }
+                case "roles.remove":
+                    user.Roles?.RemoveAll(r =>
+                        string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
+                    break;
+            }
+        }
+    }
+
     public Task<List<CsvUserRow>> ParseCsvAsync(string csvContent)
     {
         return Task.FromResult(CsvUserParser.Parse(csvContent));

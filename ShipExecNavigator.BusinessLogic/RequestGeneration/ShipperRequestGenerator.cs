@@ -1,3 +1,4 @@
+using PSI.Sox.Data;
 using PSI.Sox.Wcf.Administration;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,13 @@ namespace ShipExecNavigator.BusinessLogic.RequestGeneration
         public override GetShippersRequest ModifyGetAllRequest(GetShippersRequest request)
         {
             request.CompanyId = CompanyGuid;
+            request.SearchCriteria = new SearchCriteria
+            {
+                Skip = 0,
+                Take = int.MaxValue,
+                WhereClauses = new List<WhereClause>(),
+                OrderByClauses = new List<OrderByClause>()
+            };
             return request;
         }
 

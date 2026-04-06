@@ -77,12 +77,8 @@ public static class NavigatorDomCheatSheet
         | Hide a node (and its subtree) | `el.style.display = 'none'` |
         | Show again | `el.style.display = ''` |
         | Direct child nodes only | `el.querySelectorAll(':scope > .xml-children > .xml-node')` |
-        | **Shipper table rows** (Shippers tab) | `document.querySelectorAll('.shippers-table tbody tr')` |
-        | Shipper name cell text (Shippers tab) | `row.querySelector('.shipper-name').textContent.trim()` |
-        | Shipper symbol cell text (Shippers tab) | `row.querySelector('.shipper-symbol').textContent.trim()` |
-        | Hide a shipper table row | `row.style.display = 'none'` |
 
-        **Important:** hiding a `div.xml-node` visually hides its entire subtree without recursion.  
+        **Important:** hiding a `div.xml-node` visually hides its entire subtree without recursion.
         **Important:** `data-nodepath` uses dot-separated XML element names matching the document hierarchy.  
         The root element is `Company`, so paths look like `"Company.Shippers.Shipper"`, `"Company.Name"`,  
         `"Company.Profiles.Profile"`, etc. There is NO `ShipExec` prefix in the path.  
@@ -91,13 +87,7 @@ public static class NavigatorDomCheatSheet
         To distinguish individual items, read the `.node-info` span which contains  
         `": <Name>  (<childCount>)"` for collapsed parent nodes (the Name comes from the first  
         child element named Name, Symbol, or DisplayName).  
-        **Important:** node `id` attributes are GUIDs — `id="node-550e8400-e29b-41d4-a716-446655440000"`.  
-        **Important:** Shippers appear in **two places**:  
-        1. **Company tab (XML tree)** — as `div.xml-node` elements with `data-nodepath="Company.Shippers.Shipper"`.  
-           Read `.node-info` text to get the shipper name.  
-        2. **Shippers tab (table)** — as rows in `table.shippers-table`.  
-           Read `.shipper-name` (or `.shipper-symbol`, `.shipper-id`) cell text.  
-        Target whichever view is currently visible, or target both if the user does not specify.
+        **Important:** node `id` attributes are GUIDs — `id="node-550e8400-e29b-41d4-a716-446655440000"`.
 
         ### Depth colour palette (`--depth-color` on `.xml-children`)
         depth 0 → `#3b82f6` · depth 1 → `#8b5cf6` · depth 2 → `#06b6d4` · depth 3 → `#10b981` · depth 4+ → `#f59e0b`
@@ -115,7 +105,7 @@ public static class NavigatorDomCheatSheet
           div.viewer-content-row
             div.viewer-main-area
               div.viewer-tabs
-                button.viewer-tab [viewer-tab--active]   ← "company" | "shippers" | "users" | "logs"
+                button.viewer-tab [viewer-tab--active]   ← "company" | "users" | "logs"
               div.viewer-body-row
                 <!-- VariancePanel (left) – see below -->
                 div.viewer-main
@@ -132,14 +122,6 @@ public static class NavigatorDomCheatSheet
                         div.toolbar-actions
                           button.btn-export | button.btn-action | button.btn-action.btn-action--chat
                       div.tree-body              ← XmlNodeTree root renders here
-
-                  <!--  Shippers tab -->
-                  div.shippers-panel
-                    div.shippers-toolbar > button.btn-action
-                    div.shippers-table-wrap
-                      table.shippers-table
-                        thead > tr > th
-                        tbody > tr > td  (.shipper-id | .shipper-symbol | .shipper-name)
 
                   <!--  Users tab -->
                   div.um-tab-content
@@ -247,46 +229,25 @@ public static class NavigatorDomCheatSheet
         When the user asks to **delete** or **remove** shippers (not just hide), call the
         `delete_shippers` plugin function. It returns a JSON list of all shippers with
         `id`, `symbol`, and `name`. Filter the list to match the user's condition, then
-        respond with a ```shipper-delete code block containing ONLY the matching entries
-        as a JSON array. Example:
-
-        ```shipper-delete
-        [
-          { "id": "123", "symbol": "TST", "name": "Test Shipper" }
-        ]
-        ```
-
+        respond with action type `"shipper-delete"` and a payload array of matching entries.
+        Example response JSON:
+        { "message": "Queued 1 shipper for deletion.", "action": { "type": "shipper-delete", "payload": [{ "id": "123", "symbol": "TST", "name": "Test Shipper" }] } }
         The Navigator will remove those shippers from the XML tree, create trackable
         variance entries (visible in the Variance panel), and stage them as pending
         Remove operations that can be pushed to the live server via "View Changes".
-        Do NOT include JavaScript when performing a deletion — the ```shipper-delete
-        block is all that is needed.
+        Do NOT use action type "javascript" when performing a deletion.
         ---
         ### Adding a new shipper (model-level creation)
-        When the user asks to **add** or **create** a new shipper, respond with a
-        ```shipper-add code block containing a single JSON object with any fields the
-        user provided. The Navigator will open an **Add Shipper** dialog pre-populated
-        with those values so the user can review and confirm. Example:
-
-        ```shipper-add
-        {
-          "symbol": "NEWWH",
-          "name": "New Warehouse",
-          "address1": "123 Main St",
-          "city": "Chicago",
-          "stateProvince": "IL",
-          "postalCode": "60601",
-          "country": "US",
-          "phone": "555-1234",
-          "email": "ship@example.com"
-        }
-        ```
-
+        When the user asks to **add** or **create** a new shipper, respond with action type
+        `"shipper-add"` and a payload object with any fields the user provided.
+        The Navigator will open an **Add Shipper** dialog pre-populated with those values
+        so the user can review and confirm.
+        Example response JSON:
+        { "message": "Opening the Add Shipper dialog pre-filled with your details.", "action": { "type": "shipper-add", "payload": { "symbol": "NEWWH", "name": "New Warehouse", "address1": "123 Main St", "city": "Chicago", "stateProvince": "IL", "postalCode": "60601", "country": "US", "phone": "555-1234", "email": "ship@example.com" } } }
         Supported fields: symbol, name, code, address1, address2, address3, city,
         stateProvince, postalCode, country, company, contact, phone, fax, email,
         sms, poBox (bool), residential (bool).
-        Do NOT include JavaScript when adding a shipper — the ```shipper-add block
-        is all that is needed.
+        Do NOT use action type "javascript" when adding a shipper.
         ---
         """;
 }

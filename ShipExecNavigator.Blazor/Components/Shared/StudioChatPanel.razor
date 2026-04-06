@@ -2,6 +2,8 @@
 @inject IJSRuntime JS
 @inject IXmlViewerService XmlViewerService
 @using ShipExecNavigator.Shared.Models
+@using ShipExecNavigator.Shared.AI
+@using System.Text.Json
 
 <div class="scp-panel @(!IsVisible ? "scp-panel--hidden" : "") @(_minimized ? "scp-panel--minimized" : "")"
      id="studio-chat-panel"
@@ -53,14 +55,14 @@
 
     @* ── Input row ── *@
     <div class="scp-input-row">
-        <textarea class="scp-textarea"
-                  id="scp-textarea"
-                  rows="2"
-                  placeholder="Ask about this configuration… (Enter to send, Shift+Enter for new line)"
-                  @bind="_input"
-                  @bind:event="oninput"
-                  @onkeydown="HandleKeyDown"
-                  disabled="@_thinking" />
+        <input type="text"
+               class="scp-textarea"
+               id="scp-textarea"
+               placeholder="Ask about this configuration…"
+               @bind="_input"
+               @bind:event="oninput"
+               @onkeydown="HandleKeyDown"
+               disabled="@_thinking" />
         <button class="scp-send-btn"
                 @onclick="SendAsync"
                 disabled="@(string.IsNullOrWhiteSpace(_input) || _thinking)"
@@ -173,9 +175,9 @@
             if (XmlRoot is not null)
                 xmlContext = await XmlViewerService.SerializeAsync(XmlRoot);
 
-            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag, usersContext: UsersJson, userMetaContext: UsersMetaJson);
-            _messages.Add(new ChatMessage("assistant", reply));
-            await TryExecuteJsFromResponseAsync(reply);
+            var response = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag, usersContext: UsersJson, userMetaContext: UsersMetaJson);
+            _messages.Add(new ChatMessage("assistant", response.Message));
+            await TryExecuteActionAsync(response.Action);
         }
         catch (Exception ex)
         {
@@ -186,12 +188,13 @@
             _thinking = false;
             StateHasChanged();
             await ScrollToBottomAsync();
+            await JS.InvokeVoidAsync("eval", "document.getElementById('scp-textarea')?.focus()");
         }
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !e.ShiftKey)
+        if (e.Key == "Enter")
             await SendAsync();
     }
 
@@ -263,205 +266,59 @@
         StateHasChanged();
     }
 
-    private async Task TryExecuteJsFromResponseAsync(string response)
+    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
+    private async Task TryExecuteActionAsync(AiChatAction? action)
     {
-        // Handle shipper-add blocks first (opens the Add Shipper dialog)
-        var addItem = ExtractShipperAdd(response);
-        if (addItem is not null)
-        {
-            await OnAddShipper.InvokeAsync(addItem);
-            return;
-        }
-
-        // Handle shipper-delete blocks
-        var deleteItems = ExtractShipperDelete(response);
-        if (deleteItems is { Count: > 0 })
-        {
-            await OnDeleteShippers.InvokeAsync(deleteItems);
-            return;
-        }
-
-        // Handle shipper-edit blocks
-        var editItems = ExtractShipperEdit(response);
-        if (editItems is { Count: > 0 })
-        {
-            await OnEditShippers.InvokeAsync(editItems);
-            return;
-        }
-
-        // Handle user-find blocks
-        var findUsers = ExtractUserFind(response);
-        if (findUsers is { Count: > 0 })
-        {
-            await OnFindUsers.InvokeAsync(findUsers);
-            return;
-        }
-
-        // Handle user-add blocks (opens Create User dialog pre-populated)
-        var addUser = ExtractUserAdd(response);
-        if (addUser is not null)
-        {
-            await OnAddUser.InvokeAsync(addUser);
-            return;
-        }
-
-        // Handle user-edit blocks
-        var editUsers = ExtractUserEdit(response);
-        if (editUsers is { Count: > 0 })
-        {
-            await OnEditUsers.InvokeAsync(editUsers);
-            return;
-        }
-
-        // Handle user-delete blocks
-        var deleteUsers = ExtractUserDelete(response);
-        if (deleteUsers is { Count: > 0 })
-        {
-            await OnDeleteUsers.InvokeAsync(deleteUsers);
-            return;
-        }
-
-        var jsCode = ExtractJavaScript(response);
-        if (jsCode is null) return;
+        if (action is null) return;
         try
         {
-            var ids = await JS.InvokeAsync<string[]>("executeAiScript", jsCode);
-            if (ids is { Length: > 0 })
-                _undoIds.AddRange(ids);
+            switch (action.Type)
+            {
+                case "shipper-add":
+                    var addItem = action.Payload.Deserialize<ShipperAddItem>(_jsonOptions);
+                    if (addItem is not null) await OnAddShipper.InvokeAsync(addItem);
+                    break;
+                case "shipper-delete":
+                    var deleteItems = action.Payload.Deserialize<List<ShipperDeleteItem>>(_jsonOptions);
+                    if (deleteItems is { Count: > 0 }) await OnDeleteShippers.InvokeAsync(deleteItems);
+                    break;
+                case "shipper-edit":
+                    var editItems = action.Payload.Deserialize<List<ShipperEditItem>>(_jsonOptions);
+                    if (editItems is { Count: > 0 }) await OnEditShippers.InvokeAsync(editItems);
+                    break;
+                case "user-find":
+                    var findUsers = action.Payload.Deserialize<List<UserFindItem>>(_jsonOptions);
+                    if (findUsers is { Count: > 0 }) await OnFindUsers.InvokeAsync(findUsers);
+                    break;
+                case "user-add":
+                    var addUser = action.Payload.Deserialize<UserAddItem>(_jsonOptions);
+                    if (addUser is not null) await OnAddUser.InvokeAsync(addUser);
+                    break;
+                case "user-edit":
+                    var editUsers = action.Payload.Deserialize<List<UserEditItem>>(_jsonOptions);
+                    if (editUsers is { Count: > 0 }) await OnEditUsers.InvokeAsync(editUsers);
+                    break;
+                case "user-delete":
+                    var deleteUsers = action.Payload.Deserialize<List<UserDeleteItem>>(_jsonOptions);
+                    if (deleteUsers is { Count: > 0 }) await OnDeleteUsers.InvokeAsync(deleteUsers);
+                    break;
+                case "javascript":
+                    var jsCode = action.Payload.GetString();
+                    if (!string.IsNullOrWhiteSpace(jsCode))
+                    {
+                        var ids = await JS.InvokeAsync<string[]>("executeAiScript", jsCode);
+                        if (ids is { Length: > 0 }) _undoIds.AddRange(ids);
+                    }
+                    break;
+            }
         }
-        catch { /* execution errors are non-fatal */ }
-    }
-
-    private static ShipperAddItem? ExtractShipperAdd(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```shipper-add\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<ShipperAddItem>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static List<ShipperDeleteItem>? ExtractShipperDelete(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```shipper-delete\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<ShipperDeleteItem>>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static List<ShipperEditItem>? ExtractShipperEdit(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```shipper-edit\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<ShipperEditItem>>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static List<UserFindItem>? ExtractUserFind(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```user-find\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<UserFindItem>>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static UserAddItem? ExtractUserAdd(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```user-add\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<UserAddItem>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static List<UserEditItem>? ExtractUserEdit(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```user-edit\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<UserEditItem>>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static List<UserDeleteItem>? ExtractUserDelete(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```user-delete\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        if (!m.Success) return null;
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<UserDeleteItem>>(
-                m.Groups[1].Value.Trim(),
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        catch { return null; }
-    }
-
-    private static string? ExtractJavaScript(string response)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(
-            response,
-            @"```javascript\s*\n?([\s\S]*?)```",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
-        return m.Success ? m.Groups[1].Value.Trim() : null;
+        catch { /* non-fatal */ }
     }
 
     private static string FormatMessage(string text)
     {
         var escaped = System.Net.WebUtility.HtmlEncode(text);
-
-        escaped = System.Text.RegularExpressions.Regex.Replace(
-            escaped,
-            @"```[\w]*\n?([\s\S]*?)```",
-            m => $"<pre class=\"scp-code\">{m.Groups[1].Value.Trim()}</pre>",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
 
         escaped = System.Text.RegularExpressions.Regex.Replace(
             escaped,

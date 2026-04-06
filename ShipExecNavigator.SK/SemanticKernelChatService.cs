@@ -66,7 +66,7 @@ public sealed class SemanticKernelChatService : IAiChatService
         _logger        = logger;
     }
 
-    public async Task<string> SendMessageAsync(
+    public async Task<AiChatResponse> SendMessageAsync(
         IReadOnlyList<AppChatMessage> history,
         string userMessage,
         string? xmlContext = null,
@@ -80,7 +80,7 @@ public sealed class SemanticKernelChatService : IAiChatService
         var deployment = _configuration["AzureOpenAI:ChatDeployment"]   ?? "gpt-4o-mini";
 
         if (string.IsNullOrWhiteSpace(apiKey))
-            return "⚠️ Azure OpenAI is not configured. Set `AzureOpenAI:ApiKey` in appsettings.json.";
+            return new AiChatResponse { Message = "⚠️ Azure OpenAI is not configured. Set `AzureOpenAI:ApiKey` in appsettings.json." };
 
         var sw      = System.Diagnostics.Stopwatch.StartNew();
         var preview = userMessage.Length > 200 ? userMessage[..200] + "..." : userMessage;
@@ -95,7 +95,14 @@ public sealed class SemanticKernelChatService : IAiChatService
         var systemPrompt =
             "You are a helpful assistant for ShipExec Navigator, a tool for managing ShipExec " +
             "shipping software configuration. You help users understand company configuration XML, " +
-            "users, roles, permissions, templates, and ShipExec concepts.";
+            "users, roles, permissions, templates, and ShipExec concepts. " +
+            "IMPORTANT: Always respond with a single valid JSON object — no markdown, no plain text, no code fences outside the JSON. " +
+            "Use exactly this structure: " +
+            "{ \"message\": \"<your reply to the user>\", \"action\": { \"type\": \"<type>\", \"payload\": <payload> } } " +
+            "Omit the \"action\" key entirely when no action is needed. " +
+            "Supported action types: javascript (payload: JS code string), " +
+            "shipper-add (payload: object), shipper-delete (payload: array), shipper-edit (payload: array), " +
+            "user-find (payload: array), user-add (payload: object), user-edit (payload: array), user-delete (payload: array).";
 
         if (useRag)
             systemPrompt +=
@@ -108,66 +115,48 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "\n\nThe user has a ShipExec XML configuration loaded in the Navigator. " +
                 "When asked to hide, filter, or manipulate shippers or other XML elements, " +
                 "call the available ShipperXml plugin functions to analyse the XML. " +
-                "After receiving the plugin result always respond with exactly two sections:\n" +
-                "1. **Reasoning:** Explain which items were found and why they match the criteria.\n" +
-                "2. **JavaScript Method:** Provide a self-contained JavaScript function the user " +
-                "can paste into the browser console to hide those elements in the Navigator tree view.\n\n" +
+                "Respond using the JSON structure above.\n\n" +
+                "**Hiding shippers (JavaScript):** When asked to visually hide/show elements, " +
+                "respond with action type \"javascript\" and payload as the JS code string.\n\n" +
                 "**Deleting shippers:** When the user asks to DELETE or REMOVE shippers (not just hide), " +
-                "call the `delete_shippers` function. After receiving the shipper list, filter it to match " +
-                "the user's condition, then respond with:\n" +
-                "1. **Reasoning:** Explain which shippers matched and will be deleted.\n" +
-                "2. A ```shipper-delete code block containing a JSON array of the matching entries " +
-                "(each object must have `id`, `symbol`, and `name` string fields, exactly as returned by the plugin). " +
-                "Do NOT include any JavaScript for deletion — the Navigator will process the shipper-delete block directly.\n\n" +
-                "**Editing shippers:** When the user asks to UPDATE, EDIT, SET, or CHANGE field values on " +
-                "shippers (with optional conditions like 'for all shippers that start with T'), " +
-                "call the `edit_shippers` function. After receiving the full shipper list, filter it to match " +
-                "the user's condition, then respond with:\n" +
-                "1. **Reasoning:** Explain which shippers matched and what fields will be changed.\n" +
-                "2. A ```shipper-edit code block containing a JSON array where each object has " +
-                "`id` (string), `symbol` (string), `name` (string), and `edits` (an object mapping " +
-                "field names to new string values). Valid field names: Name, Symbol, Code, Address1, " +
-                "Address2, Address3, City, StateProvince, PostalCode, Country, Company, Contact, Phone, " +
-                "Fax, Email, Sms, PoBox, Residential. " +
-                "Do NOT include any JavaScript — the Navigator will process the shipper-edit block directly.\n" +
+                "call the `delete_shippers` function. Filter the results, then " +
+                "respond with action type \"shipper-delete\" and payload as a JSON array of matching entries " +
+                "(each object must have `id`, `symbol`, and `name` string fields). " +
+                "Do NOT use action type \"javascript\" for deletion.\n\n" +
+                "**Editing shippers:** When the user asks to UPDATE, EDIT, SET, or CHANGE field values on shippers, " +
+                "call the `edit_shippers` function. Filter the results, then " +
+                "respond with action type \"shipper-edit\" and payload as a JSON array where each object has " +
+                "`id` (string), `symbol` (string), `name` (string), and `edits` (an object mapping field names to new values). " +
+                "Valid field names: Name, Symbol, Code, Address1, Address2, Address3, City, StateProvince, PostalCode, " +
+                "Country, Company, Contact, Phone, Fax, Email, Sms, PoBox, Residential. " +
+                "Do NOT use action type \"javascript\" for editing.\n" +
                 NavigatorDomCheatSheet.Content;
 
         if (hasUsers)
             systemPrompt +=
-                "\n\n**Finding users:** The user has a ShipExec company loaded with users available. " +
-                "When the user asks to FIND, SEARCH, or FILTER users, call the `find_users` function. " +
-                "After receiving the user list, filter it to match the user's condition, then respond with:\n" +
-                "1. **Reasoning:** Explain which users matched and why.\n" +
-                "2. A ```user-find code block containing a JSON array of the matching entries " +
-                "(each object must have `id`, `username`, and `email` string fields, exactly as returned by the plugin). " +
-                "Do NOT include any JavaScript — the Navigator will highlight those users directly.\n\n" +
-                "**Editing users:** When the user asks to UPDATE, EDIT, SET, or CHANGE ANY field on " +
-                "users (including address fields, configuration, permissions, or roles), " +
-                "call the `edit_users` function. The function returns the user list AND the full list of " +
-                "available permissions and roles for the company. Filter the user list to match the " +
-                "user's condition, then respond with:\n" +
-                "1. **Reasoning:** Explain which users matched and what fields will be changed.\n" +
-                "2. A ```user-edit code block containing a JSON array where each object has " +
-                "`id` (string), `username` (string), `email` (string), and `edits` (an object). " +
+                "\n\n**Finding users:** When the user asks to FIND, SEARCH, or FILTER users, call the `find_users` function. " +
+                "Respond with action type \"user-find\" and payload as a JSON array of matching entries " +
+                "(each object must have `id`, `username`, and `email` string fields). " +
+                "Do NOT use action type \"javascript\".\n\n" +
+                "**Editing users:** When the user asks to UPDATE, EDIT, SET, or CHANGE ANY field on users, " +
+                "call the `edit_users` function. Respond with action type \"user-edit\" and payload as a JSON array " +
+                "where each object has `id` (string), `username` (string), `email` (string), and `edits` (an object). " +
                 "Supported edit fields:\n" +
                 "  - Top-level: `Email`, `UserName`, `PhoneNumber`, `PasswordExpired` (bool), `LockoutEnabled` (bool), `EmailConfirmed` (bool), `PhoneNumberConfirmed` (bool)\n" +
                 "  - Address: `Address.Company`, `Address.Contact`, `Address.Address1`, `Address.Address2`, `Address.Address3`, `Address.City`, `Address.StateProvince`, `Address.PostalCode`, `Address.Country`, `Address.Phone`, `Address.Fax`, `Address.Email`, `Address.Sms`, `Address.Account`, `Address.TaxId`, `Address.Code`, `Address.Group`, `Address.PoBox` (bool), `Address.Residential` (bool)\n" +
                 "  - Config: `Config.ExportFileDelimiter` (Comma/Semicolon/Tab), `Config.ExportFileQualifier` (None/DoubleQuotes/SingleQuote), `Config.ExportFileGroupSeparator` (Comma/Period), `Config.ExportFileDecimalSeparator` (Comma/Period)\n" +
-                "  - Permissions: `Permissions.Add` (permission name string), `Permissions.Remove` (permission name string) — use exact names from the availablePermissions list returned by edit_users\n" +
-                "  - Roles: `Roles.Add` (role name string), `Roles.Remove` (role name string) — use exact names from the availableRoles list returned by edit_users\n" +
-                "Do NOT include any JavaScript — the Navigator will apply the edits directly.\n\n" +
+                "  - Permissions: `Permissions.Add` (permission name), `Permissions.Remove` (permission name)\n" +
+                "  - Roles: `Roles.Add` (role name), `Roles.Remove` (role name)\n" +
+                "Do NOT use action type \"javascript\".\n\n" +
                 "**Deleting users:** When the user asks to DELETE or REMOVE users, call the `delete_users` function. " +
-                "After receiving the user list, filter it to match the user's condition, then respond with:\n" +
-                "1. **Reasoning:** Explain which users matched and will be deleted.\n" +
-                "2. A ```user-delete code block containing a JSON array of the matching entries " +
-                "(each object must have `id`, `username`, and `email` string fields, exactly as returned by the plugin). " +
-                "Do NOT include any JavaScript — the Navigator will delete those users directly.\n\n" +
-                "**Adding users:** When the user asks to ADD or CREATE a new user, do NOT call any plugin function. " +
-                "Respond with a ```user-add code block containing a JSON object with the user's details. " +
-                "Required field: `email` (string, used as both username and email). " +
+                "Respond with action type \"user-delete\" and payload as a JSON array of matching entries " +
+                "(each object must have `id`, `username`, and `email` string fields). " +
+                "Do NOT use action type \"javascript\".\n\n" +
+                "**Adding users:** When the user asks to ADD or CREATE a new user, do NOT call any plugin. " +
+                "Respond with action type \"user-add\" and payload as a JSON object. " +
+                "Required field: `email` (string). " +
                 "Optional fields: `company`, `contact`, `address1`, `address2`, `address3`, `city`, `stateProvince`, `postalCode`, `country`, `phone`, `fax` (all strings). " +
-                "Do NOT include a password — the user must enter it manually. " +
-                "Do NOT include any JavaScript — the Navigator will open the Create User dialog pre-populated with these values.";
+                "Do NOT use action type \"javascript\".";
 
         var kernel = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(deployment, endpoint, apiKey)
@@ -209,7 +198,17 @@ public sealed class SemanticKernelChatService : IAiChatService
             _logger.LogInformation(
                 "AzureOpenAI response | Deployment={Deployment} ResponseLength={Length} DurationMs={DurationMs}",
                 deployment, content.Length, sw.ElapsedMilliseconds);
-            return content;
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<AiChatResponse>(content,
+                    new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))
+                    ?? new AiChatResponse { Message = content };
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                _logger.LogWarning("SK response was not valid JSON; treating as plain text.");
+                return new AiChatResponse { Message = content };
+            }
         }
         catch (Exception ex)
         {
@@ -217,7 +216,7 @@ public sealed class SemanticKernelChatService : IAiChatService
             _logger.LogError(ex,
                 "AzureOpenAI error | Deployment={Deployment} DurationMs={DurationMs}",
                 deployment, sw.ElapsedMilliseconds);
-            return $"⚠️ Azure OpenAI error: {ex.Message}";
+            return new AiChatResponse { Message = "⚠️ Azure OpenAI error: check server logs for details." };
         }
     }
 }

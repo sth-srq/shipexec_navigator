@@ -235,21 +235,21 @@
     border-top: 1px solid rgba(43,63,107,0.09);
     flex-shrink: 0;
     background: #fafbff;
+    align-items: center;
 }
 
 .scp-textarea {
     flex: 1;
-    resize: none;
     border: 1.5px solid #d0d8e8;
     border-radius: 8px;
     padding: 0.45rem 0.7rem;
     font-size: 0.82rem;
     font-family: inherit;
-    line-height: 1.5;
     color: #1a2d4f;
     background: #fff;
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
+    height: 2.1rem;
 }
 
 .scp-textarea:focus {
@@ -263,7 +263,6 @@
 }
 
 .scp-send-btn {
-    align-self: flex-end;
     background: linear-gradient(135deg, #2b3f6b, #3a6ea8);
     border: none;
     color: #fff;
