@@ -745,6 +745,52 @@
     box-shadow: 0 3px 16px rgba(43,63,107,0.08);
 }
 
+/* -- Business Rules tab panel ------------------------------ */
+.br-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+    min-height: 200px;
+    max-height: calc(100dvh - var(--scp-panel-height, 0px) - 220px);
+    overflow-y: auto;
+}
+
+.br-section {
+    background-color: #ffffff;
+    border: 1px solid rgba(43,63,107,0.12);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 120px;
+    box-shadow: 0 3px 16px rgba(43,63,107,0.08);
+    overflow: hidden;
+}
+
+.br-section-header {
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a2d4f;
+    background: linear-gradient(135deg, #f0f5ff, #e8eefb);
+    border-bottom: 1px solid rgba(43,63,107,0.08);
+    border-radius: 10px 10px 0 0;
+    flex-shrink: 0;
+}
+
+.br-section-body {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.br-empty {
+    color: #9aa5b4;
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
 /* -- Logs tab panel ---------------------------------------- */
 .logs-panel {
     background-color: #ffffff;

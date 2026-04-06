@@ -61,6 +61,8 @@
         <div class="viewer-tabs">
             <button class='viewer-tab @(_activeMainTab == "company" ? "viewer-tab--active" : "")'
                     @onclick='() => _activeMainTab = "company"'>&#x1F3E2; Company</button>
+            <button class='viewer-tab @(_activeMainTab == "business-rules" ? "viewer-tab--active" : "")'
+                    @onclick='() => _activeMainTab = "business-rules"'>&#x1F4DC; Business Rules</button>
             <button class='viewer-tab @(_activeMainTab == "users" ? "viewer-tab--active" : "")'
                     @onclick='() => _activeMainTab = "users"'>&#x1F464; Users</button>
             <button class='viewer-tab @(_activeMainTab == "logs" ? "viewer-tab--active" : "")'
@@ -140,6 +142,23 @@
             </div>
         </div>
         </div>
+        @if (_activeMainTab == "business-rules")
+        {
+            <div class="br-tab-content">
+                <div class="br-section">
+                    <div class="br-section-header">&#x1F5A5;&#xFE0F; Server Business Rules</div>
+                    <div class="br-section-body">
+                        <div class="br-empty">No server business rules loaded.</div>
+                    </div>
+                </div>
+                <div class="br-section">
+                    <div class="br-section-header">&#x1F4BB; Client Business Rules</div>
+                    <div class="br-section-body">
+                        <div class="br-empty">No client business rules loaded.</div>
+                    </div>
+                </div>
+            </div>
+        }
         @if (_activeMainTab == "users")
         {
             <div class="um-tab-content">
