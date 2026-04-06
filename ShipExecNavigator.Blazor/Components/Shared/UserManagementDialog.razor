@@ -8,6 +8,7 @@
 <div class="um-panel">
     <div class="um-panel-toolbar">
         <button class="um-create-user-btn" @onclick="EnqueueCreateVariance">&#x2795; Create User</button>
+        <button class="um-upload-btn" @onclick="() => _showImportUsersDialog = true">&#x1F4CC; Import</button>
         <button class="um-upload-btn" @onclick="() => _showUploadDialog = true">&#x2B06; Upload</button>
         <button class="um-export-btn" @onclick="HandleExportAsync" disabled="@_isExporting">
             @if (_isExporting) { <span class="um-export-spinner"></span> }
@@ -68,6 +69,11 @@
                    Prefill="@_createPrefill"
                    OnClose="() => _showCreateUserDialog = false"
                    OnUserCreated="HandleUserCreated" />
+
+    <ImportUsersDialog IsVisible="_showImportUsersDialog"
+                       CanApply="true"
+                       OnClose="() => _showImportUsersDialog = false"
+                       OnUsersApplied="HandleUsersImportedAsync" />
 
     <UploadDialog IsVisible="_showUploadDialog"
                   OnClose="() => _showUploadDialog = false" />
@@ -439,6 +445,7 @@
     private bool _isLoading;
     private bool _showCreateUserDialog;
     private bool _showUploadDialog;
+    private bool _showImportUsersDialog;
     private bool _isExporting;
     private bool _isAiDeleting;
     private string? _aiDeleteError;
@@ -682,6 +689,11 @@
             _showCreateUserDialog = true;
             StateHasChanged();
         }
+    }
+
+    private async Task HandleUsersImportedAsync(List<ApplyResultItem> _)
+    {
+        await LoadUsersAsync();
     }
 
     private async Task HandleExportAsync()

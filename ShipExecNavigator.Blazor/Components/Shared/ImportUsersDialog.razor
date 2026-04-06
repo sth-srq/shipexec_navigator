@@ -1,0 +1,629 @@
+@inject IJSRuntime JS
+@inject IShipExecService ShipExecService
+
+@if (IsVisible)
+{
+    <div class="isd-backdrop" @onclick="HandleClose">
+        <div class="isd-dlg" @onclick:stopPropagation>
+
+            <div class="isd-header">
+                <span class="isd-title">&#x1F464; Import Users</span>
+                <button class="isd-close" @onclick="HandleClose" disabled="@_loading">&#x2715;</button>
+            </div>
+
+            <div class="isd-body">
+
+                @if (_stage == Stage.Pick)
+                {
+                    <InputFile id="iud-file-input" style="display:none"
+                               accept=".csv"
+                               OnChange="OnFileSelectedAsync" />
+
+                    <div class="isd-pick-area">
+                        <p class="isd-hint">Select a CSV file containing user data to preview.</p>
+                        <button class="isd-btn-choose" @onclick="TriggerFilePickerAsync">
+                            &#x1F4C2; Choose CSV File
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="isd-error">&#9888; @_error</div>
+                    }
+                }
+
+                @if (_stage == Stage.Preview)
+                {
+                    <div class="isd-preview-header">
+                        <span class="isd-file-label">&#x1F4C4; @_fileName</span>
+                        <span class="isd-row-pill">@_totalDataRows row@(_totalDataRows == 1 ? "" : "s") total</span>
+                        <button class="isd-btn-reselect" @onclick="Reset">&#x2190; Change File</button>
+                    </div>
+
+                    @if (_previewRows.Count == 0)
+                    {
+                        <div class="isd-empty">The file contains no data rows.</div>
+                    }
+                    else
+                    {
+                        <div class="isd-table-wrap">
+                            <table class="isd-table">
+                                @if (_headers.Count > 0)
+                                {
+                                    <thead>
+                                        <tr class="isd-mapping-row">
+                                            @for (int hi = 0; hi < _headers.Count; hi++)
+                                            {
+                                                var colIdx = hi;
+                                                var curVal = _columnMappings.TryGetValue(colIdx, out var cv) ? cv : string.Empty;
+                                                <th>
+                                                    <select class="isd-col-select @(string.IsNullOrEmpty(curVal) ? "" : "isd-col-select--set")"
+                                                            @onchange="@(e => OnColumnMappingChanged(colIdx, e.Value?.ToString() ?? string.Empty))">
+                                                        <option value="" selected="@(string.IsNullOrEmpty(curVal))">— map field —</option>
+                                                        @foreach (var field in AvailableFields(colIdx))
+                                                        {
+                                                            <option value="@field" selected="@(field == curVal)">@field</option>
+                                                        }
+                                                    </select>
+                                                </th>
+                                            }
+                                        </tr>
+                                        <tr>
+                                            @foreach (var h in _headers)
+                                            {
+                                                <th class="isd-th-col">@h</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                }
+                                <tbody>
+                                    @foreach (var row in _previewRows)
+                                    {
+                                        <tr>
+                                            @for (int ci = 0; ci < Math.Max(row.Count, _headers.Count > 0 ? _headers.Count : 1); ci++)
+                                            {
+                                                <td>@(ci < row.Count ? row[ci] : string.Empty)</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (_totalDataRows > 3)
+                        {
+                            <p class="isd-more-hint">
+                                Showing first 3 of @_totalDataRows rows &mdash; scroll right if columns overflow.
+                            </p>
+                        }
+                    }
+                }
+
+                @if (_stage == Stage.Users)
+                {
+                    @if (_usersBusy)
+                    {
+                        <div class="isd-vl-loading">
+                            <span class="isd-spinner"></span> Building user list&hellip;
+                        </div>
+                    }
+                    else if (_applying)
+                    {
+                        <div class="isd-vl-loading">
+                            <span class="isd-spinner"></span> Creating users&hellip;
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(_usersError))
+                    {
+                        <div class="isd-error">&#9888; @_usersError</div>
+                    }
+                    else if (_userRows.Count == 0)
+                    {
+                        <div class="isd-empty">&#x2713; No users to create &mdash; the file has no data rows.</div>
+                    }
+                    else
+                    {
+                        var validCount   = _userRows.Count(r => r.IsValid);
+                        var invalidCount = _userRows.Count(r => !r.IsValid);
+                        <div class="isd-vl-summary">
+                            @if (validCount   > 0) { <span class="isd-action-badge isd-action-add">+@validCount create</span> }
+                            @if (invalidCount > 0) { <span class="isd-action-badge isd-action-remove">&#x26A0; @invalidCount invalid</span> }
+                            <span class="isd-row-pill">@_userRows.Count row@(_userRows.Count == 1 ? "" : "s") total</span>
+                        </div>
+                        <div class="isd-table-wrap">
+                            <table class="isd-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:80px">Action</th>
+                                        <th>Email</th>
+                                        <th>Name</th>
+                                        <th>Campus</th>
+                                        <th>Issues</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < _userRows.Count; i++)
+                                    {
+                                        var idx        = i;
+                                        var ur         = _userRows[i];
+                                        var isExpanded = _expandedRowIdx.Contains(idx);
+                                        var hasDetail  = !string.IsNullOrEmpty(ur.Company) || !string.IsNullOrEmpty(ur.Addr1)
+                                                      || !string.IsNullOrEmpty(ur.City)    || !string.IsNullOrEmpty(ur.ProfileName)
+                                                      || ur.Errors.Count > 0;
+                                        <tr class="isd-vrow @(hasDetail ? "isd-vrow--expandable" : "") @(ur.IsValid ? "" : "iud-row-invalid")"
+                                            @onclick="() => ToggleRow(idx)">
+                                            <td>
+                                                @if (ur.IsValid)
+                                                {
+                                                    <span class="isd-action-badge isd-action-add">Create</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="isd-action-badge isd-action-remove">Error</span>
+                                                }
+                                            </td>
+                                            <td>@(string.IsNullOrEmpty(ur.Email) ? "—" : ur.Email)</td>
+                                            <td>@(string.IsNullOrEmpty(ur.FName) && string.IsNullOrEmpty(ur.LName)
+                                                    ? "—"
+                                                    : $"{ur.FName} {ur.LName}".Trim())</td>
+                                            <td>@(string.IsNullOrEmpty(ur.CampusDisplayName)
+                                                    ? (string.IsNullOrEmpty(ur.Campus) ? "—" : ur.Campus)
+                                                    : ur.CampusDisplayName)</td>
+                                            <td class="isd-changed-fields">
+                                                @if (ur.Errors.Count > 0)
+                                                {
+                                                    @string.Join(", ", ur.Errors)
+                                                }
+                                                @if (hasDetail)
+                                                {
+                                                    <span class="isd-expand-icon">@(isExpanded ? "▲" : "▼")</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                        @if (isExpanded && hasDetail)
+                                        {
+                                            <tr class="isd-vrow-detail">
+                                                <td colspan="5">
+                                                    <div class="isd-field-list">
+                                                        @if (!string.IsNullOrEmpty(ur.Company))
+                                                        {
+                                                            <div class="isd-field-row">
+                                                                <span class="isd-field-name">Company</span>
+                                                                <span class="isd-val isd-val--new">@ur.Company</span>
+                                                            </div>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(ur.Addr1))
+                                                        {
+                                                            <div class="isd-field-row">
+                                                                <span class="isd-field-name">Address</span>
+                                                                <span class="isd-val isd-val--new">@ur.Addr1@(string.IsNullOrEmpty(ur.City) ? "" : $", {ur.City}")@(string.IsNullOrEmpty(ur.State) ? "" : $", {ur.State}")@(string.IsNullOrEmpty(ur.Country) ? "" : $" {ur.Country}")</span>
+                                                            </div>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(ur.Phone))
+                                                        {
+                                                            <div class="isd-field-row">
+                                                                <span class="isd-field-name">Phone</span>
+                                                                <span class="isd-val isd-val--new">@ur.Phone</span>
+                                                            </div>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(ur.ProfileName))
+                                                        {
+                                                            <div class="isd-field-row">
+                                                                <span class="isd-field-name">Profile</span>
+                                                                <span class="isd-val isd-val--new">@ur.ProfileName</span>
+                                                            </div>
+                                                        }
+                                                        @foreach (var err in ur.Errors)
+                                                        {
+                                                            <div class="isd-field-row">
+                                                                <span class="isd-field-name iud-error-label">&#9888; Error</span>
+                                                                <span class="isd-val" style="color:#c53030">@err</span>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+
+                @if (_stage == Stage.ApplyResults)
+                {
+                    @if (_applyError is not null)
+                    {
+                        <div class="isd-error">&#9888; @_applyError</div>
+                    }
+                    else
+                    {
+                        var successes = _applyResults.Count(r => r.Success);
+                        var failures  = _applyResults.Count(r => !r.Success);
+                        <div class="isd-vl-summary">
+                            @if (successes > 0) { <span class="isd-action-badge isd-action-add">&#x2713; @successes created</span> }
+                            @if (failures  > 0) { <span class="isd-action-badge isd-action-remove">&#x2715; @failures failed</span> }
+                        </div>
+                        <div class="isd-table-wrap">
+                            <table class="isd-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:60px">Status</th>
+                                        <th>Email</th>
+                                        <th>Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in _applyResults)
+                                    {
+                                        <tr>
+                                            <td><span class="isd-action-badge @(r.Success ? "isd-action-add" : "isd-action-remove")">@(r.Success ? "\u2713" : "\u2715")</span></td>
+                                            <td>@r.EntityName</td>
+                                            <td class="isd-changed-fields">@r.Message</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+
+            </div>
+
+            <div class="isd-footer">
+                @if (_stage == Stage.Users && !_applying)
+                {
+                    <button class="isd-btn-secondary" @onclick="@(() => _stage = Stage.Preview)" disabled="@_usersBusy">&#x2190; Back</button>
+                }
+                @if (_stage == Stage.ApplyResults)
+                {
+                    <button class="isd-btn-secondary" @onclick="@(() => _stage = Stage.Users)">&#x2190; Back</button>
+                }
+                @if (_stage == Stage.Preview && _columnMappings.Count > 0)
+                {
+                    <button class="isd-btn-primary" @onclick="BuildUserRowsAsync">Preview Users</button>
+                }
+                @if (_stage == Stage.Users && !_applying && !_usersBusy && _userRows.Any(r => r.IsValid) && CanApply)
+                {
+                    <button class="isd-btn-primary" @onclick="ApplyAsync">&#x2705; Create Users</button>
+                }
+                <button class="isd-btn-close" @onclick="HandleClose" disabled="@_applying">Close</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public bool CanApply { get; set; }
+    [Parameter] public EventCallback<List<ApplyResultItem>> OnUsersApplied { get; set; }
+
+    private enum Stage { Pick, Preview, Users, ApplyResults }
+
+    private Stage _stage = Stage.Pick;
+    private string? _fileName;
+    private string? _error;
+    private bool _loading;
+    private List<string> _headers = [];
+    private List<List<string>> _previewRows = [];
+    private int _totalDataRows;
+    private Dictionary<int, string> _columnMappings = new();
+    private List<List<string>> _allDataRows = [];
+    private List<CsvUserRow> _userRows = [];
+    private bool _usersBusy;
+    private string? _usersError;
+    private bool _applying;
+    private List<ApplyResultItem> _applyResults = [];
+    private string? _applyError;
+    private readonly HashSet<int> _expandedRowIdx = [];
+
+    private static readonly (string Group, string[] Fields)[] UserFieldGroups =
+    [
+        ("Identity",    ["Email", "UserId", "IdLevel", "ProfileName"]),
+        ("Campus",      ["Campus", "CampusDisplayName"]),
+        ("Name",        ["Company", "FName", "LName"]),
+        ("Address",     ["Addr1", "Addr2", "Addr3", "City", "State", "Zip", "Country", "Phone"]),
+        ("Custom",      ["Custom1", "Custom2", "Custom3", "Custom4", "Custom5",
+                         "Custom6", "Custom7", "Custom8", "Custom9", "Custom10"]),
+        ("Permissions", ["CanViewAddressBook", "CanViewBatchManager", "CanViewCloseout",
+                         "CanViewCreateBatch", "CanViewDistributionList", "CanViewGroupManager",
+                         "CanViewHistory", "CanViewManageData", "CanViewManifestDocuments",
+                         "CanViewPickupRequest", "CanViewScanAndShip", "CanViewShippingAndRating",
+                         "CanViewTransmit"]),
+        ("Config",      ["ExportFileDelimiter", "ExportFileQualifier",
+                         "ExportFileGroupSeparator", "ExportFileDecimalSeparator"]),
+    ];
+
+    private void ToggleRow(int idx)
+    {
+        if (!_expandedRowIdx.Add(idx))
+            _expandedRowIdx.Remove(idx);
+    }
+
+    private async Task TriggerFilePickerAsync()
+        => await JS.InvokeVoidAsync("triggerClick", "iud-file-input");
+
+    private async Task OnFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        _loading = true;
+        try
+        {
+            var file = e.File;
+            if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                _error = "Please select a .csv file.";
+                return;
+            }
+
+            _fileName = file.Name;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var reader = new System.IO.StreamReader(stream);
+
+            var lines = new List<string>();
+            string? line;
+            while ((line = await reader.ReadLineAsync()) is not null)
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                    lines.Add(line);
+            }
+
+            if (lines.Count == 0)
+            {
+                _error = "The file is empty.";
+                return;
+            }
+
+            // First row is always treated as the header
+            _headers = ParseCsvLine(lines[0]);
+            _totalDataRows = lines.Count - 1;
+            _allDataRows = lines.Skip(1).Select(ParseCsvLine).ToList();
+            _previewRows = _allDataRows.Take(3).ToList();
+
+            _columnMappings = new();
+            var allFields = UserFieldGroups.SelectMany(g => g.Fields).ToList();
+            for (int i = 0; i < _headers.Count; i++)
+            {
+                var match = allFields.FirstOrDefault(f => string.Equals(f, _headers[i], StringComparison.OrdinalIgnoreCase));
+                if (match is not null)
+                    _columnMappings[i] = match;
+            }
+
+            _stage = Stage.Preview;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to read file: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static List<string> ParseCsvLine(string line)
+    {
+        var result = new List<string>();
+        var sb = new System.Text.StringBuilder();
+        bool inQuotes = false;
+
+        for (int i = 0; i <= line.Length; i++)
+        {
+            char c = i < line.Length ? line[i] : '\0';
+
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        sb.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            else if (c == '"')
+            {
+                inQuotes = true;
+            }
+            else if (c == ',' || c == '\0')
+            {
+                result.Add(sb.ToString());
+                sb.Clear();
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        return result;
+    }
+
+    private void Reset()
+    {
+        _stage = Stage.Pick;
+        _headers = [];
+        _previewRows = [];
+        _allDataRows = [];
+        _columnMappings = new();
+        _userRows = [];
+        _usersBusy = false;
+        _usersError = null;
+        _applying = false;
+        _applyResults = [];
+        _applyError = null;
+        _expandedRowIdx.Clear();
+        _fileName = null;
+        _error = null;
+        _totalDataRows = 0;
+    }
+
+    private Task BuildUserRowsAsync()
+    {
+        _usersBusy = true;
+        _usersError = null;
+        _userRows = [];
+        _stage = Stage.Users;
+        try
+        {
+            _userRows = _allDataRows
+                .Select((row, idx) => BuildUserRowFromMapping(row, _columnMappings, idx + 2))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _usersError = $"Failed: {ex.Message}";
+        }
+        finally
+        {
+            _usersBusy = false;
+        }
+        return Task.CompletedTask;
+    }
+
+    private static CsvUserRow BuildUserRowFromMapping(
+        List<string> row,
+        Dictionary<int, string> mappings,
+        int rowNumber)
+    {
+        var u = new CsvUserRow { RowNumber = rowNumber };
+        foreach (var (colIdx, field) in mappings)
+        {
+            var val = colIdx < row.Count ? row[colIdx].Trim() : string.Empty;
+            switch (field)
+            {
+                case "Email":                    u.Email                    = val; break;
+                case "UserId":                   u.UserId                   = val; break;
+                case "IdLevel":                  u.IdLevel                  = val; break;
+                case "ProfileName":              u.ProfileName              = val; break;
+                case "Campus":                   u.Campus                   = val; break;
+                case "CampusDisplayName":        u.CampusDisplayName        = val; break;
+                case "Company":                  u.Company                  = val; break;
+                case "FName":                    u.FName                    = val; break;
+                case "LName":                    u.LName                    = val; break;
+                case "Addr1":                    u.Addr1                    = val; break;
+                case "Addr2":                    u.Addr2                    = val; break;
+                case "Addr3":                    u.Addr3                    = val; break;
+                case "City":                     u.City                     = val; break;
+                case "State":                    u.State                    = val; break;
+                case "Zip":                      u.Zip                      = val; break;
+                case "Country":                  u.Country                  = val; break;
+                case "Phone":                    u.Phone                    = val; break;
+                case "Custom1":                  u.Custom1                  = val; break;
+                case "Custom2":                  u.Custom2                  = val; break;
+                case "Custom3":                  u.Custom3                  = val; break;
+                case "Custom4":                  u.Custom4                  = val; break;
+                case "Custom5":                  u.Custom5                  = val; break;
+                case "Custom6":                  u.Custom6                  = val; break;
+                case "Custom7":                  u.Custom7                  = val; break;
+                case "Custom8":                  u.Custom8                  = val; break;
+                case "Custom9":                  u.Custom9                  = val; break;
+                case "Custom10":                 u.Custom10                 = val; break;
+                case "CanViewAddressBook":       u.CanViewAddressBook       = ParseBool(val); break;
+                case "CanViewBatchManager":      u.CanViewBatchManager      = ParseBool(val); break;
+                case "CanViewCloseout":          u.CanViewCloseout          = ParseBool(val); break;
+                case "CanViewCreateBatch":       u.CanViewCreateBatch       = ParseBool(val); break;
+                case "CanViewDistributionList":  u.CanViewDistributionList  = ParseBool(val); break;
+                case "CanViewGroupManager":      u.CanViewGroupManager      = ParseBool(val); break;
+                case "CanViewHistory":           u.CanViewHistory           = ParseBool(val); break;
+                case "CanViewManageData":        u.CanViewManageData        = ParseBool(val); break;
+                case "CanViewManifestDocuments": u.CanViewManifestDocuments = ParseBool(val); break;
+                case "CanViewPickupRequest":     u.CanViewPickupRequest     = ParseBool(val); break;
+                case "CanViewScanAndShip":       u.CanViewScanAndShip       = ParseBool(val); break;
+                case "CanViewShippingAndRating": u.CanViewShippingAndRating = ParseBool(val); break;
+                case "CanViewTransmit":          u.CanViewTransmit          = ParseBool(val); break;
+                case "ExportFileDelimiter":      u.ExportFileDelimiter      = val; break;
+                case "ExportFileQualifier":      u.ExportFileQualifier      = val; break;
+                case "ExportFileGroupSeparator": u.ExportFileGroupSeparator = val; break;
+                case "ExportFileDecimalSeparator": u.ExportFileDecimalSeparator = val; break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(u.Email))
+            u.Errors.Add("Email is required.");
+        else if (!u.Email.Contains('@') || !u.Email.Contains('.'))
+            u.Errors.Add($"'{u.Email}' is not a valid email address.");
+
+        return u;
+    }
+
+    private static bool ParseBool(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var v = value.Trim();
+        return v == "1"
+            || string.Equals(v, "true", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(v, "yes",  StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void OnColumnMappingChanged(int colIdx, string field)
+    {
+        if (string.IsNullOrEmpty(field))
+            _columnMappings.Remove(colIdx);
+        else
+            _columnMappings[colIdx] = field;
+    }
+
+    private IEnumerable<string> AvailableFields(int colIdx)
+    {
+        var usedElsewhere = _columnMappings
+            .Where(kv => kv.Key != colIdx)
+            .Select(kv => kv.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return UserFieldGroups.SelectMany(g => g.Fields)
+            .Where(f => !usedElsewhere.Contains(f));
+    }
+
+    private async Task ApplyAsync()
+    {
+        _applying = true;
+        _applyError = null;
+        _applyResults = [];
+        StateHasChanged();
+        try
+        {
+            var validRows = _userRows.Where(r => r.IsValid).ToList();
+            var results   = await ShipExecService.CreateUsersFromCsvAsync(validRows);
+            _applyResults = results
+                .Select(r => new ApplyResultItem
+                {
+                    EntityName = r.Email,
+                    Operation  = "Create",
+                    Endpoint   = "CreateUser",
+                    Success    = r.Success,
+                    Message    = r.Message,
+                })
+                .ToList();
+            _stage = Stage.ApplyResults;
+            await OnUsersApplied.InvokeAsync(_applyResults);
+        }
+        catch (Exception ex)
+        {
+            _applyError = ex.Message;
+            _stage = Stage.ApplyResults;
+        }
+        finally
+        {
+            _applying = false;
+        }
+    }
+
+    private void HandleClose()
+    {
+        Reset();
+        OnClose.InvokeAsync();
+    }
+}
