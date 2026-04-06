@@ -491,3 +491,10 @@
     color: #6c757d;
     font-style: italic;
 }
+
+/* ── Absent placeholder ───────────────────────────────────────────────────── */
+.cpd-absent {
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 0.8rem;
+}

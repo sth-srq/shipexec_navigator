@@ -118,8 +118,26 @@
                                                 <td class="cpd-td cpd-td--change">
                                                     <span class="cpd-badge cpd-badge--@row.Kind.ToString().ToLower()">@row.Kind</span>
                                                 </td>
-                                                <td class="cpd-td cpd-td--val cpd-td--orig">@(row.OrigVal ?? string.Empty)</td>
-                                                <td class="cpd-td cpd-td--val cpd-td--new">@(row.NewVal ?? string.Empty)</td>
+                                                <td class="cpd-td cpd-td--val cpd-td--orig">
+                                                    @if (row.OrigVal is not null)
+                                                    {
+                                                        @row.OrigVal
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="cpd-absent">(not present)</span>
+                                                    }
+                                                </td>
+                                                <td class="cpd-td cpd-td--val cpd-td--new">
+                                                    @if (row.NewVal is not null)
+                                                    {
+                                                        @row.NewVal
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="cpd-absent">(not present)</span>
+                                                    }
+                                                </td>
                                             </tr>
                                             @if (isExpanded)
                                             {
@@ -431,7 +449,7 @@
     private static string? ItemKey(JsonElement item)
     {
         if (item.ValueKind != JsonValueKind.Object) return null;
-        foreach (var prop in new[] { "Id", "Name", "Symbol", "Code", "Type" })
+        foreach (var prop in new[] { "Name", "Symbol", "Code", "Description", "Type", "Id" })
             if (item.TryGetProperty(prop, out var v)
                 && v.ValueKind is not (JsonValueKind.Null or JsonValueKind.Object or JsonValueKind.Array))
             {
@@ -451,20 +469,47 @@
         _                    => string.Empty,
     };
 
+    private static readonly string[] _summaryPreferredFields = ["Name", "Description", "Symbol", "Code", "Type"];
+
     private static string ItemSummary(JsonElement item)
     {
         if (item.ValueKind != JsonValueKind.Object) return ScalarString(item);
         var parts = new List<string>();
-        foreach (var prop in item.EnumerateObject())
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Preferred descriptive fields first
+        foreach (var name in _summaryPreferredFields)
         {
-            if (prop.Value.ValueKind is JsonValueKind.Object or JsonValueKind.Array) continue;
-            var v = ScalarString(prop.Value);
-            if (!string.IsNullOrEmpty(v))
+            if (item.TryGetProperty(name, out var v)
+                && v.ValueKind is not (JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.Null))
             {
-                parts.Add($"{prop.Name}: {v}");
-                if (parts.Count == 3) break;
+                var val = ScalarString(v);
+                if (!string.IsNullOrEmpty(val))
+                {
+                    parts.Add($"{name}: {val}");
+                    used.Add(name);
+                    if (parts.Count == 3) break;
+                }
             }
         }
+
+        // Fill remaining slots from other scalar properties, skipping Id
+        if (parts.Count < 3)
+        {
+            foreach (var prop in item.EnumerateObject())
+            {
+                if (used.Contains(prop.Name)
+                    || prop.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)) continue;
+                if (prop.Value.ValueKind is JsonValueKind.Object or JsonValueKind.Array) continue;
+                var val = ScalarString(prop.Value);
+                if (!string.IsNullOrEmpty(val))
+                {
+                    parts.Add($"{prop.Name}: {val}");
+                    if (parts.Count == 3) break;
+                }
+            }
+        }
+
         return parts.Count > 0 ? string.Join(", ", parts) : "(item)";
     }
 
