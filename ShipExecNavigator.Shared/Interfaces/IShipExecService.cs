@@ -72,4 +72,10 @@ public interface IShipExecService
     // ── Client Business Rules ────────────────────────────────────────────────
     Task<List<CbrInfo>> GetCompanyClientBusinessRulesAsync(Guid companyId, string jwtJson, string adminUrl);
     Task<List<CbrSaveResult>> SaveCbrScriptsAsync(string folderPath, IEnumerable<(string CompanyName, List<CbrInfo> Rules)> entries);
+
+    // ── Server Business Rules ────────────────────────────────────────────────
+    Task<List<SbrInfo>> GetServerBusinessRulesAsync();
+
+    // ── Client Business Rules (connected company) ────────────────────────────
+    Task<List<CbrInfo>> GetClientBusinessRulesAsync();
 }

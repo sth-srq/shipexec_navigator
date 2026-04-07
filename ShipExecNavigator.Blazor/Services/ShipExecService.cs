@@ -1502,6 +1502,86 @@ public sealed class ShipExecService(
         );
     }
 
+    public Task<List<SbrInfo>> GetServerBusinessRulesAsync()
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("GetServerBusinessRules start | CompanyId={CompanyId}", _currentCompanyId);
+            try
+            {
+                var results = _appManager.GetServerBusinessRulesForCompany();
+                sw.Stop();
+                logger.LogInformation(
+                    "GetServerBusinessRules complete | Count={Count} DurationMs={DurationMs}",
+                    results.Count, sw.ElapsedMilliseconds);
+
+                return results.Select(r => new SbrInfo
+                {
+                    Id             = r.Rule.Id,
+                    Name           = r.Rule.Name        ?? string.Empty,
+                    Description    = r.Rule.Description,
+                    Version        = r.Rule.Version,
+                    Author         = r.Rule.Author,
+                    AuthorEmail    = r.Rule.AuthorEmail,
+                    FileBase64     = !string.IsNullOrEmpty(r.Rule.File)
+                                        ? r.Rule.File
+                                        : r.Rule.FileBytes is { Length: > 0 }
+                                            ? Convert.ToBase64String(r.Rule.FileBytes)
+                                            : null,
+                    UsedByProfiles = r.ProfileNames,
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                logger.LogError(ex,
+                    "GetServerBusinessRules failed | DurationMs={DurationMs}", sw.ElapsedMilliseconds);
+                throw;
+            }
+        });
+    }
+
+    public Task<List<CbrInfo>> GetClientBusinessRulesAsync()
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("GetClientBusinessRules start | CompanyId={CompanyId}", _currentCompanyId);
+            try
+            {
+                var results = _appManager.GetClientBusinessRulesWithProfilesForCompany();
+                sw.Stop();
+                logger.LogInformation(
+                    "GetClientBusinessRules complete | Count={Count} DurationMs={DurationMs}",
+                    results.Count, sw.ElapsedMilliseconds);
+
+                return results.Select(r => new CbrInfo
+                {
+                    Id             = r.Rule.Id,
+                    Name           = r.Rule.Name        ?? string.Empty,
+                    Description    = r.Rule.Description,
+                    Script         = r.Rule.Script,
+                    Version        = r.Rule.Version,
+                    UsedByProfiles = r.ProfileNames,
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                logger.LogError(ex,
+                    "GetClientBusinessRules failed | DurationMs={DurationMs}", sw.ElapsedMilliseconds);
+                throw;
+            }
+        });
+    }
+
     public async Task<List<CbrSaveResult>> SaveCbrScriptsAsync(
         string folderPath,
         IEnumerable<(string CompanyName, List<CbrInfo> Rules)> entries)

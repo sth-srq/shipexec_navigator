@@ -102,7 +102,13 @@ public sealed class SemanticKernelChatService : IAiChatService
             "Omit the \"action\" key entirely when no action is needed. " +
             "Supported action types: javascript (payload: JS code string), " +
             "shipper-add (payload: object), shipper-delete (payload: array), shipper-edit (payload: array), " +
-            "user-find (payload: array), user-add (payload: object), user-edit (payload: array), user-delete (payload: array).";
+            "user-find (payload: array), user-add (payload: object), user-edit (payload: array), user-delete (payload: array). " +
+            "The \"message\" value inside the JSON must use rich Markdown formatting: " +
+            "use **bold** for key terms, `code` for field names and values, ``` fenced code blocks for multi-line code or XML, " +
+            "# / ## / ### headings to organise long answers, - bullet lists for enumerations, " +
+            "1. numbered lists for steps, | tables for structured data comparisons, " +
+            "and > blockquotes to highlight important notes or warnings. " +
+            "Always prefer structured Markdown over plain prose for any non-trivial answer.";
 
         if (useRag)
             systemPrompt +=

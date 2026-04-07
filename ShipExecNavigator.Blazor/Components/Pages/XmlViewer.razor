@@ -13,6 +13,7 @@
 @inject IJSRuntime JSRuntime
 @inject AlertService AlertService
 @inject IAiChatService AiChatService
+@inject ICbrAnalysisService CbrAnalysisService
 
 <PageTitle>Management Studio Pro</PageTitle>
 
@@ -62,7 +63,7 @@
             <button class='viewer-tab @(_activeMainTab == "company" ? "viewer-tab--active" : "")'
                     @onclick='() => _activeMainTab = "company"'>&#x1F3E2; Company</button>
             <button class='viewer-tab @(_activeMainTab == "business-rules" ? "viewer-tab--active" : "")'
-                    @onclick='() => _activeMainTab = "business-rules"'>&#x1F4DC; Business Rules</button>
+                    @onclick='SwitchToBusinessRulesTab'>&#x1F4DC; Business Rules</button>
             <button class='viewer-tab @(_activeMainTab == "users" ? "viewer-tab--active" : "")'
                     @onclick='() => _activeMainTab = "users"'>&#x1F464; Users</button>
             <button class='viewer-tab @(_activeMainTab == "logs" ? "viewer-tab--active" : "")'
@@ -145,17 +146,247 @@
         @if (_activeMainTab == "business-rules")
         {
             <div class="br-tab-content">
-                <div class="br-section">
-                    <div class="br-section-header">&#x1F5A5;&#xFE0F; Server Business Rules</div>
-                    <div class="br-section-body">
-                        <div class="br-empty">No server business rules loaded.</div>
-                    </div>
+                <div class="br-section @(_sbrExpanded ? "" : "br-section--collapsed")">
+                    <button class="br-section-header br-section-header--toggle" @onclick="() => _sbrExpanded = !_sbrExpanded">
+                        <span class="br-chevron @(_sbrExpanded ? "br-chevron--open" : "")">&#x25B6;</span>
+                        &#x1F5A5;&#xFE0F; Server Business Rules
+                        @if (_sbrLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                        }
+                        else if (_sbrs.Count > 0)
+                        {
+                            <span class="br-count-badge">@_sbrs.Count</span>
+                        }
+                    </button>
+                    @if (_sbrExpanded)
+                    {
+                        <div class="br-section-body">
+                            @if (_sbrLoading)
+                            {
+                                <div class="br-loading">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    Loading server business rules&hellip;
+                                </div>
+                            }
+                            else if (_sbrError is not null)
+                            {
+                                <div class="br-error">&#9888; @_sbrError</div>
+                            }
+                            else if (!_sbrLoaded)
+                            {
+                                <div class="br-empty">No server business rules loaded.</div>
+                            }
+                            else if (_sbrs.Count == 0)
+                            {
+                                <div class="br-empty">No server business rules found for this company.</div>
+                            }
+                            else
+                            {
+                                <div class="sbr-list">
+                                    @foreach (var sbr in _sbrs)
+                                    {
+                                        <div class="sbr-card">
+                                            <div class="sbr-card-header">
+                                                <span class="sbr-name">@sbr.Name</span>
+                                                @if (!string.IsNullOrEmpty(sbr.FileBase64))
+                                                {
+                                                    <button class="sbr-download-btn" @onclick="() => DownloadSbrAsync(sbr)" title="Download @(sbr.Name).dll">
+                                                        &#x2B07;&#xFE0F; Download .dll
+                                                    </button>
+                                                }
+                                            </div>
+                                            <div class="sbr-details">
+                                                @if (!string.IsNullOrWhiteSpace(sbr.Description))
+                                                {
+                                                    <div class="sbr-detail-row">
+                                                        <span class="sbr-detail-label">Description</span>
+                                                        <span class="sbr-detail-value">@sbr.Description</span>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(sbr.Version))
+                                                {
+                                                    <div class="sbr-detail-row">
+                                                        <span class="sbr-detail-label">Version</span>
+                                                        <span class="sbr-detail-value">@sbr.Version</span>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(sbr.Author))
+                                                {
+                                                    <div class="sbr-detail-row">
+                                                        <span class="sbr-detail-label">Author</span>
+                                                        <span class="sbr-detail-value">@sbr.Author@(!string.IsNullOrWhiteSpace(sbr.AuthorEmail) ? $" &lt;{sbr.AuthorEmail}&gt;" : "")</span>
+                                                    </div>
+                                                }
+                                                <div class="sbr-detail-row">
+                                                    <span class="sbr-detail-label">Profiles</span>
+                                                    <span class="sbr-detail-value">
+                                                        @if (sbr.UsedByProfiles.Count > 0)
+                                                        {
+                                                            @foreach (var profile in sbr.UsedByProfiles)
+                                                            {
+                                                                <span class="sbr-profile-tag">@profile</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="sbr-none">Not assigned to any profile</span>
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
-                <div class="br-section">
-                    <div class="br-section-header">&#x1F4BB; Client Business Rules</div>
-                    <div class="br-section-body">
-                        <div class="br-empty">No client business rules loaded.</div>
-                    </div>
+                <div class="br-section @(_cbrExpanded ? (_selectedCbr is not null ? "br-section--viewer" : "") : "br-section--collapsed")">
+                    <button class="br-section-header br-section-header--toggle" @onclick="() => _cbrExpanded = !_cbrExpanded">
+                        <span class="br-chevron @(_cbrExpanded ? "br-chevron--open" : "")">&#x25B6;</span>
+                        &#x1F4BB; Client Business Rules
+                        @if (_cbrLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                        }
+                        else if (_cbrs.Count > 0)
+                        {
+                            <span class="br-count-badge">@_cbrs.Count</span>
+                        }
+                    </button>
+                    @if (_cbrExpanded)
+                    {
+                        <div class="br-section-body">
+                            @if (_cbrLoading)
+                            {
+                                <div class="br-loading">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    Loading client business rules&hellip;
+                                </div>
+                            }
+                            else if (_cbrError is not null)
+                            {
+                                <div class="br-error">&#9888; @_cbrError</div>
+                            }
+                            else if (!_cbrLoaded)
+                            {
+                                <div class="br-empty">No client business rules loaded.</div>
+                            }
+                            else if (_cbrs.Count == 0)
+                            {
+                                <div class="br-empty">No client business rules found for this company.</div>
+                            }
+                            else
+                            {
+                                <div class="cbr-body">
+                                    <div class="cbr-sidebar">
+                                        @foreach (var cbr in _cbrs)
+                                        {
+                                            <button class="cbr-item @(_selectedCbr?.Id == cbr.Id ? "cbr-item--active" : "")"
+                                                    @onclick="() => SelectCbr(cbr)">
+                                                <span class="cbr-item-name">@cbr.Name</span>
+                                                @if (!string.IsNullOrWhiteSpace(cbr.Version))
+                                                {
+                                                    <span class="cbr-item-version">@cbr.Version</span>
+                                                }
+                                                @if (cbr.UsedByProfiles.Count > 0)
+                                                {
+                                                    <span class="cbr-item-profiles">@string.Join(", ", cbr.UsedByProfiles)</span>
+                                                }
+                                            </button>
+                                        }
+                                    </div>
+                                    <div class="cbr-viewer">
+                                        @if (_selectedCbr is null)
+                                        {
+                                            <div class="cbr-viewer-empty">&#x2190; Select a rule to view its script</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="cbr-viewer-header">
+                                                <span class="cbr-viewer-name">@_selectedCbr.Name</span>
+                                                @if (!string.IsNullOrWhiteSpace(_selectedCbr.Version))
+                                                {
+                                                    <span class="cbr-viewer-version">@_selectedCbr.Version</span>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(_selectedCbr.Description))
+                                                {
+                                                    <span class="cbr-viewer-desc">@_selectedCbr.Description</span>
+                                                }
+                                            </div>
+                                            <div class="cbr-code-wrap">
+                                                <textarea class="cbr-editor" spellcheck="false"
+                                                          @bind="_cbrEditedScript"
+                                                          @bind:event="oninput"></textarea>
+                                            </div>
+                                            <div class="cbr-footer">
+                                                <button class="cbr-btn-save"
+                                                        @onclick="SaveCbrEdit"
+                                                        disabled="@(_cbrEditedScript == _cbrOriginalScript)">
+                                                    &#x2714; Save
+                                                </button>
+                                                <button class="cbr-btn-cancel"
+                                                        @onclick="CancelCbrEdit"
+                                                        disabled="@(_cbrEditedScript == _cbrOriginalScript)">
+                                                    &#x2715; Cancel
+                                                </button>
+                                                <button class="cbr-btn-analyze"
+                                                        @onclick="RunCbrAnalysisAsync"
+                                                        disabled="@(_cbrAnalyzing || string.IsNullOrWhiteSpace(_cbrEditedScript))">
+                                                    @if (_cbrAnalyzing)
+                                                    {
+                                                        <span class="cbr-analyze-spinner"></span>
+                                                        <span>Analyzing…</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>&#x1F9E0; Analyze</span>
+                                                    }
+                                                </button>
+                                            </div>
+                                            @if (_cbrAnalysisVisible)
+                                            {
+                                                <div class="cbr-analysis-panel">
+                                                    <div class="cbr-analysis-header">
+                                                        <span class="cbr-analysis-title">&#x1F9E0; AI Analysis — @_selectedCbr.Name</span>
+                                                        <div class="cbr-analysis-actions">
+                                                            @if (_cbrAnalysisResult is not null)
+                                                            {
+                                                                <button class="cbr-btn-accept" @onclick="AcceptCbrAnalysis">
+                                                                    &#x2714; Accept &amp; Replace
+                                                                </button>
+                                                            }
+                                                            <button class="cbr-btn-dismiss" @onclick="DismissCbrAnalysis">
+                                                                &#x2715; Dismiss
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    @if (_cbrAnalyzing)
+                                                    {
+                                                        <div class="cbr-analysis-loading">
+                                                            <span class="cbr-analyze-spinner cbr-analyze-spinner--lg"></span>
+                                                            <span>Sending script and CBRHelper to AI… this may take a moment.</span>
+                                                        </div>
+                                                    }
+                                                    else if (_cbrAnalysisError is not null)
+                                                    {
+                                                        <div class="cbr-analysis-error">&#9888; @_cbrAnalysisError</div>
+                                                    }
+                                                    else if (_cbrAnalysisResult is not null)
+                                                    {
+                                                        <textarea class="cbr-analysis-result" spellcheck="false"
+                                                                  readonly
+                                                                  value="@_cbrAnalysisResult"></textarea>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -493,7 +724,27 @@
     // ── Main tab state ────────────────────────────────────────────────────────
     private string _activeMainTab = "company";
 
-    // ── Logs tab state ────────────────────────────────────────────────────────
+    // ── Business Rules tab state ──────────────────────────────────────────────
+    private List<SbrInfo> _sbrs        = [];
+    private bool          _sbrLoading;
+    private bool          _sbrLoaded;
+    private bool          _sbrExpanded = true;
+    private string?       _sbrError;
+
+    private List<CbrInfo> _cbrs        = [];
+    private bool          _cbrLoading;
+    private bool          _cbrLoaded;
+    private bool          _cbrExpanded = true;
+    private string?       _cbrError;
+    private CbrInfo?      _selectedCbr;
+    private string        _cbrEditedScript   = string.Empty;
+    private string        _cbrOriginalScript = string.Empty;
+    private string?       _cbrAnalysisResult;
+    private bool          _cbrAnalyzing;
+    private string?       _cbrAnalysisError;
+    private bool          _cbrAnalysisVisible;
+
+    // ── Logs tab state
     private string _logMode = "application";
     private DateTime _logStart = DateTime.Today;
     private DateTime _logEnd = DateTime.Today;
@@ -510,6 +761,140 @@
     private void SetLogMode(string mode)
     {
         _logMode = mode;
+    }
+
+    // ── Business Rules tab ────────────────────────────────────────────────────
+
+    private async Task SwitchToBusinessRulesTab()
+    {
+        _activeMainTab = "business-rules";
+        await LoadSbrAsync();
+        await LoadCbrAsync();
+    }
+
+    private async Task LoadSbrAsync()
+    {
+        if (_sbrLoading || _sbrLoaded) return;
+        _sbrLoading = true;
+        _sbrError   = null;
+        StateHasChanged();
+        try
+        {
+            _sbrs      = await ShipExecService.GetServerBusinessRulesAsync();
+            _sbrLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _sbrError = ex.Message;
+        }
+        finally
+        {
+            _sbrLoading = false;
+        }
+    }
+
+    private async Task LoadCbrAsync()
+    {
+        if (_cbrLoading || _cbrLoaded) return;
+        _cbrLoading = true;
+        _cbrError   = null;
+        StateHasChanged();
+        try
+        {
+            _cbrs      = await ShipExecService.GetClientBusinessRulesAsync();
+            _cbrLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _cbrError = ex.Message;
+        }
+        finally
+        {
+            _cbrLoading = false;
+        }
+    }
+
+    private void SelectCbr(CbrInfo cbr)
+    {
+        _selectedCbr        = cbr;
+        _cbrOriginalScript  = cbr.Script ?? string.Empty;
+        _cbrEditedScript    = cbr.Script ?? string.Empty;
+        _cbrAnalysisResult  = null;
+        _cbrAnalysisError   = null;
+        _cbrAnalysisVisible = false;
+        _cbrAnalyzing       = false;
+    }
+
+    private void SaveCbrEdit()
+    {
+        if (_selectedCbr is null) return;
+        if (_cbrEditedScript == _cbrOriginalScript) return;
+        _varianceEntries.Insert(0, new Variance
+        {
+            NodeId          = Guid.Empty,
+            PathDescription = $"Client Business Rules \u203a {_selectedCbr.Name}",
+            Description     = "Script modified",
+            ChangeType      = "Modified",
+            OriginalXML     = _cbrOriginalScript,
+            NewXML          = _cbrEditedScript,
+        });
+        _selectedCbr.Script = _cbrEditedScript;
+        _cbrOriginalScript  = _cbrEditedScript;
+        _variancePanelVisible = true;
+    }
+
+    private void CancelCbrEdit()
+    {
+        _cbrEditedScript = _cbrOriginalScript;
+    }
+
+    private async Task RunCbrAnalysisAsync()
+    {
+        if (_selectedCbr is null || _cbrAnalyzing) return;
+
+        _cbrAnalyzing       = true;
+        _cbrAnalysisError   = null;
+        _cbrAnalysisResult  = null;
+        _cbrAnalysisVisible = true;
+        StateHasChanged();
+
+        try
+        {
+            _cbrAnalysisResult = await CbrAnalysisService.AnalyzeCbrAsync(_cbrEditedScript);
+        }
+        catch (Exception ex)
+        {
+            _cbrAnalysisError = ex.Message;
+        }
+        finally
+        {
+            _cbrAnalyzing = false;
+        }
+    }
+
+    private void AcceptCbrAnalysis()
+    {
+        if (string.IsNullOrWhiteSpace(_cbrAnalysisResult)) return;
+        _cbrEditedScript    = _cbrAnalysisResult;
+        _cbrAnalysisVisible = false;
+        _cbrAnalysisResult  = null;
+    }
+
+    private void DismissCbrAnalysis()
+    {
+        _cbrAnalysisVisible = false;
+        _cbrAnalysisResult  = null;
+        _cbrAnalysisError   = null;
+    }
+
+    private async Task DownloadSbrAsync(SbrInfo sbr)
+    {
+        if (string.IsNullOrEmpty(sbr.FileBase64)) return;
+        var safeName = string.IsNullOrWhiteSpace(sbr.Name)
+            ? "sbr"
+            : sbr.Name.Replace(" ", "_");
+        await JSRuntime.InvokeVoidAsync(
+            "downloadBase64File", $"{safeName}.dll", sbr.FileBase64, "application/octet-stream");
     }
 
     private async Task SearchLogsAsync()
@@ -734,6 +1119,21 @@
         _pendingUserDeletes = null;
         _pendingUserEdits = null;
         _addUserPrefill = null;
+        _sbrs        = [];
+        _sbrError    = null;
+        _sbrLoaded   = false;
+        _sbrLoading  = false;
+        _cbrs        = [];
+        _cbrError    = null;
+        _cbrLoaded   = false;
+        _cbrLoading  = false;
+        _selectedCbr        = null;
+        _cbrEditedScript   = string.Empty;
+        _cbrOriginalScript = string.Empty;
+        _cbrAnalysisResult  = null;
+        _cbrAnalysisError   = null;
+        _cbrAnalysisVisible = false;
+        _cbrAnalyzing       = false;
         try
         {
             rootNode = await ShipExecService.BuildCompanySkeletonAsync();

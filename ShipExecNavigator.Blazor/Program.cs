@@ -44,7 +44,9 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
     builder.Services.AddScoped<IXmlRefLookupService, XmlRefLookupService>();
     builder.Services.AddSingleton<AlertService>();
     builder.Services.AddSingleton<IVectorSearchService, InMemoryRagService>();
+    builder.Services.AddHttpClient();
     builder.Services.AddScoped<IAiChatService, SemanticKernelChatService>();
+    builder.Services.AddScoped<ICbrAnalysisService, CbrAnalysisService>();
 
     var app = builder.Build();
 

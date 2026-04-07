@@ -779,6 +779,586 @@
     flex-shrink: 0;
 }
 
+/* Collapsible toggle variant */
+.br-section-header--toggle {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    transition: background 0.15s;
+}
+
+    .br-section-header--toggle:hover {
+        background: linear-gradient(135deg, #e8eefb, #dce7f6);
+    }
+
+/* Collapsed modifier: shrink to header height only */
+.br-section--collapsed {
+    flex: none;
+    min-height: 0;
+}
+
+    .br-section--collapsed .br-section-header {
+        border-radius: 10px;
+        border-bottom: none;
+    }
+
+/* Collapse chevron */
+.br-chevron {
+    font-size: 0.6rem;
+    color: #4a7bbf;
+    display: inline-block;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.br-chevron--open {
+    transform: rotate(90deg);
+}
+
+/* Count badge next to the section header title */
+.br-count-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #dce8fc, #c8d8f4);
+    color: #2b5fa0;
+    border: 1px solid rgba(43,95,160,0.22);
+    border-radius: 2rem;
+    padding: 0.1rem 0.55rem;
+    white-space: nowrap;
+}
+
+/* Loading state inside br-section-body */
+.br-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+/* Error state */
+.br-error {
+    color: #c53030;
+    font-size: 0.875rem;
+    background-color: #fff5f5;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    padding: 0.5rem 0.85rem;
+}
+
+/* ── SBR cards ─────────────────────────────────────────────────────────── */
+.sbr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.sbr-card {
+    background: linear-gradient(180deg, #fafcff 0%, #f5f8ff 100%);
+    border: 1px solid rgba(43,63,107,0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.18s ease;
+}
+
+    .sbr-card:hover {
+        box-shadow: 0 4px 14px rgba(43,63,107,0.12);
+    }
+
+.sbr-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    background: linear-gradient(135deg, #eef3ff, #e6edfb);
+    border-bottom: 1px solid rgba(43,63,107,0.08);
+}
+
+.sbr-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a2d4f;
+    font-family: "Cascadia Code", "Consolas", monospace;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sbr-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: linear-gradient(135deg, #1a4f7c, #2e6da4);
+    border: none;
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.28rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: filter 0.15s, transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(46,109,164,0.28);
+}
+
+    .sbr-download-btn:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(46,109,164,0.38);
+    }
+
+    .sbr-download-btn:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+.sbr-details {
+    padding: 0.55rem 0.9rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.sbr-detail-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    min-width: 0;
+}
+
+.sbr-detail-label {
+    font-weight: 600;
+    color: #4a5568;
+    white-space: nowrap;
+    min-width: 6rem;
+    flex-shrink: 0;
+}
+
+.sbr-detail-value {
+    color: #2d3748;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.sbr-none {
+    color: #9aa5b4;
+    font-style: italic;
+}
+
+.sbr-profile-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    background: linear-gradient(135deg, #e0edff, #d4e4fc);
+    color: #1a4f7c;
+    border: 1px solid rgba(26,79,124,0.22);
+    border-radius: 2rem;
+    padding: 0.1rem 0.5rem;
+    white-space: nowrap;
+}
+
+/* ── CBR viewer modifier ──────────────────────────────────────────────────── */
+/* Applied to br-section when a CBR is selected so the code area gets space   */
+.br-section--viewer {
+    flex: 3;
+    min-height: 350px;
+}
+
+    .br-section--viewer .br-section-body {
+        padding: 0;
+        overflow: hidden;
+    }
+
+/* ── CBR master-detail layout ─────────────────────────────────────────────── */
+.cbr-body {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    min-height: 320px;
+    overflow: hidden;
+}
+
+/* Left sidebar — list of rule names */
+.cbr-sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(43,63,107,0.1);
+    overflow-y: auto;
+    background: #fafbff;
+    padding: 0.4rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+    .cbr-sidebar::-webkit-scrollbar { width: 6px; }
+    .cbr-sidebar::-webkit-scrollbar-track  { background: transparent; }
+    .cbr-sidebar::-webkit-scrollbar-thumb  { background: #ced4da; border-radius: 3px; }
+
+.cbr-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    padding: 0.5rem 0.85rem 0.45rem;
+    cursor: pointer;
+    color: #2d3748;
+    transition: background 0.13s, border-color 0.13s;
+}
+
+    .cbr-item:hover {
+        background: rgba(74,144,217,0.07);
+        border-left-color: #a0bfe0;
+    }
+
+    .cbr-item--active {
+        background: linear-gradient(135deg, rgba(58,123,213,0.1), rgba(58,123,213,0.05));
+        border-left-color: #3a7bd5;
+    }
+
+.cbr-item-name {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: #1a2d4f;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.cbr-item--active .cbr-item-name {
+    color: #1a4f9c;
+}
+
+.cbr-item-version {
+    font-size: 0.68rem;
+    color: #3a7bd5;
+    font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.cbr-item-profiles {
+    font-size: 0.68rem;
+    color: #868e96;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Right pane — code viewer (always dark-themed) */
+.cbr-viewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    background: #0d1117;
+}
+
+.cbr-viewer-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    flex-shrink: 0;
+}
+
+.cbr-viewer-name {
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e6edf3;
+}
+
+.cbr-viewer-version {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #57a6ff;
+    background: rgba(87,166,255,0.1);
+    border: 1px solid rgba(87,166,255,0.2);
+    border-radius: 3px;
+    padding: 0.08rem 0.45rem;
+    font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.cbr-viewer-desc {
+    font-size: 0.78rem;
+    color: #8b949e;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cbr-viewer-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #484f58;
+    font-size: 0.9rem;
+    font-style: italic;
+    user-select: none;
+}
+
+.cbr-code-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+    .cbr-code-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+    .cbr-code-wrap::-webkit-scrollbar-track  { background: #161b22; }
+    .cbr-code-wrap::-webkit-scrollbar-thumb  { background: #30363d; border-radius: 4px; }
+    .cbr-code-wrap::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+.cbr-editor {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    color: #e6edf3;
+    font-family: "Cascadia Code", "Consolas", "Monaco", monospace;
+    font-size: 0.8rem;
+    line-height: 1.65;
+    border: none;
+    outline: none;
+    resize: none;
+    tab-size: 2;
+    padding: 1rem 1.25rem;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+    .cbr-editor::-webkit-scrollbar { width: 8px; height: 8px; }
+    .cbr-editor::-webkit-scrollbar-track  { background: #161b22; }
+    .cbr-editor::-webkit-scrollbar-thumb  { background: #30363d; border-radius: 4px; }
+    .cbr-editor::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+.cbr-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #161b22;
+    border-top: 1px solid #30363d;
+    flex-shrink: 0;
+}
+
+.cbr-btn-save {
+    padding: 0.3rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #238636, #2ea043);
+    color: #fff;
+    transition: opacity 0.15s;
+}
+
+    .cbr-btn-save:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    .cbr-btn-save:not(:disabled):hover {
+        opacity: 0.85;
+    }
+
+.cbr-btn-cancel {
+    padding: 0.3rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: #c9d1d9;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+    .cbr-btn-cancel:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .cbr-btn-cancel:not(:disabled):hover {
+        background: #21262d;
+    }
+
+.cbr-btn-analyze {
+    padding: 0.3rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #388bfd;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    color: #58a6ff;
+    transition: background 0.15s, opacity 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+
+    .cbr-btn-analyze:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    .cbr-btn-analyze:not(:disabled):hover {
+        background: #1f2d45;
+    }
+
+/* Spinner for Analyze button */
+@keyframes cbr-spin {
+    to { transform: rotate(360deg); }
+}
+
+.cbr-analyze-spinner {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 2px solid #58a6ff44;
+    border-top-color: #58a6ff;
+    border-radius: 50%;
+    animation: cbr-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+    .cbr-analyze-spinner--lg {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-width: 3px;
+    }
+
+/* AI Analysis result panel */
+.cbr-analysis-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background: #0d1117;
+    border-top: 2px solid #388bfd44;
+}
+
+.cbr-analysis-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 1rem;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    flex-shrink: 0;
+}
+
+.cbr-analysis-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #58a6ff;
+}
+
+.cbr-analysis-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.cbr-btn-accept {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #238636, #2ea043);
+    color: #fff;
+    transition: opacity 0.15s;
+}
+
+    .cbr-btn-accept:hover {
+        opacity: 0.85;
+    }
+
+.cbr-btn-dismiss {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid #30363d;
+    border-radius: 5px;
+    cursor: pointer;
+    background: transparent;
+    color: #c9d1d9;
+    transition: background 0.15s;
+}
+
+    .cbr-btn-dismiss:hover {
+        background: #21262d;
+    }
+
+.cbr-analysis-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 1.25rem;
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.cbr-analysis-error {
+    padding: 1rem 1.25rem;
+    color: #f85149;
+    font-size: 0.85rem;
+}
+
+.cbr-analysis-result {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    background: transparent;
+    color: #e6edf3;
+    font-family: "Cascadia Code", "Consolas", "Monaco", monospace;
+    font-size: 0.8rem;
+    line-height: 1.65;
+    border: none;
+    outline: none;
+    resize: none;
+    tab-size: 2;
+    padding: 1rem 1.25rem;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+    .cbr-analysis-result::-webkit-scrollbar { width: 8px; height: 8px; }
+    .cbr-analysis-result::-webkit-scrollbar-track  { background: #161b22; }
+    .cbr-analysis-result::-webkit-scrollbar-thumb  { background: #30363d; border-radius: 4px; }
+    .cbr-analysis-result::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
 .br-section-body {
     flex: 1;
     padding: 1rem;
