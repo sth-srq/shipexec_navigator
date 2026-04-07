@@ -1485,6 +1485,63 @@ public sealed class ShipExecService(
     public Task<bool> CompanyHasStoredTemplatesAsync(Guid companyId)
         => templateManager.HasTemplatesAsync(companyId);
 
+    public Task<List<CbrInfo>> GetCompanyClientBusinessRulesAsync(Guid companyId, string jwtJson, string adminUrl)
+    {
+        var tempManager = new ShipExecNavigator.BusinessLogic.AppManager(jwtJson, adminUrl);
+        return Task.Run(() =>
+            tempManager.GetClientBusinessRulesForCompany(companyId)
+                       .Select(r => new CbrInfo
+                       {
+                           Id          = r.Id,
+                           Name        = r.Name        ?? string.Empty,
+                           Description = r.Description,
+                           Script      = r.Script,
+                           Version     = r.Version,
+                       })
+                       .ToList()
+        );
+    }
+
+    public async Task<List<CbrSaveResult>> SaveCbrScriptsAsync(
+        string folderPath,
+        IEnumerable<(string CompanyName, List<CbrInfo> Rules)> entries)
+    {
+        var results = new List<CbrSaveResult>();
+        Directory.CreateDirectory(folderPath);
+
+        foreach (var (companyName, rules) in entries)
+        {
+            foreach (var rule in rules)
+            {
+                var baseName = SanitizeFileName($"{companyName}_{rule.Name}_{rule.Id}");
+                var fileName = baseName + ".cs";
+                var filePath = Path.Combine(folderPath, fileName);
+
+                var result = new CbrSaveResult
+                {
+                    FileName    = fileName,
+                    CompanyName = companyName,
+                    RuleName    = rule.Name,
+                };
+
+                try
+                {
+                    await File.WriteAllTextAsync(filePath, rule.Script ?? string.Empty);
+                    result.Success = true;
+                }
+                catch (Exception ex)
+                {
+                    result.Success = false;
+                    result.Error   = ex.Message;
+                }
+
+                results.Add(result);
+            }
+        }
+
+        return results;
+    }
+
     public async Task<List<TemplateSaveResult>> SaveTemplatesToFolderAsync(string folderPath)
     {
         var templates = (await templateManager.GetAllAsync()).ToList();

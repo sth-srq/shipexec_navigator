@@ -845,6 +845,48 @@ namespace ShipExecNavigator.BusinessLogic
             }
         }
 
+        public List<ClientBusinessRule> GetClientBusinessRulesForCompany(Guid companyId)
+        {
+            // Set company context so GetProfiles() targets the correct company.
+            SetCompany(companyId, string.Empty);
+
+            // Collect every CBR ID that is actually assigned to a profile.
+            var profileCbrIds = GetProfiles()
+                .Select(p => p.ClientBusinessRuleId)
+                .Where(id => id != 0)
+                .ToHashSet();
+
+            var accessToken = GetAccessToken();
+            var request = new GetClientBusinessRulesRequest
+            {
+                CompanyId = companyId,
+                SearchCriteria = new SearchCriteria
+                {
+                    WhereClauses = new List<WhereClause>(),
+                    OrderByClauses = new List<OrderByClause>()
+                }
+            };
+
+            //System.Diagnostics.Debugger.Break(); // breakpoint before HTTP call to GetClientBusinessRules
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "GetClientBusinessRules"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+
+                string content = httpResponse.Content.ReadAsStringAsync().Result;
+                var response = JsonHelper.Deserialize<GetClientBusinessRulesResponse>(content);
+                var allRules = response?.ClientBusinessRules ?? new List<ClientBusinessRule>();
+
+                return allRules.Where(r => profileCbrIds.Contains(r.Id)).ToList();
+            }
+        }
+
         public string GetApplicationLogsJson(DateTime startDate, DateTime endDate)
         {
             var accessToken = GetAccessToken();

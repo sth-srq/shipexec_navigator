@@ -68,4 +68,8 @@ public interface IShipExecService
     Task StoreCompanyTemplatesAsync(Guid companyId, List<TemplateInfo> templates, string endpointUrl, string companyName);
     Task<bool> CompanyHasStoredTemplatesAsync(Guid companyId);
     Task<List<TemplateSaveResult>> SaveTemplatesToFolderAsync(string folderPath);
+
+    // ── Client Business Rules ────────────────────────────────────────────────
+    Task<List<CbrInfo>> GetCompanyClientBusinessRulesAsync(Guid companyId, string jwtJson, string adminUrl);
+    Task<List<CbrSaveResult>> SaveCbrScriptsAsync(string folderPath, IEnumerable<(string CompanyName, List<CbrInfo> Rules)> entries);
 }

@@ -22,6 +22,9 @@
             <button class="debug-btn debug-btn--green" @onclick="() => _showGet = true">
                 &#x1F4CB; Get Templates
             </button>
+            <button class="debug-btn debug-btn--blue" @onclick="() => _showGetCbr = true">
+                &#x1F4BB; Get Client Business Rules
+            </button>
             <button class="debug-btn debug-btn--blue" @onclick="() => _showSave = true">
                 &#x1F4BE; Save Templates
             </button>
@@ -30,10 +33,12 @@
 
 </div>
 
-<GetTemplatesDialog  IsVisible="_showGet"  OnClose="() => _showGet  = false" />
-<SaveTemplatesDialog IsVisible="_showSave" OnClose="() => _showSave = false" />
+<GetTemplatesDialog          IsVisible="_showGet"    OnClose="() => _showGet    = false" />
+<GetClientBusinessRulesDialog IsVisible="_showGetCbr" OnClose="() => _showGetCbr = false" />
+<SaveTemplatesDialog          IsVisible="_showSave"   OnClose="() => _showSave   = false" />
 
 @code {
     private bool _showGet;
+    private bool _showGetCbr;
     private bool _showSave;
 }

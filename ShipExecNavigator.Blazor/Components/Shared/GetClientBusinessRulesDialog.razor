@@ -1,0 +1,306 @@
+@inject IShipExecService ShipExecService
+@inject IJSRuntime JS
+
+@if (IsVisible)
+{
+    <div class="gt-backdrop" @onclick="HandleClose">
+        <div class="gt-dlg" @onclick:stopPropagation>
+
+            <div class="dlg-header">
+                <div class="dlg-title">&#x1F4BB; Get Client Business Rules</div>
+                <button class="dlg-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            <div class="dlg-body">
+
+                @if (_phase == Phase.Credentials)
+                {
+                    <div class="dlg-field">
+                        <label class="dlg-label">Admin URL</label>
+                        <input class="dlg-input" @bind="_adminUrl" @bind:event="oninput" />
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">JWT JSON</label>
+                        <textarea class="dlg-input gt-jwt" @bind="_jwtJson"
+                                  @bind:event="oninput"
+                                  placeholder='{"access_token":"...","refresh_token":"...",...}'></textarea>
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">Output Folder</label>
+                        <input class="dlg-input" @bind="_saveFolderPath" @bind:event="oninput"
+                               placeholder="e.g. C:\ShipExecCBR" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="gt-error">&#9888; @_errorMessage</div>
+                    }
+
+                    <div class="dlg-footer">
+                        <button class="gt-btn-secondary" @onclick="HandleClose" disabled="@_isBusy">
+                            Cancel
+                        </button>
+                        <button class="gt-btn-primary" @onclick="FetchCompaniesAsync"
+                                disabled="@(string.IsNullOrWhiteSpace(_jwtJson) || _isBusy)">
+                            @if (_isBusy)
+                            {
+                                <span class="gt-spinner"></span>
+                            }
+                            Fetch
+                        </button>
+                    </div>
+                }
+                else if (_phase == Phase.CompanyList)
+                {
+                    <div class="gt-summary-row">
+                        <span class="gt-count-pill">
+                            @_companies.Count @(_companies.Count == 1 ? "company" : "companies")
+                        </span>
+                        @if (_cbrLoadPending > 0)
+                        {
+                            <span class="gt-loading-note">
+                                <span class="gt-spinner-dark"></span>
+                                Loading rules for @_cbrLoadPending @(_cbrLoadPending == 1 ? "company" : "companies")&hellip;
+                            </span>
+                        }
+                    </div>
+
+                    <div class="gt-companies">
+                        @foreach (var company in _companies)
+                        {
+                            var companyId      = company.Id;
+                            var isExpanded     = _expandedCompanies.Contains(companyId);
+                            var rulesLoaded    = _rulesByCompany.TryGetValue(companyId, out var rules);
+                            var hasError       = _errorsByCompany.TryGetValue(companyId, out var companyError);
+                            var isLoading      = !rulesLoaded && !hasError;
+
+                            <div class="gt-company">
+                                <button class="gt-company-header" @onclick="() => ToggleCompany(companyId)">
+                                    <span class="gt-chevron @(isExpanded ? "gt-chevron--open" : "")">&#x25B6;</span>
+                                    <span class="gt-company-name">@company.DisplayName</span>
+                                    @if (isLoading)
+                                    {
+                                        <span class="gt-spinner-sm"></span>
+                                    }
+                                    else if (hasError)
+                                    {
+                                        <span class="gt-error-badge" title="@companyError">!</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="gt-template-badge">@rules!.Count</span>
+                                        @if (_saveResultsByCompany.TryGetValue(companyId, out var headerSaves))
+                                        {
+                                            var ok  = headerSaves.Count(s => s.Success);
+                                            var bad = headerSaves.Count(s => !s.Success);
+                                            <span class="gt-skipped-badge"
+                                                  style="@(bad > 0 ? "color:#c53030;border-color:#fca5a5;" : "")"
+                                                  title="Saved to @_saveFolderPath">
+                                                &#x1F4BE; @ok saved@(bad > 0 ? $" / {bad} failed" : "")
+                                            </span>
+                                        }
+                                    }
+                                </button>
+
+                                @if (isExpanded)
+                                {
+                                    <div class="gt-company-body">
+                                        @if (hasError)
+                                        {
+                                            <div class="gt-template-error">&#9888; @companyError</div>
+                                        }
+                                        else if (isLoading)
+                                        {
+                                            <div class="gt-template-loading">Loading client business rules&hellip;</div>
+                                        }
+                                        else if (rules!.Count == 0)
+                                        {
+                                            <div class="gt-template-empty">No client business rules</div>
+                                        }
+                                        else
+                                        {
+                                            <ul class="gt-template-list">
+                                                @foreach (var r in rules!)
+                                                {
+                                                    <li class="gt-template-item">
+                                                        <span class="gt-template-name">@r.Name</span>
+                                                        @if (!string.IsNullOrWhiteSpace(r.Description))
+                                                        {
+                                                            <span class="gt-template-type">@r.Description</span>
+                                                        }
+                                                        @{
+                                                            var rSave = _saveResultsByCompany.TryGetValue(companyId, out var rSaves)
+                                                                ? rSaves.FirstOrDefault(s => s.RuleName == r.Name) : null;
+                                                        }
+                                                        @if (rSave is not null)
+                                                        {
+                                                            <span class="gt-save-indicator @(rSave.Success ? "gt-save-indicator--ok" : "gt-save-indicator--err")"
+                                                                  title="@(rSave.Success ? rSave.FileName : rSave.Error)">
+                                                                @(rSave.Success ? "✔" : "✘")
+                                                            </span>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="dlg-footer">
+                        <button class="gt-btn-secondary" @onclick='() => _phase = Phase.Credentials'>
+                            &#x2190; Back
+                        </button>
+                        <button class="gt-btn-secondary" @onclick="HandleClose">
+                            Close
+                        </button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private enum Phase { Credentials, CompanyList }
+    private Phase _phase = Phase.Credentials;
+
+    private string _adminUrl = "https://BLACKBOX23/ShipExecManagementStudioApi/api/AdministrationService/";
+    private string _jwtJson  = string.Empty;
+    private List<CompanyInfo> _companies = [];
+    private Dictionary<Guid, List<CbrInfo>> _rulesByCompany    = new();
+    private Dictionary<Guid, string>        _errorsByCompany   = new();
+    private HashSet<Guid>                   _expandedCompanies = new();
+    private int  _cbrLoadPending;
+    private bool _isBusy;
+    private string _errorMessage = string.Empty;
+
+    private string _saveFolderPath = @"C:\ShipExecCBR";
+    private Dictionary<Guid, List<CbrSaveResult>> _saveResultsByCompany = new();
+
+    private async Task FetchCompaniesAsync()
+    {
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            _companies = await ShipExecService.GetCompaniesAsync(_jwtJson, _adminUrl);
+            _expandedCompanies  = new HashSet<Guid>(_companies.Select(c => c.Id));
+            _rulesByCompany     = new();
+            _errorsByCompany    = new();
+            _cbrLoadPending     = _companies.Count;
+            _phase = Phase.CompanyList;
+
+            await JS.InvokeVoidAsync("console.log",
+                $"[GetCBR] {_companies.Count} company/companies fetched from {_adminUrl}:");
+            foreach (var c in _companies)
+                await JS.InvokeVoidAsync("console.log", $"  company › {c.DisplayName}  ({c.Id})");
+
+            foreach (var company in _companies)
+                _ = await LoadRulesForCompanyAsync(company.Id);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to fetch companies: {ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task<bool> LoadRulesForCompanyAsync(Guid companyId)
+    {
+        var companyName = _companies.FirstOrDefault(c => c.Id == companyId)?.DisplayName
+                          ?? companyId.ToString();
+        try
+        {
+            await JS.InvokeVoidAsync("console.log",
+                $"[GetCBR] ▶ Fetching client business rules for company: {companyName}");
+
+            var rules = await ShipExecService.GetCompanyClientBusinessRulesAsync(companyId, _jwtJson, _adminUrl);
+
+            await JS.InvokeVoidAsync("console.log",
+                $"[GetCBR] ✔ {rules.Count} rule(s) for {companyName}:");
+            foreach (var r in rules)
+                await JS.InvokeVoidAsync("console.log", $"  cbr › {r.Name}  (id={r.Id})");
+
+            List<CbrSaveResult> saves = [];
+            if (rules.Count > 0 && !string.IsNullOrWhiteSpace(_saveFolderPath))
+            {
+                try
+                {
+                    saves = await ShipExecService.SaveCbrScriptsAsync(
+                        _saveFolderPath.Trim(),
+                        [(companyName, rules)]);
+                    foreach (var s in saves)
+                        await JS.InvokeVoidAsync("console.log",
+                            $"[GetCBR] {(s.Success ? "✔" : "✘")} {s.FileName}{(s.Success ? "" : " — " + s.Error)}");
+                }
+                catch (Exception saveEx)
+                {
+                    saves = rules.Select(r => new CbrSaveResult
+                    {
+                        RuleName    = r.Name,
+                        CompanyName = companyName,
+                        FileName    = string.Empty,
+                        Success     = false,
+                        Error       = saveEx.Message,
+                    }).ToList();
+                }
+            }
+
+            await InvokeAsync(() =>
+            {
+                _rulesByCompany[companyId] = rules;
+                if (saves.Count > 0)
+                    _saveResultsByCompany[companyId] = saves;
+                _cbrLoadPending = Math.Max(0, _cbrLoadPending - 1);
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
+            {
+                _errorsByCompany[companyId] = ex.Message;
+                _cbrLoadPending = Math.Max(0, _cbrLoadPending - 1);
+                StateHasChanged();
+            });
+        }
+        return true;
+    }
+
+    private void ToggleCompany(Guid companyId)
+    {
+        if (!_expandedCompanies.Remove(companyId))
+            _expandedCompanies.Add(companyId);
+    }
+
+    private void HandleClose()
+    {
+        Reset();
+        OnClose.InvokeAsync();
+    }
+
+    private void Reset()
+    {
+        _phase             = Phase.Credentials;
+        _jwtJson           = string.Empty;
+        _companies         = [];
+        _rulesByCompany    = new();
+        _errorsByCompany   = new();
+        _expandedCompanies = new();
+        _cbrLoadPending    = 0;
+        _errorMessage         = string.Empty;
+        _saveResultsByCompany = new();
+    }
+}
