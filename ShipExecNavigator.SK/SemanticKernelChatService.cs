@@ -73,6 +73,8 @@ public sealed class SemanticKernelChatService : IAiChatService
         bool useRag = true,
         string? usersContext = null,
         string? userMetaContext = null,
+        string? cbrsContext = null,
+        string? logsContext = null,
         CancellationToken ct = default)
     {
         var endpoint   = _configuration["AzureOpenAI:Endpoint"]        ?? string.Empty;
@@ -86,11 +88,13 @@ public sealed class SemanticKernelChatService : IAiChatService
         var preview = userMessage.Length > 200 ? userMessage[..200] + "..." : userMessage;
         var hasXml  = !string.IsNullOrWhiteSpace(xmlContext);
         var hasUsers = !string.IsNullOrWhiteSpace(usersContext);
-        _logger.LogTrace(">> SendMessageAsync | Deployment={Deployment} UseRag={UseRag} HasXml={HasXml} HasUsers={HasUsers} History={History}",
-            deployment, useRag, hasXml, hasUsers, history.Count);
+        var hasCbrs  = !string.IsNullOrWhiteSpace(cbrsContext);
+        var hasLogs  = !string.IsNullOrWhiteSpace(logsContext);
+        _logger.LogTrace(">> SendMessageAsync | Deployment={Deployment} UseRag={UseRag} HasXml={HasXml} HasUsers={HasUsers} HasCbrs={HasCbrs} HasLogs={HasLogs} History={History}",
+            deployment, useRag, hasXml, hasUsers, hasCbrs, hasLogs, history.Count);
         _logger.LogInformation(
-            "AzureOpenAI request | Deployment={Deployment} UseRag={UseRag} HasXmlContext={HasXml} HasUsersContext={HasUsers} HistoryCount={History} MessagePreview={Preview}",
-            deployment, useRag, hasXml, hasUsers, history.Count, preview);
+            "AzureOpenAI request | Deployment={Deployment} UseRag={UseRag} HasXmlContext={HasXml} HasUsersContext={HasUsers} HasCbrsContext={HasCbrs} HasLogsContext={HasLogs} HistoryCount={History} MessagePreview={Preview}",
+            deployment, useRag, hasXml, hasUsers, hasCbrs, hasLogs, history.Count, preview);
 
         var systemPrompt =
             "You are a helpful assistant for ShipExec Navigator, a tool for managing ShipExec " +
@@ -102,7 +106,11 @@ public sealed class SemanticKernelChatService : IAiChatService
             "Omit the \"action\" key entirely when no action is needed. " +
             "Supported action types: javascript (payload: JS code string), " +
             "shipper-add (payload: object), shipper-delete (payload: array), shipper-edit (payload: array), " +
-            "user-find (payload: array), user-add (payload: object), user-edit (payload: array), user-delete (payload: array). " +
+            "user-find (payload: array), user-add (payload: object), user-edit (payload: array), user-delete (payload: array), " +
+            "adapter-registration-delete (payload: array of {id, name}), adapter-registration-edit (payload: array of {id, name, edits:{fieldName:value}}), " +
+            "client-delete (payload: array of {id, name}), client-edit (payload: array of {id, name, edits:{fieldName:value}}), " +
+            "cbr-edit (payload: {id, name, script}), " +
+            "log-find (payload: array of {id (int), source (\"App\" or \"Security\")})." +
             "The \"message\" value inside the JSON must use rich Markdown formatting: " +
             "use **bold** for key terms, `code` for field names and values, ``` fenced code blocks for multi-line code or XML, " +
             "# / ## / ### headings to organise long answers, - bullet lists for enumerations, " +
@@ -164,6 +172,22 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "Optional fields: `company`, `contact`, `address1`, `address2`, `address3`, `city`, `stateProvince`, `postalCode`, `country`, `phone`, `fax` (all strings). " +
                 "Do NOT use action type \"javascript\".";
 
+        if (hasLogs)
+            systemPrompt +=
+                "\n\n**Finding log entries:** When the user asks to FIND, SEARCH, FILTER, or SUMMARIZE log entries, " +
+                "call the `find_logs` function. Filter the results, then " +
+                "respond with action type \"log-find\" and payload as a JSON array of matching entries " +
+                "(each object must have `id` (int) and `source` (\"App\" or \"Security\") fields). " +
+                "Do NOT use action type \"javascript\".";
+
+        if (hasCbrs)
+            systemPrompt +=
+                "\n\n**Editing Client Business Rules (CBR):** When the user asks to UPDATE, EDIT, SET, or CHANGE " +
+                "the script of a client business rule, respond with action type \"cbr-edit\" and payload as a JSON object " +
+                "with `id` (int), `name` (string), and `script` (string — the full updated script text). " +
+                "Do NOT use action type \"javascript\".\n\n" +
+                "Available CBRs (id, name, description, version):\n" + cbrsContext;
+
         var kernel = Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(deployment, endpoint, apiKey)
             .Build();
@@ -173,6 +197,9 @@ public sealed class SemanticKernelChatService : IAiChatService
 
         if (hasUsers)
             kernel.ImportPluginFromObject(new UserXmlPlugin(usersContext!, userMetaContext ?? "{}"), "UserXml");
+
+        if (hasLogs)
+            kernel.ImportPluginFromObject(new LogsPlugin(logsContext!), "Logs");
 
         if (useRag)
             kernel.ImportPluginFromObject(
@@ -192,7 +219,7 @@ public sealed class SemanticKernelChatService : IAiChatService
         chatHistory.AddUserMessage(userMessage);
 
         var executionSettings = new AzureOpenAIPromptExecutionSettings();
-        if (hasXml || hasUsers || useRag)
+        if (hasXml || hasUsers || useRag || hasCbrs || hasLogs)
             executionSettings.FunctionChoiceBehavior = FunctionChoiceBehavior.Auto();
 
         try

@@ -1,22 +1,18 @@
 html, body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-    background:
-        radial-gradient(ellipse at 15% 80%, rgba(91,179,247,0.07) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 15%, rgba(124,58,237,0.05) 0%, transparent 50%),
-        linear-gradient(160deg, #eef2ff 0%, #f5f7fa 45%, #edf0ff 100%);
-    background-attachment: fixed;
-    color: #212529;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: #f4f6f9;
+    color: #1e293b;
     margin: 0;
     padding: 0;
 }
 
 a, .btn-link {
-    color: #3a7bd5;
+    color: #2563eb;
     text-decoration: none;
 }
 
 a:hover {
-    color: #1a56b0;
+    color: #1d4ed8;
     text-decoration: underline;
 }
 
@@ -29,7 +25,7 @@ h1:focus {
 }
 
 .btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.35);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
     outline: none;
 }
 
@@ -53,8 +49,8 @@ h1:focus {
 }
 
 ::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -62,27 +58,24 @@ h1:focus {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #b0bfcf, #8fa5bd);
+    background: #c1c9d4;
     border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #7e95ae, #5c7d9b);
+    background: #94a3b8;
 }
 
 /* ── Page tab bar (shared across all pages) ─────────────────────────────── */
 .page-tab-bar {
     display: flex;
     align-items: stretch;
-    height: 52px;
-    background: linear-gradient(135deg, #0f1b2d 0%, #1a2d4f 30%, #2b3f6b 100%);
-    border-radius: 12px;
+    height: 48px;
+    background: #1e293b;
+    border-radius: 10px;
     flex-shrink: 0;
     padding-right: 1rem;
-    box-shadow:
-        0 8px 32px rgba(15,23,42,0.45),
-        0 2px 4px rgba(0,0,0,0.2),
-        inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     position: relative;
     overflow: hidden;
 }
@@ -90,41 +83,40 @@ h1:focus {
 .page-tab-bar::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    bottom: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: rgba(255,255,255,0.06);
     pointer-events: none;
 }
 
 .page-tab {
     display: flex;
     align-items: center;
-    padding: 0 1.35rem;
-    color: rgba(255,255,255,0.5);
-    font-size: 0.875rem;
+    padding: 0 1.25rem;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.84rem;
     font-weight: 500;
     text-decoration: none;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
-    transition: color 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
     cursor: pointer;
-    letter-spacing: 0.015em;
+    letter-spacing: 0.01em;
 }
 
 .page-tab:hover {
-    color: rgba(255,255,255,0.92);
+    color: rgba(255,255,255,0.9);
     text-decoration: none;
-    background: rgba(255,255,255,0.09);
-    border-bottom-color: rgba(255,255,255,0.28);
+    background: rgba(255,255,255,0.07);
+    border-bottom-color: rgba(255,255,255,0.2);
 }
 
 .page-tab--active {
     color: #ffffff;
-    border-bottom-color: #5bb3f7;
-    background: linear-gradient(180deg, rgba(91,179,247,0.16) 0%, rgba(91,179,247,0.04) 100%);
+    border-bottom-color: #3b82f6;
+    background: rgba(59,130,246,0.1);
     cursor: default;
     font-weight: 600;
-    text-shadow: 0 0 14px rgba(91,179,247,0.45);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
@@ -132,10 +124,7 @@ h1:focus {
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
     html, body {
-        background:
-            radial-gradient(ellipse at 15% 80%, rgba(59,130,246,0.04) 0%, transparent 50%),
-            radial-gradient(ellipse at 85% 15%, rgba(139,92,246,0.03) 0%, transparent 50%),
-            linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #0f172a 100%);
+        background: #0f172a;
         color: #e2e8f0;
     }
 
@@ -148,7 +137,7 @@ h1:focus {
     }
 
     .btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
     }
 
     .blazor-error-boundary {
@@ -158,36 +147,32 @@ h1:focus {
     }
 
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #475569, #334155);
+        background: #475569;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, #64748b, #475569);
+        background: #64748b;
     }
 
     .page-tab-bar {
-        background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 100%);
-        box-shadow:
-            0 8px 32px rgba(0,0,0,0.6),
-            0 2px 4px rgba(0,0,0,0.3),
-            inset 0 1px 0 rgba(255,255,255,0.04);
+        background: #020617;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
 
     .page-tab {
-        color: rgba(148, 163, 184, 0.5);
+        color: rgba(148, 163, 184, 0.55);
     }
 
     .page-tab:hover {
         color: rgba(226, 232, 240, 0.9);
         background: rgba(255,255,255,0.05);
-        border-bottom-color: rgba(255,255,255,0.2);
+        border-bottom-color: rgba(255,255,255,0.15);
     }
 
     .page-tab--active {
         color: #e2e8f0;
         border-bottom-color: #60a5fa;
-        background: linear-gradient(180deg, rgba(96,165,250,0.12) 0%, rgba(96,165,250,0.03) 100%);
-        text-shadow: 0 0 14px rgba(96,165,250,0.4);
+        background: rgba(96,165,250,0.08);
     }
 
     #blazor-error-ui {

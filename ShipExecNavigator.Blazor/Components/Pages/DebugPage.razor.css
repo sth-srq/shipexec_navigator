@@ -10,11 +10,11 @@
 
 /* ── Content panel ── */
 .debug-panel {
-    background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
-    border: 1px solid rgba(43,63,107,0.1);
-    border-radius: 14px;
-    padding: 3rem 2.5rem 2.5rem;
-    box-shadow: 0 4px 28px rgba(43,63,107,0.1), 0 1px 4px rgba(0,0,0,0.04);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     position: relative;
     overflow: hidden;
 }
@@ -23,9 +23,9 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #1a2d4f, #3a7bd5, #5bb3f7, #38bdf8);
-    border-radius: 14px 14px 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e293b, #3b82f6);
+    border-radius: 10px 10px 0 0;
 }
 
 /* ── Hero ── */
@@ -35,19 +35,16 @@
 }
 
 .debug-hero-title {
-    font-family: "Cascadia Code", "Consolas", monospace;
-    font-size: 1.75rem;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.6rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #2b3f6b, #4a90d9);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #1e293b;
     margin: 0 0 0.5rem;
 }
 
 .debug-hero-sub {
-    font-size: 0.9rem;
-    color: #6c757d;
+    font-size: 0.88rem;
+    color: #64748b;
     margin: 0;
 }
 
@@ -64,33 +61,40 @@
     align-items: center;
     gap: 0.45rem;
     border: none;
-    border-radius: 8px;
-    padding: 0.7rem 1.75rem;
-    font-size: 0.9rem;
+    border-radius: 7px;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.15s;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
     .debug-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 22px rgba(0,0,0,0.26);
-        filter: brightness(1.08);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .debug-btn:active {
         transform: translateY(0);
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
 .debug-btn--green {
-    background: linear-gradient(135deg, #276749, #2ecc71);
+    background: #166534;
     color: #fff;
 }
 
+.debug-btn--green:hover {
+    background: #15803d;
+}
+
 .debug-btn--blue {
-    background: linear-gradient(135deg, #2b3f6b, #3d5490);
+    background: #1e293b;
     color: #fff;
+}
+
+.debug-btn--blue:hover {
+    background: #334155;
 }

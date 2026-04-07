@@ -23,7 +23,7 @@
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
         <span class="page-tab page-tab--active">&#x1F5FA; Navigator</span>
         <a class="page-tab" href="/tools">&#x2B07;&#xFE0F; Downloads</a>
-        <a class="page-tab" href="/debug">&#x1F41B; Debug</a>
+        <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
     </div>
 
     <div class="load-panel @(rootNode != null ? "load-panel--compact" : "")">
@@ -189,12 +189,12 @@
                                         <div class="sbr-card">
                                             <div class="sbr-card-header">
                                                 <span class="sbr-name">@sbr.Name</span>
-                                                @if (!string.IsNullOrEmpty(sbr.FileBase64))
-                                                {
-                                                    <button class="sbr-download-btn" @onclick="() => DownloadSbrAsync(sbr)" title="Download @(sbr.Name).dll">
-                                                        &#x2B07;&#xFE0F; Download .dll
-                                                    </button>
-                                                }
+                                                <button class="sbr-download-btn @(string.IsNullOrEmpty(sbr.FileBase64) ? "sbr-download-btn--unavailable" : "")"
+                                                        @onclick="() => DownloadSbrAsync(sbr)"
+                                                        disabled="@(string.IsNullOrEmpty(sbr.FileBase64))"
+                                                        title="@(string.IsNullOrEmpty(sbr.FileBase64) ? "No DLL available" : $"Download {sbr.Name}.dll")">
+                                                    &#x2B07; .dll
+                                                </button>
                                             </div>
                                             <div class="sbr-details">
                                                 @if (!string.IsNullOrWhiteSpace(sbr.Description))
@@ -297,7 +297,7 @@
                                             </button>
                                         }
                                     </div>
-                                    <div class="cbr-viewer">
+                                    <div class="cbr-viewer @(!_cbrDark ? "cbr-viewer--light" : "") @(_cbrMaximized ? "cbr-viewer--maximized" : "")">
                                         @if (_selectedCbr is null)
                                         {
                                             <div class="cbr-viewer-empty">&#x2190; Select a rule to view its script</div>
@@ -314,6 +314,18 @@
                                                 {
                                                     <span class="cbr-viewer-desc">@_selectedCbr.Description</span>
                                                 }
+                                                <div class="cbr-viewer-header-actions">
+                                                    <button class="cbr-btn-theme"
+                                                            title='@(_cbrDark ? "Switch to light theme" : "Switch to dark theme")'
+                                                            @onclick="() => _cbrDark = !_cbrDark">
+                                                        @(_cbrDark ? "\u2600" : "\uD83C\uDF19")
+                                                    </button>
+                                                    <button class="cbr-btn-maximize"
+                                                            title='@(_cbrMaximized ? "Restore" : "Maximize")'
+                                                            @onclick="() => _cbrMaximized = !_cbrMaximized">
+                                                        @(_cbrMaximized ? "\u22A1" : "\u26F6")
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div class="cbr-code-wrap">
                                                 <textarea class="cbr-editor" spellcheck="false"
@@ -453,6 +465,10 @@
                             }
                             &#x2B07; Export CSV
                         </button>
+                        @if (_foundLogIds is not null)
+                        {
+                            <button class="btn-clear-filter" @onclick="ClearLogFilter">&#x2715; Clear Filter</button>
+                        }
                     }
                 </div>
 
@@ -479,7 +495,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var log in _logs)
+                                @foreach (var log in (_foundLogIds is null ? _logs : _logs.Where(l => _foundLogIds.Contains((l.Id, "App"))).ToList()))
                                 {
                                     <tr>
                                         <td class="log-date">@log.LogDate?.ToString("MM/dd HH:mm:ss.fff")</td>
@@ -514,7 +530,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var log in _secLogs)
+                                @foreach (var log in (_foundLogIds is null ? _secLogs : _secLogs.Where(l => _foundLogIds.Contains((l.Id, "Security"))).ToList()))
                                 {
                                     <tr>
                                         <td class="log-date">@log.LogDate?.ToString("MM/dd HH:mm:ss.fff")</td>
@@ -553,7 +569,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var log in _combLogs)
+                                @foreach (var log in (_foundLogIds is null ? _combLogs : _combLogs.Where(l => _foundLogIds.Contains((l.Id, l.Source))).ToList()))
                                 {
                                     <tr class="comb-row comb-row--@(log.Source.ToLower())">
                                         <td class="log-date">@log.LogDate?.ToString("MM/dd HH:mm:ss.fff")</td>
@@ -586,7 +602,7 @@
     }
 
     @* ── Studio chat panel ── *@
-    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" UsersJson="@_usersJson" UsersMetaJson="@_usersMetaJson" OnFindUsers="HandleAiFindUsers" OnDeleteUsers="HandleAiUserDeletions" OnEditUsers="HandleAiUserEdits" OnAddUser="HandleAiUserAdd" />
+    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" UsersJson="@_usersJson" UsersMetaJson="@_usersMetaJson" OnFindUsers="HandleAiFindUsers" OnDeleteUsers="HandleAiUserDeletions" OnEditUsers="HandleAiUserEdits" OnAddUser="HandleAiUserAdd" OnDeleteAdapterRegistrations="HandleAiAdapterRegistrationDeletions" OnEditAdapterRegistrations="HandleAiAdapterRegistrationEdits" OnDeleteClients="HandleAiClientDeletions" OnEditClients="HandleAiClientEdits" OnEditCbr="HandleAiCbrEditAsync" CbrsJson="@_cbrsJson" LogsJson="@_logsJson" OnFindLogs="HandleAiFindLogs" />
 
 </div>
 
@@ -671,7 +687,7 @@
     private bool _showCompareProfilesDialog;
 
     // ── Chat panel state ──────────────────────────────────────────────────────
-    private bool _chatVisible = true;
+    private bool _chatVisible = false;
 
     // ── Users AI state ────────────────────────────────────────────────────────
     private string? _usersJson;
@@ -680,6 +696,13 @@
     private List<UserDeleteItem>? _pendingUserDeletes;
     private List<UserEditItem>? _pendingUserEdits;
     private UserAddItem? _addUserPrefill;
+
+    // ── CBR AI state ──────────────────────────────────────────────────────────
+    private string? _cbrsJson;
+
+    // ── Logs AI state ─────────────────────────────────────────────────────────
+    private string? _logsJson;
+    private HashSet<(int Id, string Source)>? _foundLogIds;
 
     private async Task HandleGoToProfileAsync(string profileName)
     {
@@ -743,6 +766,8 @@
     private bool          _cbrAnalyzing;
     private string?       _cbrAnalysisError;
     private bool          _cbrAnalysisVisible;
+    private bool          _cbrDark      = true;
+    private bool          _cbrMaximized = false;
 
     // ── Logs tab state
     private string _logMode = "application";
@@ -803,6 +828,9 @@
         {
             _cbrs      = await ShipExecService.GetClientBusinessRulesAsync();
             _cbrLoaded = true;
+            _cbrsJson  = System.Text.Json.JsonSerializer.Serialize(
+                _cbrs.Select(c => new { c.Id, c.Name, c.Description, c.Version }),
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = false });
         }
         catch (Exception ex)
         {
@@ -823,6 +851,7 @@
         _cbrAnalysisError   = null;
         _cbrAnalysisVisible = false;
         _cbrAnalyzing       = false;
+        _cbrMaximized       = false;
     }
 
     private void SaveCbrEdit()
@@ -902,6 +931,7 @@
         _logsSearching = true;
         _logsError = null;
         _logsSearched = false;
+        _foundLogIds = null;
         try
         {
             var endOfDay = _logEnd.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
@@ -949,6 +979,9 @@
                 .ToList();
 
             _logsSearched = true;
+            _logsJson = System.Text.Json.JsonSerializer.Serialize(
+                _combLogs,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = false, PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
         }
         catch (Exception ex)
         {
@@ -1134,6 +1167,9 @@
         _cbrAnalysisError   = null;
         _cbrAnalysisVisible = false;
         _cbrAnalyzing       = false;
+        _cbrsJson    = null;
+        _logsJson    = null;
+        _foundLogIds = null;
         try
         {
             rootNode = await ShipExecService.BuildCompanySkeletonAsync();
@@ -1402,6 +1438,242 @@
         InvokeAsync(StateHasChanged);
     }
 
+    // ── Generic entity field helper ───────────────────────────────────────────
+
+    private void UpdateEntityFieldInTree(XmlNodeViewModel entityNode, string fieldName, string? value)
+    {
+        var fieldNode = entityNode.Children.FirstOrDefault(c =>
+            c.NodeName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+        var trimmed = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        if (fieldNode is null)
+        {
+            if (trimmed is null) return;
+            XmlViewerService.AddChild(entityNode, fieldName,
+                Enumerable.Empty<(string, string)>(), trimmed,
+                Enumerable.Empty<(string, string)>());
+            return;
+        }
+        if (string.Equals(fieldNode.NodeValue, trimmed, StringComparison.Ordinal)) return;
+        XmlViewerService.UpdateNodeValue(fieldNode, value ?? string.Empty);
+        if (string.Equals(trimmed, fieldNode.OriginalNodeValue?.Trim(), StringComparison.Ordinal))
+            fieldNode.IsModified = false;
+    }
+
+    private static XmlNodeViewModel? FindEntityNode(
+        XmlNodeViewModel parentNode, string childElementName,
+        string? idValue, string? nameValue)
+    {
+        XmlNodeViewModel? node = null;
+        if (!string.IsNullOrEmpty(nameValue))
+        {
+            node = parentNode.Children.FirstOrDefault(c =>
+                c.NodeName.Equals(childElementName, StringComparison.OrdinalIgnoreCase) &&
+                c.Children.Any(gc =>
+                    gc.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(gc.NodeValue, nameValue, StringComparison.OrdinalIgnoreCase)));
+        }
+        if (node is null && !string.IsNullOrEmpty(idValue))
+        {
+            node = parentNode.Children.FirstOrDefault(c =>
+                c.NodeName.Equals(childElementName, StringComparison.OrdinalIgnoreCase) &&
+                c.Children.Any(gc =>
+                    gc.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(gc.NodeValue, idValue, StringComparison.OrdinalIgnoreCase)));
+        }
+        return node;
+    }
+
+    // ── Adapter Registration AI handlers ─────────────────────────────────────
+
+    private void HandleAiAdapterRegistrationDeletions(List<AdapterRegistrationDeleteItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+        var parentNode = rootNode.Children
+            .FirstOrDefault(c => c.NodeName.Equals("AdapterRegistrations", StringComparison.OrdinalIgnoreCase));
+        if (parentNode is null) return;
+
+        foreach (var item in items)
+        {
+            var entityNode = FindEntityNode(parentNode, "AdapterRegistration", item.Id, item.Name);
+            if (entityNode is null) continue;
+
+            var name = entityNode.Children
+                .FirstOrDefault(c => c.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                ?.NodeValue ?? item.Name;
+            var parentId     = parentNode.Id;
+            var snapshotIndex = parentNode.Children.IndexOf(entityNode);
+
+            _varianceEntries.Insert(0, new Variance
+            {
+                NodeId           = parentId,
+                PathDescription  = $"AdapterRegistrations \u203a {name}",
+                Description      = $"AI Delete: {name}",
+                ChangeType       = "Removed",
+                SnapshotNode     = entityNode,
+                SnapshotParentId = parentId,
+                SnapshotIndex    = snapshotIndex,
+            });
+
+            XmlViewerService.RemoveNode(entityNode);
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiAdapterRegistrationEdits(List<AdapterRegistrationEditItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+        var parentNode = rootNode.Children
+            .FirstOrDefault(c => c.NodeName.Equals("AdapterRegistrations", StringComparison.OrdinalIgnoreCase));
+        if (parentNode is null) return;
+
+        var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+        foreach (var item in items)
+        {
+            if (item.Edits is null || item.Edits.Count == 0) continue;
+
+            var entityNode = FindEntityNode(parentNode, "AdapterRegistration", item.Id, item.Name);
+            if (entityNode is null) continue;
+
+            var originalFields = entityNode.Children.ToDictionary(
+                c => c.NodeName, c => c.NodeValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (field, value) in item.Edits)
+                UpdateEntityFieldInTree(entityNode, field, value);
+
+            var modifiedFields = entityNode.Children.ToDictionary(
+                c => c.NodeName, c => c.NodeValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+            var name = originalFields.TryGetValue("Name", out var n) ? n : item.Name;
+            var changedFields = string.Join(", ", item.Edits.Select(e => $"{e.Key}=\"{e.Value}\""));
+
+            _varianceEntries.Insert(0, new Variance
+            {
+                NodeId          = Guid.Empty,
+                PathDescription = $"AdapterRegistrations \u203a {name}",
+                Description     = $"AI Edit: {changedFields}",
+                ChangeType      = "Modified",
+                OriginalXML     = System.Text.Json.JsonSerializer.Serialize(originalFields, opts),
+                NewXML          = System.Text.Json.JsonSerializer.Serialize(modifiedFields, opts),
+            });
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ── Client AI handlers ────────────────────────────────────────────────────
+
+    private void HandleAiClientDeletions(List<ClientDeleteItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+        var parentNode = rootNode.Children
+            .FirstOrDefault(c => c.NodeName.Equals("Clients", StringComparison.OrdinalIgnoreCase));
+        if (parentNode is null) return;
+
+        foreach (var item in items)
+        {
+            var entityNode = FindEntityNode(parentNode, "Client", item.Id, item.Name);
+            if (entityNode is null) continue;
+
+            var name = entityNode.Children
+                .FirstOrDefault(c => c.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                ?.NodeValue ?? item.Name;
+            var parentId     = parentNode.Id;
+            var snapshotIndex = parentNode.Children.IndexOf(entityNode);
+
+            _varianceEntries.Insert(0, new Variance
+            {
+                NodeId           = parentId,
+                PathDescription  = $"Clients \u203a {name}",
+                Description      = $"AI Delete: {name}",
+                ChangeType       = "Removed",
+                SnapshotNode     = entityNode,
+                SnapshotParentId = parentId,
+                SnapshotIndex    = snapshotIndex,
+            });
+
+            XmlViewerService.RemoveNode(entityNode);
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiClientEdits(List<ClientEditItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+        var parentNode = rootNode.Children
+            .FirstOrDefault(c => c.NodeName.Equals("Clients", StringComparison.OrdinalIgnoreCase));
+        if (parentNode is null) return;
+
+        var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+        foreach (var item in items)
+        {
+            if (item.Edits is null || item.Edits.Count == 0) continue;
+
+            var entityNode = FindEntityNode(parentNode, "Client", item.Id, item.Name);
+            if (entityNode is null) continue;
+
+            var originalFields = entityNode.Children.ToDictionary(
+                c => c.NodeName, c => c.NodeValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (field, value) in item.Edits)
+                UpdateEntityFieldInTree(entityNode, field, value);
+
+            var modifiedFields = entityNode.Children.ToDictionary(
+                c => c.NodeName, c => c.NodeValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+            var name = originalFields.TryGetValue("Name", out var n) ? n : item.Name;
+            var changedFields = string.Join(", ", item.Edits.Select(e => $"{e.Key}=\"{e.Value}\""));
+
+            _varianceEntries.Insert(0, new Variance
+            {
+                NodeId          = Guid.Empty,
+                PathDescription = $"Clients \u203a {name}",
+                Description     = $"AI Edit: {changedFields}",
+                ChangeType      = "Modified",
+                OriginalXML     = System.Text.Json.JsonSerializer.Serialize(originalFields, opts),
+                NewXML          = System.Text.Json.JsonSerializer.Serialize(modifiedFields, opts),
+            });
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ── Client Business Rule AI handler ───────────────────────────────────────
+
+    private async Task HandleAiCbrEditAsync(CbrEditItem item)
+    {
+        if (!_cbrLoaded)
+            await SwitchToBusinessRulesTab();
+
+        var cbr = _cbrs.FirstOrDefault(c => c.Id == item.Id);
+        cbr ??= _cbrs.FirstOrDefault(c =>
+            string.Equals(c.Name, item.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (cbr is null) return;
+
+        _activeMainTab = "business-rules";
+        _cbrExpanded   = true;
+
+        SelectCbr(cbr);
+        _cbrEditedScript = item.Script;
+        SaveCbrEdit();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void HandleUsersJson(string json)
     {
         _usersJson = json;
@@ -1469,6 +1741,19 @@
     {
         _addUserPrefill = null;
         InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiFindLogs(List<LogFindItem> items)
+    {
+        _foundLogIds = items.Select(i => (i.Id, i.Source)).ToHashSet();
+        if (_activeMainTab != "logs")
+            _activeMainTab = "logs";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ClearLogFilter()
+    {
+        _foundLogIds = null;
     }
 
     private void OpenAddShipperDialog()

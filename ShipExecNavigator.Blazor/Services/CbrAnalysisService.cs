@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ShipExecNavigator.Shared.Interfaces;
+using ShipExecNavigator.Shared.Models;
 
 namespace ShipExecNavigator.Services;
 
@@ -210,7 +211,7 @@ public sealed class CbrAnalysisService(
         return rewritten + "\n\n" + extractedBlock;
     }
 
-    // ── Shared Azure OpenAI call ─────────────────────────────────────────────
+    // ── Shared Azure OpenAI call (single-turn) ──────────────────────────────
     private async Task<string> CallOpenAiAsync(
         string deployment,
         string endpoint,
@@ -265,6 +266,138 @@ public sealed class CbrAnalysisService(
 
         logger.LogInformation(
             "CbrAnalysis API response | Deployment={Deployment} ContentLength={Length} DurationMs={DurationMs}",
+            deployment, content.Length, sw.ElapsedMilliseconds);
+
+        return content;
+    }
+
+    // ── Conversational CBR chat ──────────────────────────────────────────────
+    private const string _chatSystemBase =
+        """
+        You are an expert JavaScript engineer specializing in ShipExec Client Business Rules (CBR).
+
+        A CBR is a JavaScript constructor function containing hook methods such as PageLoaded,
+        PreShip, PostShip, PostRate, PreBuildShipment, PostBuildShipment, NewShipment, etc.
+        The CBRHelper library provides utility methods for field access, carrier/service filtering,
+        rate shop, address book helpers, logging, UI, and more.
+
+        The user is currently working on the following CBR script:
+        """;
+
+    private const string _chatSystemTail =
+        """
+
+        Answer questions, explain code, suggest improvements, and help debug issues.
+        When providing a full revised version of the script, place the complete rewritten script
+        in the "code" field. Only set "code" when you are providing a COMPLETE updated script —
+        never for partial snippets or code fragments.
+
+        Respond with EXACTLY ONE valid JSON object — no markdown, no code fences outside the JSON.
+        Use exactly this structure:
+        {
+          "message": "<your conversational reply>",
+          "code": "<complete revised CBR script — omit this key entirely when not providing a full rewrite>"
+        }
+        """;
+
+    public async Task<CbrChatResponse> ChatCbrAsync(
+        IReadOnlyList<ChatMessage> history,
+        string userMessage,
+        string cbrScript,
+        CancellationToken ct = default)
+    {
+        var endpoint   = configuration["AzureOpenAI:Endpoint"]      ?? string.Empty;
+        var apiKey     = configuration["AzureOpenAI:ApiKey"]         ?? string.Empty;
+        var deployment = configuration["AzureOpenAI:ChatDeployment"] ?? "gpt-4o-mini";
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return new CbrChatResponse
+            {
+                Message = "⚠️ Azure OpenAI is not configured. Set AzureOpenAI:ApiKey in appsettings.json."
+            };
+
+        var systemPrompt = _chatSystemBase
+            + "\n=== CURRENT CBR SCRIPT ===\n"
+            + cbrScript
+            + "\n=== END CBR SCRIPT ==="
+            + _chatSystemTail;
+
+        var messages = new List<object> { new { role = "system", content = systemPrompt } };
+        foreach (var h in history)
+            messages.Add(new { role = h.Role, content = h.Content });
+        messages.Add(new { role = "user", content = userMessage });
+
+        logger.LogInformation(
+            "CbrChat | Deployment={Deployment} HistoryCount={Count} UserMsgLen={Len}",
+            deployment, history.Count, userMessage.Length);
+
+        var raw = await CallOpenAiMessagesAsync(deployment, endpoint, apiKey, messages, ct);
+
+        if (raw.StartsWith("// ⚠️"))
+            return new CbrChatResponse { Message = raw };
+
+        try
+        {
+            using var doc  = JsonDocument.Parse(raw);
+            var root       = doc.RootElement;
+            var message    = root.TryGetProperty("message", out var mp) ? mp.GetString() ?? raw : raw;
+            var code       = root.TryGetProperty("code",    out var cp) ? cp.GetString()        : null;
+            if (string.IsNullOrWhiteSpace(code)) code = null;
+            return new CbrChatResponse { Message = message, Code = code };
+        }
+        catch (JsonException)
+        {
+            return new CbrChatResponse { Message = raw };
+        }
+    }
+
+    // ── Shared Azure OpenAI call (multi-turn) ────────────────────────────────
+    private async Task<string> CallOpenAiMessagesAsync(
+        string deployment,
+        string endpoint,
+        string apiKey,
+        IReadOnlyList<object> messages,
+        CancellationToken ct)
+    {
+        var body = JsonSerializer.Serialize(new
+        {
+            model    = deployment,
+            messages,
+            response_format = new { type = "json_object" }
+        }, _json);
+
+        var client = httpClientFactory.CreateClient();
+        client.BaseAddress = new Uri($"{endpoint.TrimEnd('/')}/openai/deployments/{deployment}/");
+        client.DefaultRequestHeaders.Add("api-key", apiKey);
+        client.Timeout = TimeSpan.FromMinutes(5);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        using var response = await client.PostAsync(
+            "chat/completions?api-version=2025-01-01-preview",
+            new StringContent(body, Encoding.UTF8, "application/json"),
+            ct);
+
+        var raw = await response.Content.ReadAsStringAsync(ct);
+        sw.Stop();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogError(
+                "CbrChat API error | StatusCode={StatusCode} DurationMs={DurationMs} Body={Body}",
+                (int)response.StatusCode, sw.ElapsedMilliseconds,
+                raw.Length > 500 ? raw[..500] : raw);
+            return $"// ⚠️ API error {(int)response.StatusCode} — check server logs for details.";
+        }
+
+        using var doc = JsonDocument.Parse(raw);
+        var content   = doc.RootElement
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content")
+            .GetString() ?? string.Empty;
+
+        logger.LogInformation(
+            "CbrChat API response | Deployment={Deployment} ContentLength={Length} DurationMs={DurationMs}",
             deployment, content.Length, sw.ElapsedMilliseconds);
 
         return content;

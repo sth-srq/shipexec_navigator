@@ -70,6 +70,7 @@
     <File Path="Downloads/CBRHelper.min.js" />
     <File Path="Downloads/shipexec-code_standards-se2.zip" />
     <File Path="Downloads/ShipExecLogViewer.html" />
+    <File Path="Downloads/ShipExecNavigator.CertificateInspector.exe" />
     <File Path="Downloads/ShipExecSupportClientChecker.html" />
   </Folder>
   <Folder Name="/RAGDocuments/" />

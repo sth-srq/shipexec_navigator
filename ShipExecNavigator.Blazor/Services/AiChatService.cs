@@ -13,7 +13,7 @@ public sealed class AiChatService(
 {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
-    public async Task<AiChatResponse> SendMessageAsync(IReadOnlyList<ChatMessage> history, string userMessage, string? xmlContext = null, bool useRag = true, string? usersContext = null, string? userMetaContext = null, CancellationToken ct = default)
+    public async Task<AiChatResponse> SendMessageAsync(IReadOnlyList<ChatMessage> history, string userMessage, string? xmlContext = null, bool useRag = true, string? usersContext = null, string? userMetaContext = null, string? cbrsContext = null, string? logsContext = null, CancellationToken ct = default)
     {
         var apiKey  = configuration["AiChat:ApiKey"]  ?? string.Empty;
         var baseUrl = configuration["AiChat:BaseUrl"]  ?? "https://api.openai.com/v1/";
@@ -40,7 +40,13 @@ public sealed class AiChatService(
             "Supported action types: javascript (payload: JS code string), " +
             "shipper-add (payload: ShipperAddItem object), shipper-delete (payload: array), " +
             "shipper-edit (payload: array), user-find (payload: array), " +
-            "user-add (payload: object), user-edit (payload: array), user-delete (payload: array).");
+            "user-add (payload: object), user-edit (payload: array), user-delete (payload: array), " +
+            "adapter-registration-delete (payload: array of {id, name}), " +
+            "adapter-registration-edit (payload: array of {id, name, edits: {fieldName: newValue}}), " +
+            "client-delete (payload: array of {id, name}), " +
+            "client-edit (payload: array of {id, name, edits: {fieldName: newValue}}), " +
+            "cbr-edit (payload: {id, name, script}), " +
+            "log-find (payload: array of {id (int), source (\"App\" or \"Security\")}).");
 
         if (!string.IsNullOrWhiteSpace(xmlContext))
         {
@@ -49,6 +55,60 @@ public sealed class AiChatService(
                 "When writing JavaScript to manipulate the Navigator tree view, " +
                 "use only the class names and IDs documented in the DOM reference below.");
             systemContent.Append(NavigatorDomCheatSheet.Content);
+        }
+
+        if (!string.IsNullOrWhiteSpace(usersContext))
+        {
+            systemContent.Append(
+                "\n\nThe user has a ShipExec users list loaded. " +
+                "Here are the available users (JSON):\n" + usersContext + "\n\n" +
+                "**Finding users:** When asked to FIND, SEARCH, or FILTER users, " +
+                "respond with action type \"user-find\" and payload as a JSON array of matching entries " +
+                "(each object must have `id`, `username`, and `email` string fields). " +
+                "Do NOT use action type \"javascript\".\n\n" +
+                "**Editing users:** When asked to UPDATE, EDIT, SET, or CHANGE ANY field on users, " +
+                "respond with action type \"user-edit\" and payload as a JSON array where each object has " +
+                "`id` (string), `username` (string), `email` (string), and `edits` (an object). " +
+                "Supported edit fields:\n" +
+                "  - Top-level: `Email`, `UserName`, `PhoneNumber`, `PasswordExpired` (bool), `LockoutEnabled` (bool), `EmailConfirmed` (bool), `PhoneNumberConfirmed` (bool)\n" +
+                "  - Address: `Address.Company`, `Address.Contact`, `Address.Address1`, `Address.Address2`, `Address.Address3`, `Address.City`, `Address.StateProvince`, `Address.PostalCode`, `Address.Country`, `Address.Phone`, `Address.Fax`, `Address.Email`, `Address.Sms`, `Address.Account`, `Address.TaxId`, `Address.Code`, `Address.Group`, `Address.PoBox` (bool), `Address.Residential` (bool)\n" +
+                "  - Config: `Config.ExportFileDelimiter` (Comma/Semicolon/Tab), `Config.ExportFileQualifier` (None/DoubleQuotes/SingleQuote), `Config.ExportFileGroupSeparator` (Comma/Period), `Config.ExportFileDecimalSeparator` (Comma/Period)\n" +
+                "  - Permissions: `Permissions.Add` (permission name), `Permissions.Remove` (permission name)\n" +
+                "  - Roles: `Roles.Add` (role name), `Roles.Remove` (role name)\n" +
+                "Do NOT use action type \"javascript\".\n\n" +
+                "**Deleting users:** When asked to DELETE or REMOVE users, " +
+                "respond with action type \"user-delete\" and payload as a JSON array of matching entries " +
+                "(each object must have `id`, `username`, and `email` string fields). " +
+                "Do NOT use action type \"javascript\".\n\n" +
+                "**Adding users:** When asked to ADD or CREATE a new user, " +
+                "respond with action type \"user-add\" and payload as a JSON object. " +
+                "Required field: `email` (string). " +
+                "Optional fields: `company`, `contact`, `address1`, `address2`, `address3`, `city`, `stateProvince`, `postalCode`, `country`, `phone`, `fax` (all strings). " +
+                "Do NOT use action type \"javascript\".");
+
+            if (!string.IsNullOrWhiteSpace(userMetaContext))
+            {
+                systemContent.Append(
+                    "\n\nAvailable permissions and roles for this company:\n" + userMetaContext);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(logsContext))
+        {
+            systemContent.Append(
+                "\n\n**Finding log entries:** When the user asks to FIND, SEARCH, FILTER, or SUMMARIZE log entries, " +
+                "respond with action type \"log-find\" and payload as a JSON array of matching entries " +
+                "(each object must have `id` (int) and `source` (\"App\" or \"Security\") fields). " +
+                "Do NOT use action type \"javascript\"." +
+                "\n\nLoaded log entries (JSON):\n" + logsContext);
+        }
+
+        if (!string.IsNullOrWhiteSpace(cbrsContext))
+        {
+            systemContent.Append(
+                " The user has the following Client Business Rules (CBRs) loaded: " +
+                cbrsContext +
+                " For the cbr-edit action, set the payload to {\"id\": <int id>, \"name\": \"<rule name>\", \"script\": \"<complete new JavaScript script>\"}.");
         }
 
         messages.Add(new { role = "system", content = systemContent.ToString() });

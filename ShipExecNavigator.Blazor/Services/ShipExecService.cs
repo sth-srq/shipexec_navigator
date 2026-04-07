@@ -1527,11 +1527,9 @@ public sealed class ShipExecService(
                     Version        = r.Rule.Version,
                     Author         = r.Rule.Author,
                     AuthorEmail    = r.Rule.AuthorEmail,
-                    FileBase64     = !string.IsNullOrEmpty(r.Rule.File)
-                                        ? r.Rule.File
-                                        : r.Rule.FileBytes is { Length: > 0 }
-                                            ? Convert.ToBase64String(r.Rule.FileBytes)
-                                            : null,
+                    FileBase64     = r.Rule.FileBytes is { Length: > 0 }
+                                        ? Convert.ToBase64String(r.Rule.FileBytes)
+                                        : null,
                     UsedByProfiles = r.ProfileNames,
                 }).ToList();
             }

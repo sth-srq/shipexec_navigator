@@ -90,6 +90,14 @@
     [Parameter] public EventCallback<List<UserDeleteItem>> OnDeleteUsers { get; set; }
     [Parameter] public EventCallback<List<UserEditItem>> OnEditUsers { get; set; }
     [Parameter] public EventCallback<UserAddItem> OnAddUser { get; set; }
+    [Parameter] public EventCallback<List<AdapterRegistrationDeleteItem>> OnDeleteAdapterRegistrations { get; set; }
+    [Parameter] public EventCallback<List<AdapterRegistrationEditItem>> OnEditAdapterRegistrations { get; set; }
+    [Parameter] public EventCallback<List<ClientDeleteItem>> OnDeleteClients { get; set; }
+    [Parameter] public EventCallback<List<ClientEditItem>> OnEditClients { get; set; }
+    [Parameter] public EventCallback<CbrEditItem> OnEditCbr { get; set; }
+    [Parameter] public string? CbrsJson { get; set; }
+    [Parameter] public string? LogsJson { get; set; }
+    [Parameter] public EventCallback<List<LogFindItem>> OnFindLogs { get; set; }
 
     private readonly List<ChatMessage> _messages = [];
     private readonly List<string> _inputHistory = [];
@@ -175,7 +183,7 @@
             if (XmlRoot is not null)
                 xmlContext = await XmlViewerService.SerializeAsync(XmlRoot);
 
-            var response = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag, usersContext: UsersJson, userMetaContext: UsersMetaJson);
+            var response = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag, usersContext: UsersJson, userMetaContext: UsersMetaJson, cbrsContext: CbrsJson, logsContext: LogsJson);
             _messages.Add(new ChatMessage("assistant", response.Message));
             await TryExecuteActionAsync(response.Action);
         }
@@ -302,6 +310,30 @@
                 case "user-delete":
                     var deleteUsers = action.Payload.Deserialize<List<UserDeleteItem>>(_jsonOptions);
                     if (deleteUsers is { Count: > 0 }) await OnDeleteUsers.InvokeAsync(deleteUsers);
+                    break;
+                case "adapter-registration-delete":
+                    var deleteAdapters = action.Payload.Deserialize<List<AdapterRegistrationDeleteItem>>(_jsonOptions);
+                    if (deleteAdapters is { Count: > 0 }) await OnDeleteAdapterRegistrations.InvokeAsync(deleteAdapters);
+                    break;
+                case "adapter-registration-edit":
+                    var editAdapters = action.Payload.Deserialize<List<AdapterRegistrationEditItem>>(_jsonOptions);
+                    if (editAdapters is { Count: > 0 }) await OnEditAdapterRegistrations.InvokeAsync(editAdapters);
+                    break;
+                case "client-delete":
+                    var deleteClients = action.Payload.Deserialize<List<ClientDeleteItem>>(_jsonOptions);
+                    if (deleteClients is { Count: > 0 }) await OnDeleteClients.InvokeAsync(deleteClients);
+                    break;
+                case "client-edit":
+                    var editClients = action.Payload.Deserialize<List<ClientEditItem>>(_jsonOptions);
+                    if (editClients is { Count: > 0 }) await OnEditClients.InvokeAsync(editClients);
+                    break;
+                case "cbr-edit":
+                    var editCbr = action.Payload.Deserialize<CbrEditItem>(_jsonOptions);
+                    if (editCbr is not null) await OnEditCbr.InvokeAsync(editCbr);
+                    break;
+                case "log-find":
+                    var findLogs = action.Payload.Deserialize<List<LogFindItem>>(_jsonOptions);
+                    if (findLogs is { Count: > 0 }) await OnFindLogs.InvokeAsync(findLogs);
                     break;
                 case "javascript":
                     var jsCode = action.Payload.GetString();
