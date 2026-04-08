@@ -109,6 +109,8 @@ public sealed class SemanticKernelChatService : IAiChatService
             "user-find (payload: array), user-add (payload: object), user-edit (payload: array), user-delete (payload: array), " +
             "adapter-registration-delete (payload: array of {id, name}), adapter-registration-edit (payload: array of {id, name, edits:{fieldName:value}}), " +
             "client-delete (payload: array of {id, name}), client-edit (payload: array of {id, name, edits:{fieldName:value}}), " +
+            "entity-delete (payload: array of {entityType, id, name}), " +
+            "entity-edit (payload: array of {entityType, id, name, edits:{fieldName:value}}), " +
             "cbr-edit (payload: {id, name, script}), " +
             "log-find (payload: array of {id (int), source (\"App\" or \"Security\")})." +
             "The \"message\" value inside the JSON must use rich Markdown formatting: " +
@@ -143,7 +145,25 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "`id` (string), `symbol` (string), `name` (string), and `edits` (an object mapping field names to new values). " +
                 "Valid field names: Name, Symbol, Code, Address1, Address2, Address3, City, StateProvince, PostalCode, " +
                 "Country, Company, Contact, Phone, Fax, Email, Sms, PoBox, Residential. " +
-                "Do NOT use action type \"javascript\" for editing.\n" +
+                "Do NOT use action type \"javascript\" for editing.\n\n" +
+                "**Generic entity operations:** For ANY other entity type on the Navigator screen " +
+                "(Profile, Site, CarrierRoute, ClientBusinessRule, DataConfigurationMapping, DocumentConfiguration, " +
+                "Machine, PrinterConfiguration, PrinterDefinition, ScaleConfiguration, Schedule, " +
+                "ServerBusinessRule, SourceConfiguration), use the EntityXml plugin functions:\n" +
+                "- To DELETE/REMOVE: call `delete_entities` with the entity type, then respond with " +
+                "action type \"entity-delete\" and payload as a JSON array where each object has " +
+                "`entityType` (string), `id` (string), and `name` (string).\n" +
+                "- To EDIT/UPDATE/SET/CHANGE: call `edit_entities` with the entity type, then respond with " +
+                "action type \"entity-edit\" and payload as a JSON array where each object has " +
+                "`entityType` (string), `id` (string), `name` (string), and `edits` (object mapping field names to new values).\n" +
+                "- To inspect/list: call `find_entities` or `list_entity_types`.\n" +
+                "Do NOT use action type \"javascript\" for entity deletion or editing.\n\n" +
+                "**Profile composition:** Profiles are composed of other entities. " +
+                "When a user asks whether something is IN a profile, USED BY a profile, or CONTAINED in a profile, " +
+                "look for BOTH child elements (nested entities) AND ID reference fields " +
+                "(e.g. `ClientBusinessRuleId` references an existing Client Business Rule, " +
+                "`ServerBusinessRuleId` references a Server Business Rule, etc.). " +
+                "Some of these referenced entities are defined at higher levels in the configuration hierarchy.\n" +
                 NavigatorDomCheatSheet.Content;
 
         if (hasUsers)
@@ -193,7 +213,10 @@ public sealed class SemanticKernelChatService : IAiChatService
             .Build();
 
         if (hasXml)
+        {
             kernel.ImportPluginFromObject(new ShipperXmlPlugin(xmlContext!), "ShipperXml");
+            kernel.ImportPluginFromObject(new EntityXmlPlugin(xmlContext!), "EntityXml");
+        }
 
         if (hasUsers)
             kernel.ImportPluginFromObject(new UserXmlPlugin(usersContext!, userMetaContext ?? "{}"), "UserXml");
@@ -249,7 +272,7 @@ public sealed class SemanticKernelChatService : IAiChatService
             _logger.LogError(ex,
                 "AzureOpenAI error | Deployment={Deployment} DurationMs={DurationMs}",
                 deployment, sw.ElapsedMilliseconds);
-            return new AiChatResponse { Message = "⚠️ Azure OpenAI error: check server logs for details." };
+            return new AiChatResponse { Message = "⚠️ Azure OpenAI error: check server logs for details." + " _ " + ex.Message + " _ " + ex.StackTrace};
         }
     }
 }

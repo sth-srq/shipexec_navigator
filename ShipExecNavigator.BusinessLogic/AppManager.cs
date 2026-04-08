@@ -940,6 +940,38 @@ namespace ShipExecNavigator.BusinessLogic
         }
 
         /// <summary>
+        /// Retrieves a single <see cref="ServerBusinessRule"/> by ID for the current company,
+        /// including its <see cref="ServerBusinessRule.FileBytes"/>.
+        /// </summary>
+        public ServerBusinessRule? GetServerBusinessRuleById(int id)
+        {
+            _logger.LogTrace(">> GetServerBusinessRuleById | Id={Id} CompanyId={CompanyId}", id, _companyId);
+
+            var accessToken = GetAccessToken();
+            var request = new GetServerBusinessRuleRequest
+            {
+                CompanyId = _companyId,
+                Id        = id
+            };
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "GetServerBusinessRule"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+
+                string content = httpResponse.Content.ReadAsStringAsync().Result;
+                var response = JsonHelper.Deserialize<GetServerBusinessRuleResponse>(content);
+                _logger.LogTrace("<< GetServerBusinessRuleById | Id={Id} HasFile={HasFile}", id, response?.ServerBusinessRule?.FileBytes?.Length > 0);
+                return response?.ServerBusinessRule;
+            }
+        }
+
+        /// <summary>
         /// Retrieves all <see cref="ClientBusinessRule"/> records for the current company
         /// and pairs each rule with the list of profile names that reference it via
         /// <see cref="Profile.ClientBusinessRuleId"/>.

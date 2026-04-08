@@ -16,8 +16,9 @@ public sealed class RagSearchPlugin(IVectorSearchService vectorSearch, ILogger<R
         CancellationToken cancellationToken = default)
     {
         logger.LogTrace(">> SearchDocumentsAsync | Query={Query}",
-            query.Length > 100 ? query[..100] : query);
-        var chunks = await vectorSearch.SearchAsync(query, topK: 100, cancellationToken);
+            query);
+            //query.Length > 100 ? query[..100] : query);
+        var chunks = await vectorSearch.SearchAsync(query, topK: 1000, cancellationToken);
         var result = chunks.Count == 0
             ? "No relevant documentation found for this query."
             : string.Join("\n---\n", chunks);

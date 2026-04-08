@@ -1,135 +1,22 @@
-@page "/tools"
+@page "/tools-page"
 @rendermode InteractiveServer
 @inject ICbrAnalysisService CbrAnalysisService
 @inject IJSRuntime JS
 
-<PageTitle>Downloads — Management Studio Pro</PageTitle>
+<PageTitle>Tools — ShipExec™ Management Studio</PageTitle>
 
 <div class="tools-page">
 
     <div class="page-tab-bar">
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
         <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
-        <span class="page-tab page-tab--active">&#x2B07;&#xFE0F; Downloads</span>
+        <a class="page-tab" href="/downloads">&#x2B07;&#xFE0F; Downloads</a>
+        <span class="page-tab page-tab--active">&#x1F527; Tools</span>
         <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
     </div>
 
     <div class="tools-panel">
 
-        <div class="tools-sub-tabs">
-            <button class="tools-sub-tab @(_activeTab == "downloads" ? "tools-sub-tab--active" : "")"
-                    @onclick='() => _activeTab = "downloads"'>
-                &#x2B07;&#xFE0F; Downloads
-            </button>
-            <button class="tools-sub-tab @(_activeTab == "tools" ? "tools-sub-tab--active" : "")"
-                    @onclick='() => _activeTab = "tools"'>
-                &#x1F527; Tools
-            </button>
-        </div>
-
-        @if (_activeTab == "downloads")
-        {
-        <div class="tools-hero">
-            <h1 class="tools-hero-title">Downloads</h1>
-            <p class="tools-hero-sub">Standalone utilities and templates for ShipExec support, diagnostics, and client customization.</p>
-        </div>
-
-        <div class="tools-grid">
-            <div class="tool-card">
-                <div class="tool-card-icon">&#x1F6E0;&#xFE0F;</div>
-                <div class="tool-card-body">
-                    <div class="tool-card-title">Support Client Checker</div>
-                    <div class="tool-card-desc">
-                        A self-contained browser tool for testing the ShipExec local hardware service.
-                        Supports printer label submission, scale reads, and system information requests over HTTP or HTTPS.
-                    </div>
-                    <a class="tool-download-btn" href="/downloads/ShipExecSupportClientChecker.html" download>
-                        &#x2B07;&#xFE0F; Download for Offline Use
-                    </a>
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <div class="tool-card-icon">&#x1F4CB;</div>
-                <div class="tool-card-body">
-                    <div class="tool-card-title">Log Viewer</div>
-                    <div class="tool-card-desc">
-                        A self-contained offline log viewer. Paste exported CSV log data to explore,
-                        sort, and filter Application, Security, or Combined log exports.
-                        Supports per-column filtering, global search, and re-export of visible rows.
-                    </div>
-                    <a class="tool-download-btn" href="/downloads/LogViewer.html" download>
-                        &#x2B07;&#xFE0F; Download for Offline Use
-                    </a>
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <div class="tool-card-icon">&#x1F4E6;</div>
-                <div class="tool-card-body">
-                    <div class="tool-card-title">SBR / CBR Template</div>
-                    <div class="tool-card-desc">
-                        The ShipExec SE2 code standards template used as the base for client
-                        customization. Contains SBR and CBR project scaffolding, naming conventions,
-                        and reference implementations for building custom ShipExec integrations.
-                    </div>
-                    <a class="tool-download-btn" href="/downloads/shipexec-code_standards-se2.zip" download>
-                        &#x2B07;&#xFE0F; Download Template
-                    </a>
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <div class="tool-card-icon">&#x1F9E9;</div>
-                <div class="tool-card-body">
-                    <div class="tool-card-title">CBR Helper Library</div>
-                    <div class="tool-card-desc">
-                        A single-file JavaScript utility library for ShipExec CBR development.
-                        Packages ~120 helper functions — Utilities, Logger, UI, API, Validation,
-                        Printing, LTL, Shipment, and more — into a single global
-                        <code>CBRHelper</code> object, ready to drop into any CBR page.
-                    </div>
-                    <a class="tool-download-btn" href="/downloads/CBRHelper.js" download>
-                        &#x2B07;&#xFE0F; Download CBRHelper.js
-                    </a>
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <div class="tool-card-icon">&#x1F6F3;&#xFE0F;</div>
-                <div class="tool-card-body">
-                    <div class="tool-card-title">ShipExec API Log Viewer</div>
-                    <div class="tool-card-desc">
-                        A self-contained offline viewer for ShipExec API log files.
-                        Paste raw log data or open a <code>.txt</code> file directly — no server required.
-                        Features log-level color coding, live filters, sortable columns,
-                        transaction grouping, full-entry detail view, and CSV export.
-                    </div>
-                    <a class="tool-download-btn" href="/downloads/ShipExecLogViewer.html" download>
-                        &#x2B07;&#xFE0F; Download Log Viewer
-                    </a>
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <div class="tool-card-icon">&#x1F50D;</div>
-                <div class="tool-card-body">
-                    <div class="tool-card-title">Certificate Inspector</div>
-                    <div class="tool-card-desc">
-                        A Windows desktop utility for inspecting TLS/SSL certificates on ShipExec servers.
-                        Connects directly to a host and port to retrieve and display certificate details —
-                        subject, issuer, expiry, chain, and SANs — without requiring a browser or MMC.
-                        Useful for diagnosing HTTPS connectivity and certificate trust issues in ShipExec environments.
-                    </div>
-                    <a class="tool-download-btn" href="/downloads/ShipExecNavigator.CertificateInspector.exe" download>
-                        &#x2B07;&#xFE0F; Download Certificate Inspector
-                    </a>
-                </div>
-            </div>
-        </div>
-        }
-        else
-        {
         @if (!_showCbrHelper)
         {
         <div class="tools-hero">
@@ -280,15 +167,13 @@
             </div>
         </div>
         }
-        }
 
     </div>
 
 </div>
 
 @code {
-    private string _activeTab    = "downloads";
-    private bool   _showCbrHelper;
+    private bool _showCbrHelper;
 
     private string  _cbrScript   = string.Empty;
     private bool    _cbrAnalyzing;

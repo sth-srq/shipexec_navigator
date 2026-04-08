@@ -75,6 +75,15 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
         };
     });
 
+    // ── Content-Security-Policy: block inline scripts and eval ──────────
+    app.Use(async (context, next) =>
+    {
+        var cspPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'sha256-dQxdeGZjFqPCswiIiPV57iSY1ejBiU7sWgV6E0c1fqw='; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;";
+
+        context.Response.Headers["Content-Security-Policy"] = cspPolicy;
+        await next();
+    });
+
     app.UseAntiforgery();
 
     app.MapStaticAssets();

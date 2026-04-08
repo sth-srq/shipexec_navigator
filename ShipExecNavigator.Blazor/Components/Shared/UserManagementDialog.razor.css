@@ -316,7 +316,7 @@
     .um-table thead th {
         text-align: left;
         padding: 0.45rem 0.75rem;
-        background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+        background: #337ab7;
         border-bottom: 2px solid rgba(43, 63, 107, 0.12);
         color: #495057;
         font-weight: 600;
@@ -325,7 +325,7 @@
     .um-table tbody td {
         padding: 0.45rem 0.75rem;
         border-bottom: 1px solid #dee2e6;
-        color: #212529;
+        color: #333;
     }
 
 /* ── User rows ──────────────────────────────────────────────────────────── */
@@ -516,7 +516,7 @@
     .um-summary-table tbody td {
         padding: 0.3rem 0.6rem;
         border-bottom: 1px solid #d0ddf5;
-        color: #212529;
+        color: #333;
         vertical-align: middle;
     }
 
@@ -543,7 +543,7 @@
     align-items: center;
     gap: 0.4rem;
     font-size: 0.8rem;
-    color: #212529;
+    color: #333;
     cursor: pointer;
     user-select: none;
 }
@@ -673,7 +673,7 @@
     border: 1px solid #dee2e6;
     border-radius: 3px;
     background-color: #ffffff;
-    color: #212529;
+    color: #333;
     width: 100%;
     transition: border-color 0.12s;
 }
@@ -690,7 +690,7 @@
     border: 1px solid #dee2e6;
     border-radius: 3px;
     background-color: #ffffff;
-    color: #212529;
+    color: #333;
     width: 100%;
 }
 

@@ -15,14 +15,15 @@
 @inject IAiChatService AiChatService
 @inject ICbrAnalysisService CbrAnalysisService
 
-<PageTitle>Management Studio Pro</PageTitle>
+<PageTitle>ShipExec™ Management Studio</PageTitle>
 
 <div class="viewer-page">
 
     <div class="page-tab-bar">
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
         <span class="page-tab page-tab--active">&#x1F5FA; Navigator</span>
-        <a class="page-tab" href="/tools">&#x2B07;&#xFE0F; Downloads</a>
+        <a class="page-tab" href="/downloads">&#x2B07;&#xFE0F; Downloads</a>
+        <a class="page-tab" href="/tools-page">&#x1F527; Tools</a>
         <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
     </div>
 
@@ -36,13 +37,41 @@
         }
 
         <div class="input-row @(rootNode == null ? "input-row--centered" : "")">
-            <button class="btn-load" @onclick="OpenConnectDialog" disabled="@isLoading">
-                @if (isLoading)
+            @if (rootNode != null)
+            {
+                <span class="connected-label">&#x2705; Connected to <strong>@loadedFileName</strong></span>
+                @if (_managementStudioUrl is not null)
                 {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <a class="btn-ms-link" href="@($"{_managementStudioUrl}{_currentCompanyId}")" target="_blank" rel="noopener"
+                       title="Open in ShipExec Management Studio">&#x1F517; Management Studio</a>
                 }
-                <span>&#x1F517; Connect to ShipExec</span>
-            </button>
+                <button class="btn-action" @onclick="RefreshCompanyAsync" disabled="@isLoading" title="Refresh the company data from the server">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    &#x1F504; Refresh
+                </button>
+                @if (_cachedCompanies.Count > 1)
+                {
+                    <select class="company-switcher" value="@_currentCompanyId" @onchange="SwitchCompanyAsync">
+                        @foreach (var c in _cachedCompanies)
+                        {
+                            <option value="@c.Id">@c.DisplayName</option>
+                        }
+                    </select>
+                }
+            }
+            else
+            {
+                <button class="btn-load" @onclick="OpenConnectDialog" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    <span>&#x1F517; Connect to ShipExec</span>
+                </button>
+            }
         </div>
 
         @if (!string.IsNullOrEmpty(errorMessage))
@@ -76,6 +105,7 @@
                            OnEntryClicked="NavigateToNode"
                            OnEntryUndo="UndoVariance"
                            OnLoadHistory="LoadHistoryAsync"
+                           OnClearAndRevert="ClearAndRevertAsync"
                            HistoryError="@_historyError"
                            CanLoadHistory="@_canLoadHistory" />
 
@@ -88,6 +118,17 @@
                     @if (!string.IsNullOrEmpty(loadedFileName))
                     {
                         <span class="company-name">@loadedFileName</span>
+                    }
+                    @{ var licNode = rootNode.Children.FirstOrDefault(c => c.NodeName.Equals("LicenseId", StringComparison.OrdinalIgnoreCase)); }
+                    @if (licNode is not null && !string.IsNullOrWhiteSpace(licNode.NodeValue))
+                    {
+                        <span class="stat-pill" title="LicenseId">&#x1F511; @licNode.NodeValue</span>
+                    }
+                    @{ var profNode = rootNode.Children.FirstOrDefault(c => c.NodeName.Equals("ProfileId", StringComparison.OrdinalIgnoreCase)); }
+                    @if (profNode is not null && !string.IsNullOrWhiteSpace(profNode.NodeValue))
+                    {
+                        var profName = XmlRefLookupService.GetRefOptions("ProfileId")?.FirstOrDefault(o => o.Value == profNode.NodeValue)?.Display;
+                        <span class="stat-pill" title="ProfileId: @profNode.NodeValue">&#x1F4CB; @(profName ?? profNode.NodeValue)</span>
                     }
                     <span class="stat-pill">@nodeCount nodes</span>
                     <span class="stat-pill">@rootNode.Children.Count sections</span>
@@ -122,7 +163,6 @@
                         <button class="btn-depth @(activeDepth == 4 ? "active" : "")" @onclick="() => ExpandToDepth(4)">4</button>
                     </div>
                     <button class="btn-close-tree" @onclick="CloseTree" title="Close tree">&#x2715;</button>
-                    <button class="btn-action btn-action--chat @(_chatVisible ? "btn-action--chat-active" : "")" @onclick="() => _chatVisible = !_chatVisible" title="@(_chatVisible ? "Hide AI chat" : "Show AI chat")">&#x1F916; Chat</button>
                 </div>
             </div>
 
@@ -189,11 +229,18 @@
                                         <div class="sbr-card">
                                             <div class="sbr-card-header">
                                                 <span class="sbr-name">@sbr.Name</span>
-                                                <button class="sbr-download-btn @(string.IsNullOrEmpty(sbr.FileBase64) ? "sbr-download-btn--unavailable" : "")"
+                                                <button class="sbr-download-btn @(_sbrDownloadingIds.Contains(sbr.Id) ? "sbr-download-btn--busy" : "")"
                                                         @onclick="() => DownloadSbrAsync(sbr)"
-                                                        disabled="@(string.IsNullOrEmpty(sbr.FileBase64))"
-                                                        title="@(string.IsNullOrEmpty(sbr.FileBase64) ? "No DLL available" : $"Download {sbr.Name}.dll")">
-                                                    &#x2B07; .dll
+                                                        disabled="@(_sbrDownloadingIds.Contains(sbr.Id))"
+                                                        title="Download @(sbr.Name).dll">
+                                                    @if (_sbrDownloadingIds.Contains(sbr.Id))
+                                                    {
+                                                        <span class="gt-spinner-sm"></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>&#x2B07; @(sbr.Name).dll</span>
+                                                    }
                                                 </button>
                                             </div>
                                             <div class="sbr-details">
@@ -215,7 +262,7 @@
                                                 {
                                                     <div class="sbr-detail-row">
                                                         <span class="sbr-detail-label">Author</span>
-                                                        <span class="sbr-detail-value">@sbr.Author@(!string.IsNullOrWhiteSpace(sbr.AuthorEmail) ? $" &lt;{sbr.AuthorEmail}&gt;" : "")</span>
+                                                        <span class="sbr-detail-value">@sbr.Author@(!string.IsNullOrWhiteSpace(sbr.AuthorEmail) ? $" <{sbr.AuthorEmail}>" : "")</span>
                                                     </div>
                                                 }
                                                 <div class="sbr-detail-row">
@@ -279,6 +326,37 @@
                             }
                             else
                             {
+                                @if (_selectedCbr is not null)
+                                {
+                                    <div class="cbr-top-bar @(!_cbrDark ? "cbr-top-bar--light" : "")">
+                                        <span class="cbr-viewer-name">@_selectedCbr.Name</span>
+                                        @if (!string.IsNullOrWhiteSpace(_selectedCbr.Version))
+                                        {
+                                            <span class="cbr-viewer-version">@_selectedCbr.Version</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(_selectedCbr.Description))
+                                        {
+                                            <span class="cbr-viewer-desc">@_selectedCbr.Description</span>
+                                        }
+                                        <div class="cbr-viewer-header-actions">
+                                            <button class="cbr-btn-download"
+                                                    @onclick="DownloadCbrAsync"
+                                                    title="Download script as .js file">
+                                                &#x2B07; .js
+                                            </button>
+                                            <button class="cbr-btn-theme"
+                                                    title='@(_cbrDark ? "Switch to light theme" : "Switch to dark theme")'
+                                                    @onclick="() => _cbrDark = !_cbrDark">
+                                                @(_cbrDark ? "\u2600" : "\uD83C\uDF19")
+                                            </button>
+                                            <button class="cbr-btn-maximize"
+                                                    title='@(_cbrMaximized ? "Restore" : "Maximize")'
+                                                    @onclick="() => _cbrMaximized = !_cbrMaximized">
+                                                @(_cbrMaximized ? "\u22A1" : "\u26F6")
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
                                 <div class="cbr-body">
                                     <div class="cbr-sidebar">
                                         @foreach (var cbr in _cbrs)
@@ -298,22 +376,10 @@
                                         }
                                     </div>
                                     <div class="cbr-viewer @(!_cbrDark ? "cbr-viewer--light" : "") @(_cbrMaximized ? "cbr-viewer--maximized" : "")">
-                                        @if (_selectedCbr is null)
+                                        @if (_cbrMaximized && _selectedCbr is not null)
                                         {
-                                            <div class="cbr-viewer-empty">&#x2190; Select a rule to view its script</div>
-                                        }
-                                        else
-                                        {
-                                            <div class="cbr-viewer-header">
+                                            <div class="cbr-maximized-bar @(!_cbrDark ? "cbr-top-bar--light" : "")">
                                                 <span class="cbr-viewer-name">@_selectedCbr.Name</span>
-                                                @if (!string.IsNullOrWhiteSpace(_selectedCbr.Version))
-                                                {
-                                                    <span class="cbr-viewer-version">@_selectedCbr.Version</span>
-                                                }
-                                                @if (!string.IsNullOrWhiteSpace(_selectedCbr.Description))
-                                                {
-                                                    <span class="cbr-viewer-desc">@_selectedCbr.Description</span>
-                                                }
                                                 <div class="cbr-viewer-header-actions">
                                                     <button class="cbr-btn-theme"
                                                             title='@(_cbrDark ? "Switch to light theme" : "Switch to dark theme")'
@@ -321,12 +387,19 @@
                                                         @(_cbrDark ? "\u2600" : "\uD83C\uDF19")
                                                     </button>
                                                     <button class="cbr-btn-maximize"
-                                                            title='@(_cbrMaximized ? "Restore" : "Maximize")'
-                                                            @onclick="() => _cbrMaximized = !_cbrMaximized">
-                                                        @(_cbrMaximized ? "\u22A1" : "\u26F6")
+                                                            title="Restore"
+                                                            @onclick="() => _cbrMaximized = false">
+                                                        &#x22A1;
                                                     </button>
                                                 </div>
                                             </div>
+                                        }
+                                        @if (_selectedCbr is null)
+                                        {
+                                            <div class="cbr-viewer-empty">&#x2190; Select a rule to view its script</div>
+                                        }
+                                        else
+                                        {
                                             <div class="cbr-code-wrap">
                                                 <textarea class="cbr-editor" spellcheck="false"
                                                           @bind="_cbrEditedScript"
@@ -406,15 +479,16 @@
         {
             <div class="um-tab-content">
                 <UserManagementDialog OnUsersJson="HandleUsersJson"
-                                      OnUsersMetaJson="HandleUsersMetaJson"
-                                      FoundUserIds="_foundUserIds"
-                                      OnClearFound="HandleClearFoundUsers"
-                                      AiPendingDeletes="_pendingUserDeletes"
-                                      OnDeletesHandled="HandleUserDeletesHandled"
-                                      AiPendingEdits="_pendingUserEdits"
-                                      OnEditsHandled="HandleUserEditsHandled"
-                                      AiCreatePrefill="_addUserPrefill"
-                                      OnCreateHandled="HandleUserCreateHandled" />
+                                       OnUsersMetaJson="HandleUsersMetaJson"
+                                       FoundUserIds="_foundUserIds"
+                                       OnClearFound="HandleClearFoundUsers"
+                                       AiPendingDeletes="_pendingUserDeletes"
+                                       OnDeletesHandled="HandleUserDeletesHandled"
+                                       AiPendingEdits="_pendingUserEdits"
+                                       OnEditsHandled="HandleUserEditsHandled"
+                                       AiCreatePrefill="_addUserPrefill"
+                                       OnCreateHandled="HandleUserCreateHandled"
+                                       OnVariancesChanged="HandleUserVariancesChanged" />
             </div>
         }
         @if (_activeMainTab == "logs")
@@ -601,8 +675,17 @@
     </div>@* /viewer-content-row *@
     }
 
+    @* ── Floating AI chat FAB ── *@
+    @if (rootNode != null)
+    {
+    <div class="ai-fab @(_chatVisible ? "ai-fab--active" : "")" @onclick="() => _chatVisible = !_chatVisible" title="@(_chatVisible ? "Hide AI chat" : "Open AI chat")">
+        <span class="ai-fab-icon">&#x1F916;</span>
+        <span class="ai-fab-label">AI Assistant</span>
+    </div>
+    }
+
     @* ── Studio chat panel ── *@
-    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" UsersJson="@_usersJson" UsersMetaJson="@_usersMetaJson" OnFindUsers="HandleAiFindUsers" OnDeleteUsers="HandleAiUserDeletions" OnEditUsers="HandleAiUserEdits" OnAddUser="HandleAiUserAdd" OnDeleteAdapterRegistrations="HandleAiAdapterRegistrationDeletions" OnEditAdapterRegistrations="HandleAiAdapterRegistrationEdits" OnDeleteClients="HandleAiClientDeletions" OnEditClients="HandleAiClientEdits" OnEditCbr="HandleAiCbrEditAsync" CbrsJson="@_cbrsJson" LogsJson="@_logsJson" OnFindLogs="HandleAiFindLogs" />
+    <StudioChatPanel OnToggle="() => _chatVisible = false" IsVisible="_chatVisible" XmlRoot="rootNode" OnDeleteShippers="HandleAiShipperDeletions" OnEditShippers="HandleAiShipperEdits" OnAddShipper="HandleAiShipperAdd" UsersJson="@_usersJson" UsersMetaJson="@_usersMetaJson" OnFindUsers="HandleAiFindUsers" OnDeleteUsers="HandleAiUserDeletions" OnEditUsers="HandleAiUserEdits" OnAddUser="HandleAiUserAdd" OnDeleteAdapterRegistrations="HandleAiAdapterRegistrationDeletions" OnEditAdapterRegistrations="HandleAiAdapterRegistrationEdits" OnDeleteClients="HandleAiClientDeletions" OnEditClients="HandleAiClientEdits" OnEditCbr="HandleAiCbrEditAsync" CbrsJson="@_cbrsJson" LogsJson="@_logsJson" OnFindLogs="HandleAiFindLogs" OnDeleteEntities="HandleAiEntityDeletions" OnEditEntities="HandleAiEntityEdits" />
 
 </div>
 
@@ -662,6 +745,10 @@
     private int _version;
     private int? activeDepth;
     private bool _isDirty;
+    private Guid _currentCompanyId;
+
+    private string? _managementStudioUrl => ShipExecService.GetManagementStudioUrl();
+    private List<CompanyInfo> _cachedCompanies => ShipExecService.GetCachedCompanies();
 
     // ── Variance panel state ──────────────────────────────────────────────────
     private readonly List<Variance> _varianceEntries = [];
@@ -687,7 +774,7 @@
     private bool _showCompareProfilesDialog;
 
     // ── Chat panel state ──────────────────────────────────────────────────────
-    private bool _chatVisible = false;
+    private bool _chatVisible = true;
 
     // ── Users AI state ────────────────────────────────────────────────────────
     private string? _usersJson;
@@ -748,11 +835,12 @@
     private string _activeMainTab = "company";
 
     // ── Business Rules tab state ──────────────────────────────────────────────
-    private List<SbrInfo> _sbrs        = [];
+    private List<SbrInfo> _sbrs             = [];
     private bool          _sbrLoading;
     private bool          _sbrLoaded;
-    private bool          _sbrExpanded = true;
+    private bool          _sbrExpanded      = true;
     private string?       _sbrError;
+    private HashSet<int>  _sbrDownloadingIds = [];
 
     private List<CbrInfo> _cbrs        = [];
     private bool          _cbrLoading;
@@ -916,14 +1004,36 @@
         _cbrAnalysisError   = null;
     }
 
+    private async Task DownloadCbrAsync()
+    {
+        if (_selectedCbr is null || string.IsNullOrWhiteSpace(_cbrEditedScript)) return;
+        var safeName = string.IsNullOrWhiteSpace(_selectedCbr.Name)
+            ? "cbr"
+            : _selectedCbr.Name.Replace(" ", "_");
+        await JSRuntime.InvokeVoidAsync("downloadFile", $"{safeName}.js", _cbrEditedScript, "text/javascript");
+    }
+
     private async Task DownloadSbrAsync(SbrInfo sbr)
     {
-        if (string.IsNullOrEmpty(sbr.FileBase64)) return;
-        var safeName = string.IsNullOrWhiteSpace(sbr.Name)
-            ? "sbr"
-            : sbr.Name.Replace(" ", "_");
-        await JSRuntime.InvokeVoidAsync(
-            "downloadBase64File", $"{safeName}.dll", sbr.FileBase64, "application/octet-stream");
+        if (_sbrDownloadingIds.Contains(sbr.Id)) return;
+        _sbrDownloadingIds.Add(sbr.Id);
+        StateHasChanged();
+        try
+        {
+            var fileBase64 = sbr.FileBase64;
+            if (string.IsNullOrEmpty(fileBase64))
+                fileBase64 = await ShipExecService.GetServerBusinessRuleFileBase64Async(sbr.Id);
+            if (string.IsNullOrEmpty(fileBase64)) return;
+            var safeName = string.IsNullOrWhiteSpace(sbr.Name)
+                ? "sbr"
+                : sbr.Name.Replace(" ", "_");
+            await JSRuntime.InvokeVoidAsync(
+                "downloadBase64File", $"{safeName}.dll", fileBase64, "application/octet-stream");
+        }
+        finally
+        {
+            _sbrDownloadingIds.Remove(sbr.Id);
+        }
     }
 
     private async Task SearchLogsAsync()
@@ -1140,6 +1250,7 @@
     {
         _showConnectDialog = false;
         _canLoadHistory = true;
+        _currentCompanyId = company.Id;
         loadedFileName = company.Name;
         isLoading = true;
         errorMessage = null;
@@ -1152,10 +1263,12 @@
         _pendingUserDeletes = null;
         _pendingUserEdits = null;
         _addUserPrefill = null;
-        _sbrs        = [];
-        _sbrError    = null;
-        _sbrLoaded   = false;
-        _sbrLoading  = false;
+        _userVarianceIds.Clear();
+        _sbrs             = [];
+        _sbrError         = null;
+        _sbrLoaded        = false;
+        _sbrLoading       = false;
+        _sbrDownloadingIds = [];
         _cbrs        = [];
         _cbrError    = null;
         _cbrLoaded   = false;
@@ -1187,6 +1300,23 @@
             isLoading = false;
         }
         await LoadHistoryAsync();
+    }
+
+    private async Task RefreshCompanyAsync()
+    {
+        if (_currentCompanyId == Guid.Empty || string.IsNullOrEmpty(loadedFileName)) return;
+        await HandleCompanyConnected((_currentCompanyId, loadedFileName));
+    }
+
+    private async Task SwitchCompanyAsync(ChangeEventArgs e)
+    {
+        if (e.Value is not string val || !Guid.TryParse(val, out var newId)) return;
+        if (newId == _currentCompanyId) return;
+        var companies = ShipExecService.GetCachedCompanies();
+        var company = companies.FirstOrDefault(c => c.Id == newId);
+        if (company is null) return;
+        await ShipExecService.SetupCompanyAsync(company.Id, company.Name);
+        await HandleCompanyConnected((company.Id, company.Name));
     }
 
     private async Task HandleLazyLoadAsync(XmlNodeViewModel node)
@@ -1674,6 +1804,124 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    // ── Generic entity AI handlers ────────────────────────────────────────────
+
+    /// <summary>
+    /// Maps singular entity type names to their plural collection node names in the tree.
+    /// </summary>
+    private static readonly Dictionary<string, string> _entityCollectionMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Profile"]                  = "Profiles",
+        ["Site"]                     = "Sites",
+        ["CarrierRoute"]             = "CarrierRoutes",
+        ["ClientBusinessRule"]       = "ClientBusinessRules",
+        ["DataConfigurationMapping"] = "DataConfigurationMappings",
+        ["DocumentConfiguration"]    = "DocumentConfigurations",
+        ["Machine"]                  = "Machines",
+        ["PrinterConfiguration"]     = "PrinterConfigurations",
+        ["PrinterDefinition"]        = "PrinterDefinitions",
+        ["ScaleConfiguration"]       = "ScaleConfigurations",
+        ["Schedule"]                 = "Schedules",
+        ["ServerBusinessRule"]       = "ServerBusinessRules",
+        ["SourceConfiguration"]      = "SourceConfigurations",
+    };
+
+    private void HandleAiEntityDeletions(List<EntityDeleteItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+
+        foreach (var group in items.GroupBy(i => i.EntityType, StringComparer.OrdinalIgnoreCase))
+        {
+            var entityType = group.Key;
+            if (!_entityCollectionMap.TryGetValue(entityType, out var collectionName)) continue;
+
+            var parentNode = rootNode.Children
+                .FirstOrDefault(c => c.NodeName.Equals(collectionName, StringComparison.OrdinalIgnoreCase));
+            if (parentNode is null) continue;
+
+            foreach (var item in group)
+            {
+                var entityNode = FindEntityNode(parentNode, entityType, item.Id, item.Name);
+                if (entityNode is null) continue;
+
+                var name = entityNode.Children
+                    .FirstOrDefault(c => c.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                    ?.NodeValue ?? item.Name;
+                var parentId      = parentNode.Id;
+                var snapshotIndex = parentNode.Children.IndexOf(entityNode);
+
+                _varianceEntries.Insert(0, new Variance
+                {
+                    NodeId           = parentId,
+                    PathDescription  = $"{collectionName} \u203a {name}",
+                    Description      = $"AI Delete: {name}",
+                    ChangeType       = "Removed",
+                    SnapshotNode     = entityNode,
+                    SnapshotParentId = parentId,
+                    SnapshotIndex    = snapshotIndex,
+                });
+
+                XmlViewerService.RemoveNode(entityNode);
+            }
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAiEntityEdits(List<EntityEditItem> items)
+    {
+        if (rootNode is null || items.Count == 0) return;
+
+        var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+        foreach (var group in items.GroupBy(i => i.EntityType, StringComparer.OrdinalIgnoreCase))
+        {
+            var entityType = group.Key;
+            if (!_entityCollectionMap.TryGetValue(entityType, out var collectionName)) continue;
+
+            var parentNode = rootNode.Children
+                .FirstOrDefault(c => c.NodeName.Equals(collectionName, StringComparison.OrdinalIgnoreCase));
+            if (parentNode is null) continue;
+
+            foreach (var item in group)
+            {
+                if (item.Edits is null || item.Edits.Count == 0) continue;
+
+                var entityNode = FindEntityNode(parentNode, entityType, item.Id, item.Name);
+                if (entityNode is null) continue;
+
+                var originalFields = entityNode.Children.ToDictionary(
+                    c => c.NodeName, c => c.NodeValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var (field, value) in item.Edits)
+                    UpdateEntityFieldInTree(entityNode, field, value);
+
+                var modifiedFields = entityNode.Children.ToDictionary(
+                    c => c.NodeName, c => c.NodeValue ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
+                var name = originalFields.TryGetValue("Name", out var n) ? n : item.Name;
+                var changedFields = string.Join(", ", item.Edits.Select(e => $"{e.Key}=\"{e.Value}\""));
+
+                _varianceEntries.Insert(0, new Variance
+                {
+                    NodeId          = Guid.Empty,
+                    PathDescription = $"{collectionName} \u203a {name}",
+                    Description     = $"AI Edit: {changedFields}",
+                    ChangeType      = "Modified",
+                    OriginalXML     = System.Text.Json.JsonSerializer.Serialize(originalFields, opts),
+                    NewXML          = System.Text.Json.JsonSerializer.Serialize(modifiedFields, opts),
+                });
+            }
+        }
+
+        XmlRefLookupService.Rebuild(rootNode);
+        MarkDirty();
+        _version++;
+        InvokeAsync(StateHasChanged);
+    }
+
     private void HandleUsersJson(string json)
     {
         _usersJson = json;
@@ -1740,6 +1988,38 @@
     private void HandleUserCreateHandled()
     {
         _addUserPrefill = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private readonly HashSet<Guid> _userVarianceIds = [];
+
+    private void HandleUserVariancesChanged(List<UserVariance> userVariances)
+    {
+        // Remove previous user-variance entries from the main panel
+        _varianceEntries.RemoveAll(v => _userVarianceIds.Contains(v.Id));
+        _userVarianceIds.Clear();
+
+        // Convert each UserVariance into a Variance entry for the main panel
+        foreach (var uv in userVariances)
+        {
+            var changeType = uv.Kind switch
+            {
+                UserVarianceKind.Create => "Added",
+                UserVarianceKind.Delete => "Removed",
+                UserVarianceKind.Edit   => "Modified",
+                _                       => "Modified",
+            };
+            _varianceEntries.Insert(0, new Variance
+            {
+                Id              = uv.Id,
+                PathDescription = "Users",
+                Description     = uv.Description,
+                ChangeType      = changeType,
+            });
+            _userVarianceIds.Add(uv.Id);
+        }
+
+        _variancePanelVisible = true;
         InvokeAsync(StateHasChanged);
     }
 
@@ -2072,6 +2352,7 @@
     {
         rootNode = null;
         loadedFileName = null;
+        _currentCompanyId = Guid.Empty;
         errorMessage = null;
         activeDepth = null;
         _isDirty = false;
@@ -2234,6 +2515,35 @@
     {
         _varianceEntries.Insert(0, entry);
         InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ClearAndRevertAsync()
+    {
+        // Preserve historical entries
+        var historical = _varianceEntries.Where(e => e.IsHistorical).ToList();
+        _varianceEntries.Clear();
+        _varianceEntries.AddRange(historical);
+        _userVarianceIds.Clear();
+
+        // Rebuild the tree from the live server
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            rootNode = await ShipExecService.BuildCompanySkeletonAsync();
+            XmlViewerService.ExpandToDepth(rootNode, 1);
+            nodeCount = CountNodes(rootNode);
+            _isDirty = false;
+            _version++;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to reload company: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task NavigateToNode(Guid nodeId)

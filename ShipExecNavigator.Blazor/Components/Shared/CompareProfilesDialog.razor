@@ -1,6 +1,7 @@
 @using PSI.Sox
 @using System.Text.Json
 @inject IShipExecService ShipExecService
+@inject IJSRuntime JS
 
 @if (IsVisible)
 {
@@ -93,6 +94,9 @@
                                 {
                                     <span class="cpd-pill cpd-pill--del">&#x2212; @_diffRows.Count(r => r.Kind == DiffKind.Removed) removed</span>
                                 }
+                                <button class="cpd-btn-export" @onclick="ExportDiffCsvAsync" title="Export differences as CSV">
+                                    &#x2B07; Export CSV
+                                </button>
                             </div>
 
                             <div class="cpd-table-wrap">
@@ -608,6 +612,24 @@
         if (!string.IsNullOrWhiteSpace(profile.Description)) return profile.Description;
         return profile.Id.ToString();
     }
+
+    private async Task ExportDiffCsvAsync()
+    {
+        if (_diffRows.Count == 0) return;
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Path,Change,\"{EscapeCsv(_profileAName)}\",\"{EscapeCsv(_profileBName)}\"");
+        foreach (var row in _diffRows)
+        {
+            sb.AppendLine($"\"{EscapeCsv(row.Path)}\",{row.Kind},\"{EscapeCsv(row.OrigVal ?? "")}\",\"{EscapeCsv(row.NewVal ?? "")}\"");
+        }
+
+        var fileName = $"ProfileDiff_{_profileAName}_vs_{_profileBName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        await JS.InvokeVoidAsync("downloadFile", fileName, sb.ToString(), "text/csv");
+    }
+
+    private static string EscapeCsv(string value)
+        => value.Replace("\"", "\"\"");
 
     private async Task HandleClose()
     {

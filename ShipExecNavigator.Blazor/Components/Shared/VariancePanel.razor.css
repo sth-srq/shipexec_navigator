@@ -13,7 +13,7 @@
     flex-shrink: 0;
     background: linear-gradient(180deg, #ffffff 0%, #fafbfe 100%);
     border: 1px solid rgba(43, 63, 107, 0.1);
-    border-radius: 14px;
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
     max-height: calc(100dvh - 300px);
@@ -28,8 +28,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.6rem 0.85rem;
-    border-bottom: 1px solid rgba(43, 63, 107, 0.08);
-    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    border-bottom: 1px solid #ddd;
+    background: #337ab7;
     border-radius: 14px 14px 0 0;
     flex-shrink: 0;
 }
@@ -55,6 +55,33 @@
     font-weight: 600;
     white-space: nowrap;
 }
+
+.vp-revert-btn {
+    background: none;
+    border: 1px solid #adb5bd;
+    color: #adb5bd;
+    font-size: 0.65rem;
+    cursor: pointer;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: color 0.1s, background-color 0.1s, border-color 0.1s;
+    white-space: nowrap;
+}
+
+    .vp-revert-btn:hover:not(:disabled) {
+        color: #e67e22;
+        border-color: #e67e22;
+        background-color: rgba(230, 126, 34, 0.08);
+    }
+
+    .vp-revert-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
 
 .vp-clear-btn {
     background: none;
@@ -441,9 +468,9 @@
 
 .vp-detail-modal {
     background: #fff;
-    border: 1px solid rgba(43, 63, 107, 0.12);
-    border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
     width: 560px;
     max-width: 95vw;
     max-height: 80vh;
@@ -457,8 +484,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(43, 63, 107, 0.08);
-    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    border-bottom: 1px solid #ddd;
+    background: #337ab7;
     border-radius: 14px 14px 0 0;
 }
 
@@ -507,7 +534,7 @@
 }
 
 .vp-detail-value {
-    color: #212529;
+    color: #333;
     word-break: break-word;
 }
 
@@ -532,7 +559,7 @@
     padding: 0.6rem 0.75rem;
     font-size: 0.72rem;
     font-family: "Cascadia Code", "Consolas", monospace;
-    color: #212529;
+    color: #333;
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-all;
@@ -591,18 +618,18 @@
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
     .vp-panel {
-        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(180deg, #333 0%, #0f172a 100%);
         border-color: rgba(148, 163, 184, 0.12);
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15);
     }
 
     .vp-header {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(135deg, #333 0%, #0f172a 100%);
         border-bottom-color: rgba(148, 163, 184, 0.08);
     }
 
     .vp-title {
-        color: #e2e8f0;
+        color: #ddd;
     }
 
     .vp-count {
@@ -611,14 +638,14 @@
     }
 
     .vp-toggle-btn {
-        background-color: #1e293b;
+        background-color: #333;
         border-color: #334155;
         color: #94a3b8;
     }
 
     .vp-toggle-btn:hover {
         background-color: #334155;
-        border-color: #64748b;
+        border-color: #777;
     }
 
     .vp-empty {
@@ -634,7 +661,7 @@
     }
 
     .vp-entry-path {
-        color: #64748b;
+        color: #777;
     }
 
     .vp-entry-desc {
@@ -642,7 +669,7 @@
     }
 
     .vp-body::-webkit-scrollbar-track {
-        background: #1e293b;
+        background: #333;
     }
 
     .vp-body::-webkit-scrollbar-thumb {
@@ -677,18 +704,18 @@
     }
 
     .vp-detail-modal {
-        background: #1e293b;
+        background: #333;
         border-color: rgba(148, 163, 184, 0.12);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
     }
 
     .vp-detail-header {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(135deg, #333 0%, #0f172a 100%);
         border-bottom-color: rgba(148, 163, 184, 0.08);
     }
 
     .vp-detail-title {
-        color: #e2e8f0;
+        color: #ddd;
     }
 
     .vp-detail-label {
@@ -696,13 +723,13 @@
     }
 
     .vp-detail-value {
-        color: #e2e8f0;
+        color: #ddd;
     }
 
     .vp-detail-json {
         background: #0f172a;
         border-color: #334155;
-        color: #e2e8f0;
+        color: #ddd;
     }
 
     .vp-history-error {

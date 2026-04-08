@@ -29,29 +29,11 @@
         }
     </div>
 
-    @if (_pendingVariances.Count > 0)
+    @if (!string.IsNullOrEmpty(_applyError))
     {
-        <div class="um-pending-panel">
-            <div class="um-pending-header">
-                <span>&#x23F3; Pending changes — not yet saved to ShipExec</span>
-            </div>
-            <ul class="um-pending-list">
-                @foreach (var v in _pendingVariances)
-                {
-                    <li class="um-pending-item um-pending-item--@(v.Kind.ToString().ToLower())">
-                        <span class="um-pending-kind">@v.Kind</span>
-                        <span class="um-pending-desc">@v.Description</span>
-                        <button class="um-pending-remove" title="Remove this change" @onclick="() => RemoveVariance(v.Id)">&#x2715;</button>
-                    </li>
-                }
-            </ul>
-            @if (!string.IsNullOrEmpty(_applyError))
-            {
-                <div class="um-delete-banner um-delete-banner--error" style="margin:0.4rem 0 0">
-                    <span>&#9888; @_applyError</span>
-                    <button class="um-find-clear-btn" @onclick="() => _applyError = null">&#x2715;</button>
-                </div>
-            }
+        <div class="um-delete-banner um-delete-banner--error" style="margin:0.4rem 0.5rem">
+            <span>&#9888; @_applyError</span>
+            <button class="um-find-clear-btn" @onclick="() => _applyError = null">&#x2715;</button>
         </div>
     }
 
@@ -440,6 +422,7 @@
     [Parameter] public EventCallback<string> OnUsersMetaJson { get; set; }
     [Parameter] public UserAddItem? AiCreatePrefill { get; set; }
     [Parameter] public EventCallback OnCreateHandled { get; set; }
+    [Parameter] public EventCallback<List<UserVariance>> OnVariancesChanged { get; set; }
 
     private List<User> _users = [];
     private bool _isLoading;
@@ -535,6 +518,7 @@
             });
             if (OnCreateHandled.HasDelegate)
                 await OnCreateHandled.InvokeAsync();
+            await NotifyVariancesChanged();
             StateHasChanged();
         }
     }
@@ -559,6 +543,7 @@
         if (OnDeletesHandled.HasDelegate)
             await OnDeletesHandled.InvokeAsync();
 
+        await NotifyVariancesChanged();
         StateHasChanged();
     }
 
@@ -582,6 +567,7 @@
         if (OnEditsHandled.HasDelegate)
             await OnEditsHandled.InvokeAsync();
 
+        await NotifyVariancesChanged();
         StateHasChanged();
     }
 
@@ -624,33 +610,33 @@
         finally
         {
             _isApplying = false;
+            await NotifyVariancesChanged();
             StateHasChanged();
         }
     }
 
     private void EnqueueCreateVariance()
     {
-        _pendingVariances.Add(new UserVariance
-        {
-            Kind        = UserVarianceKind.Create,
-            Description = "Create new user",
-        });
+        _createPrefill = null;
+        _showCreateUserDialog = true;
         StateHasChanged();
     }
 
-    private void DiscardVariances()
+    private async Task DiscardVariances()
     {
         _pendingVariances.Clear();
         _activeCreateVarianceId = null;
         _createPrefill = null;
         _showCreateUserDialog = false;
         _applyError = null;
+        await NotifyVariancesChanged();
         StateHasChanged();
     }
 
-    private void RemoveVariance(Guid id)
+    private async Task RemoveVariance(Guid id)
     {
         _pendingVariances.RemoveAll(v => v.Id == id);
+        await NotifyVariancesChanged();
         StateHasChanged();
     }
 
@@ -668,6 +654,12 @@
         await OnUsersMetaJson.InvokeAsync(json);
     }
 
+    private async Task NotifyVariancesChanged()
+    {
+        if (OnVariancesChanged.HasDelegate)
+            await OnVariancesChanged.InvokeAsync([.._pendingVariances]);
+    }
+
     private async Task HandleUserCreated(Guid newUserId)
     {
         // Remove the variance that was just fulfilled via the dialog.
@@ -678,6 +670,7 @@
             _createPrefill = null;
         }
         _showCreateUserDialog = false;
+        await NotifyVariancesChanged();
         await LoadUsersAsync();
 
         // If more Create variances remain, open the dialog for the next one.

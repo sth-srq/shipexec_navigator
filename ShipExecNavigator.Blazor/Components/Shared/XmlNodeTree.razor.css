@@ -92,7 +92,7 @@
 }
 
 .node-label {
-    color: #2563eb;
+    color: #23527c;
     font-weight: 600;
     transition: color 0.12s;
 }
@@ -102,7 +102,7 @@
 }
 
 .xml-elem {
-    color: #2563eb;
+    color: #23527c;
     font-weight: 500;
 }
 
@@ -359,7 +359,7 @@
     }
 
 /* -- Depth colour palette (set via inline style --depth-color) ------------- */
-/* depth 0 */ .xml-children[style*="--depth-color: #3b82f6"] { border-left-color: rgba(59, 130, 246, 0.25); }
+/* depth 0 */ .xml-children[style*="--depth-color: #337ab7"] { border-left-color: rgba(59, 130, 246, 0.25); }
 /* depth 1 */ .xml-children[style*="--depth-color: #8b5cf6"] { border-left-color: rgba(139, 92, 246, 0.25); }
 /* depth 2 */ .xml-children[style*="--depth-color: #06b6d4"] { border-left-color: rgba(6, 182, 212, 0.25); }
 /* depth 3 */ .xml-children[style*="--depth-color: #10b981"] { border-left-color: rgba(16, 185, 129, 0.25); }
@@ -402,7 +402,7 @@
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
     .xml-node {
-        color: #e2e8f0;
+        color: #ddd;
     }
 
     .node-label {
@@ -434,7 +434,7 @@
     }
 
     .xml-punct, .attr-eq, .node-sep {
-        color: #64748b;
+        color: #777;
     }
 
     .attr-dot {
@@ -442,11 +442,11 @@
     }
 
     .node-empty {
-        color: #64748b;
+        color: #777;
     }
 
     .node-hint, .xml-ellipsis {
-        color: #64748b;
+        color: #777;
     }
 
     .node-info, .node-summary {
@@ -530,9 +530,9 @@
     }
 
     .inline-edit {
-        background-color: #1e293b;
+        background-color: #333;
         color: #fbbf24;
-        border-color: #3b82f6;
+        border-color: #337ab7;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 
@@ -541,8 +541,8 @@
     }
 
     .inline-edit--select option {
-        background-color: #1e293b;
-        color: #e2e8f0;
+        background-color: #333;
+        color: #ddd;
     }
 
     .xml-node-line--changed {

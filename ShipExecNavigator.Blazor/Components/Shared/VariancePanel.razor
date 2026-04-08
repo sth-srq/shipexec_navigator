@@ -20,6 +20,20 @@ else
                 @if (Entries.Count > 0)
                 {
                     <span class="vp-count">@Entries.Count</span>
+                    @if (Entries.Any(e => !e.IsHistorical))
+                    {
+                        <button class="vp-revert-btn" @onclick="HandleRevertAll" disabled="@(_isReverting ? "disabled" : null)" title="Clear uncommitted changes and reload from server">
+                            @if (_isReverting)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            }
+                            else
+                            {
+                                <span>&#x21BA;</span>
+                            }
+                            Revert
+                        </button>
+                    }
                     <button class="vp-clear-btn" @onclick="ClearAll" title="Clear all entries">&#x2715;</button>
                 }
                 <button class="vp-history-btn @(_isLoadingHistory ? "vp-history-btn--loading" : "")"
@@ -191,8 +205,12 @@ else
     [Parameter]
     public bool CanLoadHistory { get; set; }
 
+    [Parameter]
+    public EventCallback OnClearAndRevert { get; set; }
+
     private readonly HashSet<Guid> _expandedIds = [];
     private bool _isLoadingHistory;
+    private bool _isReverting;
     private Variance? _detailEntry;
 
     private void ShowDetails(Variance entry) => _detailEntry = entry;
@@ -233,6 +251,19 @@ else
     {
         Entries.Clear();
         _expandedIds.Clear();
+    }
+
+    private async Task HandleRevertAll()
+    {
+        _isReverting = true;
+        try
+        {
+            await OnClearAndRevert.InvokeAsync();
+        }
+        finally
+        {
+            _isReverting = false;
+        }
     }
 
     private static string ChangeTypeIcon(string type) => type switch

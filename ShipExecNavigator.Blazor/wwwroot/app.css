@@ -1,18 +1,18 @@
 html, body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-    background: #f4f6f9;
-    color: #1e293b;
+    background: #f5f5f5;
+    color: #333;
     margin: 0;
     padding: 0;
 }
 
 a, .btn-link {
-    color: #2563eb;
+    color: #337ab7;
     text-decoration: none;
 }
 
 a:hover {
-    color: #1d4ed8;
+    color: #23527c;
     text-decoration: underline;
 }
 
@@ -25,7 +25,7 @@ h1:focus {
 }
 
 .btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 0 0 2px rgba(51, 122, 183, 0.25);
     outline: none;
 }
 
@@ -70,114 +70,107 @@ h1:focus {
 .page-tab-bar {
     display: flex;
     align-items: stretch;
-    height: 48px;
-    background: #1e293b;
-    border-radius: 10px;
+    height: 42px;
+    background: #f8f8f8;
+    border: 1px solid #e7e7e7;
+    border-radius: 4px;
     flex-shrink: 0;
     padding-right: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     position: relative;
     overflow: hidden;
 }
 
 .page-tab-bar::before {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 1px;
-    background: rgba(255,255,255,0.06);
-    pointer-events: none;
+    display: none;
 }
 
 .page-tab {
     display: flex;
     align-items: center;
-    padding: 0 1.25rem;
-    color: rgba(255,255,255,0.55);
+    padding: 0 1.15rem;
+    color: #777;
     font-size: 0.84rem;
     font-weight: 500;
     text-decoration: none;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
-    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
     letter-spacing: 0.01em;
 }
 
 .page-tab:hover {
-    color: rgba(255,255,255,0.9);
+    color: #333;
     text-decoration: none;
-    background: rgba(255,255,255,0.07);
-    border-bottom-color: rgba(255,255,255,0.2);
+    background: #e8e8e8;
 }
 
 .page-tab--active {
-    color: #ffffff;
-    border-bottom-color: #3b82f6;
-    background: rgba(59,130,246,0.1);
+    color: #333;
+    border-bottom-color: #337ab7;
+    background: #fff;
     cursor: default;
     font-weight: 600;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
-/*  DARK THEME — global overrides                                           */
+/*  DARK THEME — class-based toggle                                         */
 /* ══════════════════════════════════════════════════════════════════════════ */
-@media (prefers-color-scheme: dark) {
-    html, body {
-        background: #0f172a;
-        color: #e2e8f0;
-    }
+.dark-theme,
+.dark-theme body {
+    background: #1a1a1a;
+    color: #ddd;
+}
 
-    a, .btn-link {
-        color: #60a5fa;
-    }
+.dark-theme a, .dark-theme .btn-link {
+    color: #6cb3e6;
+}
 
-    a:hover {
-        color: #93c5fd;
-    }
+.dark-theme a:hover {
+    color: #8fcef5;
+}
 
-    .btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
-        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
-    }
+.dark-theme .btn:focus, .dark-theme .btn:active:focus,
+.dark-theme .form-control:focus, .dark-theme .form-check-input:focus {
+    box-shadow: 0 0 0 2px rgba(108, 179, 230, 0.25);
+}
 
-    .blazor-error-boundary {
-        background-color: rgba(248, 113, 113, 0.08);
-        border-top-color: #ef4444;
-        color: #f87171;
-    }
+.dark-theme .blazor-error-boundary {
+    background-color: rgba(248, 113, 113, 0.08);
+    border-top-color: #ef4444;
+    color: #f87171;
+}
 
-    ::-webkit-scrollbar-thumb {
-        background: #475569;
-    }
+.dark-theme ::-webkit-scrollbar-thumb {
+    background: #555;
+}
 
-    ::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
-    }
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
 
-    .page-tab-bar {
-        background: #020617;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
+.dark-theme .page-tab-bar {
+    background: #2a2a2a;
+    border-color: #444;
+}
 
-    .page-tab {
-        color: rgba(148, 163, 184, 0.55);
-    }
+.dark-theme .page-tab {
+    color: #999;
+}
 
-    .page-tab:hover {
-        color: rgba(226, 232, 240, 0.9);
-        background: rgba(255,255,255,0.05);
-        border-bottom-color: rgba(255,255,255,0.15);
-    }
+.dark-theme .page-tab:hover {
+    color: #ddd;
+    background: #333;
+}
 
-    .page-tab--active {
-        color: #e2e8f0;
-        border-bottom-color: #60a5fa;
-        background: rgba(96,165,250,0.08);
-    }
+.dark-theme .page-tab--active {
+    color: #fff;
+    border-bottom-color: #6cb3e6;
+    background: #333;
+}
 
-    #blazor-error-ui {
-        background: #1e293b;
-        border-top-color: #ef4444;
-        color: #f87171;
-    }
+.dark-theme #blazor-error-ui {
+    background: #2a2a2a;
+    border-top-color: #ef4444;
+    color: #f87171;
 }

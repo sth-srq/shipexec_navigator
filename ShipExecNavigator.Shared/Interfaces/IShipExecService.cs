@@ -44,6 +44,8 @@ public interface IShipExecService
 
     // ── Company state ────────────────────────────────────────────────────────
     CompanyInfo? GetCurrentCompany();
+    List<CompanyInfo> GetCachedCompanies();
+    string? GetManagementStudioUrl();
     void PrepareForApply(Guid companyId, string companyName);
 
     // ── Profiles ─────────────────────────────────────────────────────────────
@@ -75,6 +77,7 @@ public interface IShipExecService
 
     // ── Server Business Rules ────────────────────────────────────────────────
     Task<List<SbrInfo>> GetServerBusinessRulesAsync();
+    Task<string?> GetServerBusinessRuleFileBase64Async(int sbrId);
 
     // ── Client Business Rules (connected company) ────────────────────────────
     Task<List<CbrInfo>> GetClientBusinessRulesAsync();

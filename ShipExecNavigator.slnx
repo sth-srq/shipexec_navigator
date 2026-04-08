@@ -64,6 +64,14 @@
     <File Path="Docs/Logon/loginpage.html" />
     <File Path="Docs/Logon/passwordpage.html" />
   </Folder>
+  <Folder Name="/Docs/SEPages/">
+    <File Path="Docs/SEPages/app.css" />
+    <File Path="Docs/SEPages/screen1.html" />
+    <File Path="Docs/SEPages/screen2.html" />
+    <File Path="Docs/SEPages/screen3.html" />
+    <File Path="Docs/SEPages/screen4.html" />
+    <File Path="Docs/SEPages/screen5.html" />
+  </Folder>
   <Folder Name="/Downloads/">
     <File Path="Docs/LogViewer.html" />
     <File Path="Downloads/CBRHelper.js" />

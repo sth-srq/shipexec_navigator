@@ -1,7 +1,45 @@
-﻿<header class="top-navbar">
-    <a class="brand-link" href="/">Management Studio Pro</a>
+﻿@inject IJSRuntime JS
+
+<header class="top-navbar">
+    <div class="navbar-header">
+        <a class="brand-link" href="/">ShipExec™ Management Studio</a>
+    </div>
     <nav class="top-nav-links">
         <NavLink class="top-nav-link" href="/" Match="NavLinkMatch.All">&#x1F916; ShipExec Copilot</NavLink>
         <NavLink class="top-nav-link" href="/studio">&#x1F5FA; Navigator</NavLink>
+        <NavLink class="top-nav-link" href="/downloads">&#x2B07;&#xFE0F; Downloads</NavLink>
+        <NavLink class="top-nav-link" href="/tools-page">&#x1F527; Tools</NavLink>
     </nav>
+    <button class="theme-toggle" @onclick="ToggleThemeAsync" title="Toggle light/dark mode">
+        @(_isDark ? "☀️" : "🌙")
+    </button>
 </header>
+
+@code {
+    private bool _isDark;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var stored = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('theme')");
+            _isDark = stored == "dark";
+            if (_isDark)
+                await JS.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark-theme')");
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleThemeAsync()
+    {
+        _isDark = !_isDark;
+        if (_isDark)
+        {
+            await JS.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark-theme');localStorage.setItem('theme','dark')");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark-theme');localStorage.setItem('theme','light')");
+        }
+    }
+}

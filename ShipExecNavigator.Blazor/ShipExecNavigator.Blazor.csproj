@@ -66,6 +66,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Update="rag_index.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

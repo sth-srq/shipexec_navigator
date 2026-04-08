@@ -14,17 +14,17 @@
 /* ── Dialog shell ─────────────────────────────────────────────────────────── */
 .cpd-dlg {
     background: #fff;
-    border: 1px solid rgba(43, 63, 107, 0.12);
-    border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
-    width: min(860px, 96vw);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: min(1200px, 96vw);
     max-height: 88vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 0.875rem;
-    color: #212529;
+    color: #333;
 }
 
 /* ── Header ───────────────────────────────────────────────────────────────── */
@@ -32,23 +32,23 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.85rem 1.1rem 0.75rem;
-    border-bottom: 1px solid rgba(43, 63, 107, 0.08);
-    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    padding: 0.75rem 1.1rem;
+    border-bottom: 1px solid #ddd;
+    background: #337ab7;
     flex-shrink: 0;
 }
 
 .cpd-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #212529;
+    color: #fff;
 }
 
 .cpd-close {
     background: none;
     border: none;
     font-size: 1rem;
-    color: #6c757d;
+    color: rgba(255,255,255,0.7);
     cursor: pointer;
     padding: 0.15rem 0.35rem;
     border-radius: 4px;
@@ -497,4 +497,27 @@
     color: #adb5bd;
     font-style: italic;
     font-size: 0.8rem;
+}
+
+/* ── Export button ─────────────────────────────────────────────────────────── */
+.cpd-btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-left: auto;
+    background: #337ab7;
+    color: #fff;
+    border: 1px solid #2e6da4;
+    border-radius: 4px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.12s;
+}
+
+.cpd-btn-export:hover {
+    background: #286090;
+    border-color: #204d74;
 }

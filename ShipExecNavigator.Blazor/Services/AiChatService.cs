@@ -45,6 +45,8 @@ public sealed class AiChatService(
             "adapter-registration-edit (payload: array of {id, name, edits: {fieldName: newValue}}), " +
             "client-delete (payload: array of {id, name}), " +
             "client-edit (payload: array of {id, name, edits: {fieldName: newValue}}), " +
+            "entity-delete (payload: array of {entityType, id, name}), " +
+            "entity-edit (payload: array of {entityType, id, name, edits: {fieldName: newValue}}), " +
             "cbr-edit (payload: {id, name, script}), " +
             "log-find (payload: array of {id (int), source (\"App\" or \"Security\")}).");
 
@@ -54,6 +56,37 @@ public sealed class AiChatService(
                 " The user has a ShipExec XML configuration loaded. " +
                 "When writing JavaScript to manipulate the Navigator tree view, " +
                 "use only the class names and IDs documented in the DOM reference below.");
+            systemContent.Append(
+                "\n\n**Generic entity operations:** For ANY entity type on the Navigator screen " +
+                "(Profile, Site, CarrierRoute, ClientBusinessRule, DataConfigurationMapping, DocumentConfiguration, " +
+                "Machine, PrinterConfiguration, PrinterDefinition, ScaleConfiguration, Schedule, " +
+                "ServerBusinessRule, SourceConfiguration), you can:\n" +
+                "- DELETE/REMOVE: respond with action type \"entity-delete\" and payload as a JSON array " +
+                "where each object has `entityType` (singular, e.g. \"Profile\"), `id` (string), and `name` (string).\n" +
+                "- EDIT/UPDATE/SET/CHANGE: respond with action type \"entity-edit\" and payload as a JSON array " +
+                "where each object has `entityType` (singular, e.g. \"Profile\"), `id` (string), `name` (string), " +
+                "and `edits` (object mapping field names to new values).\n" +
+                "Do NOT use action type \"javascript\" for entity deletion or editing.");
+            systemContent.Append(
+                "\n\n**Profile composition & cross-referencing:** Profiles are composed of other entities. " +
+                "When a user asks whether something is IN a profile, USED BY a profile, CONTAINED in a profile, " +
+                "OR asks which entities are associated with which profiles (in either direction), " +
+                "look for BOTH child elements (nested entities) AND ID reference fields " +
+                "(e.g. `ClientBusinessRuleId`, `ServerBusinessRuleId`, `SiteId`, etc.). " +
+                "Some of these referenced entities are defined at higher levels in the configuration hierarchy.\n\n" +
+                "**How to resolve ID references:** Many entities reference each other by ID fields. " +
+                "To answer questions about relationships between entities, follow these steps:\n" +
+                "1. Find each entity of the first type (e.g. each `<Profile>` under `<Profiles>`).\n" +
+                "2. Read the ID reference field (e.g. the `<ClientBusinessRuleId>` child element's text value).\n" +
+                "3. Find the matching entity of the referenced type whose `<Id>` child element matches that value " +
+                "(e.g. find the `<ClientBusinessRule>` under `<ClientBusinessRules>` whose `<Id>` equals the value from step 2).\n" +
+                "4. Return the referenced entity's `<Name>` (or other identifying field) alongside the referring entity's name.\n" +
+                "5. If the ID reference field is empty, missing, or zero, report that the entity has no reference set.\n" +
+                "6. Repeat for every entity of the first type.\n\n" +
+                "Common ID reference fields on Profiles: `ClientBusinessRuleId` → `ClientBusinessRule`, " +
+                "`ServerBusinessRuleId` → `ServerBusinessRule`, `SiteId` → `Site`, " +
+                "`DocumentConfigurationId` → `DocumentConfiguration`, `SourceConfigurationId` → `SourceConfiguration`, " +
+                "`PrinterConfigurationId` → `PrinterConfiguration`, `ScaleConfigurationId` → `ScaleConfiguration`.");
             systemContent.Append(NavigatorDomCheatSheet.Content);
         }
 

@@ -81,6 +81,9 @@ public sealed class ShipExecService(
     /// <summary>Normalised admin URL (always trailing-slash) for building sub-service URLs.</summary>
     private string?     _adminUrl;
 
+    /// <summary>Cached company list from the last <see cref="GetCompaniesAsync"/> call.</summary>
+    private List<CompanyInfo> _lastCompanies = [];
+
     /// <summary>GUID of the company currently in scope for this circuit.</summary>
     private Guid        _currentCompanyId;
 
@@ -131,6 +134,11 @@ public sealed class ShipExecService(
                     adminUrl, sw.ElapsedMilliseconds);
                 throw;
             }
+        }).ContinueWith(t =>
+        {
+            if (t.IsCompletedSuccessfully)
+                _lastCompanies = t.Result;
+            return t.Result;
         });
     }
 
@@ -180,6 +188,7 @@ public sealed class ShipExecService(
                 ("Sites",                     "Sites"),
                 ("AdapterRegistrations",      "AdapterRegistrations"),
                 ("CarrierRoutes",             "CarrierRoutes"),
+                ("ClientBusinessRules",       "ClientBusinessRules"),
                 ("DataConfigurationMappings", "DataConfigurationMappings"),
                 ("DocumentConfigurations",    "DocumentConfigurations"),
                 ("Machines",                  "Machines"),
@@ -187,6 +196,7 @@ public sealed class ShipExecService(
                 ("PrinterDefinitions",        "PrinterDefinitions"),
                 ("ScaleConfigurations",       "ScaleConfigurations"),
                 ("Schedules",                 "Schedules"),
+                ("ServerBusinessRules",       "ServerBusinessRules"),
                 ("SourceConfigurations",      "SourceConfigurations"),
             };
 
@@ -294,6 +304,38 @@ public sealed class ShipExecService(
                     FetchAndPopulate(categoryNode, "SourceConfiguration",
                         new SourceConfigurationFetcher(url, cid, jwt),
                         r => r?.SourceConfigurations);
+                    break;
+
+                case "ClientBusinessRules":
+                    PopulateCategory(categoryNode, "ClientBusinessRule",
+                        _appManager.GetClientBusinessRulesWithProfilesForCompany()
+                            .Select(r => new CbrInfo
+                            {
+                                Id             = r.Rule.Id,
+                                Name           = r.Rule.Name ?? string.Empty,
+                                Description    = r.Rule.Description,
+                                Script         = r.Rule.Script,
+                                Version        = r.Rule.Version,
+                                UsedByProfiles = r.ProfileNames,
+                            }).ToList());
+                    break;
+
+                case "ServerBusinessRules":
+                    PopulateCategory(categoryNode, "ServerBusinessRule",
+                        _appManager.GetServerBusinessRulesForCompany()
+                            .Select(r => new SbrInfo
+                            {
+                                Id             = r.Rule.Id,
+                                Name           = r.Rule.Name ?? string.Empty,
+                                Description    = r.Rule.Description,
+                                Version        = r.Rule.Version,
+                                Author         = r.Rule.Author,
+                                AuthorEmail    = r.Rule.AuthorEmail,
+                                FileBase64     = r.Rule.FileBytes is { Length: > 0 }
+                                                    ? Convert.ToBase64String(r.Rule.FileBytes)
+                                                    : null,
+                                UsedByProfiles = r.ProfileNames,
+                            }).ToList());
                     break;
 
                 default:
@@ -1543,6 +1585,43 @@ public sealed class ShipExecService(
         });
     }
 
+    public Task<string?> GetServerBusinessRuleFileBase64Async(int sbrId)
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("GetServerBusinessRuleFileBase64 start | SbrId={SbrId}", sbrId);
+            try
+            {
+                // The singular GetServerBusinessRule endpoint does not exist on all
+                // API versions (returns 404).  Fall back to the plural endpoint and
+                // locate the requested rule by ID.
+                var allRules = _appManager.GetServerBusinessRulesForCompany();
+                var match = allRules.FirstOrDefault(r => r.Rule.Id == sbrId);
+                var fileBytes = match.Rule?.FileBytes;
+                sw.Stop();
+                bool hasFile = fileBytes is { Length: > 0 };
+                logger.LogInformation(
+                    "GetServerBusinessRuleFileBase64 complete | SbrId={SbrId} HasFile={HasFile} DurationMs={DurationMs}",
+                    sbrId, hasFile, sw.ElapsedMilliseconds);
+                return hasFile
+                    ? Convert.ToBase64String(fileBytes!)
+                    : null;
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                logger.LogError(ex,
+                    "GetServerBusinessRuleFileBase64 failed | SbrId={SbrId} DurationMs={DurationMs}",
+                    sbrId, sw.ElapsedMilliseconds);
+                throw;
+            }
+        });
+    }
+
     public Task<List<CbrInfo>> GetClientBusinessRulesAsync()
     {
         if (_appManager is null)
@@ -1721,6 +1800,24 @@ public sealed class ShipExecService(
             Id = id,
             Name = _appManager.GetCurrentCompanyName(),
         };
+    }
+
+    public List<CompanyInfo> GetCachedCompanies() => _lastCompanies;
+
+    public string? GetManagementStudioUrl()
+    {
+        if (string.IsNullOrEmpty(_adminUrl)) return null;
+        // Admin URL format: https://<server>/ShipExecManagementStudioApi/api/AdministrationService/
+        // Management Studio: https://<server>/ShipExecManagementStudio/#!/company/
+        try
+        {
+            var uri = new Uri(_adminUrl);
+            return $"{uri.Scheme}://{uri.Authority}/ShipExecManagementStudio/#!/company/";
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string SerializeUsersXml(IEnumerable<PSI.Sox.User> users)

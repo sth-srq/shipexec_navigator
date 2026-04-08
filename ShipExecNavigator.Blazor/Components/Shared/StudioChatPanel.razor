@@ -69,6 +69,12 @@
                 title="Send">
             &#x27A4;
         </button>
+        <button class="scp-clear-btn"
+                @onclick="ClearChatAsync"
+                disabled="@(_messages.Count == 0 && string.IsNullOrWhiteSpace(_input))"
+                title="Clear chat and context">
+            &#x1F5D1;
+        </button>
     </div>
 
     @if (!string.IsNullOrEmpty(_error))
@@ -98,6 +104,8 @@
     [Parameter] public string? CbrsJson { get; set; }
     [Parameter] public string? LogsJson { get; set; }
     [Parameter] public EventCallback<List<LogFindItem>> OnFindLogs { get; set; }
+    [Parameter] public EventCallback<List<EntityDeleteItem>> OnDeleteEntities { get; set; }
+    [Parameter] public EventCallback<List<EntityEditItem>> OnEditEntities { get; set; }
 
     private readonly List<ChatMessage> _messages = [];
     private readonly List<string> _inputHistory = [];
@@ -133,6 +141,11 @@
             await JS.InvokeVoidAsync("initChatPanelDrag", "studio-chat-resize-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
             await SyncPanelHeightCssVarAsync();
             await JS.InvokeVoidAsync("initChatInputHistory", "scp-textarea", DotNetObjectReference.Create(this));
+        }
+
+        if (_thinking)
+        {
+            await ScrollToBottomAsync();
         }
     }
 
@@ -255,6 +268,10 @@
     {
         _messages.Clear();
         _undoIds.Clear();
+        _inputHistory.Clear();
+        _historyIndex = -1;
+        _historyDraft = string.Empty;
+        _input = string.Empty;
         _error = null;
         StateHasChanged();
         await Task.CompletedTask;
@@ -334,6 +351,14 @@
                 case "log-find":
                     var findLogs = action.Payload.Deserialize<List<LogFindItem>>(_jsonOptions);
                     if (findLogs is { Count: > 0 }) await OnFindLogs.InvokeAsync(findLogs);
+                    break;
+                case "entity-delete":
+                    var deleteEntities = action.Payload.Deserialize<List<EntityDeleteItem>>(_jsonOptions);
+                    if (deleteEntities is { Count: > 0 }) await OnDeleteEntities.InvokeAsync(deleteEntities);
+                    break;
+                case "entity-edit":
+                    var editEntities = action.Payload.Deserialize<List<EntityEditItem>>(_jsonOptions);
+                    if (editEntities is { Count: > 0 }) await OnEditEntities.InvokeAsync(editEntities);
                     break;
                 case "javascript":
                     var jsCode = action.Payload.GetString();

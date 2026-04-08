@@ -7,13 +7,14 @@
 @inject IAiChatService AiChat
 @inject IJSRuntime JS
 
-<PageTitle>Ask AI — Management Studio Pro</PageTitle>
+<PageTitle>Ask AI — ShipExec™ Management Studio</PageTitle>
 
 <div class="chat-page">
     <div class="page-tab-bar">
         <span class="page-tab page-tab--active">&#x1F916; ShipExec Copilot</span>
         <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
-        <a class="page-tab" href="/tools">&#x2B07;&#xFE0F; Downloads</a>
+        <a class="page-tab" href="/downloads">&#x2B07;&#xFE0F; Downloads</a>
+        <a class="page-tab" href="/tools-page">&#x1F527; Tools</a>
         <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
         @if (_messages.Count > 0)
         {
@@ -217,6 +218,23 @@
 
     private static string FormatMessage(string text)
     {
+        // ── Strip JSON action payloads and dangerous structures ───────────
+        try
+        {
+            if (text.TrimStart().StartsWith("{") && text.TrimEnd().EndsWith("}"))
+            {
+                var json = System.Text.Json.JsonDocument.Parse(text);
+                if (json.RootElement.TryGetProperty("message", out var msgProp))
+                {
+                    text = msgProp.GetString() ?? text;
+                }
+            }
+        }
+        catch
+        {
+            // Not JSON or invalid, continue with original text
+        }
+
         // ── Normalize line endings ────────────────────────────────────────
         text = text.Replace("\r\n", "\n").Replace("\r", "\n");
 
