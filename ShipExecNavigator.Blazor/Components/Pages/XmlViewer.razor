@@ -532,12 +532,17 @@
                             <span class="log-source log-source--app">App</span>
                             <span class="log-source log-source--security">Security</span>
                         }
+                        <button class='log-mode-btn @(_logExportExtended ? "log-mode-btn--active" : "")'
+                                @onclick="() => _logExportExtended = !_logExportExtended"
+                                title="@(_logExportExtended ? "ShipExec format — works with ShipExec API Log Viewer (includes extended fields)" : "CSV format — works with Log Viewer")">
+                            @(_logExportExtended ? "&#x1F527; ShipExec" : "&#x1F4CB; CSV")
+                        </button>
                         <button class="btn-export" @onclick="ExportLogsCsvAsync" disabled="@_logsExporting">
                             @if (_logsExporting)
                             {
                                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                             }
-                            &#x2B07; Export CSV
+                            &#x2B07; Export @(_logExportExtended ? ".log" : "CSV")
                         </button>
                         @if (_foundLogIds is not null)
                         {
@@ -865,6 +870,7 @@
     private bool _logsExporting;
     private string? _logsError;
     private bool _logsSearched;
+    private bool _logExportExtended;
     private List<LogEntry> _logs = [];
     private int _logTotal;
     private List<SecurityLogEntry> _secLogs = [];
@@ -1128,62 +1134,191 @@
         _logsExporting = true;
         try
         {
-            var sb = new System.Text.StringBuilder();
             var dateSuffix = $"{_logStart:yyyyMMdd}_{_logEnd:yyyyMMdd}";
 
-            if (_logMode == "application")
+            if (_logExportExtended)
             {
-                sb.AppendLine("Date/Time,Level,Logger,Message,Server,Transaction ID");
-                foreach (var log in _logs)
-                    sb.AppendLine(string.Join(",",
-                        EscapeLogCsv(log.LogDate?.ToString("yyyy-MM-dd HH:mm:ss.fff")),
-                        EscapeLogCsv(log.LogLevel),
-                        EscapeLogCsv(log.Logger),
-                        EscapeLogCsv(log.Message),
-                        EscapeLogCsv(log.ServerAddress),
-                        EscapeLogCsv(log.TransactionId)));
-                await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_application_{dateSuffix}.csv", sb.ToString(), "text/csv");
-            }
-            else if (_logMode == "security")
-            {
-                sb.AppendLine("Date/Time,Level,User,Action,Entity,Entity Name,Current Value,Previous Value,Message,Server,Transaction ID");
-                foreach (var log in _secLogs)
-                    sb.AppendLine(string.Join(",",
-                        EscapeLogCsv(log.LogDate?.ToString("yyyy-MM-dd HH:mm:ss.fff")),
-                        EscapeLogCsv(log.LogLevel),
-                        EscapeLogCsv(log.UserName),
-                        EscapeLogCsv(log.ActionType),
-                        EscapeLogCsv(log.Entity),
-                        EscapeLogCsv(log.EntityName),
-                        EscapeLogCsv(log.CurrentValue),
-                        EscapeLogCsv(log.PreviousValue),
-                        EscapeLogCsv(log.Message),
-                        EscapeLogCsv(log.ServerAddress),
-                        EscapeLogCsv(log.TransactionId)));
-                await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_security_{dateSuffix}.csv", sb.ToString(), "text/csv");
+                // ShipExec pipe-delimited format — compatible with ShipExec API Log Viewer
+                var sb = new System.Text.StringBuilder();
+                if (_logMode == "application")
+                {
+                    foreach (var log in _logs)
+                        sb.AppendLine(BuildAppPipeLine(log));
+                    await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_application_{dateSuffix}.log", sb.ToString(), "text/plain");
+                }
+                else if (_logMode == "security")
+                {
+                    foreach (var log in _secLogs)
+                        sb.AppendLine(BuildSecPipeLine(log));
+                    await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_security_{dateSuffix}.log", sb.ToString(), "text/plain");
+                }
+                else
+                {
+                    foreach (var log in _combLogs)
+                        sb.AppendLine(BuildCombPipeLine(log));
+                    await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_both_{dateSuffix}.log", sb.ToString(), "text/plain");
+                }
             }
             else
             {
-                sb.AppendLine("Date/Time,Source,Level,Logger/User,Action,Entity,Entity Name,Message,Server,Transaction ID");
-                foreach (var log in _combLogs)
-                    sb.AppendLine(string.Join(",",
-                        EscapeLogCsv(log.LogDate?.ToString("yyyy-MM-dd HH:mm:ss.fff")),
-                        EscapeLogCsv(log.Source),
-                        EscapeLogCsv(log.LogLevel),
-                        EscapeLogCsv(log.Source == "Security" ? log.UserName : log.Logger),
-                        EscapeLogCsv(log.ActionType),
-                        EscapeLogCsv(log.Entity),
-                        EscapeLogCsv(log.EntityName),
-                        EscapeLogCsv(log.Message),
-                        EscapeLogCsv(log.ServerAddress),
-                        EscapeLogCsv(log.TransactionId)));
-                await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_both_{dateSuffix}.csv", sb.ToString(), "text/csv");
+                // CSV format — compatible with Log Viewer
+                var sb = new System.Text.StringBuilder();
+                if (_logMode == "application")
+                {
+                    sb.AppendLine("Date/Time,Level,Logger,Message,Server,Transaction ID");
+                    foreach (var log in _logs)
+                        sb.AppendLine(string.Join(",",
+                            EscapeLogCsv(log.LogDate?.ToString("yyyy-MM-dd HH:mm:ss.fff")),
+                            EscapeLogCsv(log.LogLevel),
+                            EscapeLogCsv(log.Logger),
+                            EscapeLogCsv(log.Message),
+                            EscapeLogCsv(log.ServerAddress),
+                            EscapeLogCsv(log.TransactionId)));
+                    await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_application_{dateSuffix}.csv", sb.ToString(), "text/csv");
+                }
+                else if (_logMode == "security")
+                {
+                    sb.AppendLine("Date/Time,Level,User,Action,Entity,Entity Name,Current Value,Previous Value,Message,Server,Transaction ID");
+                    foreach (var log in _secLogs)
+                        sb.AppendLine(string.Join(",",
+                            EscapeLogCsv(log.LogDate?.ToString("yyyy-MM-dd HH:mm:ss.fff")),
+                            EscapeLogCsv(log.LogLevel),
+                            EscapeLogCsv(log.UserName),
+                            EscapeLogCsv(log.ActionType),
+                            EscapeLogCsv(log.Entity),
+                            EscapeLogCsv(log.EntityName),
+                            EscapeLogCsv(log.CurrentValue),
+                            EscapeLogCsv(log.PreviousValue),
+                            EscapeLogCsv(log.Message),
+                            EscapeLogCsv(log.ServerAddress),
+                            EscapeLogCsv(log.TransactionId)));
+                    await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_security_{dateSuffix}.csv", sb.ToString(), "text/csv");
+                }
+                else
+                {
+                    sb.AppendLine("Date/Time,Source,Level,Logger/User,Action,Entity,Entity Name,Message,Server,Transaction ID");
+                    foreach (var log in _combLogs)
+                        sb.AppendLine(string.Join(",",
+                            EscapeLogCsv(log.LogDate?.ToString("yyyy-MM-dd HH:mm:ss.fff")),
+                            EscapeLogCsv(log.Source),
+                            EscapeLogCsv(log.LogLevel),
+                            EscapeLogCsv(log.Source == "Security" ? log.UserName : log.Logger),
+                            EscapeLogCsv(log.ActionType),
+                            EscapeLogCsv(log.Entity),
+                            EscapeLogCsv(log.EntityName),
+                            EscapeLogCsv(log.Message),
+                            EscapeLogCsv(log.ServerAddress),
+                            EscapeLogCsv(log.TransactionId)));
+                    await JSRuntime.InvokeVoidAsync("downloadFile", $"logs_both_{dateSuffix}.csv", sb.ToString(), "text/csv");
+                }
             }
         }
         finally
         {
             _logsExporting = false;
         }
+    }
+
+    /// <summary>
+    /// Builds a ShipExec pipe-delimited log line for an application log entry.
+    /// Default-visible fields (DATE, LogLevel, Message, TransactionId, LogEventAction,
+    /// UserId, ClientAddress, ApplicationName) come first, matching the ShipExec API
+    /// Log Viewer's DEFAULT_VISIBLE set.  Extended fields follow and can be toggled
+    /// on inside the viewer.
+    /// </summary>
+    private static string BuildAppPipeLine(LogEntry log)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"DATE:{PipeVal(log.LogDate?.ToString("yyyy-MM-ddTHH:mm:ss.fff"))}");
+        sb.Append($"|LogLevel:{PipeVal(log.LogLevel)}");
+        sb.Append($"|Message:{PipeVal(log.Message)}");
+        sb.Append($"|TransactionId:{PipeVal(log.TransactionId)}");
+        sb.Append($"|LogEventAction:{PipeVal(log.LogEventAction)}");
+        sb.Append($"|UserId:{PipeVal(log.UserId)}");
+        sb.Append($"|ClientAddress:{PipeVal(log.ClientAddress)}");
+        sb.Append($"|ApplicationName:{PipeVal(log.ApplicationName)}");
+        // Extended fields — visible via column toggles in ShipExec API Log Viewer
+        sb.Append($"|LogId:{log.Id}");
+        sb.Append($"|UserAgentString:{PipeVal(log.UserAgentString)}");
+        sb.Append($"|CompanyId:{PipeVal(log.CompanyId)}");
+        sb.Append($"|SiteId:{PipeVal(log.SiteId)}");
+        sb.Append($"|EnterpriseId:{PipeVal(log.EnterpriseId)}");
+        sb.Append($"|LogEventType:{PipeVal(log.LogEventType)}");
+        sb.Append($"|HTTPStatusCode:{PipeVal(log.Status)}");
+        sb.Append($"|ServerEnvironment:{PipeVal(log.ServerEnv)}");
+        sb.Append($"|ServerIp:{PipeVal(log.ServerAddress)}");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Builds a ShipExec pipe-delimited log line for a security log entry.
+    /// Security-specific fields (ActionType, Entity, EntityName, CurrentValue,
+    /// PreviousValue) are appended as extra segments; the ShipExec API Log Viewer
+    /// displays the fields it recognises and ignores the rest.
+    /// </summary>
+    private static string BuildSecPipeLine(SecurityLogEntry log)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"DATE:{PipeVal(log.LogDate?.ToString("yyyy-MM-ddTHH:mm:ss.fff"))}");
+        sb.Append($"|LogLevel:{PipeVal(log.LogLevel)}");
+        sb.Append($"|Message:{PipeVal(log.Message)}");
+        sb.Append($"|TransactionId:{PipeVal(log.TransactionId)}");
+        sb.Append($"|UserName:{PipeVal(log.UserName)}");
+        sb.Append($"|UserId:{PipeVal(log.UserId)}");
+        sb.Append($"|ClientAddress:{PipeVal(log.ClientAddress)}");
+        sb.Append($"|ApplicationName:{PipeVal(log.ApplicationName)}");
+        // Extended fields
+        sb.Append($"|LogId:{log.Id}");
+        sb.Append($"|CompanyId:{PipeVal(log.CompanyId)}");
+        sb.Append($"|CompanyName:{PipeVal(log.CompanyName)}");
+        sb.Append($"|SiteId:{PipeVal(log.SiteId)}");
+        sb.Append($"|EnterpriseId:{PipeVal(log.EnterpriseId)}");
+        sb.Append($"|ServerIp:{PipeVal(log.ServerAddress)}");
+        // Security-only fields
+        sb.Append($"|ActionType:{PipeVal(log.ActionType)}");
+        sb.Append($"|Entity:{PipeVal(log.Entity)}");
+        sb.Append($"|EntityName:{PipeVal(log.EntityName)}");
+        sb.Append($"|CurrentValue:{PipeVal(log.CurrentValue)}");
+        sb.Append($"|PreviousValue:{PipeVal(log.PreviousValue)}");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Builds a ShipExec pipe-delimited log line for a combined log entry.
+    /// Source ("App" / "Security") is included as an extra segment so entries
+    /// remain distinguishable when the export is loaded into the ShipExec API
+    /// Log Viewer.
+    /// </summary>
+    private static string BuildCombPipeLine(CombinedLogEntry log)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"DATE:{PipeVal(log.LogDate?.ToString("yyyy-MM-ddTHH:mm:ss.fff"))}");
+        sb.Append($"|LogLevel:{PipeVal(log.LogLevel)}");
+        sb.Append($"|Message:{PipeVal(log.Message)}");
+        sb.Append($"|TransactionId:{PipeVal(log.TransactionId)}");
+        sb.Append($"|UserName:{PipeVal(log.Source == "Security" ? log.UserName : log.Logger)}");
+        sb.Append($"|ServerIp:{PipeVal(log.ServerAddress)}");
+        // Extended fields
+        sb.Append($"|Source:{PipeVal(log.Source)}");
+        sb.Append($"|ActionType:{PipeVal(log.ActionType)}");
+        sb.Append($"|Entity:{PipeVal(log.Entity)}");
+        sb.Append($"|EntityName:{PipeVal(log.EntityName)}");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Sanitises a value for inclusion in a ShipExec pipe-delimited log line.
+    /// Newlines are collapsed to a space; pipe characters are replaced with a
+    /// middle-dot (·) so the viewer's field splitter is never confused.
+    /// </summary>
+    private static string PipeVal(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        return value
+            .Replace("\r\n", " ")
+            .Replace("\n", " ")
+            .Replace("\r", " ")
+            .Replace("|", "\u00b7");
     }
 
     private static string EscapeLogCsv(string? value)
