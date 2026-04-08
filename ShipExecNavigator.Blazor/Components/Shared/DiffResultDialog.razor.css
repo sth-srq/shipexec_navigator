@@ -53,7 +53,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-    width: min(820px, 96vw);
+    width: min(1025px, 96vw);
     max-height: 90vh;
     display: flex;
     flex-direction: column;

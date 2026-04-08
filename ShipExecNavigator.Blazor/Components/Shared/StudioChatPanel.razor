@@ -7,13 +7,13 @@
 
 <div class="scp-panel @(!IsVisible ? "scp-panel--hidden" : "") @(_minimized ? "scp-panel--minimized" : "")"
      id="studio-chat-panel"
-     style="@(IsVisible && !_minimized ? $"height: {_panelHeight}px" : "")">
+     style="@(IsVisible && !_minimized ? $"height: {_panelHeight}px; bottom: {_panelBottom}px" : $"bottom: {_panelBottom}px")">
 
     @* ── Resize handle ── *@
     <div class="scp-resize-handle" id="studio-chat-resize-handle" title="Drag to resize"></div>
 
     @* ── Header bar ── *@
-    <div class="scp-header">
+    <div class="scp-header" id="studio-chat-move-handle">
         <span class="scp-header-title">&#x1F916; AI Assistant</span>
         <div class="scp-header-actions">
             @if (_undoIds.Count > 0)
@@ -114,6 +114,7 @@
     private bool _useRag = true;
     private string? _error;
     private int _panelHeight = 280;
+    private int _panelBottom = 0;
     private bool _minimized;
     private readonly List<string> _undoIds = [];
     private int _historyIndex = -1;
@@ -139,6 +140,7 @@
             _hasRendered = true;
             _prevVisible = IsVisible;
             await JS.InvokeVoidAsync("initChatPanelDrag", "studio-chat-resize-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
+            await JS.InvokeVoidAsync("initChatPanelMove", "studio-chat-move-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
             await SyncPanelHeightCssVarAsync();
             await JS.InvokeVoidAsync("initChatInputHistory", "scp-textarea", DotNetObjectReference.Create(this));
         }
@@ -154,6 +156,13 @@
     {
         _panelHeight = Math.Clamp(height, 140, 700);
         await SyncPanelHeightCssVarAsync();
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void SetPanelBottom(int bottom)
+    {
+        _panelBottom = Math.Clamp(bottom, 0, 800);
         StateHasChanged();
     }
 

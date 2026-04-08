@@ -34,7 +34,7 @@
     }
 
 .top-nav-links {
-    display: flex;
+    display: none;
     align-items: stretch;
     height: 100%;
     gap: 0;

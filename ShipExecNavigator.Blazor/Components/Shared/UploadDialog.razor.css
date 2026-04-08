@@ -17,7 +17,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-    width: 600px;
+    width: 750px;
     max-width: 96vw;
     max-height: 88vh;
     display: flex;
@@ -39,14 +39,14 @@
 .au-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #333;
+    color: #fff;
 }
 
 .au-close {
     background: none;
     border: none;
     font-size: 1rem;
-    color: #6c757d;
+    color: rgba(255,255,255,0.7);
     cursor: pointer;
     padding: 0.15rem 0.35rem;
     border-radius: 4px;
@@ -54,8 +54,8 @@
 }
 
     .au-close:hover {
-        background: #e9ecef;
-        color: #333;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
     }
 
 /* ── Body ────────────────────────────────────────────────────────────────── */

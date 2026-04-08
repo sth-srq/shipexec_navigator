@@ -17,7 +17,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-    width: min(1200px, 96vw);
+    width: min(1500px, 96vw);
     max-height: 88vh;
     display: flex;
     flex-direction: column;
@@ -131,6 +131,65 @@
     flex: 1;
     min-width: 180px;
 }
+
+.cpd-selector-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+}
+
+.cpd-btn-remove-slot {
+    background: none;
+    border: none;
+    color: #adb5bd;
+    font-size: 0.7rem;
+    line-height: 1;
+    padding: 0.1rem 0.25rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color 0.12s, background 0.12s;
+    flex-shrink: 0;
+}
+
+    .cpd-btn-remove-slot:hover:not(:disabled) {
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.08);
+    }
+
+    .cpd-btn-remove-slot:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+.cpd-btn-add-slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: transparent;
+    color: #6c757d;
+    border: 1px dashed #ced4da;
+    border-radius: 6px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    align-self: flex-end;
+    transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+    .cpd-btn-add-slot:hover:not(:disabled) {
+        border-color: #2e6da4;
+        color: #2e6da4;
+        background: rgba(46, 109, 164, 0.04);
+    }
+
+    .cpd-btn-add-slot:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 
 .cpd-label {
     font-size: 0.75rem;
@@ -520,4 +579,66 @@
 .cpd-btn-export:hover {
     background: #286090;
     border-color: #204d74;
+}
+
+/* ── Compare All button ────────────────────────────────────────────────────── */
+.cpd-compare-all-sep {
+    font-size: 0.75rem;
+    color: #adb5bd;
+    align-self: flex-end;
+    padding-bottom: 0.4rem;
+    flex-shrink: 0;
+}
+
+.cpd-btn-compare-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    color: #2e6da4;
+    border: 1px solid #2e6da4;
+    border-radius: 6px;
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.12s, color 0.12s;
+    flex-shrink: 0;
+    align-self: flex-end;
+}
+
+    .cpd-btn-compare-all:hover:not(:disabled) {
+        background: #2e6da4;
+        color: #fff;
+    }
+
+    .cpd-btn-compare-all:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+/* ── Matrix table (3+ profiles) ───────────────────────────────────────────── */
+.cpd-table-wrap--matrix {
+    overflow-x: auto;
+}
+
+.cpd-table--matrix .cpd-th--val {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cpd-table--matrix .cpd-td--val {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cpd-absent-cell {
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 0.8rem;
 }

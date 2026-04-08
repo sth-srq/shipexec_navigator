@@ -1596,12 +1596,8 @@ public sealed class ShipExecService(
             logger.LogInformation("GetServerBusinessRuleFileBase64 start | SbrId={SbrId}", sbrId);
             try
             {
-                // The singular GetServerBusinessRule endpoint does not exist on all
-                // API versions (returns 404).  Fall back to the plural endpoint and
-                // locate the requested rule by ID.
-                var allRules = _appManager.GetServerBusinessRulesForCompany();
-                var match = allRules.FirstOrDefault(r => r.Rule.Id == sbrId);
-                var fileBytes = match.Rule?.FileBytes;
+                var rule = _appManager.GetServerBusinessRuleById(sbrId);
+                var fileBytes = rule?.FileBytes;
                 sw.Stop();
                 bool hasFile = fileBytes is { Length: > 0 };
                 logger.LogInformation(

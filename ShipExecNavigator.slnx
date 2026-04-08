@@ -73,13 +73,15 @@
     <File Path="Docs/SEPages/screen5.html" />
   </Folder>
   <Folder Name="/Downloads/">
-    <File Path="Docs/LogViewer.html" />
-    <File Path="Downloads/CBRHelper.js" />
-    <File Path="Downloads/CBRHelper.min.js" />
     <File Path="Downloads/shipexec-code_standards-se2.zip" />
-    <File Path="Downloads/ShipExecLogViewer.html" />
     <File Path="Downloads/ShipExecNavigator.CertificateInspector.exe" />
-    <File Path="Downloads/ShipExecSupportClientChecker.html" />
+    <File Path="Downloads/ShipExecNavigator_AllProfilesDiffViewer.html" />
+    <File Path="Downloads/ShipExecNavigator_CBRHelper.js" />
+    <File Path="Downloads/ShipExecNavigator_CBRHelper.min.js" />
+    <File Path="Downloads/ShipExecNavigator_NavLogViewer.html" />
+    <File Path="Downloads/ShipExecNavigator_ProfileDiffViewer.html" />
+    <File Path="Downloads/ShipExecNavigator_ShipExecLogViewer.html" />
+    <File Path="Downloads/ShipExecNavigator_ShipExecSupportClientChecker.html" />
   </Folder>
   <Folder Name="/RAGDocuments/" />
   <Folder Name="/References/">

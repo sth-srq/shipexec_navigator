@@ -56,6 +56,7 @@
   <ItemGroup>
     <Folder Include="Logs\" />
     <Folder Include="Shared\Interfaces\" />
+    <Folder Include="wwwroot\downloads\" />
   </ItemGroup>
 
   <PropertyGroup>

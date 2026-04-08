@@ -130,6 +130,45 @@ window.initChatPanelDrag = function (handleId, panelId, dotNetRef) {
     });
 };
 
+// ── Chat panel vertical drag-to-move (drag the header to reposition) ────────
+window.initChatPanelMove = function (headerId, panelId, dotNetRef) {
+    var header = document.getElementById(headerId);
+    var panel  = document.getElementById(panelId);
+    if (!header || !panel) return;
+
+    var startY      = 0;
+    var startBottom = 0;
+
+    function onMouseMove(e) {
+        var delta     = startY - e.clientY;
+        var newBottom = Math.max(0, Math.min(window.innerHeight - 60, startBottom + delta));
+        panel.style.bottom = newBottom + 'px';
+    }
+
+    function onMouseUp(e) {
+        var delta     = startY - e.clientY;
+        var newBottom = Math.max(0, Math.min(window.innerHeight - 60, startBottom + delta));
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup',   onMouseUp);
+        document.body.style.userSelect = '';
+        document.body.style.cursor     = '';
+        header.style.cursor            = '';
+        dotNetRef.invokeMethodAsync('SetPanelBottom', Math.round(newBottom));
+    }
+
+    header.addEventListener('mousedown', function (e) {
+        if (e.target.closest('button')) return;
+        e.preventDefault();
+        startY      = e.clientY;
+        startBottom = parseInt(panel.style.bottom || '0', 10);
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor     = 'grabbing';
+        header.style.cursor            = 'grabbing';
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup',   onMouseUp);
+    });
+};
+
 // ── Chat input history (↑ / ↓ arrow recall) ─────────────────────────────────
 window.initChatInputHistory = function (textareaId, dotNetRef) {
     var textarea = document.getElementById(textareaId);

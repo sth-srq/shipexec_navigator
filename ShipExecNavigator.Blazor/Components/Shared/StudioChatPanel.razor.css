@@ -74,6 +74,16 @@
     padding: 0.45rem 1rem 0.35rem;
     background: #222;
     flex-shrink: 0;
+    cursor: grab;
+    user-select: none;
+}
+
+.scp-header:active {
+    cursor: grabbing;
+}
+
+.scp-header button {
+    cursor: pointer;
 }
 
 .scp-header-title {

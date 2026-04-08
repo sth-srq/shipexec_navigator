@@ -17,7 +17,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-    width: min(620px, 94vw);
+    width: min(775px, 94vw);
     max-height: 88vh;
     display: flex;
     flex-direction: column;

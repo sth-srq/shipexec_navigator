@@ -17,7 +17,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-    width: min(580px, 94vw);
+    width: min(725px, 94vw);
     max-height: 88vh;
     display: flex;
     flex-direction: column;
@@ -41,13 +41,13 @@
 .st-title {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #333;
+    color: #fff;
 }
 
 .st-close {
     background: none;
     border: none;
-    color: #adb5bd;
+    color: rgba(255,255,255,0.7);
     font-size: 1rem;
     cursor: pointer;
     padding: 0.2rem 0.4rem;
@@ -57,8 +57,8 @@
 }
 
     .st-close:hover:not(:disabled) {
-        color: #c53030;
-        background-color: rgba(197, 48, 48, 0.08);
+        color: #fff;
+        background-color: rgba(255,255,255,0.15);
     }
 
     .st-close:disabled { opacity: 0.4; cursor: not-allowed; }

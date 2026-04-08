@@ -17,7 +17,7 @@
     border: 1px solid rgba(43,63,107,0.12);
     border-radius: 14px;
     box-shadow: 0 20px 60px rgba(15,23,42,0.25), 0 4px 16px rgba(0,0,0,0.1);
-    width: min(620px, 94vw);
+    width: min(775px, 94vw);
     max-height: 88vh;
     display: flex;
     flex-direction: column;
