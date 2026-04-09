@@ -1696,12 +1696,13 @@
         _version++;
     }
 
-    private void HandleAiShipperDeletions(List<ShipperDeleteItem> items)
+    private async Task HandleAiShipperDeletions(List<ShipperDeleteItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
         var shippersNode = rootNode.Children
             .FirstOrDefault(c => c.NodeName.Equals("Shippers", StringComparison.OrdinalIgnoreCase));
         if (shippersNode is null) return;
+        await EnsureCategoryLoadedAsync(shippersNode);
 
         var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
         foreach (var item in items)
@@ -1796,12 +1797,13 @@
         return shipper;
     }
 
-    private void HandleAiShipperEdits(List<ShipperEditItem> items)
+    private async Task HandleAiShipperEdits(List<ShipperEditItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
         var shippersNode = rootNode.Children
             .FirstOrDefault(c => c.NodeName.Equals("Shippers", StringComparison.OrdinalIgnoreCase));
         if (shippersNode is null) return;
+        await EnsureCategoryLoadedAsync(shippersNode);
 
         var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
         foreach (var item in items)
@@ -1877,6 +1879,20 @@
         InvokeAsync(StateHasChanged);
     }
 
+    // ── Lazy-load helper for AI handlers ────────────────────────────────────────
+
+    /// <summary>
+    /// Ensures a category node has its children loaded before AI handlers try to
+    /// find entities inside it.  Without this, lazy-loadable categories that the
+    /// user hasn't expanded in the tree have zero children, causing all
+    /// FindEntityNode lookups to silently fail.
+    /// </summary>
+    private async Task EnsureCategoryLoadedAsync(XmlNodeViewModel categoryNode)
+    {
+        if (categoryNode.IsLazyLoadable && !categoryNode.IsLazyLoaded)
+            await HandleLazyLoadAsync(categoryNode);
+    }
+
     // ── Generic entity field helper ───────────────────────────────────────────
 
     private void UpdateEntityFieldInTree(XmlNodeViewModel entityNode, string fieldName, string? value)
@@ -1924,12 +1940,13 @@
 
     // ── Adapter Registration AI handlers ─────────────────────────────────────
 
-    private void HandleAiAdapterRegistrationDeletions(List<AdapterRegistrationDeleteItem> items)
+    private async Task HandleAiAdapterRegistrationDeletions(List<AdapterRegistrationDeleteItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
         var parentNode = rootNode.Children
             .FirstOrDefault(c => c.NodeName.Equals("AdapterRegistrations", StringComparison.OrdinalIgnoreCase));
         if (parentNode is null) return;
+        await EnsureCategoryLoadedAsync(parentNode);
 
         foreach (var item in items)
         {
@@ -1962,12 +1979,13 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void HandleAiAdapterRegistrationEdits(List<AdapterRegistrationEditItem> items)
+    private async Task HandleAiAdapterRegistrationEdits(List<AdapterRegistrationEditItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
         var parentNode = rootNode.Children
             .FirstOrDefault(c => c.NodeName.Equals("AdapterRegistrations", StringComparison.OrdinalIgnoreCase));
         if (parentNode is null) return;
+        await EnsureCategoryLoadedAsync(parentNode);
 
         var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
         foreach (var item in items)
@@ -2008,12 +2026,13 @@
 
     // ── Client AI handlers ────────────────────────────────────────────────────
 
-    private void HandleAiClientDeletions(List<ClientDeleteItem> items)
+    private async Task HandleAiClientDeletions(List<ClientDeleteItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
         var parentNode = rootNode.Children
             .FirstOrDefault(c => c.NodeName.Equals("Clients", StringComparison.OrdinalIgnoreCase));
         if (parentNode is null) return;
+        await EnsureCategoryLoadedAsync(parentNode);
 
         foreach (var item in items)
         {
@@ -2046,12 +2065,13 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void HandleAiClientEdits(List<ClientEditItem> items)
+    private async Task HandleAiClientEdits(List<ClientEditItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
         var parentNode = rootNode.Children
             .FirstOrDefault(c => c.NodeName.Equals("Clients", StringComparison.OrdinalIgnoreCase));
         if (parentNode is null) return;
+        await EnsureCategoryLoadedAsync(parentNode);
 
         var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
         foreach (var item in items)
@@ -2135,7 +2155,7 @@
         ["SourceConfiguration"]      = "SourceConfigurations",
     };
 
-    private void HandleAiEntityDeletions(List<EntityDeleteItem> items)
+    private async Task HandleAiEntityDeletions(List<EntityDeleteItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
 
@@ -2147,6 +2167,7 @@
             var parentNode = rootNode.Children
                 .FirstOrDefault(c => c.NodeName.Equals(collectionName, StringComparison.OrdinalIgnoreCase));
             if (parentNode is null) continue;
+            await EnsureCategoryLoadedAsync(parentNode);
 
             foreach (var item in group)
             {
@@ -2180,7 +2201,7 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void HandleAiEntityEdits(List<EntityEditItem> items)
+    private async Task HandleAiEntityEdits(List<EntityEditItem> items)
     {
         if (rootNode is null || items.Count == 0) return;
 
@@ -2193,6 +2214,7 @@
             var parentNode = rootNode.Children
                 .FirstOrDefault(c => c.NodeName.Equals(collectionName, StringComparison.OrdinalIgnoreCase));
             if (parentNode is null) continue;
+            await EnsureCategoryLoadedAsync(parentNode);
 
             foreach (var item in group)
             {

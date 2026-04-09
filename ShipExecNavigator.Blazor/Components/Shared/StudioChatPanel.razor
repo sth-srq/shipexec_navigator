@@ -238,6 +238,14 @@
             // Auto-expand tree nodes for categories the AI accessed
             if (response.ReferencedCategories is { Count: > 0 })
                 await OnExpandCategories.InvokeAsync(response.ReferencedCategories);
+
+            // Auto-navigate to the last node link so the user sees the affected entity
+            if (nodeLinks is { Count: > 0 })
+            {
+                StateHasChanged();
+                await ScrollToBottomAsync();
+                await HandleNodeLinkClick(nodeLinks[^1]);
+            }
         }
         catch (Exception ex)
         {
