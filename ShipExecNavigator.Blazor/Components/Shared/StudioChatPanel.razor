@@ -20,9 +20,6 @@
             {
                 <button class="scp-btn-undo" @onclick="UndoAsync" title="Undo AI DOM changes">&#x21BA; Undo</button>
             }
-            <button class="scp-btn-clear" @onclick="ClearChatAsync" title="Clear conversation"
-                    disabled="@(_messages.Count == 0)">&#x1F5D1;</button>
-            <button class="scp-btn-newtab" @onclick="OpenNewTabAsync" title="Open AI chat in a new tab">&#x1F5D7; New Tab</button>
             <button class="scp-btn-minimize" @onclick="ToggleMinimize"
                     title="@(_minimized ? "Expand chat" : "Minimise chat")">@(_minimized ? "▶" : "◀")</button>
         </div>
@@ -122,7 +119,7 @@
     private string _input = string.Empty;
     private bool _thinking;
     private string? _error;
-    private int _panelSize = 360;
+    private int _panelSize = -1;
     private bool _minimized;
     private readonly List<string> _undoIds = [];
     private int _historyIndex = -1;
@@ -147,6 +144,12 @@
         {
             _hasRendered = true;
             _prevVisible = IsVisible;
+            // Default to 35% of screen width on first load
+            if (_panelSize < 0)
+            {
+                var screenWidth = await JS.InvokeAsync<int>("eval", "(window.innerWidth || 1200)");
+                _panelSize = Math.Clamp((int)(screenWidth * 0.35), 360, 700);
+            }
             await JS.InvokeVoidAsync("initChatPanelResize", "studio-chat-resize-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
             await SyncPanelCssVarsAsync();
             await JS.InvokeVoidAsync("initChatInputHistory", "scp-textarea", DotNetObjectReference.Create(this));
@@ -180,12 +183,14 @@
     private string GetPanelStyle()
     {
         if (!IsVisible || _minimized) return "";
-        return $"width: {_panelSize}px;";
+        var size = _panelSize > 0 ? _panelSize : 360;
+        return $"width: {size}px;";
     }
 
     private async Task SyncPanelCssVarsAsync()
     {
-        var size = (!IsVisible || _minimized) ? 0 : _panelSize;
+        var actualSize = _panelSize > 0 ? _panelSize : 360;
+        var size = (!IsVisible || _minimized) ? 0 : actualSize;
         await JS.InvokeVoidAsync("eval",
             $"document.documentElement.style.setProperty('--scp-panel-size','{size}px');");
     }

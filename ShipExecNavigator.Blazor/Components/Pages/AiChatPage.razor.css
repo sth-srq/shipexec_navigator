@@ -7,7 +7,26 @@
     gap: 0;
     background: transparent;
     overflow: hidden;
-    padding: 1rem 1.5rem 0;
+    padding: 0 1.5rem;
+}
+
+/* -- Brand title row (shared pattern) -- */
+.page-brand-row {
+    padding: 0.6rem 1rem 0;
+}
+
+.page-brand-title {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.page-brand-accent {
+    color: #337ab7;
+    font-weight: 700;
 }
 
 /* ── Header / tab bar (global styles in app.css) ── */
@@ -15,36 +34,38 @@
 .chat-export-btn {
     margin-left: auto;
     align-self: center;
-    background: transparent;
-    border: 1px solid #ccc;
-    color: #777;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
     border-radius: 4px;
-    padding: 0.3rem 0.75rem;
-    font-size: 0.78rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.15s;
 }
 
     .chat-export-btn:hover {
-        background: #e8e8e8;
-        color: #333;
+        background: rgba(255,255,255,0.25);
+        color: #fff;
     }
 
 .chat-clear-btn {
     align-self: center;
-    background: transparent;
-    border: 1px solid #ccc;
-    color: #777;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
     border-radius: 4px;
-    padding: 0.3rem 0.75rem;
-    font-size: 0.78rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.15s;
 }
 
     .chat-clear-btn:hover {
-        background: #e8e8e8;
-        color: #333;
+        background: rgba(255,255,255,0.25);
+        color: #fff;
     }
 
 /* ── Message list ── */
@@ -114,7 +135,7 @@
 .chat-bubble-body {
     padding: 0.7rem 1rem;
     border-radius: 18px;
-    font-size: 0.875rem;
+    font-size: 1rem;
     line-height: 1.6;
     white-space: normal;
     word-break: break-word;
@@ -398,7 +419,7 @@
     outline: none;
     background: #fafbfe;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    height: 2.6rem;
+    height: 3.2rem;
 }
 
     .chat-textarea:focus {
@@ -486,3 +507,6 @@
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+/* ── Dark-theme brand override ── */
+:global(.dark-theme) .page-brand-title { color: #c9d1d9; }

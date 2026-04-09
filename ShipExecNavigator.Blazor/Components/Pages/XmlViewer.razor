@@ -62,7 +62,7 @@
                 @if (_managementStudioUrl is not null)
                 {
                     <a class="btn-ms-link" href="@($"{_managementStudioUrl}{_currentCompanyId}")" target="_blank" rel="noopener"
-                       title="Open in ShipExec Management Studio">&#x1F517; Management Studio</a>
+                       title="Open in ShipExec Navigator">&#x1F517; Navigator</a>
                     <span class="source-badge source-badge--live">
                         &#x1F7E2; Live
                     </span>
@@ -91,6 +91,30 @@
 
     @if (rootNode != null)
     {
+        @if (_varianceEntries.Any(e => !e.IsHistorical))
+        {
+            <div class="apply-changes-bar">
+                <button class="apply-changes-bar-btn @(_applyChangesGlow ? "apply-changes-bar-btn--glow" : "")"
+                        @onclick="HandleApplyChangesFromBar"
+                        disabled="@(_isComputingDiff ? "disabled" : null)">
+                    @if (_isComputingDiff)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    &#x2714; Apply Changes (@_varianceEntries.Count(e => !e.IsHistorical))
+                </button>
+            </div>
+        }
+
+        <div class="preview-import-bar">
+            <button class="preview-changes-btn" @onclick="PreviewChanges" title="Open the variance panel to preview changes">
+                &#x1F50D; Preview Changes
+            </button>
+            <button class="import-variances-btn" @onclick="() => _showImportVariancesDialog = true" title="Import variances from a JSON file">
+                &#x1F4E5; Import Variances
+            </button>
+        </div>
+
         <div class="viewer-content-row">
 
         <div class="viewer-main-area">
@@ -151,25 +175,6 @@
                         }
                         &#x1F4CA; View Changes
                     </button>
-                    <div class="toolbar-dropdown" @onfocusout="() => _actionsDropdownOpen = false">
-                        <button class="btn-action toolbar-dropdown-toggle" @onclick="() => _actionsDropdownOpen = !_actionsDropdownOpen">
-                            &#x2699;&#xFE0F; Actions &#x25BE;
-                        </button>
-                        @if (_actionsDropdownOpen)
-                        {
-                            <div class="toolbar-dropdown-menu">
-                                <div class="toolbar-dropdown-section">Shippers</div>
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showImportShippersDialog = true; _actionsDropdownOpen = false; }">&#x1F4CC; Import Shippers</button>
-                                <button class="toolbar-dropdown-item" @onclick="async () => { _actionsDropdownOpen = false; await ExportShippersAsync(); }" disabled="@_isExportingShippers">&#x2B07; Export Shippers</button>
-                                <div class="toolbar-dropdown-section">Users</div>
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showUserManagement = true; _actionsDropdownOpen = false; }">&#x1F465; Manage Users</button>
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showImportUsersFromToolbar = true; _actionsDropdownOpen = false; }">&#x1F4CC; Import Users</button>
-                                <button class="toolbar-dropdown-item" @onclick="async () => { _actionsDropdownOpen = false; await ExportUsersFromToolbarAsync(); }" disabled="@_isExportingUsers">&#x2B07; Export Users</button>
-                                <div class="toolbar-dropdown-section">Profiles</div>
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showCompareProfilesDialog = true; _actionsDropdownOpen = false; }">&#x1F4CA; Compare Profiles</button>
-                            </div>
-                        }
-                    </div>
                     <button class="btn-action" @onclick="ExpandAll">Expand All</button>
                     <button class="btn-action" @onclick="CollapseAll">Collapse All</button>
                     <span class="depth-label">Depth</span>
@@ -343,6 +348,27 @@
                                         <span>&#x1F6E0; Test Build</span>
                                     }
                                 </button>
+                                @if (_sbrBuildSucceeded)
+                                {
+                                    <button class="sbr-deploy-btn @(_sbrDeploying ? "sbr-deploy-btn--busy" : "")"
+                                            title="Build Release, download DLL, and copy base64 to clipboard"
+                                            @onclick="DeploySbrAsync"
+                                            disabled="@(_sbrDeploying)">
+                                        @if (_sbrDeploying)
+                                        {
+                                            <span class="gt-spinner-sm"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>&#x1F680; Deploy</span>
+                                        }
+                                    </button>
+                                }
+                                <button class="sbr-chat-toggle @(_sbrChatVisible ? "sbr-chat-toggle--active" : "")"
+                                        title="@(_sbrChatVisible ? "Close AI chat" : "Chat with AI about this SBR")"
+                                        @onclick="ToggleSbrChat">
+                                    &#x1F4AC; Chat
+                                </button>
                                 <button class="cbr-btn-theme"
                                         title='@(_sbrViewerDark ? "Switch to light theme" : "Switch to dark theme")'
                                         @onclick="() => ToggleSbrViewerTheme()">
@@ -395,21 +421,107 @@
                                     {
                                         <div class="cbr-viewer-empty">&#x2190; Select a file to view</div>
                                     }
+                                    else if (_sbrEditing)
+                                    {
+                                        <textarea class="sbr-editor @(!_sbrViewerDark ? "sbr-editor--light" : "")" spellcheck="false"
+                                                  @bind="_sbrViewerSelectedContent"
+                                                  @bind:event="oninput"></textarea>
+                                    }
                                     else
                                     {
-                                        <div id="sbrCodeDisplay" class="cbr-code-display"></div>
+                                        <div id="sbrCodeDisplay" class="cbr-code-display"
+                                             @ondblclick="EnterSbrEditMode"></div>
                                     }
                                 </div>
+                                @if (_sbrViewerSelectedFile is not null)
+                                {
+                                    <div class="sbr-footer @(!_sbrViewerDark ? "sbr-footer--light" : "")">
+                                        @if (!_sbrEditing)
+                                        {
+                                            <button class="sbr-btn-edit" @onclick="EnterSbrEditMode" title="Switch to edit mode">
+                                                &#x270F; Edit
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="sbr-btn-save" @onclick="SaveSbrEdit">
+                                                &#x2714; Save
+                                            </button>
+                                            <button class="sbr-btn-cancel" @onclick="CancelSbrEdit">
+                                                &#x2715; Cancel
+                                            </button>
+                                        }
+                                    </div>
+                                }
                             }
                         </div>
                         @if (_sbrBuildOutput is not null)
                         {
-                            <div class="sbr-build-output">
+                            <div class="sbr-build-output @(!_sbrViewerDark ? "sbr-build-output--light" : "")">
                                 <div class="sbr-build-output-header">
                                     <span>&#x1F6E0; Build Output</span>
                                     <button class="sbr-build-output-close" @onclick="() => _sbrBuildOutput = null">&#x2715;</button>
                                 </div>
                                 <pre class="sbr-build-output-body">@_sbrBuildOutput</pre>
+                            </div>
+                        }
+                        @* ── SBR Chat Panel ── *@
+                        @if (_sbrChatVisible)
+                        {
+                            <div class="sbr-chat-panel @(!_sbrViewerDark ? "sbr-chat-panel--light" : "")">
+                                <div class="sbr-chat-header">
+                                    <span class="sbr-chat-title">&#x1F4AC; SBR Chat — @_sbrViewerSbr?.Name</span>
+                                    <div class="sbr-chat-actions">
+                                        <button class="sbr-chat-clear" @onclick="ClearSbrChat"
+                                                disabled="@(_sbrChatHistory.Count == 0)"
+                                                title="Clear chat">&#x1F5D1;</button>
+                                        <button class="sbr-chat-close" @onclick="ToggleSbrChat"
+                                                title="Close chat">&#x2715;</button>
+                                    </div>
+                                </div>
+                                <div class="sbr-chat-messages" id="sbr-chat-messages">
+                                    @if (_sbrChatHistory.Count == 0 && !_sbrChatThinking)
+                                    {
+                                        <div class="sbr-chat-empty">
+                                            Ask the AI about this SBR — request changes, ask questions, or describe what you want.
+                                        </div>
+                                    }
+                                    @foreach (var msg in _sbrChatHistory)
+                                    {
+                                        <div class="sbr-chat-bubble sbr-chat-bubble--@msg.Role">
+                                            <span class="sbr-chat-label">@(msg.Role == "user" ? "You" : "SBR Copilot")</span>
+                                            <div class="sbr-chat-body">@((MarkupString)FormatCbrChatMessage(msg.Content))</div>
+                                        </div>
+                                    }
+                                    @if (_sbrChatThinking)
+                                    {
+                                        <div class="sbr-chat-bubble sbr-chat-bubble--assistant">
+                                            <span class="sbr-chat-label">SBR Copilot</span>
+                                            <div class="sbr-chat-body sbr-chat-thinking">
+                                                <span></span><span></span><span></span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(_sbrChatError))
+                                {
+                                    <div class="sbr-chat-error">&#9888; @_sbrChatError</div>
+                                }
+                                <div class="sbr-chat-input-row">
+                                    <input type="text"
+                                           class="sbr-chat-input"
+                                           placeholder="Ask about this SBR…"
+                                           @bind="_sbrChatInput"
+                                           @bind:event="oninput"
+                                           @onkeydown="HandleSbrChatKeyDown"
+                                           disabled="@_sbrChatThinking" />
+                                    <button class="sbr-chat-send"
+                                            @onclick="SendSbrChatAsync"
+                                            disabled="@(string.IsNullOrWhiteSpace(_sbrChatInput) || _sbrChatThinking)"
+                                            title="Send">
+                                        &#x27A4;
+                                    </button>
+                                </div>
                             </div>
                         }
                     </div>
@@ -762,9 +874,14 @@
                         </button>
                         @if (_foundLogIds is not null)
                         {
-                            <button class="btn-clear-filter" @onclick="ClearLogFilter">&#x2715; Clear Filter</button>
-                        }
-                    }
+                                <button class="btn-clear-filter" @onclick="ClearLogFilter">&#x2715; Clear Filter</button>
+                                }
+                                <button class="logs-chat-toggle @(_logsChatVisible ? "logs-chat-toggle--active" : "")"
+                                        title="@(_logsChatVisible ? "Close AI chat" : "Chat with AI about these logs")"
+                                        @onclick="ToggleLogsChat">
+                                    &#x1F4AC; Chat
+                                </button>
+                            }
                 </div>
 
                 @if (!string.IsNullOrEmpty(_logsError))
@@ -887,6 +1004,65 @@
                 {
                     <div class="logs-empty">No log entries found for the selected date range.</div>
                 }
+                @* ── Logs Chat Panel ── *@
+                @if (_logsChatVisible)
+                {
+                    <div class="logs-chat-panel">
+                        <div class="logs-chat-header">
+                            <span class="logs-chat-title">&#x1F4AC; Logs Chat</span>
+                            <div class="logs-chat-actions">
+                                <button class="logs-chat-clear" @onclick="ClearLogsChat"
+                                        disabled="@(_logsChatHistory.Count == 0)"
+                                        title="Clear chat">&#x1F5D1;</button>
+                                <button class="logs-chat-close" @onclick="ToggleLogsChat"
+                                        title="Close chat">&#x2715;</button>
+                            </div>
+                        </div>
+                        <div class="logs-chat-messages" id="logs-chat-messages">
+                            @if (_logsChatHistory.Count == 0 && !_logsChatThinking)
+                            {
+                                <div class="logs-chat-empty">
+                                    Ask the AI to analyze, summarize, or investigate patterns in the current log data.
+                                </div>
+                            }
+                            @foreach (var msg in _logsChatHistory)
+                            {
+                                <div class="logs-chat-bubble logs-chat-bubble--@msg.Role">
+                                    <span class="logs-chat-label">@(msg.Role == "user" ? "You" : "Logs Copilot")</span>
+                                    <div class="logs-chat-body">@((MarkupString)FormatCbrChatMessage(msg.Content))</div>
+                                </div>
+                            }
+                            @if (_logsChatThinking)
+                            {
+                                <div class="logs-chat-bubble logs-chat-bubble--assistant">
+                                    <span class="logs-chat-label">Logs Copilot</span>
+                                    <div class="logs-chat-body logs-chat-thinking">
+                                        <span></span><span></span><span></span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(_logsChatError))
+                        {
+                            <div class="logs-chat-error">&#9888; @_logsChatError</div>
+                        }
+                        <div class="logs-chat-input-row">
+                            <input type="text"
+                                   class="logs-chat-input"
+                                   placeholder="Ask about these logs…"
+                                   @bind="_logsChatInput"
+                                   @bind:event="oninput"
+                                   @onkeydown="HandleLogsChatKeyDown"
+                                   disabled="@_logsChatThinking" />
+                            <button class="logs-chat-send"
+                                    @onclick="SendLogsChatAsync"
+                                    disabled="@(string.IsNullOrWhiteSpace(_logsChatInput) || _logsChatThinking)"
+                                    title="Send">
+                                &#x27A4;
+                            </button>
+                        </div>
+                    </div>
+                }
             </div>
         }
             </div>
@@ -952,6 +1128,36 @@
                   CanApply="true"
                   OnClose="() => _showDiffDialog = false" />
 
+@* ── Import Variances dialog ── *@
+@if (_showImportVariancesDialog)
+{
+    <div class="import-var-backdrop" @onclick="() => _showImportVariancesDialog = false">
+        <div class="import-var-modal" @onclick:stopPropagation>
+            <div class="import-var-header">
+                <span class="import-var-title">&#x1F4E5; Import Variances</span>
+                <button class="import-var-close" @onclick="() => _showImportVariancesDialog = false">&#x2715;</button>
+            </div>
+            <div class="import-var-body">
+                <p class="import-var-desc">Paste a JSON array of variances below to import them into the variance panel.</p>
+                <textarea class="import-var-textarea" spellcheck="false"
+                          @bind="_importVariancesJson"
+                          @bind:event="oninput"
+                          placeholder='[{"PathDescription":"...", "Description":"...", "ChangeType":"Modified", "OriginalXML":"...", "NewXML":"..."}]'></textarea>
+                @if (!string.IsNullOrEmpty(_importVariancesError))
+                {
+                    <div class="import-var-error">&#9888; @_importVariancesError</div>
+                }
+            </div>
+            <div class="import-var-footer">
+                <button class="import-var-btn" @onclick="ImportVariancesFromJson" disabled="@string.IsNullOrWhiteSpace(_importVariancesJson)">
+                    &#x1F4E5; Import
+                </button>
+                <button class="import-var-cancel" @onclick="() => _showImportVariancesDialog = false">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     // ── Load state ────────────────────────────────────────────────────────────
     private string? loadedFileName;
@@ -985,7 +1191,6 @@
     private readonly List<Variance> _pendingShipperVariances = [];
 
     // ── Toolbar dropdown state ────────────────────────────────────────────────
-    private bool _actionsDropdownOpen;
     private bool _showUserManagement;
     private bool _showImportUsersFromToolbar;
     private bool _isExportingUsers;
@@ -1014,6 +1219,306 @@
 
     // ── Entity index (complete, API-sourced) ──────────────────────────────────
     private CompanyEntityIndex? _entityIndex;
+
+    // ── Preview / Apply Changes bar state ─────────────────────────────────────
+    private bool _applyChangesGlow;
+
+    // ── Import Variances dialog state ─────────────────────────────────────────
+    private bool _showImportVariancesDialog;
+    private string _importVariancesJson = string.Empty;
+    private string? _importVariancesError;
+
+    // ── SBR chat state ────────────────────────────────────────────────────────
+    private List<ChatMessage> _sbrChatHistory = [];
+    private string            _sbrChatInput   = string.Empty;
+    private bool              _sbrChatThinking;
+    private string?           _sbrChatError;
+    private bool              _sbrChatVisible;
+
+    // ── SBR deploy state (build + DLL + base64) ──────────────────────────────
+    private bool   _sbrBuildSucceeded;
+    private bool   _sbrDeploying;
+    private string? _sbrDeployBase64;
+
+    // ── Logs chat state ───────────────────────────────────────────────────────
+    private List<ChatMessage> _logsChatHistory = [];
+    private string            _logsChatInput   = string.Empty;
+    private bool              _logsChatThinking;
+    private string?           _logsChatError;
+    private bool              _logsChatVisible;
+
+    private void PreviewChanges()
+    {
+        _variancePanelVisible = true;
+        _applyChangesGlow = true;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            await InvokeAsync(() =>
+            {
+                _applyChangesGlow = false;
+                StateHasChanged();
+            });
+        });
+    }
+
+    private async Task HandleApplyChangesFromBar()
+    {
+        await ViewChanges();
+    }
+
+    private void ImportVariancesFromJson()
+    {
+        _importVariancesError = null;
+        try
+        {
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var imported = System.Text.Json.JsonSerializer.Deserialize<List<Variance>>(_importVariancesJson, options);
+            if (imported is null || imported.Count == 0)
+            {
+                _importVariancesError = "No variances found in the provided JSON.";
+                return;
+            }
+            foreach (var v in imported)
+            {
+                if (v.Id == Guid.Empty) v.Id = Guid.NewGuid();
+                v.Timestamp = DateTime.Now;
+                _varianceEntries.Insert(0, v);
+            }
+            _showImportVariancesDialog = false;
+            _importVariancesJson = string.Empty;
+            _variancePanelVisible = true;
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            _importVariancesError = $"Invalid JSON: {ex.Message}";
+        }
+    }
+
+    // ── SBR chat methods ──────────────────────────────────────────────────────
+
+    private void ToggleSbrChat()
+    {
+        _sbrChatVisible = !_sbrChatVisible;
+    }
+
+    private async Task SendSbrChatAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_sbrChatInput) || _sbrChatThinking || _sbrViewerSbr is null) return;
+
+        var userText = _sbrChatInput.Trim();
+        _sbrChatInput    = string.Empty;
+        _sbrChatError    = null;
+        _sbrChatThinking = true;
+        _sbrChatHistory.Add(new ChatMessage("user", userText));
+        StateHasChanged();
+        await ScrollSbrChatAsync();
+
+        try
+        {
+            // Build context from the currently viewed SBR file
+            var contextCode = _sbrViewerSelectedContent ?? string.Empty;
+            var allFiles = string.Join("\n\n", _sbrViewerFiles.Select(kv => $"// === {kv.Key} ===\n{kv.Value}"));
+
+            var response = await AiChatService.SendMessageAsync(
+                _sbrChatHistory.Take(_sbrChatHistory.Count - 1).ToList(),
+                $"[SBR: {_sbrViewerSbr.Name}] [File: {_sbrViewerSelectedFile ?? "none"}]\n\nProject files:\n{allFiles}\n\nUser question: {userText}",
+                useRag: false);
+
+            _sbrChatHistory.Add(new ChatMessage("assistant", response.Message));
+        }
+        catch (Exception ex)
+        {
+            _sbrChatError = ex.Message;
+        }
+        finally
+        {
+            _sbrChatThinking = false;
+            StateHasChanged();
+            await ScrollSbrChatAsync();
+        }
+    }
+
+    private void ClearSbrChat()
+    {
+        _sbrChatHistory.Clear();
+        _sbrChatInput = string.Empty;
+        _sbrChatError = null;
+    }
+
+    private async Task HandleSbrChatKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendSbrChatAsync();
+    }
+
+    private async Task ScrollSbrChatAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await JSRuntime.InvokeVoidAsync("eval",
+                "document.getElementById('sbr-chat-messages')?.scrollTo({top:999999,behavior:'smooth'})");
+        }
+        catch { }
+    }
+
+    // ── SBR Deploy (build + DLL + base64) ────────────────────────────────────
+
+    private async Task DeploySbrAsync()
+    {
+        if (_sbrDeploying || _sbrViewerFiles.Count == 0) return;
+        _sbrDeploying = true;
+        _sbrDeployBase64 = null;
+        StateHasChanged();
+
+        string? buildDir = null;
+        try
+        {
+            buildDir = Path.Combine(Path.GetTempPath(), $"sbr_deploy_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(buildDir);
+
+            foreach (var (relPath, content) in _sbrViewerFiles)
+            {
+                var fullPath = Path.Combine(buildDir, relPath);
+                var dir = Path.GetDirectoryName(fullPath);
+                if (dir is not null) Directory.CreateDirectory(dir);
+                await File.WriteAllTextAsync(fullPath, content);
+            }
+
+            var psi = new System.Diagnostics.ProcessStartInfo("dotnet", "build --nologo --configuration Release")
+            {
+                WorkingDirectory = buildDir,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc is null)
+            {
+                _sbrBuildOutput = "Failed to start dotnet build process.";
+                return;
+            }
+
+            await proc.StandardOutput.ReadToEndAsync();
+            await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+
+            if (proc.ExitCode != 0)
+            {
+                _sbrBuildOutput = "❌ Build failed. Fix errors and try again.";
+                return;
+            }
+
+            // Find the output DLL
+            var dllFiles = Directory.GetFiles(buildDir, "*.dll", SearchOption.AllDirectories)
+                .Where(f => f.Contains(Path.Combine("bin", "Release")))
+                .Where(f => !Path.GetFileName(f).StartsWith("System.") && !Path.GetFileName(f).StartsWith("Microsoft."))
+                .ToList();
+
+            var targetDll = dllFiles.FirstOrDefault(f =>
+                Path.GetFileNameWithoutExtension(f).Equals(_sbrViewerSbr?.Name, StringComparison.OrdinalIgnoreCase))
+                ?? dllFiles.FirstOrDefault();
+
+            if (targetDll is null)
+            {
+                _sbrBuildOutput = "Build succeeded but no output DLL found.";
+                return;
+            }
+
+            var dllBytes = await File.ReadAllBytesAsync(targetDll);
+            _sbrDeployBase64 = Convert.ToBase64String(dllBytes);
+
+            // Download the DLL
+            var safeName = _sbrViewerSbr?.Name?.Replace(" ", "_") ?? "sbr";
+            using var stream = new DotNetStreamReference(new MemoryStream(dllBytes));
+            await JSRuntime.InvokeVoidAsync("downloadFileFromStream", $"{safeName}.dll", stream);
+
+            // Also copy the base64 to clipboard
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", _sbrDeployBase64);
+            _sbrBuildOutput = $"✅ Build succeeded. DLL downloaded and base64 string copied to clipboard ({_sbrDeployBase64.Length:N0} chars).";
+        }
+        catch (Exception ex)
+        {
+            _sbrBuildOutput = $"Deploy error: {ex.Message}";
+        }
+        finally
+        {
+            _sbrDeploying = false;
+            try { if (buildDir is not null && Directory.Exists(buildDir)) Directory.Delete(buildDir, true); } catch { }
+            StateHasChanged();
+        }
+    }
+
+    // ── Logs chat methods ─────────────────────────────────────────────────────
+
+    private void ToggleLogsChat()
+    {
+        _logsChatVisible = !_logsChatVisible;
+    }
+
+    private async Task SendLogsChatAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_logsChatInput) || _logsChatThinking) return;
+
+        var userText = _logsChatInput.Trim();
+        _logsChatInput    = string.Empty;
+        _logsChatError    = null;
+        _logsChatThinking = true;
+        _logsChatHistory.Add(new ChatMessage("user", userText));
+        StateHasChanged();
+        await ScrollLogsChatAsync();
+
+        try
+        {
+            var logsContext = _logsJson ?? "No logs loaded.";
+            var response = await AiChatService.SendMessageAsync(
+                _logsChatHistory.Take(_logsChatHistory.Count - 1).ToList(),
+                $"[Logs Context - {_logMode} mode, {_logStart:yyyy-MM-dd} to {_logEnd:yyyy-MM-dd}]\n\nLog data (JSON):\n{logsContext}\n\nUser question: {userText}",
+                useRag: false);
+
+            _logsChatHistory.Add(new ChatMessage("assistant", response.Message));
+        }
+        catch (Exception ex)
+        {
+            _logsChatError = ex.Message;
+        }
+        finally
+        {
+            _logsChatThinking = false;
+            StateHasChanged();
+            await ScrollLogsChatAsync();
+        }
+    }
+
+    private void ClearLogsChat()
+    {
+        _logsChatHistory.Clear();
+        _logsChatInput = string.Empty;
+        _logsChatError = null;
+    }
+
+    private async Task HandleLogsChatKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendLogsChatAsync();
+    }
+
+    private async Task ScrollLogsChatAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await JSRuntime.InvokeVoidAsync("eval",
+                "document.getElementById('logs-chat-messages')?.scrollTo({top:999999,behavior:'smooth'})");
+        }
+        catch { }
+    }
 
     private async Task HandleGoToProfileAsync(string profileName)
     {
@@ -1081,6 +1586,8 @@
     private HashSet<int>  _sbrViewingIds = [];
     private bool          _sbrBuildRunning;
     private string?       _sbrBuildOutput;
+    private bool          _sbrEditing;
+    private string?       _sbrOriginalContent;
 
     private List<CbrInfo> _cbrs        = [];
     private bool          _cbrLoading;
@@ -1630,6 +2137,11 @@
     private async Task SelectSbrFileAsync(string filePath)
     {
         if (!_sbrViewerFiles.TryGetValue(filePath, out var content)) return;
+        // Exit edit mode when switching files (auto-save current edits)
+        if (_sbrEditing && _sbrViewerSelectedFile is not null && _sbrViewerSelectedContent is not null)
+            _sbrViewerFiles[_sbrViewerSelectedFile] = _sbrViewerSelectedContent;
+        _sbrEditing = false;
+        _sbrOriginalContent = null;
         _sbrViewerSelectedFile    = filePath;
         _sbrViewerSelectedContent = content;
         StateHasChanged();
@@ -1671,12 +2183,46 @@
         catch { /* element may not exist yet */ }
     }
 
+    /// <summary>Switch to edit mode for the currently selected SBR file.</summary>
+    private void EnterSbrEditMode()
+    {
+        if (_sbrViewerSelectedFile is null || _sbrViewerSelectedContent is null) return;
+        _sbrOriginalContent = _sbrViewerSelectedContent;
+        _sbrEditing = true;
+    }
+
+    /// <summary>Save the edited content back into the decompiled file map.</summary>
+    private async Task SaveSbrEdit()
+    {
+        if (_sbrViewerSelectedFile is not null && _sbrViewerSelectedContent is not null)
+        {
+            _sbrViewerFiles[_sbrViewerSelectedFile] = _sbrViewerSelectedContent;
+            _sbrBuildSucceeded = false; // edits invalidate the last build
+        }
+        _sbrEditing = false;
+        _sbrOriginalContent = null;
+        StateHasChanged();
+        await RenderSbrCodeAsync();
+    }
+
+    /// <summary>Cancel editing and revert to the original content.</summary>
+    private async Task CancelSbrEdit()
+    {
+        if (_sbrOriginalContent is not null)
+            _sbrViewerSelectedContent = _sbrOriginalContent;
+        _sbrEditing = false;
+        _sbrOriginalContent = null;
+        StateHasChanged();
+        await RenderSbrCodeAsync();
+    }
+
     /// <summary>Write decompiled sources to a temp dir, run dotnet build, and capture output.</summary>
     private async Task TestBuildSbrAsync()
     {
         if (_sbrBuildRunning || _sbrViewerFiles.Count == 0) return;
         _sbrBuildRunning = true;
         _sbrBuildOutput = null;
+        _sbrBuildSucceeded = false;
         StateHasChanged();
 
         string? buildDir = null;
@@ -1719,7 +2265,8 @@
             if (!string.IsNullOrWhiteSpace(stdout)) result.AppendLine(stdout.TrimEnd());
             if (!string.IsNullOrWhiteSpace(stderr)) result.AppendLine(stderr.TrimEnd());
             result.AppendLine();
-            result.AppendLine(proc.ExitCode == 0 ? "✅ Build succeeded." : "❌ Build failed.");
+            _sbrBuildSucceeded = proc.ExitCode == 0;
+            result.AppendLine(_sbrBuildSucceeded ? "✅ Build succeeded." : "❌ Build failed.");
 
             _sbrBuildOutput = result.ToString();
         }

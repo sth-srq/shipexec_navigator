@@ -1,6 +1,9 @@
 /* -- Collapsed strip ------------------------------------------------------- */
 .vp-strip {
-    flex-shrink: 0;
+    position: fixed;
+    top: 160px;
+    right: 12px;
+    z-index: 900;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -9,41 +12,39 @@
 
 /* -- Expanded panel -------------------------------------------------------- */
 .vp-panel {
-    width: 256px;
-    flex-shrink: 0;
+    width: 280px;
+    position: fixed;
+    top: 160px;
+    right: 12px;
+    z-index: 900;
     background: linear-gradient(180deg, #ffffff 0%, #fafbfe 100%);
-    border: 1px solid rgba(43, 63, 107, 0.1);
-    border-radius: 4px;
+    border: 1px solid rgba(43, 63, 107, 0.15);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - 300px);
+    max-height: calc(100dvh - 180px);
     min-height: 0;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
     overflow: hidden;
+    animation: vp-panel-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* -- Header ---------------------------------------------------------------- */
 .vp-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.6rem 0.85rem;
+    justify-content: flex-end;
+    padding: 0.4rem 0.6rem;
     border-bottom: 1px solid #ddd;
     background: #337ab7;
-    border-radius: 14px 14px 0 0;
+    border-radius: 8px 8px 0 0;
     flex-shrink: 0;
-}
-
-.vp-title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #ffffff;
 }
 
 .vp-header-actions {
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.25rem;
 }
 
 .vp-count {
@@ -60,14 +61,14 @@
     background: none;
     border: 1px solid rgba(255, 255, 255, 0.5);
     color: rgba(255, 255, 255, 0.85);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     cursor: pointer;
-    padding: 0.15rem 0.45rem;
+    padding: 0.1rem 0.35rem;
     border-radius: 3px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.2rem;
     transition: color 0.1s, background-color 0.1s, border-color 0.1s;
     white-space: nowrap;
 }
@@ -105,15 +106,15 @@
     background: #337ab7;
     border: 1px solid #2e6da4;
     color: #fff;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 600;
     cursor: pointer;
-    padding: 0.2rem 0.55rem;
-    border-radius: 4px;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
-    gap: 0.2rem;
+    gap: 0.15rem;
     transition: background 0.15s, box-shadow 0.15s;
     white-space: nowrap;
 }
@@ -512,7 +513,7 @@
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #ddd;
     background: #337ab7;
-    border-radius: 14px 14px 0 0;
+    border-radius: 8px 8px 0 0;
 }
 
 .vp-detail-title {
@@ -741,14 +742,15 @@
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
     .vp-panel {
-        background: linear-gradient(180deg, #333 0%, #0f172a 100%);
-        border-color: rgba(148, 163, 184, 0.12);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        border-color: rgba(148, 163, 184, 0.15);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
     }
 
     .vp-header {
         background: linear-gradient(135deg, #333 0%, #0f172a 100%);
         border-bottom-color: rgba(148, 163, 184, 0.08);
+        border-radius: 8px 8px 0 0;
     }
 
     .vp-title {
@@ -864,7 +866,7 @@
 
 /* -- Flash highlight for newly added variances ----------------------------- */
 .vp-entry--flash {
-    animation: vp-slide-in 0.5s ease-out;
+    animation: vp-slide-in 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     z-index: 10;
 }
@@ -876,16 +878,21 @@
     background: rgba(59, 130, 246, 0.12);
     border-radius: 3px;
     pointer-events: none;
-    animation: vp-flash-fade 1.8s ease-in-out forwards;
-    animation-delay: 0.5s;
+    animation: vp-flash-fade 2.5s ease-in-out forwards;
+    animation-delay: 0.7s;
 }
 
 @keyframes vp-slide-in {
-    0%   { transform: translateX(100%); opacity: 0.5; }
+    0%   { transform: translateX(100%); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes vp-flash-fade {
     0%   { opacity: 1; }
     100% { opacity: 0; }
+}
+
+@keyframes vp-panel-slide-in {
+    0%   { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
 }

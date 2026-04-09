@@ -7,7 +7,7 @@
 @inject AlertService AlertService
 @inject IJSRuntime JS
 
-<PageTitle>Tools — ShipExec™ Management Studio</PageTitle>
+<PageTitle>Tools — ShipExec™ Navigator</PageTitle>
 
 <div class="tools-page">
 
@@ -55,14 +55,9 @@
                         Supports printer label submission, scale reads, and system information requests over HTTP or HTTPS.
                     </div>
                     <div class="tool-card-footer">
-                        <div class="tool-btn-row">
-                            <a class="tool-open-btn" href="/downloads/ShipExecNavigator_ShipExecSupportClientChecker.html" target="_blank" rel="noopener">
-                                &#x1F517; Open
-                            </a>
-                            <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ShipExecSupportClientChecker.html")'>
-                                &#x1F4C4; Save as HTML
-                            </button>
-                        </div>
+                        <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ShipExecSupportClientChecker.html")'>
+                            &#x2B07;&#xFE0F; Download
+                        </button>
                     </div>
                 </div>
             </div>
@@ -79,14 +74,9 @@
                         transaction grouping, full-entry detail view, and re-export of visible rows.
                     </div>
                     <div class="tool-card-footer">
-                        <div class="tool-btn-row">
-                            <a class="tool-open-btn" href="/downloads/ShipExecNavigator_ShipExecLogViewer.html" target="_blank" rel="noopener">
-                                &#x1F517; Open
-                            </a>
-                            <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ShipExecLogViewer.html")'>
-                                &#x1F4C4; Save as HTML
-                            </button>
-                        </div>
+                        <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ShipExecLogViewer.html")'>
+                            &#x2B07;&#xFE0F; Download
+                        </button>
                     </div>
                 </div>
             </div>
@@ -175,14 +165,9 @@
                         live search, expandable row detail, and filtered CSV re-export.
                     </div>
                     <div class="tool-card-footer">
-                        <div class="tool-btn-row">
-                            <a class="tool-open-btn" href="/downloads/ShipExecNavigator_ProfilesDiffViewer.html" target="_blank" rel="noopener">
-                                &#x1F517; Open
-                            </a>
-                            <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ProfilesDiffViewer.html")'>
-                                &#x1F4C4; Save as HTML
-                            </button>
-                        </div>
+                        <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ProfilesDiffViewer.html")'>
+                            &#x2B07;&#xFE0F; Download
+                        </button>
                     </div>
                 </div>
             </div>
@@ -273,6 +258,32 @@
                     <div class="tool-card-footer">
                         <button class="tool-download-btn" disabled="@(!connected)" @onclick="() => _showCompareProfilesDialog = true">
                             &#x1F4CA; Compare Profiles
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x1F4DD;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Summarize Company</div>
+                    <div class="tool-card-desc">
+                        Generate a comprehensive AI-powered report of the active company's configuration.
+                        Includes profiles, shippers, users, business rules, adapters, and more.
+                        Downloads as a PDF summary.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected || _isSummarizing)" @onclick="SummarizeCompanyAsync">
+                            @if (_isSummarizing)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span>Generating&hellip;</span>
+                            }
+                            else
+                            {
+                                <span>&#x1F4DD; Summarize</span>
+                            }
                         </button>
                     </div>
                 </div>
@@ -447,6 +458,7 @@
     private bool _showCompareProfilesDialog;
     private bool _isExportingShippers;
     private bool _isExportingUsers;
+    private bool _isSummarizing;
 
     protected override void OnParametersSet()
     {
@@ -609,6 +621,40 @@
         finally
         {
             _isExportingUsers = false;
+        }
+    }
+
+    private async Task SummarizeCompanyAsync()
+    {
+        _isSummarizing = true;
+        StateHasChanged();
+        try
+        {
+            var company = ShipExecService.GetCurrentCompany();
+            if (company is null) return;
+
+            var companyXml = await ShipExecService.GetCompanyXmlAsync(company.Id, company.Name ?? "");
+            var prompt = $"Generate a comprehensive summary report for this ShipExec company configuration. " +
+                $"Include sections for: Company Overview, Profiles, Shippers, Users, Business Rules (SBR and CBR), " +
+                $"Adapter Registrations, Clients, and any notable configuration items. " +
+                $"Format as a well-structured plain-text report with headers and bullet points.\n\n" +
+                $"Company XML:\n{companyXml}";
+
+            var response = await CbrAnalysisService.AnalyzeCbrAsync(prompt);
+
+            // Download as text file (PDF generation would require a heavy library)
+            var companySlug = (company.Name ?? "company").Replace(" ", "_");
+            var filename = $"{companySlug}_Summary_{DateTime.Now:yyyyMMdd}.txt";
+            await JS.InvokeVoidAsync("downloadFile", filename, response, "text/plain");
+        }
+        catch (Exception ex)
+        {
+            await AlertService.ShowAlertAsync($"Summarize failed: {ex.Message}");
+        }
+        finally
+        {
+            _isSummarizing = false;
+            StateHasChanged();
         }
     }
 }

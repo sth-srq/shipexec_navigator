@@ -6,6 +6,25 @@
     flex: 1;
 }
 
+/* -- Brand title row (shared pattern) -- */
+.page-brand-row {
+    padding: 0.6rem 1rem 0;
+}
+
+.page-brand-title {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.page-brand-accent {
+    color: #337ab7;
+    font-weight: 700;
+}
+
 /* Tab bar styles live in app.css */
 
 /* ── Content panel ── */
@@ -98,3 +117,6 @@
 .debug-btn--blue:hover {
     background: #334155;
 }
+
+/* ── Dark-theme brand override ── */
+:global(.dark-theme) .page-brand-title { color: #c9d1d9; }

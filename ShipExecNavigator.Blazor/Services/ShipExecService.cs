@@ -1986,7 +1986,7 @@ public sealed class ShipExecService(
     {
         if (string.IsNullOrEmpty(_adminUrl)) return null;
         // Admin URL format: https://<server>/ShipExecManagementStudioApi/api/AdministrationService/
-        // Management Studio: https://<server>/ShipExecManagementStudio/#!/company/
+        // Navigator: https://<server>/ShipExecManagementStudio/#!/company/
         try
         {
             var uri = new Uri(_adminUrl);
