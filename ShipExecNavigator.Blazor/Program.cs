@@ -44,14 +44,7 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
     builder.Services.AddScoped<IShipExecService, ShipExecService>();
     builder.Services.AddScoped<IXmlRefLookupService, XmlRefLookupService>();
     builder.Services.AddSingleton<AlertService>();
-
-    // Toggle between "Qdrant" (vector DB) and "Local" (in-memory JSON index)
-    var vectorProvider = builder.Configuration["VectorSearch:Provider"] ?? "Local";
-    if (vectorProvider.Equals("Qdrant", StringComparison.OrdinalIgnoreCase))
-        builder.Services.AddSingleton<IVectorSearchService, QdrantSearchService>();
-    else
-        builder.Services.AddSingleton<IVectorSearchService, InMemoryRagService>();
-
+    builder.Services.AddSingleton<IVectorSearchService, InMemoryRagService>();
     builder.Services.AddHttpClient();
     builder.Services.AddScoped<IAiChatService, SemanticKernelChatService>();
     builder.Services.AddScoped<ICbrAnalysisService, CbrAnalysisService>();
