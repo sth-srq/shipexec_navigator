@@ -949,7 +949,7 @@ namespace ShipExecNavigator.BusinessLogic
         /// </summary>
         public byte[]? GetServerBusinessRuleFileBytes(string name, string? version)
         {
-            System.Diagnostics.Debugger.Break();
+            //System.Diagnostics.Debugger.Break();
             _logger.LogTrace(">> GetServerBusinessRuleFileBytes | Name={Name} Version={Version} CompanyId={CompanyId}", name, version, _companyId);
 
             var accessToken = GetAccessToken();
