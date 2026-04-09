@@ -119,6 +119,33 @@
     margin-top: 0.25rem;
 }
 
+.connect-stored-hint {
+    background-color: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    color: #1e40af;
+    font-size: 0.79rem;
+    padding: 0.4rem 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connect-clear-btn {
+    background: none;
+    border: none;
+    color: #dc2626;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.connect-clear-btn:hover {
+    color: #991b1b;
+}
+
 /* ── Footer row ─────────────────────────────────────────────────────────── */
 .dlg-footer {
     display: flex;

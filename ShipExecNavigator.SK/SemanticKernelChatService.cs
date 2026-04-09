@@ -7,6 +7,7 @@ using ShipExecNavigator.SK.Plugins;
 using ShipExecNavigator.Shared.AI;
 using ShipExecNavigator.Shared.Interfaces;
 using ShipExecNavigator.Shared.Logging;
+using ShipExecNavigator.Shared.Models;
 using AppChatMessage = ShipExecNavigator.Shared.Interfaces.ChatMessage;
 
 namespace ShipExecNavigator.SK;
@@ -75,6 +76,7 @@ public sealed class SemanticKernelChatService : IAiChatService
         string? userMetaContext = null,
         string? cbrsContext = null,
         string? logsContext = null,
+        CompanyEntityIndex? entityIndex = null,
         CancellationToken ct = default)
     {
         var endpoint   = _configuration["AzureOpenAI:Endpoint"]        ?? string.Empty;
@@ -87,14 +89,15 @@ public sealed class SemanticKernelChatService : IAiChatService
         var sw      = System.Diagnostics.Stopwatch.StartNew();
         var preview = userMessage.Length > 200 ? userMessage[..200] + "..." : userMessage;
         var hasXml  = !string.IsNullOrWhiteSpace(xmlContext);
+        var hasIndex = entityIndex is not null;
         var hasUsers = !string.IsNullOrWhiteSpace(usersContext);
         var hasCbrs  = !string.IsNullOrWhiteSpace(cbrsContext);
         var hasLogs  = !string.IsNullOrWhiteSpace(logsContext);
-        _logger.LogTrace(">> SendMessageAsync | Deployment={Deployment} UseRag={UseRag} HasXml={HasXml} HasUsers={HasUsers} HasCbrs={HasCbrs} HasLogs={HasLogs} History={History}",
-            deployment, useRag, hasXml, hasUsers, hasCbrs, hasLogs, history.Count);
+        _logger.LogTrace(">> SendMessageAsync | Deployment={Deployment} UseRag={UseRag} HasXml={HasXml} HasIndex={HasIndex} HasUsers={HasUsers} HasCbrs={HasCbrs} HasLogs={HasLogs} History={History}",
+            deployment, useRag, hasXml, hasIndex, hasUsers, hasCbrs, hasLogs, history.Count);
         _logger.LogInformation(
-            "AzureOpenAI request | Deployment={Deployment} UseRag={UseRag} HasXmlContext={HasXml} HasUsersContext={HasUsers} HasCbrsContext={HasCbrs} HasLogsContext={HasLogs} HistoryCount={History} MessagePreview={Preview}",
-            deployment, useRag, hasXml, hasUsers, hasCbrs, hasLogs, history.Count, preview);
+            "AzureOpenAI request | Deployment={Deployment} UseRag={UseRag} HasXmlContext={HasXml} HasEntityIndex={HasIndex} HasUsersContext={HasUsers} HasCbrsContext={HasCbrs} HasLogsContext={HasLogs} HistoryCount={History} MessagePreview={Preview}",
+            deployment, useRag, hasXml, hasIndex, hasUsers, hasCbrs, hasLogs, history.Count, preview);
 
         var systemPrompt =
             "You are a helpful assistant for ShipExec Navigator, a tool for managing ShipExec " +
@@ -126,7 +129,7 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "whenever the user asks about ShipExec features, configuration options, or concepts " +
                 "that may be covered in the documentation.";
 
-        if (hasXml)
+        if (hasXml && !hasIndex)
             systemPrompt +=
                 "\n\nThe user has a ShipExec XML configuration loaded in the Navigator. " +
                 "When asked to hide, filter, or manipulate shippers or other XML elements, " +
@@ -164,6 +167,34 @@ public sealed class SemanticKernelChatService : IAiChatService
                 "(e.g. `ClientBusinessRuleId` references an existing Client Business Rule, " +
                 "`ServerBusinessRuleId` references a Server Business Rule, etc.). " +
                 "Some of these referenced entities are defined at higher levels in the configuration hierarchy.\n" +
+                NavigatorDomCheatSheet.Content;
+
+        if (hasIndex)
+            systemPrompt +=
+                "\n\nThe user has a ShipExec company configuration loaded. " +
+                "A complete entity index is available — ALL entity categories are indexed regardless of " +
+                "which tree nodes the user has expanded in the UI.\n\n" +
+                "**Entity manifest (categories and entities):**\n" + entityIndex!.ManifestJson + "\n\n" +
+                "To get full field-level details for any category, call the `get_category_details` function.\n\n" +
+                "**Shipper operations:**\n" +
+                "- FIND/SEARCH: call `find_shippers`\n" +
+                "- DELETE/REMOVE: call `delete_shippers`, then respond with action type \"shipper-delete\"\n" +
+                "- EDIT/UPDATE: call `edit_shippers`, then respond with action type \"shipper-edit\"\n" +
+                "- ADD/CREATE: respond with action type \"shipper-add\" (no plugin call needed)\n\n" +
+                "**Generic entity operations** (Profile, Site, CarrierRoute, ClientBusinessRule, " +
+                "DataConfigurationMapping, DocumentConfiguration, Machine, PrinterConfiguration, " +
+                "PrinterDefinition, ScaleConfiguration, Schedule, ServerBusinessRule, SourceConfiguration):\n" +
+                "- FIND/INSPECT: call `find_entities` or `get_category_details`\n" +
+                "- DELETE/REMOVE: call `delete_entities`, then respond with action type \"entity-delete\"\n" +
+                "- EDIT/UPDATE: call `edit_entities`, then respond with action type \"entity-edit\"\n\n" +
+                "Do NOT use action type \"javascript\" for entity operations.\n\n" +
+                "**Profile composition & cross-referencing:** Profiles are composed of other entities. " +
+                "When a user asks whether something is IN a profile, USED BY a profile, CONTAINED in a profile, " +
+                "OR asks which entities are associated with which profiles (in either direction), " +
+                "look for BOTH child elements (nested entities) AND ID reference fields " +
+                "(e.g. `ClientBusinessRuleId`, `ServerBusinessRuleId`, `SiteId`, etc.). " +
+                "Some of these referenced entities are defined at higher levels in the configuration hierarchy.\n" +
+                "Call `get_category_details` for the relevant categories to resolve ID references.\n" +
                 NavigatorDomCheatSheet.Content;
 
         if (hasUsers)
@@ -212,7 +243,13 @@ public sealed class SemanticKernelChatService : IAiChatService
             .AddAzureOpenAIChatCompletion(deployment, endpoint, apiKey)
             .Build();
 
-        if (hasXml)
+        CompanyIndexPlugin? indexPlugin = null;
+        if (hasIndex)
+        {
+            indexPlugin = new CompanyIndexPlugin(entityIndex!);
+            kernel.ImportPluginFromObject(indexPlugin, "CompanyIndex");
+        }
+        else if (hasXml)
         {
             kernel.ImportPluginFromObject(new ShipperXmlPlugin(xmlContext!), "ShipperXml");
             kernel.ImportPluginFromObject(new EntityXmlPlugin(xmlContext!), "EntityXml");
@@ -242,7 +279,7 @@ public sealed class SemanticKernelChatService : IAiChatService
         chatHistory.AddUserMessage(userMessage);
 
         var executionSettings = new AzureOpenAIPromptExecutionSettings();
-        if (hasXml || hasUsers || useRag || hasCbrs || hasLogs)
+        if (hasXml || hasIndex || hasUsers || useRag || hasCbrs || hasLogs)
             executionSettings.FunctionChoiceBehavior = FunctionChoiceBehavior.Auto();
 
         try
@@ -251,19 +288,29 @@ public sealed class SemanticKernelChatService : IAiChatService
                 chatHistory, executionSettings, kernel, ct);
             var content = result.Content ?? "(empty response)";
             sw.Stop();
-            _logger.LogInformation(
-                "AzureOpenAI response | Deployment={Deployment} ResponseLength={Length} DurationMs={DurationMs}",
-                deployment, content.Length, sw.ElapsedMilliseconds);
+
+            var accessedCategories = indexPlugin?.AccessedCategories.ToList() ?? [];
+            if (accessedCategories.Count > 0)
+                _logger.LogInformation(
+                    "AzureOpenAI response | Deployment={Deployment} ResponseLength={Length} DurationMs={DurationMs} AccessedCategories={Categories}",
+                    deployment, content.Length, sw.ElapsedMilliseconds, string.Join(", ", accessedCategories));
+            else
+                _logger.LogInformation(
+                    "AzureOpenAI response | Deployment={Deployment} ResponseLength={Length} DurationMs={DurationMs}",
+                    deployment, content.Length, sw.ElapsedMilliseconds);
+
             try
             {
-                return System.Text.Json.JsonSerializer.Deserialize<AiChatResponse>(content,
+                var response = System.Text.Json.JsonSerializer.Deserialize<AiChatResponse>(content,
                     new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))
                     ?? new AiChatResponse { Message = content };
+                response.ReferencedCategories = accessedCategories;
+                return response;
             }
             catch (System.Text.Json.JsonException)
             {
                 _logger.LogWarning("SK response was not valid JSON; treating as plain text.");
-                return new AiChatResponse { Message = content };
+                return new AiChatResponse { Message = content, ReferencedCategories = accessedCategories };
             }
         }
         catch (Exception ex)

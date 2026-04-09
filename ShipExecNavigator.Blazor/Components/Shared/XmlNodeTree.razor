@@ -195,7 +195,7 @@
         <div class="xml-children" style="--depth-color: @GetDepthColor()">
             @foreach (var child in Node.Children)
             {
-                @if (!IsHiddenChild(child))
+                @if (!IsHiddenChild(child) && !IsFilteredOut(child))
                 {
                     <XmlNodeTree Node="child" ParentEntityType="@(IsRefEntityParent() ? Node.NodeName : null)" />
                 }
@@ -221,6 +221,11 @@
         // GUID Id: only show when the parent element is a ref entity (Role, Permission)
         return !IsRefEntityParent();
     }
+
+    private bool IsFilteredOut(XmlNodeViewModel child) =>
+        !string.IsNullOrEmpty(TreeFilterCategory)
+        && Node.Depth == 0
+        && !child.NodeName.Equals(TreeFilterCategory, StringComparison.OrdinalIgnoreCase);
 
     [Parameter, EditorRequired]
     public XmlNodeViewModel Node { get; set; } = default!;
@@ -478,6 +483,9 @@
 
     [CascadingParameter(Name = "OnLazyLoadAsync")]
     private Func<XmlNodeViewModel, Task>? OnLazyLoadAsync { get; set; }
+
+    [CascadingParameter(Name = "TreeFilterCategory")]
+    private string? TreeFilterCategory { get; set; }
 
     /// <summary>
     /// Set by the parent XmlNodeTree when it is a ref entity (Role, Permission).

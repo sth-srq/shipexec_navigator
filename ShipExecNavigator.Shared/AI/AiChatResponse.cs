@@ -10,6 +10,15 @@ public class AiChatResponse
 
     [JsonPropertyName("action")]
     public AiChatAction? Action { get; set; }
+
+    /// <summary>
+    /// Entity categories that the AI accessed during its function-calling loop
+    /// (e.g. "Shippers", "Profiles").  The UI uses this to auto-expand the
+    /// corresponding tree nodes so the user can see the referenced data.
+    /// This is populated server-side and never sent by the LLM.
+    /// </summary>
+    [JsonIgnore]
+    public List<string> ReferencedCategories { get; set; } = [];
 }
 
 public class AiChatAction

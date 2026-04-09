@@ -15,6 +15,13 @@ public interface IShipExecService
     Task<XmlNodeViewModel> BuildCompanySkeletonAsync();
     Task LoadCategoryChildrenAsync(XmlNodeViewModel categoryNode);
 
+    /// <summary>
+    /// Builds a complete entity index by fetching all entity categories from the API.
+    /// The index is independent of the UI tree expansion state and includes every entity
+    /// across all categories.
+    /// </summary>
+    Task<CompanyEntityIndex> BuildEntityIndexAsync();
+
     // ── Diff / apply (deferred to "View Changes" time) ──────────────────────
     Task<string> GetCompanyXmlAsync(Guid companyId, string companyName, string path = "", HashSet<string>? loadedSections = null);
     Task<DiffResult> GetDiffAsync(string originalXml, string modifiedXml);

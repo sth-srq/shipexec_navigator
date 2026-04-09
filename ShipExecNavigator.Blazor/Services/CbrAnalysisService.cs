@@ -123,7 +123,7 @@ public sealed class CbrAnalysisService(
         if (string.IsNullOrWhiteSpace(apiKey))
             return "// ⚠️ Azure OpenAI is not configured. Set AzureOpenAI:ApiKey in appsettings.json.";
 
-        var helperPath = Path.Combine(env.WebRootPath, "downloads", "CBRHelper.js");
+        var helperPath = Path.Combine(env.WebRootPath, "downloads", "ShipExecNavigator_CBRHelper.js");
         if (!File.Exists(helperPath))
             return $"// ⚠️ CBRHelper.js not found at: {helperPath}";
 

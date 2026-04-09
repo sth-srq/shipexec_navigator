@@ -186,6 +186,7 @@ public sealed class ShipExecService(
                 ("Clients",                   "Clients"),
                 ("Profiles",                  "Profiles"),
                 ("Sites",                     "Sites"),
+                ("Users",                     "Users"),
                 ("AdapterRegistrations",      "AdapterRegistrations"),
                 ("CarrierRoutes",             "CarrierRoutes"),
                 ("ClientBusinessRules",       "ClientBusinessRules"),
@@ -206,6 +207,181 @@ public sealed class ShipExecService(
             }
 
             return root;
+        });
+    }
+
+    // ── Entity index (complete, API-sourced) ─────────────────────────────────
+
+    /// <summary>
+    /// Scalar types that <see cref="ExtractEntityFields"/> will include.
+    /// </summary>
+    private static readonly HashSet<Type> _indexScalarTypes =
+    [
+        typeof(string), typeof(int), typeof(long), typeof(short), typeof(byte),
+        typeof(float), typeof(double), typeof(decimal), typeof(bool),
+        typeof(Guid), typeof(DateTime), typeof(DateTimeOffset),
+    ];
+
+    /// <summary>
+    /// Extracts all scalar (primitive / simple) public properties from an object
+    /// into a <c>string → string?</c> dictionary via reflection.
+    /// </summary>
+    private static Dictionary<string, string?> ExtractEntityFields(object item)
+    {
+        var dict = new Dictionary<string, string?>();
+        foreach (var prop in item.GetType().GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!prop.CanRead) continue;
+            var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            if (!type.IsPrimitive && !_indexScalarTypes.Contains(type) && !type.IsEnum) continue;
+            try
+            {
+                var value = prop.GetValue(item);
+                dict[prop.Name] = value switch
+                {
+                    null => null,
+                    bool b => b ? "true" : "false",
+                    Enum e => Convert.ToInt32(e).ToString(),
+                    _ => value.ToString()
+                };
+            }
+            catch { /* skip properties that throw */ }
+        }
+        return dict;
+    }
+
+    /// <inheritdoc />
+    public Task<CompanyEntityIndex> BuildEntityIndexAsync()
+    {
+        logger.LogTrace(">> BuildEntityIndexAsync");
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("BuildEntityIndex start | CompanyId={CompanyId}", _currentCompanyId);
+
+            var jwt = _appManager.GetAccessToken();
+            var url = _appManager.AdminUrl;
+            var cid = _currentCompanyId;
+
+            var manifest = new Dictionary<string, object>();
+            var details  = new Dictionary<string, string>();
+            var jsonOpts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+
+            // ── Helper: index a collection of domain objects ──────────────
+            void IndexItems(string category, System.Collections.IEnumerable? items)
+            {
+                if (items is null)
+                {
+                    manifest[category] = Array.Empty<object>();
+                    details[category]  = "[]";
+                    return;
+                }
+                var fields = items.Cast<object>().Select(ExtractEntityFields).ToList();
+                manifest[category] = fields.Select(f => new
+                {
+                    id   = f.GetValueOrDefault("Id") ?? f.GetValueOrDefault("Symbol") ?? "",
+                    name = f.GetValueOrDefault("Name") ?? f.GetValueOrDefault("UserName") ?? f.GetValueOrDefault("Symbol") ?? "",
+                }).ToArray();
+                details[category] = System.Text.Json.JsonSerializer.Serialize(fields, jsonOpts);
+            }
+
+            // ── Direct AppManager calls ──────────────────────────────────
+            try { IndexItems("Shippers",  _appManager.GetShippers());  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Shippers");  IndexItems("Shippers",  null); }
+            try { IndexItems("Clients",   _appManager.GetClients());   } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Clients");   IndexItems("Clients",   null); }
+            try { IndexItems("Profiles",  _appManager.GetFullProfiles()); } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Profiles"); IndexItems("Profiles",  null); }
+            try { IndexItems("Sites",     _appManager.GetSites(cid));  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Sites");     IndexItems("Sites",     null); }
+            try
+            {
+                var users = _appManager.GetUsers()
+                    .Select(u => { try { return _appManager.GetUserDetail(u.Id) ?? u; } catch { return u; } })
+                    .ToList();
+                IndexItems("Users", users);
+            }
+            catch (Exception ex) { logger.LogWarning(ex, "Index skipped Users"); IndexItems("Users", null); }
+
+            // ── Fetcher-based calls ──────────────────────────────────────
+            void IndexFetcher<TReq, TRes>(
+                string category,
+                EntityFetcher<TReq, TRes> fetcher,
+                Func<TRes, System.Collections.IEnumerable?> extract)
+                where TReq : PSI.Sox.Wcf.RequestBase, new()
+                where TRes : new()
+            {
+                try
+                {
+                    var response = fetcher.Fetch();
+                    IndexItems(category, extract(response));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Index skipped {Category}", category);
+                    IndexItems(category, null);
+                }
+            }
+
+            IndexFetcher("AdapterRegistrations",      new AdapterRegistrationFetcher(url, cid, jwt),          r => r?.AdapterRegistrations);
+            IndexFetcher("CarrierRoutes",             new CarrierRouteFetcher(url, cid, jwt),                  r => r?.CarrierRoute);
+            IndexFetcher("DataConfigurationMappings", new DataConfigurationMappingFetcher(url, cid, jwt),      r => r?.DataConfigurations);
+            IndexFetcher("DocumentConfigurations",    new DocumentConfigurationFetcher(url, cid, jwt),         r => r?.DocumentConfigurations);
+            IndexFetcher("Machines",                  new MachineFetcher(url, cid, jwt),                       r => r?.Machines);
+            IndexFetcher("PrinterConfigurations",     new PrinterConfigurationFetcher(url, cid, jwt),          r => r?.PrinterConfigurations);
+            IndexFetcher("PrinterDefinitions",        new PrinterDefinitionFetcher(url, cid, jwt),             r => r?.PrinterDefinitions);
+            IndexFetcher("ScaleConfigurations",       new ScaleConfigurationFetcher(url, cid, jwt),            r => r?.ScaleConfigurations);
+            IndexFetcher("Schedules",                 new ScheduleFetcher(url, cid, jwt),                      r => r?.Schedules);
+            IndexFetcher("SourceConfigurations",      new SourceConfigurationFetcher(url, cid, jwt),           r => r?.SourceConfigurations);
+
+            // ── Business rules (special model mapping) ───────────────────
+            try
+            {
+                var cbrs = _appManager.GetClientBusinessRulesWithProfilesForCompany()
+                    .Select(r => new CbrInfo
+                    {
+                        Id             = r.Rule.Id,
+                        Name           = r.Rule.Name ?? string.Empty,
+                        Description    = r.Rule.Description,
+                        Version        = r.Rule.Version,
+                        UsedByProfiles = r.ProfileNames,
+                        // Intentionally omit Script to keep index compact
+                    }).ToList();
+                IndexItems("ClientBusinessRules", cbrs);
+            }
+            catch (Exception ex) { logger.LogWarning(ex, "Index skipped ClientBusinessRules"); IndexItems("ClientBusinessRules", null); }
+
+            try
+            {
+                var sbrs = _appManager.GetServerBusinessRulesForCompany()
+                    .Select(r => new SbrInfo
+                    {
+                        Id             = r.Rule.Id,
+                        Name           = r.Rule.Name ?? string.Empty,
+                        Description    = r.Rule.Description,
+                        Version        = r.Rule.Version,
+                        Author         = r.Rule.Author,
+                        AuthorEmail    = r.Rule.AuthorEmail,
+                        UsedByProfiles = r.ProfileNames,
+                        // Intentionally omit FileBase64 to keep index compact
+                    }).ToList();
+                IndexItems("ServerBusinessRules", sbrs);
+            }
+            catch (Exception ex) { logger.LogWarning(ex, "Index skipped ServerBusinessRules"); IndexItems("ServerBusinessRules", null); }
+
+            sw.Stop();
+            var totalEntities = manifest.Values
+                .OfType<object[]>()
+                .Sum(a => a.Length);
+            logger.LogInformation(
+                "BuildEntityIndex complete | Categories={Categories} TotalEntities={TotalEntities} DurationMs={DurationMs}",
+                manifest.Count, totalEntities, sw.ElapsedMilliseconds);
+
+            return new CompanyEntityIndex
+            {
+                ManifestJson        = System.Text.Json.JsonSerializer.Serialize(manifest, jsonOpts),
+                CategoryDetailsJson = details,
+            };
         });
     }
 
@@ -244,6 +420,18 @@ public sealed class ShipExecService(
                 case "Sites":
                     PopulateCategory(categoryNode, "Site",
                         _appManager.GetSites(cid));
+                    break;
+
+                case "Users":
+                    var summaryUsers = _appManager.GetUsers();
+                    var detailedUsers = summaryUsers
+                        .Select(u =>
+                        {
+                            try { return _appManager.GetUserDetail(u.Id) ?? u; }
+                            catch { return u; }
+                        })
+                        .ToList();
+                    PopulateCategory(categoryNode, "User", detailedUsers);
                     break;
 
                 case "AdapterRegistrations":

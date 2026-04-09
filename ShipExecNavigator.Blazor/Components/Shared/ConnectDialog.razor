@@ -1,5 +1,6 @@
 @inject IShipExecService ShipExecService
 @inject IJSRuntime JS
+@using ShipExecNavigator.Shared.Models
 
 @if (IsVisible)
 {
@@ -26,6 +27,13 @@
                                   @bind:event="oninput"
                                   placeholder='{"access_token":"...","refresh_token":"...",...}'></textarea>
                     </div>
+
+                    @if (_hasStoredJwt)
+                    {
+                        <div class="connect-stored-hint">
+                            &#x1F512; Stored credentials loaded from browser. <button class="connect-clear-btn" @onclick="ClearStoredJwt">Clear</button>
+                        </div>
+                    }
 
                     @if (!string.IsNullOrEmpty(_errorMessage))
                     {
@@ -97,6 +105,8 @@
     private bool _isBusy;
     private string _errorMessage = string.Empty;
     private bool _autoConnectFired;
+    private bool _hasStoredJwt;
+    private bool _storedJwtLoaded;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -107,8 +117,28 @@
             _jwtJson  = DebugConfig.JwtToken;
             if (!string.IsNullOrWhiteSpace(_jwtJson))
                 await ConnectAsync();
+            return;
+        }
+
+        // Load stored JWT from localStorage when the dialog becomes visible
+        if (IsVisible && !_storedJwtLoaded && string.IsNullOrWhiteSpace(_jwtJson))
+        {
+            _storedJwtLoaded = true;
+            try
+            {
+                var stored = await JS.InvokeAsync<StoredJwt?>("loadJwt");
+                if (stored is not null && !string.IsNullOrWhiteSpace(stored.JwtJson))
+                {
+                    _jwtJson      = stored.JwtJson;
+                    _adminUrl     = stored.AdminUrl ?? _adminUrl;
+                    _hasStoredJwt = true;
+                }
+            }
+            catch { /* JS interop may fail during prerender */ }
         }
     }
+
+    private record StoredJwt(string JwtJson, string AdminUrl);
 
     private async Task ConnectAsync()
     {
@@ -125,6 +155,9 @@
             }
             _selectedIndex = -1;
             _phase = Phase.SelectCompany;
+
+            // Store JWT + admin URL in localStorage for reconnect
+            try { await JS.InvokeVoidAsync("storeJwt", _jwtJson, _adminUrl); } catch { }
 
             if (DebugConfig.AutoConnect)
                 await AutoSelectCompanyAsync();
@@ -182,6 +215,14 @@
 
     private void HandleClose() => OnClose.InvokeAsync();
 
+    private async void ClearStoredJwt()
+    {
+        try { await JS.InvokeVoidAsync("clearJwt"); } catch { }
+        _hasStoredJwt = false;
+        _jwtJson = string.Empty;
+        StateHasChanged();
+    }
+
     private void Reset()
     {
         _phase         = Phase.Credentials;
@@ -190,5 +231,7 @@
         _selectedIndex = -1;
         _errorMessage  = string.Empty;
         _autoConnectFired = false;
+        _hasStoredJwt     = false;
+        _storedJwtLoaded  = false;
     }
 }
