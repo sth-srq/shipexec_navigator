@@ -20,11 +20,6 @@
             {
                 <button class="scp-btn-undo" @onclick="UndoAsync" title="Undo AI DOM changes">&#x21BA; Undo</button>
             }
-            <button class="scp-btn-rag @(_useRag ? "scp-btn-rag--on" : "")"
-                    @onclick="() => _useRag = !_useRag"
-                    title="@(_useRag ? "RAG document search ON — click to disable" : "RAG document search OFF — click to enable")">
-                &#x1F4DA;
-            </button>
             <button class="scp-btn-clear" @onclick="ClearChatAsync" title="Clear conversation"
                     disabled="@(_messages.Count == 0)">&#x1F5D1;</button>
             <button class="scp-btn-newtab" @onclick="OpenNewTabAsync" title="Open AI chat in a new tab">&#x1F5D7; New Tab</button>
@@ -126,7 +121,6 @@
     private readonly List<string> _inputHistory = [];
     private string _input = string.Empty;
     private bool _thinking;
-    private bool _useRag = true;
     private string? _error;
     private int _panelSize = 360;
     private bool _minimized;
@@ -227,7 +221,7 @@
             if (currentIndex is null && XmlRoot is not null)
                 xmlContext = await XmlViewerService.SerializeAsync(XmlRoot);
 
-            var response = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: _useRag, usersContext: UsersJson, userMetaContext: UsersMetaJson, cbrsContext: CbrsJson, logsContext: LogsJson, entityIndex: currentIndex);
+            var response = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: true, usersContext: UsersJson, userMetaContext: UsersMetaJson, cbrsContext: CbrsJson, logsContext: LogsJson, entityIndex: currentIndex);
 
             // Build clickable node links from the response
             var nodeLinks = BuildNodeLinks(response);

@@ -14,8 +14,7 @@
         <span class="page-tab-brand">ShipExec Navigator</span>
         <span class="page-tab page-tab--active">&#x1F916; ShipExec Copilot</span>
         <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
-        <a class="page-tab" href="/downloads">&#x2B07;&#xFE0F; Downloads</a>
-        <a class="page-tab" href="/tools-page">&#x1F527; Tools</a>
+        <a class="page-tab" href="/tools">&#x1F527; Tools</a>
         <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
         @if (_messages.Count > 0)
         {
@@ -44,12 +43,6 @@
     </div>
 
     <div class="chat-input-row">
-        <button class="chat-rag-btn @(_useRag ? "chat-rag-btn--on" : "")"
-                @onclick="() => _useRag = !_useRag"
-                title="@(_useRag ? "RAG document search ON — click to disable" : "RAG document search OFF — click to enable")"
-                disabled="@_thinking">
-            &#x1F4DA; RAG
-        </button>
         <input type="text"
                class="chat-textarea"
                id="chat-textarea"
@@ -74,7 +67,6 @@
     private readonly List<string> _inputHistory = [];
     private string _input = string.Empty;
     private bool _thinking = true;
-    private bool _useRag = true;
     private string? _error;
     private int _historyIndex = -1;
     private string _historyDraft = string.Empty;
@@ -138,7 +130,7 @@
 
         try
         {
-            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, useRag: _useRag);
+            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, useRag: true);
             _messages.Add(new ChatMessage("assistant", reply.Message));
         }
         catch (Exception ex)

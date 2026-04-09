@@ -120,7 +120,8 @@
             return;
         }
 
-        // Load stored JWT from localStorage when the dialog becomes visible
+        // Auto-reconnect: when the dialog becomes visible, if we have stored
+        // credentials AND a previously-selected company, skip the dialog entirely.
         if (IsVisible && !_storedJwtLoaded && string.IsNullOrWhiteSpace(_jwtJson))
         {
             _storedJwtLoaded = true;
@@ -132,6 +133,14 @@
                     _jwtJson      = stored.JwtJson;
                     _adminUrl     = stored.AdminUrl ?? _adminUrl;
                     _hasStoredJwt = true;
+
+                    // Attempt silent auto-reconnect with last company
+                    var lastId = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('shipexec_lastCompany')");
+                    if (!string.IsNullOrEmpty(lastId))
+                    {
+                        await AutoReconnectAsync(lastId);
+                        return;
+                    }
                 }
             }
             catch { /* JS interop may fail during prerender */ }
@@ -159,6 +168,18 @@
             // Store JWT + admin URL in localStorage for reconnect
             try { await JS.InvokeVoidAsync("storeJwt", _jwtJson, _adminUrl); } catch { }
 
+            // Pre-select the last used company if available
+            try
+            {
+                var lastId = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('shipexec_lastCompany')");
+                if (!string.IsNullOrEmpty(lastId))
+                {
+                    var idx = _companies.FindIndex(c => c.Id.ToString() == lastId);
+                    if (idx >= 0) _selectedIndex = idx;
+                }
+            }
+            catch { }
+
             if (DebugConfig.AutoConnect)
                 await AutoSelectCompanyAsync();
         }
@@ -181,6 +202,8 @@
         try
         {
             await ShipExecService.SetupCompanyAsync(company.Id, company.Name);
+            // Store the selected company ID so it is pre-selected next time
+            try { await JS.InvokeVoidAsync("eval", $"localStorage.setItem('shipexec_lastCompany','{company.Id}')"); } catch { }
             await OnCompanyConnected.InvokeAsync((company.Id, company.Name));
             Reset();
         }
@@ -211,6 +234,33 @@
             _selectedIndex = idx;
             await LoadCompanyAsync();
         }
+    }
+
+    /// <summary>
+    /// Silently reconnect using stored credentials and the last-used company.
+    /// If anything fails, the dialog stays visible for manual login.
+    /// </summary>
+    private async Task AutoReconnectAsync(string lastCompanyId)
+    {
+        try
+        {
+            _companies = await ShipExecService.GetCompaniesAsync(_jwtJson, _adminUrl);
+            _companies.Sort((a, b) => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase));
+
+            var idx = _companies.FindIndex(c => c.Id.ToString() == lastCompanyId);
+            if (idx >= 0)
+            {
+                var company = _companies[idx];
+                await ShipExecService.SetupCompanyAsync(company.Id, company.Name);
+                await OnCompanyConnected.InvokeAsync((company.Id, company.Name));
+                Reset();
+                return;
+            }
+        }
+        catch { /* silent reconnect failed – fall through to show dialog */ }
+
+        // If auto-reconnect fails, stay on credentials phase with stored data visible
+        _phase = Phase.Credentials;
     }
 
     private void HandleClose() => OnClose.InvokeAsync();

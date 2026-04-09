@@ -20,12 +20,14 @@
 
 <div class="viewer-page">
 
+    <div class="page-brand-row">
+        <span class="page-brand-title">ShipExec<span class="page-brand-accent">Navigator</span></span>
+    </div>
+
     <div class="page-tab-bar">
-        <span class="page-tab-brand">ShipExec Navigator</span>
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
         <span class="page-tab page-tab--active">&#x1F5FA; Navigator</span>
-        <a class="page-tab" href="/downloads">&#x2B07;&#xFE0F; Downloads</a>
-        <a class="page-tab" href="/tools-page">&#x1F527; Tools</a>
+        <a class="page-tab" href="/tools">&#x1F527; Tools</a>
         <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
     </div>
 
@@ -41,27 +43,29 @@
         <div class="input-row @(rootNode == null ? "input-row--centered" : "")">
             @if (rootNode != null)
             {
-                <span class="connected-label">&#x2705; Connected to <strong>@loadedFileName</strong></span>
-                @if (_managementStudioUrl is not null)
-                {
-                    <a class="btn-ms-link" href="@($"{_managementStudioUrl}{_currentCompanyId}")" target="_blank" rel="noopener"
-                       title="Open in ShipExec Management Studio">&#x1F517; Management Studio</a>
-                }
-                <button class="btn-action" @onclick="RefreshCompanyAsync" disabled="@isLoading" title="Refresh the company data from the server">
+                <select class="company-switcher" value="@_currentCompanyId" @onchange="SwitchCompanyAsync">
+                    @foreach (var c in _cachedCompanies)
+                    {
+                        <option value="@c.Id">@c.DisplayName</option>
+                    }
+                </select>
+                <button class="btn-refresh-icon" @onclick="RefreshCompanyAsync" disabled="@isLoading" title="Refresh the company data from the server">
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     }
-                    &#x1F504; Refresh
+                    else
+                    {
+                        <span class="refresh-icon">&#x1F504;</span>
+                    }
                 </button>
-                @if (_cachedCompanies.Count > 1)
+                @if (_managementStudioUrl is not null)
                 {
-                    <select class="company-switcher" value="@_currentCompanyId" @onchange="SwitchCompanyAsync">
-                        @foreach (var c in _cachedCompanies)
-                        {
-                            <option value="@c.Id">@c.DisplayName</option>
-                        }
-                    </select>
+                    <a class="btn-ms-link" href="@($"{_managementStudioUrl}{_currentCompanyId}")" target="_blank" rel="noopener"
+                       title="Open in ShipExec Management Studio">&#x1F517; Management Studio</a>
+                    <span class="source-badge source-badge--live">
+                        &#x1F7E2; Live
+                    </span>
                 }
             }
             else
@@ -104,12 +108,12 @@
         <div class="viewer-body-row">
             <VariancePanel Entries="_varianceEntries"
                            @bind-IsVisible="_variancePanelVisible"
+                           FlashIds="_flashVarianceIds"
                            OnEntryClicked="NavigateToNode"
                            OnEntryUndo="UndoVariance"
-                           OnLoadHistory="LoadHistoryAsync"
+                           OnViewChanges="ViewChanges"
                            OnClearAndRevert="ClearAndRevertAsync"
-                           HistoryError="@_historyError"
-                           CanLoadHistory="@_canLoadHistory" />
+                           HistoryError="@_historyError" />
 
             <div class="viewer-main">
         <div class="viewer-workspace" style="@(_activeMainTab != "company" ? "display:none" : "")">
@@ -132,15 +136,10 @@
                         var profName = XmlRefLookupService.GetRefOptions("ProfileId")?.FirstOrDefault(o => o.Value == profNode.NodeValue)?.Display;
                         <span class="stat-pill" title="ProfileId: @profNode.NodeValue">&#x1F4CB; @(profName ?? profNode.NodeValue)</span>
                     }
-                    <span class="stat-pill">@nodeCount nodes</span>
-                    <span class="stat-pill">@rootNode.Children.Count sections</span>
                     @if (_isDirty)
                     {
                         <span class="dirty-pill">&#x25CF; unsaved</span>
                     }
-                    <span class="source-badge source-badge--live">
-                        &#x1F7E2; Live
-                    </span>
                 </div>
                 <div class="toolbar-actions">
                     <button class="btn-export" @onclick="ViewChanges"
@@ -152,32 +151,25 @@
                         }
                         &#x1F4CA; View Changes
                     </button>
-                    <div class="toolbar-dropdown" @onfocusout="() => _shipperDropdownOpen = false">
-                        <button class="btn-action toolbar-dropdown-toggle" @onclick="() => _shipperDropdownOpen = !_shipperDropdownOpen">
-                            &#x1F69A; Shipper &#x25BE;
+                    <div class="toolbar-dropdown" @onfocusout="() => _actionsDropdownOpen = false">
+                        <button class="btn-action toolbar-dropdown-toggle" @onclick="() => _actionsDropdownOpen = !_actionsDropdownOpen">
+                            &#x2699;&#xFE0F; Actions &#x25BE;
                         </button>
-                        @if (_shipperDropdownOpen)
+                        @if (_actionsDropdownOpen)
                         {
                             <div class="toolbar-dropdown-menu">
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showImportShippersDialog = true; _shipperDropdownOpen = false; }">&#x1F4CC; Import Shippers</button>
-                                <button class="toolbar-dropdown-item" @onclick="async () => { _shipperDropdownOpen = false; await ExportShippersAsync(); }" disabled="@_isExportingShippers">&#x2B07; Export Shippers</button>
+                                <div class="toolbar-dropdown-section">Shippers</div>
+                                <button class="toolbar-dropdown-item" @onclick="() => { _showImportShippersDialog = true; _actionsDropdownOpen = false; }">&#x1F4CC; Import Shippers</button>
+                                <button class="toolbar-dropdown-item" @onclick="async () => { _actionsDropdownOpen = false; await ExportShippersAsync(); }" disabled="@_isExportingShippers">&#x2B07; Export Shippers</button>
+                                <div class="toolbar-dropdown-section">Users</div>
+                                <button class="toolbar-dropdown-item" @onclick="() => { _showUserManagement = true; _actionsDropdownOpen = false; }">&#x1F465; Manage Users</button>
+                                <button class="toolbar-dropdown-item" @onclick="() => { _showImportUsersFromToolbar = true; _actionsDropdownOpen = false; }">&#x1F4CC; Import Users</button>
+                                <button class="toolbar-dropdown-item" @onclick="async () => { _actionsDropdownOpen = false; await ExportUsersFromToolbarAsync(); }" disabled="@_isExportingUsers">&#x2B07; Export Users</button>
+                                <div class="toolbar-dropdown-section">Profiles</div>
+                                <button class="toolbar-dropdown-item" @onclick="() => { _showCompareProfilesDialog = true; _actionsDropdownOpen = false; }">&#x1F4CA; Compare Profiles</button>
                             </div>
                         }
                     </div>
-                    <div class="toolbar-dropdown" @onfocusout="() => _userDropdownOpen = false">
-                        <button class="btn-action toolbar-dropdown-toggle" @onclick="() => _userDropdownOpen = !_userDropdownOpen">
-                            &#x1F464; User &#x25BE;
-                        </button>
-                        @if (_userDropdownOpen)
-                        {
-                            <div class="toolbar-dropdown-menu">
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showUserManagement = true; _userDropdownOpen = false; }">&#x1F465; Manage Users</button>
-                                <button class="toolbar-dropdown-item" @onclick="() => { _showImportUsersFromToolbar = true; _userDropdownOpen = false; }">&#x1F4CC; Import Users</button>
-                                <button class="toolbar-dropdown-item" @onclick="async () => { _userDropdownOpen = false; await ExportUsersFromToolbarAsync(); }" disabled="@_isExportingUsers">&#x2B07; Export Users</button>
-                            </div>
-                        }
-                    </div>
-                    <button class="btn-action" @onclick="() => _showCompareProfilesDialog = true">&#x1F4CA; Compare Profiles</button>
                     <button class="btn-action" @onclick="ExpandAll">Expand All</button>
                     <button class="btn-action" @onclick="CollapseAll">Collapse All</button>
                     <span class="depth-label">Depth</span>
@@ -268,6 +260,19 @@
                                                         <span>&#x1F4E6; @(sbr.Name) Project</span>
                                                     }
                                                 </button>
+                                                <button class="sbr-view-btn @(_sbrViewingIds.Contains(sbr.Id) ? "sbr-download-btn--busy" : "")"
+                                                        @onclick="() => ViewSbrProjectAsync(sbr)"
+                                                        disabled="@(_sbrViewingIds.Contains(sbr.Id))"
+                                                        title="Decompile and view @(sbr.Name) source code">
+                                                    @if (_sbrViewingIds.Contains(sbr.Id))
+                                                    {
+                                                        <span class="gt-spinner-sm"></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>&#x1F441; View</span>
+                                                    }
+                                                </button>
                                             </div>
                                             <div class="sbr-details">
                                                 @if (!string.IsNullOrWhiteSpace(sbr.Description))
@@ -314,6 +319,101 @@
                             }
                         </div>
                 </div>
+                @if (_sbrViewerOpen)
+                {
+                    <div class="sbr-viewer @(_sbrViewerMaximized ? "sbr-viewer--maximized" : "")">
+                        <div class="sbr-viewer-header @(!_sbrViewerDark ? "sbr-viewer-header--light" : "")">
+                            <button class="sbr-viewer-back" @onclick="CloseSbrViewer">&#x2190; Back</button>
+                            <span class="sbr-viewer-title">&#x1F4E6; @_sbrViewerSbr?.Name</span>
+                            @if (_sbrViewerSelectedFile is not null)
+                            {
+                                <span class="sbr-viewer-file-path">@_sbrViewerSelectedFile</span>
+                            }
+                            <div class="sbr-viewer-header-actions">
+                                <button class="sbr-build-btn @(_sbrBuildRunning ? "sbr-build-btn--busy" : "")"
+                                        title="Test build the decompiled project"
+                                        @onclick="TestBuildSbrAsync"
+                                        disabled="@(_sbrBuildRunning || _sbrViewerLoading || _sbrViewerFiles.Count == 0)">
+                                    @if (_sbrBuildRunning)
+                                    {
+                                        <span class="gt-spinner-sm"></span>
+                                    }
+                                    else
+                                    {
+                                        <span>&#x1F6E0; Test Build</span>
+                                    }
+                                </button>
+                                <button class="cbr-btn-theme"
+                                        title='@(_sbrViewerDark ? "Switch to light theme" : "Switch to dark theme")'
+                                        @onclick="() => ToggleSbrViewerTheme()">
+                                    @(_sbrViewerDark ? "\u2600" : "\uD83C\uDF19")
+                                </button>
+                                <button class="cbr-btn-maximize"
+                                        title='@(_sbrViewerMaximized ? "Minimize" : "Maximize")'
+                                        @onclick="() => _sbrViewerMaximized = !_sbrViewerMaximized">
+                                    @(_sbrViewerMaximized ? "\u22A1" : "\u26F6")
+                                </button>
+                            </div>
+                        </div>
+                        <div class="sbr-viewer-body">
+                            @if (_sbrViewerLoading)
+                            {
+                                <div class="sbr-viewer-loading">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                    Decompiling @_sbrViewerSbr?.Name&hellip;
+                                </div>
+                            }
+                            else if (_sbrViewerError is not null)
+                            {
+                                <div class="br-error" style="margin: 1.5rem;">&#9888; @_sbrViewerError</div>
+                            }
+                            else
+                            {
+                                <div class="sbr-file-tree">
+                                    @foreach (var filePath in _sbrViewerFilePaths)
+                                    {
+                                        var fp = filePath;
+                                        var ext = Path.GetExtension(fp).ToLowerInvariant();
+                                        var icon = ext switch
+                                        {
+                                            ".cs" => "\uD83D\uDD37",
+                                            ".csproj" => "\uD83D\uDCCB",
+                                            ".config" => "\u2699\uFE0F",
+                                            ".xml" => "\uD83D\uDCC4",
+                                            ".json" => "\uD83D\uDCC4",
+                                            _ => "\uD83D\uDCC4"
+                                        };
+                                        <button class="sbr-file-item @(_sbrViewerSelectedFile == fp ? "sbr-file-item--active" : "")"
+                                                @onclick="() => SelectSbrFileAsync(fp)">
+                                            <span class="sbr-file-icon">@icon</span>
+                                            <span class="sbr-file-name">@fp</span>
+                                        </button>
+                                    }
+                                </div>
+                                <div class="sbr-code-viewer @(!_sbrViewerDark ? "sbr-code-viewer--light" : "")">
+                                    @if (_sbrViewerSelectedFile is null)
+                                    {
+                                        <div class="cbr-viewer-empty">&#x2190; Select a file to view</div>
+                                    }
+                                    else
+                                    {
+                                        <div id="sbrCodeDisplay" class="cbr-code-display"></div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        @if (_sbrBuildOutput is not null)
+                        {
+                            <div class="sbr-build-output">
+                                <div class="sbr-build-output-header">
+                                    <span>&#x1F6E0; Build Output</span>
+                                    <button class="sbr-build-output-close" @onclick="() => _sbrBuildOutput = null">&#x2715;</button>
+                                </div>
+                                <pre class="sbr-build-output-body">@_sbrBuildOutput</pre>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         }
         @if (_activeMainTab == "client-rules")
@@ -461,6 +561,11 @@
                                                         <span>&#x1F9E0; Analyze</span>
                                                     }
                                                 </button>
+                                                <button class="cbr-btn-chat @(_cbrChatVisible ? "cbr-btn-chat--active" : "")"
+                                                        @onclick="ToggleCbrChat"
+                                                        title="@(_cbrChatVisible ? "Close AI chat" : "Chat with AI about this script")">
+                                                    &#x1F4AC; Chat
+                                                </button>
                                             </div>
                                             @if (_cbrAnalysisVisible)
                                             {
@@ -494,6 +599,84 @@
                                                     {
                                                         <div id="cbrAnalysisDisplay" class="cbr-analysis-display"></div>
                                                     }
+                                                </div>
+                                            }
+                                            @* ── CBR Chat Panel (#2-4) ── *@
+                                            @if (_cbrChatVisible)
+                                            {
+                                                <div class="cbr-chat-panel">
+                                                    <div class="cbr-chat-header">
+                                                        <span class="cbr-chat-title">&#x1F4AC; CBR Chat — @_selectedCbr.Name</span>
+                                                        <div class="cbr-chat-actions">
+                                                            <button class="cbr-chat-clear" @onclick="ClearCbrChat"
+                                                                    disabled="@(_cbrChatHistory.Count == 0)"
+                                                                    title="Clear chat">&#x1F5D1;</button>
+                                                            <button class="cbr-chat-close" @onclick="ToggleCbrChat"
+                                                                    title="Close chat">&#x2715;</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="cbr-chat-messages" id="cbr-chat-messages">
+                                                        @if (_cbrChatHistory.Count == 0 && !_cbrChatThinking)
+                                                        {
+                                                            <div class="cbr-chat-empty">
+                                                                Type a message to chat with AI about this script.
+                                                                You can ask questions, request changes, or describe what you want —
+                                                                the AI will respond and can suggest code changes shown as a diff.
+                                                            </div>
+                                                        }
+                                                        @foreach (var msg in _cbrChatHistory)
+                                                        {
+                                                            <div class="cbr-chat-bubble cbr-chat-bubble--@msg.Role">
+                                                                <span class="cbr-chat-label">@(msg.Role == "user" ? "You" : "CBR Copilot")</span>
+                                                                <div class="cbr-chat-body">@((MarkupString)FormatCbrChatMessage(msg.Content))</div>
+                                                            </div>
+                                                        }
+                                                        @if (_cbrChatThinking)
+                                                        {
+                                                            <div class="cbr-chat-bubble cbr-chat-bubble--assistant">
+                                                                <span class="cbr-chat-label">CBR Copilot</span>
+                                                                <div class="cbr-chat-body cbr-chat-thinking">
+                                                                    <span></span><span></span><span></span>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    @if (_cbrChatPendingCode is not null)
+                                                    {
+                                                        <div class="cbr-chat-diff-section">
+                                                            <div class="cbr-chat-diff-header">
+                                                                <span>&#x1F504; Proposed Changes</span>
+                                                                <div class="cbr-chat-diff-actions">
+                                                                    <button class="cbr-btn-accept" @onclick="AcceptCbrChatCode">
+                                                                        &#x2714; Accept
+                                                                    </button>
+                                                                    <button class="cbr-btn-dismiss" @onclick="DismissCbrChatCode">
+                                                                        &#x2715; Dismiss
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div id="cbrChatDiffDisplay" class="cbr-analysis-display"></div>
+                                                        </div>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(_cbrChatError))
+                                                    {
+                                                        <div class="cbr-chat-error">&#9888; @_cbrChatError</div>
+                                                    }
+                                                    <div class="cbr-chat-input-row">
+                                                        <input type="text"
+                                                               class="cbr-chat-input"
+                                                               placeholder="Describe a change or ask about the script…"
+                                                               @bind="_cbrChatInput"
+                                                               @bind:event="oninput"
+                                                               @onkeydown="HandleCbrChatKeyDown"
+                                                               disabled="@_cbrChatThinking" />
+                                                        <button class="cbr-chat-send"
+                                                                @onclick="SendCbrChatAsync"
+                                                                disabled="@(string.IsNullOrWhiteSpace(_cbrChatInput) || _cbrChatThinking)"
+                                                                title="Send">
+                                                            &#x27A4;
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             }
                                         }
@@ -786,11 +969,12 @@
 
     // ── Variance panel state ──────────────────────────────────────────────────
     private readonly List<Variance> _varianceEntries = [];
-    private bool _variancePanelVisible = true;
+    private bool _variancePanelVisible;
     private bool _isLoadingHistory;
     private bool _canLoadHistory;
     private string? _historyError;
     private Guid? _highlightedNodeId;
+    private readonly HashSet<Guid> _flashVarianceIds = [];
 
     // ── Connect dialog state ──────────────────────────────────────────────────
     private bool _showConnectDialog;
@@ -801,8 +985,7 @@
     private readonly List<Variance> _pendingShipperVariances = [];
 
     // ── Toolbar dropdown state ────────────────────────────────────────────────
-    private bool _shipperDropdownOpen;
-    private bool _userDropdownOpen;
+    private bool _actionsDropdownOpen;
     private bool _showUserManagement;
     private bool _showImportUsersFromToolbar;
     private bool _isExportingUsers;
@@ -884,6 +1067,21 @@
     private HashSet<int>  _sbrDownloadingIds = [];
     private HashSet<int>  _sbrDecompilingIds = [];
 
+    // ── SBR project viewer state ──────────────────────────────────────────────
+    private bool          _sbrViewerOpen;
+    private bool          _sbrViewerMaximized = true;
+    private bool          _sbrViewerDark      = false;
+    private SbrInfo?      _sbrViewerSbr;
+    private Dictionary<string, string> _sbrViewerFiles = new();
+    private List<string>  _sbrViewerFilePaths = [];
+    private string?       _sbrViewerSelectedFile;
+    private string?       _sbrViewerSelectedContent;
+    private bool          _sbrViewerLoading;
+    private string?       _sbrViewerError;
+    private HashSet<int>  _sbrViewingIds = [];
+    private bool          _sbrBuildRunning;
+    private string?       _sbrBuildOutput;
+
     private List<CbrInfo> _cbrs        = [];
     private bool          _cbrLoading;
     private bool          _cbrLoaded;
@@ -896,9 +1094,18 @@
     private bool          _cbrAnalyzing;
     private string?       _cbrAnalysisError;
     private bool          _cbrAnalysisVisible;
-    private bool          _cbrDark      = true;
+    private bool          _cbrDark      = false;
     private bool          _cbrMaximized = false;
     private bool          _cbrEditing;  // true = textarea mode, false = syntax-highlighted view
+
+    // ── CBR chat state (#2-4: separate interactive chat for CBR)
+    private List<ChatMessage> _cbrChatHistory = [];
+    private string            _cbrChatInput   = string.Empty;
+    private bool              _cbrChatThinking;
+    private string?           _cbrChatError;
+    private bool              _cbrChatVisible;
+    private string?           _cbrChatPendingCode;   // code from last AI response (user can accept)
+    private string            _cbrChatPreCode = string.Empty; // snapshot before AI code for diff
 
     // ── Logs tab state
     private string _logMode = "application";
@@ -1007,6 +1214,12 @@
         _cbrAnalyzing          = false;
         _cbrMaximized          = false;
         _cbrEditing            = false;
+        // Reset CBR chat (#4: separate history per CBR selection)
+        _cbrChatHistory.Clear();
+        _cbrChatInput       = string.Empty;
+        _cbrChatError       = null;
+        _cbrChatPendingCode = null;
+        _cbrChatThinking    = false;
         StateHasChanged();
         await RenderCbrCodeAsync();
     }
@@ -1026,7 +1239,6 @@
         });
         _selectedCbr.Script = _cbrEditedScript;
         _cbrOriginalScript  = _cbrEditedScript;
-        _variancePanelVisible = true;
         _cbrEditing = false;
         StateHasChanged();
         await RenderCbrCodeAsync();
@@ -1116,6 +1328,115 @@
             await JSRuntime.InvokeVoidAsync("renderCbrDiff", "cbrAnalysisDisplay", _cbrPreAnalysisScript, _cbrAnalysisResult);
         }
         catch { /* element may not exist yet */ }
+    }
+
+    // ── CBR chat methods ─────────────────────────────────────────────────────
+
+    private void ToggleCbrChat()
+    {
+        _cbrChatVisible = !_cbrChatVisible;
+    }
+
+    private async Task SendCbrChatAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_cbrChatInput) || _cbrChatThinking || _selectedCbr is null) return;
+
+        var userText = _cbrChatInput.Trim();
+        _cbrChatInput    = string.Empty;
+        _cbrChatError    = null;
+        _cbrChatThinking = true;
+        _cbrChatHistory.Add(new ChatMessage("user", userText));
+        StateHasChanged();
+        await ScrollCbrChatAsync();
+
+        try
+        {
+            var response = await CbrAnalysisService.ChatCbrAsync(
+                _cbrChatHistory.Take(_cbrChatHistory.Count - 1).ToList(), // pass history sans latest user msg
+                userText,
+                _cbrEditedScript);
+
+            _cbrChatHistory.Add(new ChatMessage("assistant", response.Message));
+
+            if (!string.IsNullOrWhiteSpace(response.Code))
+            {
+                _cbrChatPendingCode = response.Code;
+                _cbrChatPreCode     = _cbrEditedScript; // snapshot for diff
+            }
+        }
+        catch (Exception ex)
+        {
+            _cbrChatError = ex.Message;
+        }
+        finally
+        {
+            _cbrChatThinking = false;
+            StateHasChanged();
+            await ScrollCbrChatAsync();
+            if (_cbrChatPendingCode is not null)
+                await RenderCbrChatDiffAsync();
+        }
+    }
+
+    private async void AcceptCbrChatCode()
+    {
+        if (string.IsNullOrWhiteSpace(_cbrChatPendingCode)) return;
+        _cbrEditedScript    = _cbrChatPendingCode;
+        _cbrChatPendingCode = null;
+        _cbrEditing         = false;
+        StateHasChanged();
+        await RenderCbrCodeAsync();
+    }
+
+    private void DismissCbrChatCode()
+    {
+        _cbrChatPendingCode = null;
+    }
+
+    private void ClearCbrChat()
+    {
+        _cbrChatHistory.Clear();
+        _cbrChatInput       = string.Empty;
+        _cbrChatError       = null;
+        _cbrChatPendingCode = null;
+    }
+
+    private async Task HandleCbrChatKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendCbrChatAsync();
+    }
+
+    private async Task ScrollCbrChatAsync()
+    {
+        try
+        {
+            await Task.Yield();
+            await JSRuntime.InvokeVoidAsync("eval",
+                "document.getElementById('cbr-chat-messages')?.scrollTo({top:999999,behavior:'smooth'})");
+        }
+        catch { }
+    }
+
+    /// <summary>Render side-by-side diff for the AI-proposed CBR code changes.</summary>
+    private async Task RenderCbrChatDiffAsync()
+    {
+        if (_cbrChatPendingCode is null) return;
+        try
+        {
+            await Task.Yield();
+            await JSRuntime.InvokeVoidAsync("renderCbrDiff", "cbrChatDiffDisplay", _cbrChatPreCode, _cbrChatPendingCode);
+        }
+        catch { }
+    }
+
+    private string FormatCbrChatMessage(string content)
+    {
+        // Simple HTML-safe rendering with code block support
+        var escaped = System.Net.WebUtility.HtmlEncode(content);
+        escaped = System.Text.RegularExpressions.Regex.Replace(escaped, @"`([^`]+)`", "<code>$1</code>");
+        escaped = escaped.Replace("\n", "<br />");
+        return escaped;
     }
 
     private async Task DownloadCbrAsync()
@@ -1214,6 +1535,202 @@
             _sbrDecompilingIds.Remove(sbr.Id);
             try { if (outputDir is not null && Directory.Exists(outputDir)) Directory.Delete(outputDir, true); } catch { }
             try { if (zipPath is not null && File.Exists(zipPath)) File.Delete(zipPath); } catch { }
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>Decompile an SBR and display its files in the viewer panel.</summary>
+    private async Task ViewSbrProjectAsync(SbrInfo sbr)
+    {
+        if (_sbrViewingIds.Contains(sbr.Id)) return;
+        _sbrViewingIds.Add(sbr.Id);
+
+        _sbrViewerOpen    = true;
+        _sbrViewerLoading = true;
+        _sbrViewerError   = null;
+        _sbrViewerSbr     = sbr;
+        _sbrViewerFiles.Clear();
+        _sbrViewerFilePaths.Clear();
+        _sbrViewerSelectedFile    = null;
+        _sbrViewerSelectedContent = null;
+        StateHasChanged();
+
+        string? outputDir = null;
+        try
+        {
+            var fileBase64 = await ShipExecService.GetServerBusinessRuleFileBase64Async(sbr.Name, sbr.Version);
+            if (string.IsNullOrEmpty(fileBase64))
+            {
+                _sbrViewerError = $"No file data available for '{sbr.Name}'.";
+                return;
+            }
+
+            var dllBytes = Convert.FromBase64String(fileBase64);
+            var tempDir  = Path.GetTempPath();
+            var dllPath  = Path.Combine(tempDir, $"{sbr.Name}.dll");
+            await File.WriteAllBytesAsync(dllPath, dllBytes);
+
+            outputDir = Path.Combine(tempDir, $"sbr_view_{sbr.Id}_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(outputDir);
+
+            await Task.Run(() =>
+            {
+                using var module = new ICSharpCode.Decompiler.Metadata.PEFile(dllPath);
+                var targetFramework = ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions
+                    .DetectTargetFrameworkId(module);
+                var resolver = new ICSharpCode.Decompiler.Metadata.UniversalAssemblyResolver(
+                    dllPath, throwOnError: false, targetFramework);
+                var decompiler = new ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler(resolver);
+                decompiler.DecompileProject(module, outputDir);
+            });
+
+            // Read all decompiled files into memory
+            var baseUri = new Uri(outputDir + Path.DirectorySeparatorChar);
+            foreach (var fullPath in Directory.EnumerateFiles(outputDir, "*", SearchOption.AllDirectories))
+            {
+                var relativePath = Uri.UnescapeDataString(baseUri.MakeRelativeUri(new Uri(fullPath)).ToString())
+                    .Replace('/', Path.DirectorySeparatorChar);
+                var content = await File.ReadAllTextAsync(fullPath);
+                _sbrViewerFiles[relativePath] = content;
+            }
+
+            // Sort: .cs files first, then by name
+            _sbrViewerFilePaths = [.. _sbrViewerFiles.Keys
+                .OrderByDescending(f => Path.GetExtension(f).Equals(".cs", StringComparison.OrdinalIgnoreCase))
+                .ThenBy(f => f, StringComparer.OrdinalIgnoreCase)];
+
+            // Auto-select the first .cs file (or the first file if none)
+            var firstCs = _sbrViewerFilePaths.FirstOrDefault(f =>
+                Path.GetExtension(f).Equals(".cs", StringComparison.OrdinalIgnoreCase));
+            var autoSelect = firstCs ?? _sbrViewerFilePaths.FirstOrDefault();
+            if (autoSelect is not null)
+            {
+                _sbrViewerSelectedFile    = autoSelect;
+                _sbrViewerSelectedContent = _sbrViewerFiles[autoSelect];
+            }
+        }
+        catch (Exception ex)
+        {
+            _sbrViewerError = $"Failed to decompile '{sbr.Name}': {ex.Message}";
+        }
+        finally
+        {
+            _sbrViewerLoading = false;
+            _sbrViewingIds.Remove(sbr.Id);
+            try { if (outputDir is not null && Directory.Exists(outputDir)) Directory.Delete(outputDir, true); } catch { }
+            StateHasChanged();
+
+            // Render the auto-selected file after the UI has updated
+            if (_sbrViewerSelectedFile is not null)
+                await RenderSbrCodeAsync();
+        }
+    }
+
+    /// <summary>Select a file in the SBR viewer and render its content.</summary>
+    private async Task SelectSbrFileAsync(string filePath)
+    {
+        if (!_sbrViewerFiles.TryGetValue(filePath, out var content)) return;
+        _sbrViewerSelectedFile    = filePath;
+        _sbrViewerSelectedContent = content;
+        StateHasChanged();
+        await RenderSbrCodeAsync();
+    }
+
+    /// <summary>Close the SBR project viewer panel.</summary>
+    private void CloseSbrViewer()
+    {
+        _sbrViewerOpen            = false;
+        _sbrViewerMaximized       = true;
+        _sbrViewerSbr             = null;
+        _sbrViewerFiles.Clear();
+        _sbrViewerFilePaths.Clear();
+        _sbrViewerSelectedFile    = null;
+        _sbrViewerSelectedContent = null;
+        _sbrViewerLoading         = false;
+        _sbrViewerError           = null;
+    }
+
+    /// <summary>Toggle dark/light theme for the SBR viewer and re-render code.</summary>
+    private async Task ToggleSbrViewerTheme()
+    {
+        _sbrViewerDark = !_sbrViewerDark;
+        StateHasChanged();
+        if (_sbrViewerSelectedFile is not null)
+            await RenderSbrCodeAsync();
+    }
+
+    /// <summary>Call JS to render the SBR code display with line numbers + syntax highlighting.</summary>
+    private async Task RenderSbrCodeAsync()
+    {
+        if (_sbrViewerSelectedFile is null || _sbrViewerSelectedContent is null) return;
+        try
+        {
+            await Task.Yield(); // let Blazor render the container first
+            await JSRuntime.InvokeVoidAsync("renderSbrCode", "sbrCodeDisplay", _sbrViewerSelectedContent, _sbrViewerSelectedFile);
+        }
+        catch { /* element may not exist yet */ }
+    }
+
+    /// <summary>Write decompiled sources to a temp dir, run dotnet build, and capture output.</summary>
+    private async Task TestBuildSbrAsync()
+    {
+        if (_sbrBuildRunning || _sbrViewerFiles.Count == 0) return;
+        _sbrBuildRunning = true;
+        _sbrBuildOutput = null;
+        StateHasChanged();
+
+        string? buildDir = null;
+        try
+        {
+            buildDir = Path.Combine(Path.GetTempPath(), $"sbr_build_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(buildDir);
+
+            // Write all decompiled files to disk
+            foreach (var (relPath, content) in _sbrViewerFiles)
+            {
+                var fullPath = Path.Combine(buildDir, relPath);
+                var dir = Path.GetDirectoryName(fullPath);
+                if (dir is not null) Directory.CreateDirectory(dir);
+                await File.WriteAllTextAsync(fullPath, content);
+            }
+
+            // Run dotnet build and capture output
+            var psi = new System.Diagnostics.ProcessStartInfo("dotnet", "build --nologo --no-restore")
+            {
+                WorkingDirectory = buildDir,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc is null)
+            {
+                _sbrBuildOutput = "Failed to start dotnet build process.";
+                return;
+            }
+
+            var stdout = await proc.StandardOutput.ReadToEndAsync();
+            var stderr = await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+
+            var result = new System.Text.StringBuilder();
+            if (!string.IsNullOrWhiteSpace(stdout)) result.AppendLine(stdout.TrimEnd());
+            if (!string.IsNullOrWhiteSpace(stderr)) result.AppendLine(stderr.TrimEnd());
+            result.AppendLine();
+            result.AppendLine(proc.ExitCode == 0 ? "✅ Build succeeded." : "❌ Build failed.");
+
+            _sbrBuildOutput = result.ToString();
+        }
+        catch (Exception ex)
+        {
+            _sbrBuildOutput = $"Build error: {ex.Message}";
+        }
+        finally
+        {
+            _sbrBuildRunning = false;
+            try { if (buildDir is not null && Directory.Exists(buildDir)) Directory.Delete(buildDir, true); } catch { }
             StateHasChanged();
         }
     }
@@ -1567,6 +2084,12 @@
     {
         if (firstRender)
         {
+            // Match code-editor themes to the site's current light/dark setting
+            var siteTheme = await JSRuntime.InvokeAsync<string?>("eval", "localStorage.getItem('theme')");
+            var siteIsDark = siteTheme == "dark";
+            _sbrViewerDark = siteIsDark;
+            _cbrDark = siteIsDark;
+
             _showConnectDialog = true;
             StateHasChanged();
         }
@@ -1600,6 +2123,7 @@
         _sbrLoaded        = false;
         _sbrLoading       = false;
         _sbrDownloadingIds = [];
+        CloseSbrViewer();
         _cbrs        = [];
         _cbrError    = null;
         _cbrLoaded   = false;
@@ -1635,7 +2159,22 @@
         }
         await LoadHistoryAsync();
 
-        // Build the entity index in the background — fetches ALL entity categories
+        // #14: Auto-collapse the variance panel 0.6s after loading
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(600);
+                await InvokeAsync(() =>
+                {
+                    _variancePanelVisible = false;
+                    StateHasChanged();
+                });
+            }
+            catch { }
+        });
+
+        // Build the entity index in the background
         // from the API so the AI chatbot has complete data regardless of which tree
         // nodes the user has expanded.
         _ = Task.Run(async () =>
@@ -2409,7 +2948,6 @@
             _userVarianceIds.Add(uv.Id);
         }
 
-        _variancePanelVisible = true;
         InvokeAsync(StateHasChanged);
     }
 
@@ -2903,6 +3441,30 @@
 
     private void AddVarianceEntry(Variance entry)
     {
+        // Task 11: If a "Modified" variance already exists for the same NodeId,
+        // merge descriptions and update the new value rather than adding a duplicate.
+        if (entry.ChangeType == "Modified" && entry.NodeId != Guid.Empty)
+        {
+            var existing = _varianceEntries.FirstOrDefault(e =>
+                e.NodeId == entry.NodeId &&
+                e.ChangeType == "Modified" &&
+                !e.IsUndone &&
+                !e.IsHistorical &&
+                e.UndoAttributeName == entry.UndoAttributeName);
+            if (existing is not null)
+            {
+                // Keep the original OriginalXML but update the new state
+                existing.NewXML      = entry.NewXML;
+                existing.Description = entry.Description;
+                existing.Timestamp   = DateTime.Now;
+                // Move to top of list for visibility
+                _varianceEntries.Remove(existing);
+                _varianceEntries.Insert(0, existing);
+                InvokeAsync(StateHasChanged);
+                return;
+            }
+        }
+
         _varianceEntries.Insert(0, entry);
         InvokeAsync(StateHasChanged);
     }
@@ -3062,7 +3624,7 @@
             var history = await ShipExecService.GetCompanyVarianceHistoryAsync();
             _varianceEntries.RemoveAll(e => e.IsHistorical);
             _varianceEntries.AddRange(history);
-            _variancePanelVisible = true;
+            _variancePanelVisible = true; // User explicitly requested history — keep open
         }
         catch
         {
@@ -3078,14 +3640,16 @@
 
     private void UndoVariance(Variance entry)
     {
-        //System.Diagnostics/.Debugger.Break();
         if (rootNode is null) return;
+
+        // #5: Undoing an unapplied, non-historical variance removes it from the list
+        var removeInsteadOfRevert = !entry.IsApplied && !entry.IsHistorical;
 
         // Historical entries and JSON-payload-only entries (e.g., shipper imports)
         // don't have a NodeId anchor – use JSON-based entity lookup instead.
         if (entry.NodeId == Guid.Empty)
         {
-            UndoJsonBasedVariance(entry);
+            UndoJsonBasedVariance(entry, removeInsteadOfRevert);
             return;
         }
 
@@ -3099,8 +3663,8 @@
                     entry.IsUndone = true;
                     break;
                 }
-                _varianceEntries.Insert(0, CreateRevertEntry(entry));
-                //System.Diagnostics.Debugger.Break();
+                if (!removeInsteadOfRevert)
+                    _varianceEntries.Insert(0, CreateRevertEntry(entry));
                 if (entry.UndoAttributeName is not null)
                 {
                     var attr = node.Attributes.FirstOrDefault(a => a.Name == entry.UndoAttributeName);
@@ -3127,16 +3691,21 @@
                         e.IsUndone = true;
                     }
                 }
+                if (removeInsteadOfRevert)
+                    _varianceEntries.Remove(entry);
                 break;
             }
             case "Added":
             {
-                _varianceEntries.Insert(0, CreateRevertEntry(entry));
-                //System.Diagnostics.Debugger.Break();
+                if (!removeInsteadOfRevert)
+                    _varianceEntries.Insert(0, CreateRevertEntry(entry));
                 var addedNode = FindNode(rootNode, entry.NodeId);
                 if (addedNode?.Parent is not null)
                     addedNode.Parent.Children.Remove(addedNode);
-                entry.IsUndone = true;
+                if (removeInsteadOfRevert)
+                    _varianceEntries.Remove(entry);
+                else
+                    entry.IsUndone = true;
                 break;
             }
             case "Removed":
@@ -3145,8 +3714,8 @@
                 var parentId = entry.SnapshotParentId ?? entry.NodeId;
                 var parent = FindNode(rootNode, parentId);
                 if (parent is null) break;
-                _varianceEntries.Insert(0, CreateRevertEntry(entry));
-                //System.Diagnostics.Debugger.Break();
+                if (!removeInsteadOfRevert)
+                    _varianceEntries.Insert(0, CreateRevertEntry(entry));
                 var insertIdx = entry.SnapshotIndex >= 0
                     ? Math.Min(entry.SnapshotIndex, parent.Children.Count)
                     : parent.Children.Count;
@@ -3154,7 +3723,10 @@
                 snap.Parent = parent;
                 parent.Children.Insert(insertIdx, snap);
                 parent.IsExpanded = true;
-                entry.IsUndone = true;
+                if (removeInsteadOfRevert)
+                    _varianceEntries.Remove(entry);
+                else
+                    entry.IsUndone = true;
                 break;
             }
         }
@@ -3166,12 +3738,11 @@
 
     // ── JSON-based undo (historical + import entries) ─────────────────────────
 
-    private void UndoJsonBasedVariance(Variance entry)
+    private void UndoJsonBasedVariance(Variance entry, bool removeInsteadOfRevert = false)
     {
         if (rootNode is null) return;
 
         var inverseVariance = CreateRevertEntry(entry);
-        //System.Diagnostics.Debugger.Break();
 
         try
         {
@@ -3242,6 +3813,8 @@
                             return;
                         }
                         XmlViewerService.RemoveNode(shipperNode);
+                        // Record a Removed variance so the deletion is tracked
+                        inverseVariance.ChangeType = "Removed";
                         break;
                     }
                     var newObj = System.Text.Json.Nodes.JsonNode.Parse(entry.NewXML)?.AsObject();
@@ -3257,6 +3830,85 @@
                         return;
                     }
                     XmlViewerService.RemoveNode(entityNode);
+                    // Record a Removed variance so the deletion is tracked
+                    inverseVariance.ChangeType = "Removed";
+                    break;
+                }
+                case "Removed":
+                {
+                    // Re-add the deleted entity to the tree from the original snapshot
+                    var sourceJson = !string.IsNullOrEmpty(entry.OriginalXML) ? entry.OriginalXML : entry.NewXML;
+                    if (string.IsNullOrEmpty(sourceJson))
+                    {
+                        errorMessage = "Cannot undo: original entity data is not available for this variance.";
+                        return;
+                    }
+                    if (entry.PathDescription.StartsWith("Shippers", StringComparison.OrdinalIgnoreCase) ||
+                        entry.PathDescription.Equals("Shipper", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var origShipper = System.Text.Json.JsonSerializer.Deserialize<PSI.Sox.Shipper>(sourceJson);
+                        if (origShipper is null)
+                        {
+                            errorMessage = "Cannot undo: shipper data could not be parsed.";
+                            return;
+                        }
+                        var shippersNode = rootNode.Children.FirstOrDefault(c =>
+                            c.NodeName.Equals("Shippers", StringComparison.OrdinalIgnoreCase));
+                        if (shippersNode is null)
+                        {
+                            errorMessage = "Cannot undo: Shippers category not found in the XML tree.";
+                            return;
+                        }
+                        XmlViewerService.AddChild(shippersNode, "Shipper",
+                            Enumerable.Empty<(string, string)>(), null,
+                            Enumerable.Empty<(string, string)>());
+                        var addedShipper = shippersNode.Children.Last();
+                        ApplyShipperToShipperNode(addedShipper, origShipper);
+                        // Record an Added variance so the re-addition is tracked
+                        inverseVariance.ChangeType = "Added";
+                        break;
+                    }
+                    var origObj = System.Text.Json.Nodes.JsonNode.Parse(sourceJson)?.AsObject();
+                    if (origObj is null)
+                    {
+                        errorMessage = "Cannot undo: entity data could not be parsed.";
+                        return;
+                    }
+                    // Determine the parent category from the path description
+                    var categoryToken = entry.PathDescription
+                        .Split([' ', ':', '\u203a', '>'], StringSplitOptions.RemoveEmptyEntries)
+                        .FirstOrDefault();
+                    if (categoryToken is null)
+                    {
+                        errorMessage = "Cannot undo: unable to determine entity category from path.";
+                        return;
+                    }
+                    var parentCategory = rootNode.Children.FirstOrDefault(c =>
+                        c.NodeName.Equals(categoryToken, StringComparison.OrdinalIgnoreCase));
+                    if (parentCategory is null)
+                    {
+                        // Try singularized name
+                        var singular = categoryToken.Length > 2 && categoryToken.EndsWith('s')
+                            ? categoryToken[..^1] : categoryToken;
+                        parentCategory = rootNode.Children.FirstOrDefault(c =>
+                            c.NodeName.Equals(singular, StringComparison.OrdinalIgnoreCase));
+                    }
+                    if (parentCategory is null)
+                    {
+                        errorMessage = $"Cannot undo: could not find '{categoryToken}' category in the XML tree.";
+                        return;
+                    }
+                    // Determine child element name (singularize the category name)
+                    var childElementName = parentCategory.NodeName.EndsWith('s')
+                        ? parentCategory.NodeName[..^1]
+                        : parentCategory.NodeName;
+                    XmlViewerService.AddChild(parentCategory, childElementName,
+                        Enumerable.Empty<(string, string)>(), null,
+                        Enumerable.Empty<(string, string)>());
+                    var restoredNode = parentCategory.Children.Last();
+                    ApplyJsonObjectToNode(restoredNode, origObj);
+                    // Record an Added variance so the re-addition is tracked
+                    inverseVariance.ChangeType = "Added";
                     break;
                 }
                 default:
@@ -3270,8 +3922,15 @@
             return;
         }
 
-        entry.IsUndone = true;
-        _varianceEntries.Insert(0, inverseVariance);
+        if (removeInsteadOfRevert)
+        {
+            _varianceEntries.Remove(entry);
+        }
+        else
+        {
+            entry.IsUndone = true;
+            _varianceEntries.Insert(0, inverseVariance);
+        }
         XmlRefLookupService.Rebuild(rootNode!);
         MarkDirty();
         _version++;
@@ -3309,6 +3968,7 @@
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        // First pass: try matching against nodes whose names match path tokens
         foreach (var token in tokens)
         {
             foreach (var node in EnumerateDescendants(root))
@@ -3317,6 +3977,28 @@
                 if (NodeMatchesJsonObject(node, jsonObj)) return node;
             }
         }
+
+        // Second pass (Task 10a): if path-based lookup failed, try to find
+        // entities by their identity fields (Name, Symbol, UserName, Email, Id)
+        string[] identityFields = ["Name", "Symbol", "UserName", "Email", "Id"];
+        foreach (var idField in identityFields)
+        {
+            if (jsonObj.TryGetPropertyValue(idField, out var idVal) && idVal is not null)
+            {
+                var idStr = idVal.ToString();
+                if (string.IsNullOrWhiteSpace(idStr)) continue;
+                foreach (var node in EnumerateDescendants(root))
+                {
+                    if (node.Children.Count == 0) continue;
+                    var fieldChild = node.Children.FirstOrDefault(c =>
+                        c.NodeName.Equals(idField, StringComparison.OrdinalIgnoreCase));
+                    if (fieldChild is null) continue;
+                    if (!string.Equals(fieldChild.NodeValue?.Trim(), idStr.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
+                    if (NodeMatchesJsonObject(node, jsonObj)) return node;
+                }
+            }
+        }
+
         return null;
     }
 
@@ -3367,7 +4049,6 @@
 
             var childNode = node.Children.FirstOrDefault(c =>
                 c.NodeName.Equals(key, StringComparison.OrdinalIgnoreCase));
-            if (childNode is null) continue;
 
             string newValue;
             if (val is System.Text.Json.Nodes.JsonValue jv && jv.TryGetValue<bool>(out var boolVal))
@@ -3375,7 +4056,23 @@
             else
                 newValue = val.ToString();
 
+            if (childNode is null)
+            {
+                // Create the child if it doesn't exist yet (e.g., restoring a removed entity)
+                if (!string.IsNullOrWhiteSpace(newValue))
+                {
+                    XmlViewerService.AddChild(node, key,
+                        Enumerable.Empty<(string, string)>(), newValue,
+                        Enumerable.Empty<(string, string)>());
+                }
+                continue;
+            }
+
             XmlViewerService.UpdateNodeValue(childNode, newValue);
+            // Reset the original value to match the restored value so the
+            // field is no longer marked dirty after undo (Task 10d)
+            childNode.OriginalNodeValue = newValue;
+            childNode.IsModified = false;
         }
     }
 

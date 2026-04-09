@@ -6,6 +6,25 @@
     flex: 1;
 }
 
+/* -- Brand title row (same as Navigator) -- */
+.page-brand-row {
+    padding: 0.6rem 1rem 0;
+}
+
+.page-brand-title {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.page-brand-accent {
+    color: #337ab7;
+    font-weight: 700;
+}
+
 /* Tab bar styles live in app.css */
 
 /* ── Content panel ── */
@@ -74,6 +93,23 @@
     transform: translateY(-2px);
 }
 
+.tool-card--disabled {
+    opacity: 0.55;
+    pointer-events: auto;
+}
+
+    .tool-card--disabled:hover {
+        box-shadow: none;
+        transform: none;
+    }
+
+.tool-card-disabled-hint {
+    display: block;
+    font-size: 0.78rem;
+    color: #868e96;
+    margin-top: 0.25rem;
+}
+
 .tool-card-icon {
     font-size: 1.75rem;
     line-height: 1;
@@ -98,15 +134,23 @@
     font-size: 0.84rem;
     color: #777;
     line-height: 1.6;
+    flex: 1;
+}
+
+/* ── Card footer — pushes buttons to the bottom ── */
+.tool-card-footer {
+    margin-top: auto;
 }
 
 /* ── Download button ── */
 .tool-download-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     margin-top: 0.5rem;
     padding: 0.5rem 1.1rem;
+    min-width: 140px;
     background: #337ab7;
     border: 1px solid #2e6da4;
     color: #ffffff;
@@ -133,14 +177,14 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-/* ── Download button in button row (same size as open) ── */
-
 /* ── Open button (new tab) ── */
 .tool-open-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     padding: 0.5rem 1.1rem;
+    min-width: 140px;
     background: #ffffff;
     border: 1px solid #337ab7;
     color: #337ab7;
@@ -169,3 +213,329 @@
     margin-top: 0.5rem;
     flex-wrap: wrap;
 }
+
+/* ── CBR Helper pane (moved from ToolsPage) ── */
+.cbrh-pane {
+    display: flex;
+    flex-direction: column;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.cbrh-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #161b22, #0d1117);
+    border-bottom: 1px solid #30363d;
+}
+
+.cbrh-back-btn {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s;
+}
+.cbrh-back-btn:hover { color: #c9d1d9; border-color: #484f58; }
+
+.cbrh-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #c9d1d9;
+}
+
+.cbrh-hint {
+    font-size: 0.78rem;
+    color: #8b949e;
+    flex: 1;
+}
+
+.cbrh-header-actions {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.cbrh-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    flex: 1;
+}
+
+.cbrh-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cbrh-editor-wrap { flex: 1; min-height: 180px; }
+.cbrh-editor {
+    width: 100%;
+    min-height: 180px;
+    background: #0d1117;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    resize: vertical;
+}
+
+.cbrh-toolbar {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.cbrh-btn-analyze {
+    background: #238636;
+    border: 1px solid #2ea043;
+    color: #fff;
+    padding: 0.45rem 1rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.cbrh-btn-analyze:hover:not(:disabled) { background: #2ea043; }
+.cbrh-btn-analyze:disabled { opacity: 0.5; cursor: default; }
+
+.cbrh-btn-clear {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    padding: 0.45rem 0.85rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.cbrh-btn-clear:hover:not(:disabled) { color: #c9d1d9; border-color: #484f58; }
+
+.cbrh-btn-theme,
+.cbrh-btn-maximize {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    border-radius: 4px;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.cbrh-btn-theme:hover,
+.cbrh-btn-maximize:hover { color: #c9d1d9; border-color: #484f58; }
+
+.cbrh-result-wrap {
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.cbrh-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.cbrh-result-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #c9d1d9;
+}
+
+.cbrh-btn-copy {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+.cbrh-btn-copy:hover { color: #c9d1d9; border-color: #484f58; }
+
+.cbrh-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    color: #8b949e;
+    font-size: 0.82rem;
+}
+
+.cbrh-error {
+    padding: 0.75rem;
+    color: #f85149;
+    font-size: 0.82rem;
+}
+
+.cbrh-result {
+    width: 100%;
+    min-height: 120px;
+    background: #0d1117;
+    color: #c9d1d9;
+    border: none;
+    padding: 0.75rem;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    resize: vertical;
+}
+
+.cbrh-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: cbrh-spin 0.6s linear infinite;
+    flex-shrink: 0;
+}
+.cbrh-spinner--lg { width: 20px; height: 20px; }
+@keyframes cbrh-spin { to { transform: rotate(360deg); } }
+
+/* ── CBR Helper chat ── */
+.cbrh-chat {
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cbrh-chat-label {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #c9d1d9;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.cbrh-chat-messages {
+    min-height: 80px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cbrh-chat-empty {
+    color: #484f58;
+    font-size: 0.78rem;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+.cbrh-bubble {
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    max-width: 85%;
+}
+.cbrh-bubble--user { background: #1f6feb; color: #fff; align-self: flex-end; }
+.cbrh-bubble--assistant { background: #21262d; color: #c9d1d9; align-self: flex-start; }
+
+.cbrh-bubble-text { white-space: pre-wrap; }
+
+.cbrh-bubble-apply {
+    margin-top: 0.35rem;
+    background: #238636;
+    border: 1px solid #2ea043;
+    color: #fff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.cbrh-thinking span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #8b949e;
+    animation: cbrh-dot 1s infinite ease-in-out;
+    margin: 0 2px;
+}
+.cbrh-thinking span:nth-child(2) { animation-delay: 0.15s; }
+.cbrh-thinking span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes cbrh-dot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.cbrh-chat-input-row {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid #30363d;
+}
+
+.cbrh-chat-input {
+    flex: 1;
+    background: #0d1117;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.82rem;
+    resize: none;
+}
+
+.cbrh-chat-send {
+    background: #238636;
+    border: 1px solid #2ea043;
+    color: #fff;
+    border-radius: 4px;
+    padding: 0 0.65rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+.cbrh-chat-send:disabled { opacity: 0.4; cursor: default; }
+
+/* ── CBR Helper light theme ── */
+.cbrh-pane--light { background: #fff; border-color: #d0d7de; }
+.cbrh-pane--light .cbrh-header { background: #f6f8fa; border-bottom-color: #d0d7de; }
+.cbrh-pane--light .cbrh-title { color: #1f2328; }
+.cbrh-pane--light .cbrh-hint { color: #656d76; }
+.cbrh-pane--light .cbrh-editor { background: #fff; color: #1f2328; border-color: #d0d7de; }
+.cbrh-pane--light .cbrh-result { background: #f6f8fa; color: #1f2328; }
+.cbrh-pane--light .cbrh-result-header { background: #f6f8fa; border-bottom-color: #d0d7de; }
+.cbrh-pane--light .cbrh-chat-label { background: #f6f8fa; color: #1f2328; border-bottom-color: #d0d7de; }
+.cbrh-pane--light .cbrh-chat-input { background: #fff; color: #1f2328; border-color: #d0d7de; }
+.cbrh-pane--light .cbrh-bubble--assistant { background: #f6f8fa; color: #1f2328; }
+
+/* ── CBR Helper maximized ── */
+.cbrh-pane--maximized {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    border-radius: 0;
+}
+
+/* ── Dark theme overrides ── */
+:global(.dark-theme) .tools-panel { background: #1a1a1a; border-color: #333; }
+:global(.dark-theme) .tools-hero-title { color: #ddd; }
+:global(.dark-theme) .tools-hero-sub { color: #999; }
+:global(.dark-theme) .tool-card { background: #222; border-color: #333; border-left-color: #337ab7; }
+:global(.dark-theme) .tool-card-title { color: #ddd; }
+:global(.dark-theme) .tool-card-desc { color: #999; }
+:global(.dark-theme) .page-brand-title { color: #c9d1d9; }

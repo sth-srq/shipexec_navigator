@@ -63,5 +63,7 @@ namespace ShipExecNavigator.BusinessLogic.EntityComparison
         public bool     IsRevert          { get; set; }
         /// <summary>True once this variance has been successfully applied to the live server.</summary>
         public bool     IsApplied         { get; set; }
+        /// <summary>Groups historical variances that were applied together in the same batch.</summary>
+        public Guid?    BatchId           { get; set; }
     }
 }

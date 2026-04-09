@@ -17,6 +17,12 @@ else
         <div class="vp-header">
             <span class="vp-title">&#x1F4CB; Changes</span>
             <div class="vp-header-actions">
+                @if (Entries.Any(e => !e.IsHistorical))
+                {
+                    <button class="vp-apply-btn" @onclick="OnViewChanges" title="Compute variances and apply changes">
+                        &#x2714; Apply Changes
+                    </button>
+                }
                 @if (Entries.Count > 0)
                 {
                     <span class="vp-count">@Entries.Count</span>
@@ -36,19 +42,6 @@ else
                     }
                     <button class="vp-clear-btn" @onclick="ClearAll" title="Clear all entries">&#x2715;</button>
                 }
-                <button class="vp-history-btn @(_isLoadingHistory ? "vp-history-btn--loading" : "")"
-                        @onclick="HandleLoadHistory"
-                        disabled="@((_isLoadingHistory || !CanLoadHistory) ? "disabled" : null)"
-                        title="@(CanLoadHistory ? "Load historical variances for this company" : "Connect to a live company to load history")">
-                    @if (_isLoadingHistory)
-                    {
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    }
-                    else
-                    {
-                        <span>&#x1F553;</span>
-                    }
-                </button>
                 <button class="vp-toggle-btn vp-toggle-btn--in-header" @onclick="Hide" title="Hide panel">
                     <span class="vp-toggle-icon">&#x276E;</span>
                 </button>
@@ -73,9 +66,11 @@ else
             {
                 @foreach (var entry in Entries)
                 {
-                    <div class="vp-entry vp-entry--@entry.ChangeType.ToLowerInvariant() @(HasDetail(entry) ? "vp-entry--expandable" : "") @(entry.IsHistorical ? "vp-entry--historical" : "") @(entry.IsUndone ? "vp-entry--undone" : "") @(entry.IsRevert ? "vp-entry--reverted" : "")"
+                    <div class="vp-entry vp-entry--@entry.ChangeType.ToLowerInvariant() @(HasDetail(entry) ? "vp-entry--expandable" : "") @(entry.IsHistorical ? "vp-entry--historical" : "") @(entry.IsUndone ? "vp-entry--undone" : "") @(entry.IsRevert ? "vp-entry--reverted" : "") @(IsFlashing(entry.Id) ? "vp-entry--flash" : "")"
                          @onclick="() => HandleEntryClick(entry)"
-                         title="@(HasDetail(entry) ? "Click to view changes" : "Click to navigate to this change")">
+                         @ondblclick="() => HandleEntryDblClick(entry)"
+                         @ondblclick:stopPropagation
+                         title="@(entry.IsHistorical ? "Double-click for details" : HasDetail(entry) ? "Click to view changes" : "Click to navigate to this change")">
                         <div class="vp-entry-icon">@ChangeTypeIcon(entry.ChangeType)</div>
                         <div class="vp-entry-content">
                             <div class="vp-entry-path">@entry.PathDescription</div>
@@ -100,10 +95,6 @@ else
                         }
                         @if (entry.IsHistorical)
                         {
-                            <button class="vp-details-btn"
-                                    @onclick="() => ShowDetails(entry)"
-                                    @onclick:stopPropagation
-                                    title="View details">&#x1F4CB;</button>
                             <span class="vp-historical-badge" title="Historical record">&#x1F553;</span>
                         }
                     </div>
@@ -175,6 +166,36 @@ else
                 </div>
                 <div class="vp-detail-section-label">Change Details</div>
                 <pre class="vp-detail-json">@(string.IsNullOrWhiteSpace(_detailEntry.VarianceJson) ? "No data" : _detailEntry.VarianceJson)</pre>
+
+                <div class="vp-detail-actions">
+                    @if (!_detailEntry.IsUndone && !_detailEntry.IsRevert)
+                    {
+                        <button class="vp-detail-undo-btn" @onclick="() => { OnEntryUndo.InvokeAsync(_detailEntry); CloseDetails(); }">
+                            &#x21A9; Undo
+                        </button>
+                    }
+                    @if (_detailEntry.BatchId.HasValue)
+                    {
+                        <button class="vp-detail-batch-btn" @onclick="() => ShowBatch(_detailEntry.BatchId.Value)">
+                            &#x1F4C2; Show Batch (@GetBatchCount(_detailEntry.BatchId.Value))
+                        </button>
+                    }
+                </div>
+
+                @if (_batchEntries is not null)
+                {
+                    <div class="vp-detail-section-label">Other Changes in Batch</div>
+                    <div class="vp-batch-list">
+                        @foreach (var batchEntry in _batchEntries)
+                        {
+                            <div class="vp-batch-item @(batchEntry.Id == _detailEntry.Id ? "vp-batch-item--current" : "")">
+                                <span class="vp-batch-item-type vp-batch-item-type--@batchEntry.ChangeType.ToLowerInvariant()">@batchEntry.ChangeType</span>
+                                <span class="vp-batch-item-path">@batchEntry.PathDescription</span>
+                                <span class="vp-batch-item-desc">@batchEntry.Description</span>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -185,7 +206,7 @@ else
     public List<Variance> Entries { get; set; } = default!;
 
     [Parameter]
-    public bool IsVisible { get; set; } = true;
+    public bool IsVisible { get; set; } = false;
 
     [Parameter]
     public EventCallback<bool> IsVisibleChanged { get; set; }
@@ -197,40 +218,98 @@ else
     public EventCallback<Variance> OnEntryUndo { get; set; }
 
     [Parameter]
-    public EventCallback OnLoadHistory { get; set; }
-
-    [Parameter]
     public string? HistoryError { get; set; }
-
-    [Parameter]
-    public bool CanLoadHistory { get; set; }
 
     [Parameter]
     public EventCallback OnClearAndRevert { get; set; }
 
+    [Parameter]
+    public EventCallback OnViewChanges { get; set; }
+
+    [Parameter]
+    public HashSet<Guid> FlashIds { get; set; } = [];
+
     private readonly HashSet<Guid> _expandedIds = [];
-    private bool _isLoadingHistory;
+    private readonly HashSet<Guid> _localFlashIds = [];
     private bool _isReverting;
     private Variance? _detailEntry;
+    private List<Variance>? _batchEntries;
+    private int _lastKnownCount;
+    private CancellationTokenSource? _autoHideCts;
 
-    private void ShowDetails(Variance entry) => _detailEntry = entry;
-    private void CloseDetails() => _detailEntry = null;
+    protected override void OnParametersSet()
+    {
+        var currentCount = Entries.Count;
+        if (currentCount > _lastKnownCount && _lastKnownCount >= 0)
+        {
+            var newCount = currentCount - _lastKnownCount;
+            _localFlashIds.Clear();
+            for (var i = 0; i < newCount && i < Entries.Count; i++)
+                _localFlashIds.Add(Entries[i].Id);
+
+            // Auto-show with slide-in animation
+            if (!IsVisible)
+            {
+                _ = IsVisibleChanged.InvokeAsync(true);
+                ScheduleAutoHide();
+            }
+        }
+        _lastKnownCount = currentCount;
+    }
+
+    private void ScheduleAutoHide()
+    {
+        _autoHideCts?.Cancel();
+        _autoHideCts?.Dispose();
+        _autoHideCts = new CancellationTokenSource();
+        var token = _autoHideCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(2000, token);
+                await InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+                    _localFlashIds.Clear();
+                    _ = IsVisibleChanged.InvokeAsync(false);
+                    StateHasChanged();
+                });
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+    }
+
+    private bool IsFlashing(Guid id) => _localFlashIds.Contains(id) || FlashIds.Contains(id);
+
+    private void ShowDetails(Variance entry)
+    {
+        _detailEntry = entry;
+        _batchEntries = null;
+    }
+
+    private void CloseDetails()
+    {
+        _detailEntry = null;
+        _batchEntries = null;
+    }
+
+    private void HandleEntryDblClick(Variance entry)
+    {
+        if (entry.IsHistorical)
+            ShowDetails(entry);
+    }
+
+    private void ShowBatch(Guid batchId)
+    {
+        _batchEntries = Entries.Where(e => e.BatchId == batchId).ToList();
+    }
+
+    private int GetBatchCount(Guid batchId) =>
+        Entries.Count(e => e.BatchId == batchId);
 
     private static bool HasDetail(Variance entry) =>
         !string.IsNullOrEmpty(entry.OriginalXML) || !string.IsNullOrEmpty(entry.NewXML);
-
-    private async Task HandleLoadHistory()
-    {
-        _isLoadingHistory = true;
-        try
-        {
-            await OnLoadHistory.InvokeAsync();
-        }
-        finally
-        {
-            _isLoadingHistory = false;
-        }
-    }
 
     private void HandleEntryClick(Variance entry)
     {
@@ -245,12 +324,19 @@ else
         }
     }
 
-    private Task Show() => IsVisibleChanged.InvokeAsync(true);
+    private Task Show()
+    {
+        _autoHideCts?.Cancel();
+        _localFlashIds.Clear();
+        return IsVisibleChanged.InvokeAsync(true);
+    }
     private Task Hide() => IsVisibleChanged.InvokeAsync(false);
     private void ClearAll()
     {
         Entries.Clear();
         _expandedIds.Clear();
+        _localFlashIds.Clear();
+        _lastKnownCount = 0;
     }
 
     private async Task HandleRevertAll()

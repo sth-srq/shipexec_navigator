@@ -16,13 +16,13 @@
                 @if (_stage == Stage.Pick)
                 {
                     <InputFile id="iud-file-input" style="display:none"
-                               accept=".csv"
+                               accept=".csv,.xlsx"
                                OnChange="OnFileSelectedAsync" />
 
                     <div class="isd-pick-area">
-                        <p class="isd-hint">Select a CSV file containing user data to preview.</p>
+                        <p class="isd-hint">Select a CSV or Excel (.xlsx) file containing user data to preview.</p>
                         <button class="isd-btn-choose" @onclick="TriggerFilePickerAsync">
-                            &#x1F4C2; Choose CSV File
+                            &#x1F4C2; Choose File
                         </button>
                     </div>
 
@@ -353,35 +353,47 @@
         try
         {
             var file = e.File;
-            if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            var isCsv  = file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+            var isXlsx = file.Name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase);
+            if (!isCsv && !isXlsx)
             {
-                _error = "Please select a .csv file.";
+                _error = "Please select a .csv or .xlsx file.";
                 return;
             }
 
             _fileName = file.Name;
 
             using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            using var reader = new System.IO.StreamReader(stream);
 
-            var lines = new List<string>();
-            string? line;
-            while ((line = await reader.ReadLineAsync()) is not null)
+            if (isXlsx)
             {
-                if (!string.IsNullOrWhiteSpace(line))
-                    lines.Add(line);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                ms.Position = 0;
+                ParseExcelData(ms);
             }
-
-            if (lines.Count == 0)
+            else
             {
-                _error = "The file is empty.";
-                return;
-            }
+                using var reader = new System.IO.StreamReader(stream);
+                var lines = new List<string>();
+                string? line;
+                while ((line = await reader.ReadLineAsync()) is not null)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                        lines.Add(line);
+                }
 
-            // First row is always treated as the header
-            _headers = ParseCsvLine(lines[0]);
-            _totalDataRows = lines.Count - 1;
-            _allDataRows = lines.Skip(1).Select(ParseCsvLine).ToList();
+                if (lines.Count == 0)
+                {
+                    _error = "The file is empty.";
+                    return;
+                }
+
+                // First row is always treated as the header
+                _headers = ParseCsvLine(lines[0]);
+                _totalDataRows = lines.Count - 1;
+                _allDataRows = lines.Skip(1).Select(ParseCsvLine).ToList();
+            }
             _previewRows = _allDataRows.Take(3).ToList();
 
             _columnMappings = new();
@@ -450,6 +462,41 @@
         }
 
         return result;
+    }
+
+    private void ParseExcelData(MemoryStream ms)
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook(ms);
+        var ws = workbook.Worksheets.First();
+        var usedRange = ws.RangeUsed();
+        if (usedRange is null)
+        {
+            _error = "The Excel file contains no data.";
+            return;
+        }
+
+        var rows = usedRange.RowsUsed().ToList();
+        if (rows.Count == 0)
+        {
+            _error = "The Excel file contains no data.";
+            return;
+        }
+
+        var headerRow = rows[0];
+        _headers = headerRow.Cells().Select(c => c.GetString().Trim()).ToList();
+        var colCount = _headers.Count;
+
+        _allDataRows = rows.Skip(1)
+            .Select(row =>
+            {
+                var vals = new List<string>();
+                for (int c = 1; c <= colCount; c++)
+                    vals.Add(row.Cell(c).GetString().Trim());
+                return vals;
+            })
+            .Where(vals => vals.Any(v => !string.IsNullOrEmpty(v)))
+            .ToList();
+        _totalDataRows = _allDataRows.Count;
     }
 
     private void Reset()

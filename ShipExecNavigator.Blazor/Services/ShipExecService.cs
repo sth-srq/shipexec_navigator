@@ -1779,7 +1779,7 @@ public sealed class ShipExecService(
             try
             {
                 var fileBytes = _appManager.GetServerBusinessRuleFileBytes(sbrName, sbrVersion);
-                System.Diagnostics.Debugger.Break(); // breakpoint: after fetching SBR file bytes (DLL or Project download)
+                //System.Diagnostics.Debugger.Break(); // breakpoint: after fetching SBR file bytes (DLL or Project download)
                 sw.Stop();
                 bool hasFile = fileBytes is { Length: > 0 };
                 logger.LogInformation(

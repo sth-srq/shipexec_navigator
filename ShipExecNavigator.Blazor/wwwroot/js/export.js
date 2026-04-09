@@ -248,6 +248,28 @@ window.renderCbrCode = function (containerId, code) {
         '<pre class="cbr-code-pre"><code>' + codeHtml + '</code></pre>';
 };
 
+// ── SBR code viewer: syntax-highlighted C# / XML / generic with line numbers ─
+window.renderSbrCode = function (containerId, code, fileName) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+
+    var ext = (fileName || '').split('.').pop().toLowerCase();
+    var highlighter = ext === 'cs' ? highlightCsLine
+                    : ext === 'xml' || ext === 'csproj' || ext === 'config' ? highlightXmlLine
+                    : highlightGenericLine;
+
+    var lines = (code || '').split('\n');
+    var gutterHtml = '';
+    var codeHtml = '';
+    for (var i = 0; i < lines.length; i++) {
+        gutterHtml += '<span class="cbr-ln">' + (i + 1) + '</span>\n';
+        codeHtml += highlighter(escapeHtml(lines[i])) + '\n';
+    }
+    container.innerHTML =
+        '<div class="cbr-gutter" aria-hidden="true">' + gutterHtml + '</div>' +
+        '<pre class="cbr-code-pre"><code>' + codeHtml + '</code></pre>';
+};
+
 function escapeHtml(s) {
     return s
         .replace(/&/g, '&amp;')
@@ -294,6 +316,76 @@ function highlightJsLine(escapedLine) {
     return escapedLine;
 }
 
+// ── C# syntax highlighting ───────────────────────────────────────────────────
+function highlightCsLine(escapedLine) {
+    // Single-line comments
+    escapedLine = escapedLine.replace(
+        /(\/\/.*)$/,
+        '<span class="cs-comment">$1</span>'
+    );
+    // Strings (double-quoted)
+    escapedLine = escapedLine.replace(
+        /(&quot;(?:[^&]|&(?!quot;))*?&quot;)/g,
+        '<span class="cs-string">$1</span>'
+    );
+    // Char literals
+    escapedLine = escapedLine.replace(
+        /('\\?.')/g,
+        '<span class="cs-string">$1</span>'
+    );
+    // Numbers
+    escapedLine = escapedLine.replace(
+        /\b(\d+\.?\d*[fFdDmMlLuU]?)\b/g,
+        '<span class="cs-number">$1</span>'
+    );
+    // C# keywords
+    var kwPattern = /\b(abstract|as|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|while|async|await|dynamic|nameof|when|where|yield|record|init|required|file|scoped|global|get|set|add|remove|value|nint|nuint)\b/g;
+    escapedLine = escapedLine.replace(
+        kwPattern,
+        '<span class="cs-keyword">$1</span>'
+    );
+    // Preprocessor directives
+    escapedLine = escapedLine.replace(
+        /^(\s*#\w+.*)/,
+        '<span class="cs-preprocessor">$1</span>'
+    );
+    // Attributes in brackets
+    escapedLine = escapedLine.replace(
+        /(\[[\w.]+\])/g,
+        '<span class="cs-attribute">$1</span>'
+    );
+    return escapedLine;
+}
+
+// ── XML syntax highlighting ──────────────────────────────────────────────────
+function highlightXmlLine(escapedLine) {
+    // Comments
+    escapedLine = escapedLine.replace(
+        /(&lt;!--.*?--&gt;)/g,
+        '<span class="cs-comment">$1</span>'
+    );
+    // Attribute values
+    escapedLine = escapedLine.replace(
+        /(&quot;[^&]*?&quot;)/g,
+        '<span class="cs-string">$1</span>'
+    );
+    // Tag names
+    escapedLine = escapedLine.replace(
+        /(&lt;\/?)([\w:.-]+)/g,
+        '$1<span class="cs-keyword">$2</span>'
+    );
+    // Attribute names
+    escapedLine = escapedLine.replace(
+        /\b([\w:-]+)(=)/g,
+        '<span class="cs-attribute">$1</span>$2'
+    );
+    return escapedLine;
+}
+
+function highlightGenericLine(escapedLine) {
+    return escapedLine;
+}
+
 // ── CBR diff viewer: side-by-side original vs output with diff highlighting ─────
 window.renderCbrDiff = function (containerId, originalCode, newCode) {
     var container = document.getElementById(containerId);
@@ -335,11 +427,11 @@ window.renderCbrDiff = function (containerId, originalCode, newCode) {
             rightCode   += '<div class="cbr-diff-line cbr-diff-added">' + highlightJsLine(escapeHtml(entry.newLine)) + '</div>';
         } else if (entry.type === 'modified') {
             leftNum++; rightNum++;
-            // Replaced with method
-            leftGutter  += '<span class="cbr-ln cbr-ln--modified">' + leftNum + '</span>\n';
-            leftCode    += '<div class="cbr-diff-line cbr-diff-modified">' + highlightJsLine(escapeHtml(entry.oldLine)) + '</div>';
-            rightGutter += '<span class="cbr-ln cbr-ln--modified">' + rightNum + '</span>\n';
-            rightCode   += '<div class="cbr-diff-line cbr-diff-modified">' + highlightJsLine(escapeHtml(entry.newLine)) + '</div>';
+            // Show old version in red (removed) and new version in green (added)
+            leftGutter  += '<span class="cbr-ln cbr-ln--removed">' + leftNum + '</span>\n';
+            leftCode    += '<div class="cbr-diff-line cbr-diff-removed">' + highlightJsLine(escapeHtml(entry.oldLine)) + '</div>';
+            rightGutter += '<span class="cbr-ln cbr-ln--added">' + rightNum + '</span>\n';
+            rightCode   += '<div class="cbr-diff-line cbr-diff-added">' + highlightJsLine(escapeHtml(entry.newLine)) + '</div>';
         }
     }
 
@@ -471,6 +563,17 @@ function computeSimpleDiff(oldLines, newLines) {
     }
     return result;
 }
+
+// ── Download HTML page as styled PDF via browser print dialog ─────────────────
+window.downloadAsPdf = function (url) {
+    var w = window.open(url, '_blank');
+    if (!w) return;
+    // Wait for the page to load, then trigger the browser print dialog
+    // (the user can choose "Save as PDF" as the destination)
+    w.addEventListener('load', function () {
+        setTimeout(function () { w.print(); }, 600);
+    });
+};
 
 // ── Shipper import: column drag-hover highlight (pure JS, no Blazor round trip) ──
 ;(function () {

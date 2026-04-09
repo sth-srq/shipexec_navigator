@@ -37,7 +37,7 @@
 .vp-title {
     font-size: 0.78rem;
     font-weight: 600;
-    color: #495057;
+    color: #ffffff;
 }
 
 .vp-header-actions {
@@ -48,8 +48,8 @@
 
 .vp-count {
     font-size: 0.68rem;
-    background-color: rgba(46, 109, 164, 0.1);
-    color: #2e6da4;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
     border-radius: 999px;
     padding: 0.05rem 0.45rem;
     font-weight: 600;
@@ -58,8 +58,8 @@
 
 .vp-revert-btn {
     background: none;
-    border: 1px solid #adb5bd;
-    color: #adb5bd;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.65rem;
     cursor: pointer;
     padding: 0.15rem 0.45rem;
@@ -86,7 +86,7 @@
 .vp-clear-btn {
     background: none;
     border: none;
-    color: #adb5bd;
+    color: rgba(255, 255, 255, 0.8);
     font-size: 0.7rem;
     cursor: pointer;
     padding: 0.15rem 0.35rem;
@@ -96,8 +96,31 @@
 }
 
     .vp-clear-btn:hover {
-        color: #c53030;
-        background-color: rgba(197, 48, 48, 0.08);
+        color: #ffcccc;
+        background-color: rgba(255, 255, 255, 0.12);
+    }
+
+/* -- Apply Changes button -------------------------------------------------- */
+.vp-apply-btn {
+    background: #337ab7;
+    border: 1px solid #2e6da4;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    transition: background 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+}
+
+    .vp-apply-btn:hover {
+        background: #286090;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     }
 
 /* -- Toggle button (used in both collapsed strip and header) --------------- */
@@ -124,12 +147,15 @@
 .vp-toggle-btn--in-header {
     width: 24px;
     height: 24px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
 }
 
 .vp-history-btn {
     background: none;
     border: none;
-    color: #b08000;
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.9rem;
     cursor: pointer;
     padding: 0.15rem 0.3rem;
@@ -492,13 +518,13 @@
 .vp-detail-title {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #343a40;
+    color: #ffffff;
 }
 
 .vp-detail-close {
     background: none;
     border: none;
-    color: #6c757d;
+    color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
     cursor: pointer;
     padding: 0.2rem 0.4rem;
@@ -566,6 +592,103 @@
     margin: 0;
     max-height: 300px;
     overflow-y: auto;
+}
+
+/* -- Detail modal actions -------------------------------------------------- */
+.vp-detail-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.vp-detail-undo-btn {
+    background: #e67e22;
+    border: 1px solid #d35400;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+    .vp-detail-undo-btn:hover {
+        background: #d35400;
+    }
+
+.vp-detail-batch-btn {
+    background: #337ab7;
+    border: 1px solid #2e6da4;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+    .vp-detail-batch-btn:hover {
+        background: #286090;
+    }
+
+/* -- Batch list in detail modal -------------------------------------------- */
+.vp-batch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.vp-batch-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.vp-batch-item--current {
+    background: rgba(51, 122, 183, 0.08);
+    border-color: rgba(51, 122, 183, 0.3);
+}
+
+.vp-batch-item-type {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.05rem 0.4rem;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.vp-batch-item-type--modified { background: rgba(46, 109, 164, 0.12); color: #2e6da4; }
+.vp-batch-item-type--added    { background: rgba(25, 135, 84, 0.12); color: #198754; }
+.vp-batch-item-type--removed  { background: rgba(197, 48, 48, 0.1); color: #c53030; }
+.vp-batch-item-type--reverted { background: rgba(121, 82, 179, 0.12); color: #7952b3; }
+
+.vp-batch-item-path {
+    color: #868e96;
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vp-batch-item-desc {
+    color: #495057;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* -- Undone entries -------------------------------------------------------- */
@@ -737,4 +860,32 @@
         border-left-color: #ef4444;
         color: #f87171;
     }
+}
+
+/* -- Flash highlight for newly added variances ----------------------------- */
+.vp-entry--flash {
+    animation: vp-slide-in 0.5s ease-out;
+    position: relative;
+    z-index: 10;
+}
+
+.vp-entry--flash::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(59, 130, 246, 0.12);
+    border-radius: 3px;
+    pointer-events: none;
+    animation: vp-flash-fade 1.8s ease-in-out forwards;
+    animation-delay: 0.5s;
+}
+
+@keyframes vp-slide-in {
+    0%   { transform: translateX(100%); opacity: 0.5; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes vp-flash-fade {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
 }
