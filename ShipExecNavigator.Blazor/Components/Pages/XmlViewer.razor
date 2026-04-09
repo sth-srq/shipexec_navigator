@@ -4090,16 +4090,8 @@
         if (rootNode is null) return;
 
         // Switch to the appropriate tab so the tree is visible
-        if (string.Equals(link.Category, "Users", StringComparison.OrdinalIgnoreCase))
-        {
-            _activeMainTab = "company";
-            _treeFilterCategory = "Users";
-        }
-        else
-        {
-            _activeMainTab = "company";
-            _treeFilterCategory = null;
-        }
+        _activeMainTab = "company";
+        _treeFilterCategory = null;
 
         var categoryNode = rootNode.Children.FirstOrDefault(c =>
             string.Equals(c.NodeName, link.Category, StringComparison.OrdinalIgnoreCase));
