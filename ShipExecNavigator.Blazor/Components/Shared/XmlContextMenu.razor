@@ -26,6 +26,16 @@
             </button>
         }
 
+        @if (IsShippersNode)
+        {
+            <div class="ctx-sep"></div>
+
+            <button class="ctx-item" @onclick="HandleImportShippers">
+                <span class="ctx-icon">&#x1F69A;</span>
+                Import Shippers
+            </button>
+        }
+
         @if (Node.Parent is not null)
         {
             <div class="ctx-sep"></div>
@@ -49,10 +59,16 @@
     [Parameter] public EventCallback<XmlNodeViewModel> OnRemove { get; set; }
     [Parameter] public EventCallback<XmlNodeViewModel> OnCopy { get; set; }
     [Parameter] public EventCallback<XmlNodeViewModel> OnPaste { get; set; }
+    [Parameter] public EventCallback OnImportShippers { get; set; }
+
+    private bool IsShippersNode =>
+        Node is not null
+        && string.Equals(Node.NodeName, "Shippers", StringComparison.OrdinalIgnoreCase);
 
     private Task HandleClose() => OnClose.InvokeAsync();
     private Task HandleAdd() => OnAdd.InvokeAsync(Node);
     private Task HandleCopy() => OnCopy.InvokeAsync(Node);
     private Task HandlePaste() => OnPaste.InvokeAsync(Node);
     private Task HandleDelete() => OnRemove.InvokeAsync(Node);
+    private Task HandleImportShippers() => OnImportShippers.InvokeAsync();
 }

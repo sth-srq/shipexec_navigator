@@ -7,6 +7,8 @@
 @inject AlertService AlertService
 @inject SummaryPdfService PdfService
 @inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+@inject PendingImportService PendingImportService
 
 <PageTitle>Tools — ShipExec™ Navigator</PageTitle>
 
@@ -425,7 +427,10 @@
 </div>
 
 <ImportShippersDialog IsVisible="_showImportShippersDialog"
-                      OnClose="() => _showImportShippersDialog = false" />
+                      CanApply="true"
+                      OnClose="() => _showImportShippersDialog = false"
+                      OnShippersApplied="HandleShippersAppliedAsync"
+                      OnAddToVarianceList="HandleShipperVariancesForStudio" />
 
 <ImportUsersDialog IsVisible="_showImportUsersDialog"
                    OnClose="() => _showImportUsersDialog = false" />
@@ -790,5 +795,21 @@
         _summarizeFilename = null;
         _summarizePercent  = 0;
         _summarizeStatus   = string.Empty;
+    }
+
+    private void HandleShippersAppliedAsync(List<ApplyResultItem> results)
+    {
+        if (!results.Any(r => r.Success)) return;
+        _showImportShippersDialog = false;
+        PendingImportService.HighlightCategory = "Shippers";
+        NavigationManager.NavigateTo("/studio", forceLoad: false);
+    }
+
+    private void HandleShipperVariancesForStudio(List<ShipExecNavigator.BusinessLogic.EntityComparison.Variance> variances)
+    {
+        if (variances.Count == 0) return;
+        _showImportShippersDialog = false;
+        PendingImportService.SetPendingShipperVariances(variances);
+        NavigationManager.NavigateTo("/studio", forceLoad: false);
     }
 }

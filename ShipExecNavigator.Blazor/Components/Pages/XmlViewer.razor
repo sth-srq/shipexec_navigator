@@ -13,6 +13,7 @@
 @inject IXmlRefLookupService XmlRefLookupService
 @inject IJSRuntime JSRuntime
 @inject AlertService AlertService
+@inject PendingImportService PendingImportService
 @inject IAiChatService AiChatService
 @inject ICbrAnalysisService CbrAnalysisService
 
@@ -1109,7 +1110,8 @@
                 OnAdd="OpenAddChildDialog"
                 OnRemove="ExecuteRemove"
                 OnCopy="ExecuteCopy"
-                OnPaste="ExecutePaste" />
+                OnPaste="ExecutePaste"
+                OnImportShippers="OpenImportShippersFromContextMenu" />
 
 @* ── Add-child dialog ── *@
 <XmlAddChildDialog ParentNode="_addChildTarget"
@@ -2706,6 +2708,21 @@
         }
         await LoadHistoryAsync();
 
+        // Process any pending shipper-import variances from the Tools page
+        if (PendingImportService.HasPendingShipperVariances && rootNode is not null)
+        {
+            var pendingVariances = PendingImportService.ConsumePendingShipperVariances();
+            HandleShipperVariancesForPanel(pendingVariances);
+        }
+
+        // Highlight a category (e.g. Shippers) if requested from another page
+        var highlightCategory = PendingImportService.HighlightCategory;
+        if (!string.IsNullOrEmpty(highlightCategory))
+        {
+            PendingImportService.HighlightCategory = null;
+            _ = HighlightCategoryAfterLoadAsync(highlightCategory);
+        }
+
         // #14: Auto-collapse the variance panel 0.6s after loading
         _ = Task.Run(async () =>
         {
@@ -2844,6 +2861,37 @@
             XmlRefLookupService.Rebuild(rootNode);
         MarkDirty();
         _version++;
+    }
+
+    /// <summary>
+    /// After connecting and loading the tree, expand and temporarily highlight
+    /// a top-level category node (e.g. "Shippers").
+    /// </summary>
+    private async Task HighlightCategoryAfterLoadAsync(string categoryName)
+    {
+        if (rootNode is null) return;
+
+        // Small delay so the tree renders first
+        await Task.Delay(400);
+
+        _activeMainTab = "company";
+        _treeFilterCategory = null;
+
+        var categoryNode = rootNode.Children.FirstOrDefault(c =>
+            string.Equals(c.NodeName, categoryName, StringComparison.OrdinalIgnoreCase));
+        if (categoryNode is null) return;
+
+        if (categoryNode.IsLazyLoadable && !categoryNode.IsLazyLoaded)
+            await HandleLazyLoadAsync(categoryNode);
+
+        categoryNode.IsExpanded = true;
+        _highlightedNodeId = categoryNode.Id;
+        _version++;
+        await InvokeAsync(StateHasChanged);
+        try { await JSRuntime.InvokeVoidAsync("scrollToNode", $"node-{categoryNode.Id}"); } catch { }
+        await Task.Delay(3000);
+        _highlightedNodeId = null;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task HandleAiShipperDeletions(List<ShipperDeleteItem> items)
@@ -3863,6 +3911,12 @@
     {
         _showContextMenu = false;
         _contextMenuNode = null;
+    }
+
+    private void OpenImportShippersFromContextMenu()
+    {
+        CloseContextMenu();
+        _showImportShippersDialog = true;
     }
 
     // ── Context menu actions ──────────────────────────────────────────────────
