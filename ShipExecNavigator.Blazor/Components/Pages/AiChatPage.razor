@@ -6,13 +6,17 @@
 @using ShipExecNavigator.Shared.Interfaces
 @inject IAiChatService AiChat
 @inject IJSRuntime JS
+@inject IShipExecService ShipExecService
 
-<PageTitle>Ask AI — ShipExec™ Navigator</PageTitle>
+<PageTitle>ShipExec Navigator</PageTitle>
 
 <div class="chat-page">
-    <div class="page-brand-row">
-        <span class="page-brand-title">ShipExec<span class="page-brand-accent">Navigator</span></span>
-    </div>
+
+    @{ var _currentCompany = ShipExecService.GetCurrentCompany(); }
+    @if (_currentCompany is not null)
+    {
+        <div class="company-heading">@_currentCompany.DisplayName</div>
+    }
 
     <div class="page-tab-bar">
         <span class="page-tab page-tab--active">&#x1F916; ShipExec Copilot</span>

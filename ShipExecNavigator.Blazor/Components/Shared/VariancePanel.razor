@@ -1,50 +1,54 @@
 @using ShipExecNavigator.BusinessLogic.EntityComparison
 @if (!IsVisible)
 {
-    <div class="vp-strip">
-        <button class="vp-toggle-btn" @onclick="Show" title="Show changes panel">
-            <span class="vp-toggle-icon">&#x276F;</span>
-            @if (Entries.Count > 0)
-            {
-                <span class="vp-badge">@(Entries.Count > 99 ? "99+" : Entries.Count.ToString())</span>
-            }
-        </button>
+    <div class="vp-strip" @onclick="Show" title="Show changes panel">
+        <span class="vp-strip-icon">&#x0394;</span>
+        @if (Entries.Count > 0)
+        {
+            <span class="vp-strip-badge">@(Entries.Count > 99 ? "99+" : Entries.Count.ToString())</span>
+        }
+        <span class="vp-strip-chevron">&#x276F;</span>
     </div>
 }
 else
 {
     <div class="vp-panel">
         <div class="vp-header">
-            <div class="vp-header-actions">
+            <div class="vp-header-top">
+                <button class="vp-collapse-btn" @onclick="Hide" title="Hide panel">
+                    <span class="vp-collapse-icon">&#x276E;</span>
+                </button>
+                <span class="vp-header-label">Changes</span>
+                @if (Entries.Count > 0)
+                {
+                    <span class="vp-count">@Entries.Count</span>
+                }
+                <div class="vp-header-spacer"></div>
                 @if (Entries.Any(e => !e.IsHistorical))
                 {
-                    <button class="vp-apply-btn" @onclick="OnViewChanges" title="Compute variances and apply changes">
-                        &#x2714; Apply Changes
+                    <button class="vp-revert-btn" @onclick="HandleRevertAll" disabled="@(_isReverting ? "disabled" : null)" title="Clear uncommitted changes and reload from server">
+                        @if (_isReverting)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <span>&#x21BA;</span>
+                        }
+                        Revert
                     </button>
                 }
                 @if (Entries.Count > 0)
                 {
-                    <span class="vp-count">@Entries.Count</span>
-                    @if (Entries.Any(e => !e.IsHistorical))
-                    {
-                        <button class="vp-revert-btn" @onclick="HandleRevertAll" disabled="@(_isReverting ? "disabled" : null)" title="Clear uncommitted changes and reload from server">
-                            @if (_isReverting)
-                            {
-                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            }
-                            else
-                            {
-                                <span>&#x21BA;</span>
-                            }
-                            Revert
-                        </button>
-                    }
                     <button class="vp-clear-btn" @onclick="ClearAll" title="Clear all entries">&#x2715;</button>
                 }
-                <button class="vp-toggle-btn vp-toggle-btn--in-header" @onclick="Hide" title="Hide panel">
-                    <span class="vp-toggle-icon">&#x276E;</span>
-                </button>
             </div>
+            @if (Entries.Any(e => !e.IsHistorical))
+            {
+                <button class="vp-apply-btn" @onclick="OnViewChanges" title="Compute variances and apply changes">
+                    &#x2714; Apply Changes (@Entries.Count(e => !e.IsHistorical))
+                </button>
+            }
         </div>
 
         <div class="vp-body">

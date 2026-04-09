@@ -6,23 +6,13 @@
     flex: 1;
 }
 
-/* -- Brand title row (shared pattern) -- */
-.page-brand-row {
-    padding: 0.6rem 1rem 0;
-}
-
-.page-brand-title {
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 1.55rem;
-    font-weight: 800;
-    color: #1e3a5f;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-}
-
-.page-brand-accent {
-    color: #337ab7;
+/* ── Company heading ── */
+.company-heading {
+    font-size: 1.15rem;
     font-weight: 700;
+    color: #1e3a5f;
+    padding: 0.5rem 1rem 0;
+    letter-spacing: 0.01em;
 }
 
 /* Tab bar styles live in app.css */

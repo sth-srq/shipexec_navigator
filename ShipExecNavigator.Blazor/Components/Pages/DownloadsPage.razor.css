@@ -6,23 +6,13 @@
     flex: 1;
 }
 
-/* -- Brand title row (same as Navigator) -- */
-.page-brand-row {
-    padding: 0.6rem 1rem 0;
-}
-
-.page-brand-title {
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 1.55rem;
-    font-weight: 800;
-    color: #1e3a5f;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-}
-
-.page-brand-accent {
-    color: #337ab7;
+/* ── Company heading ── */
+.company-heading {
+    font-size: 1.15rem;
     font-weight: 700;
+    color: #1e3a5f;
+    padding: 0.5rem 1rem 0;
+    letter-spacing: 0.01em;
 }
 
 /* Tab bar styles live in app.css */
@@ -125,9 +115,18 @@
 }
 
 .tool-card-title {
+    display: flex;
+    align-items: center;
     font-size: 0.95rem;
     font-weight: 700;
     color: #333;
+}
+
+.tool-title-download-icon {
+    margin-left: auto;
+    font-size: 1.1rem;
+    line-height: 1;
+    flex-shrink: 0;
 }
 
 .tool-card-desc {
@@ -538,7 +537,7 @@
 :global(.dark-theme) .tool-card { background: #222; border-color: #333; border-left-color: #337ab7; }
 :global(.dark-theme) .tool-card-title { color: #ddd; }
 :global(.dark-theme) .tool-card-desc { color: #999; }
-:global(.dark-theme) .page-brand-title { color: #c9d1d9; }
+:global(.dark-theme) .company-heading { color: #c9d1d9; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    Summarize Company — confirmation / progress modal

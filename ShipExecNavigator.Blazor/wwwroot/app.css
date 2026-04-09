@@ -187,3 +187,8 @@ h1:focus {
     border-top-color: #ef4444;
     color: #f87171;
 }
+
+/* ── Dark-theme company heading ── */
+.dark-theme .company-heading {
+    color: #c9d1d9;
+}

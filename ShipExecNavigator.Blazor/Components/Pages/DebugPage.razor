@@ -1,13 +1,16 @@
 @page "/debug"
 @rendermode InteractiveServer
+@inject IShipExecService ShipExecService
 
-<PageTitle>Debug — ShipExec™ Navigator</PageTitle>
+<PageTitle>ShipExec Navigator</PageTitle>
 
 <div class="debug-page">
 
-    <div class="page-brand-row">
-        <span class="page-brand-title">ShipExec<span class="page-brand-accent">Navigator</span></span>
-    </div>
+    @{ var _debugCompany = ShipExecService.GetCurrentCompany(); }
+    @if (_debugCompany is not null)
+    {
+        <div class="company-heading">@_debugCompany.DisplayName</div>
+    }
 
     <div class="page-tab-bar">
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>

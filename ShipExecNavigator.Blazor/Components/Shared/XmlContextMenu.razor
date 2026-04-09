@@ -34,6 +34,31 @@
                 <span class="ctx-icon">&#x1F69A;</span>
                 Import Shippers
             </button>
+
+            <button class="ctx-item" @onclick="HandleExportShippers">
+                <span class="ctx-icon">&#x2B07;</span>
+                Export Shippers
+            </button>
+        }
+
+        @if (IsProfilesNode)
+        {
+            <div class="ctx-sep"></div>
+
+            <button class="ctx-item" @onclick="HandleCompareProfiles">
+                <span class="ctx-icon">&#x1F4CA;</span>
+                Compare Profiles
+            </button>
+        }
+
+        @if (IsUsersNode)
+        {
+            <div class="ctx-sep"></div>
+
+            <button class="ctx-item" @onclick="HandleExportUsers">
+                <span class="ctx-icon">&#x2B07;</span>
+                Export Users
+            </button>
         }
 
         @if (Node.Parent is not null)
@@ -60,10 +85,21 @@
     [Parameter] public EventCallback<XmlNodeViewModel> OnCopy { get; set; }
     [Parameter] public EventCallback<XmlNodeViewModel> OnPaste { get; set; }
     [Parameter] public EventCallback OnImportShippers { get; set; }
+    [Parameter] public EventCallback OnExportShippers { get; set; }
+    [Parameter] public EventCallback OnCompareProfiles { get; set; }
+    [Parameter] public EventCallback OnExportUsers { get; set; }
 
     private bool IsShippersNode =>
         Node is not null
         && string.Equals(Node.NodeName, "Shippers", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsProfilesNode =>
+        Node is not null
+        && string.Equals(Node.NodeName, "Profiles", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsUsersNode =>
+        Node is not null
+        && string.Equals(Node.NodeName, "Users", StringComparison.OrdinalIgnoreCase);
 
     private Task HandleClose() => OnClose.InvokeAsync();
     private Task HandleAdd() => OnAdd.InvokeAsync(Node);
@@ -71,4 +107,7 @@
     private Task HandlePaste() => OnPaste.InvokeAsync(Node);
     private Task HandleDelete() => OnRemove.InvokeAsync(Node);
     private Task HandleImportShippers() => OnImportShippers.InvokeAsync();
+    private Task HandleExportShippers() => OnExportShippers.InvokeAsync();
+    private Task HandleCompareProfiles() => OnCompareProfiles.InvokeAsync();
+    private Task HandleExportUsers() => OnExportUsers.InvokeAsync();
 }

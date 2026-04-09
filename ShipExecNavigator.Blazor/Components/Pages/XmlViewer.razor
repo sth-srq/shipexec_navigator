@@ -21,9 +21,11 @@
 
 <div class="viewer-page">
 
-    <div class="page-brand-row">
-        <span class="page-brand-title">ShipExec<span class="page-brand-accent">Navigator</span></span>
-    </div>
+    @{ var _navCompany = ShipExecService.GetCurrentCompany(); }
+    @if (_navCompany is not null)
+    {
+        <div class="company-heading">@_navCompany.DisplayName</div>
+    }
 
     <div class="page-tab-bar">
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
@@ -64,9 +66,6 @@
                 {
                     <a class="btn-ms-link" href="@($"{_managementStudioUrl}{_currentCompanyId}")" target="_blank" rel="noopener"
                        title="Open in ShipExec Navigator">&#x1F517; Navigator</a>
-                    <span class="source-badge source-badge--live">
-                        &#x1F7E2; Live
-                    </span>
                 }
             }
             else
@@ -1111,7 +1110,10 @@
                 OnRemove="ExecuteRemove"
                 OnCopy="ExecuteCopy"
                 OnPaste="ExecutePaste"
-                OnImportShippers="OpenImportShippersFromContextMenu" />
+                OnImportShippers="OpenImportShippersFromContextMenu"
+                OnExportShippers="ExportShippersFromContextMenu"
+                OnCompareProfiles="OpenCompareProfilesFromContextMenu"
+                OnExportUsers="ExportUsersFromContextMenu" />
 
 @* ── Add-child dialog ── *@
 <XmlAddChildDialog ParentNode="_addChildTarget"
@@ -3917,6 +3919,24 @@
     {
         CloseContextMenu();
         _showImportShippersDialog = true;
+    }
+
+    private async Task ExportShippersFromContextMenu()
+    {
+        CloseContextMenu();
+        await ExportShippersAsync();
+    }
+
+    private void OpenCompareProfilesFromContextMenu()
+    {
+        CloseContextMenu();
+        _showCompareProfilesDialog = true;
+    }
+
+    private async Task ExportUsersFromContextMenu()
+    {
+        CloseContextMenu();
+        await ExportUsersFromToolbarAsync();
     }
 
     // ── Context menu actions ──────────────────────────────────────────────────

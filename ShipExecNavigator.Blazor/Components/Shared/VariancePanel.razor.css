@@ -1,28 +1,65 @@
-/* -- Collapsed strip ------------------------------------------------------- */
+/* -- Collapsed strip (translucent left-edge bar) --------------------------- */
 .vp-strip {
-    position: fixed;
-    top: 160px;
-    right: 12px;
-    z-index: 900;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 0.5rem;
+    gap: 0.6rem;
+    padding: 0.75rem 0;
+    width: 36px;
+    align-self: stretch;
+    flex-shrink: 0;
+    background: rgba(51, 122, 183, 0.06);
+    border-right: 2px solid rgba(51, 122, 183, 0.18);
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.vp-strip:hover {
+    background: rgba(51, 122, 183, 0.12);
+    border-right-color: rgba(51, 122, 183, 0.35);
+}
+
+.vp-strip-icon {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #337ab7;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.vp-strip-badge {
+    background: linear-gradient(135deg, #2b5ea7, #3a7bd5);
+    color: #ffffff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0 5px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.vp-strip-chevron {
+    font-size: 0.6rem;
+    color: #337ab7;
+    opacity: 0.5;
+    line-height: 1;
 }
 
 /* -- Expanded panel -------------------------------------------------------- */
 .vp-panel {
     width: 280px;
-    position: fixed;
-    top: 160px;
-    right: 12px;
-    z-index: 900;
+    align-self: stretch;
+    flex-shrink: 0;
     background: linear-gradient(180deg, #ffffff 0%, #fafbfe 100%);
     border: 1px solid rgba(43, 63, 107, 0.15);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - 180px);
     min-height: 0;
     box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
     overflow: hidden;
@@ -32,19 +69,30 @@
 /* -- Header ---------------------------------------------------------------- */
 .vp-header {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0.4rem 0.6rem;
+    flex-direction: column;
+    gap: 0;
     border-bottom: 1px solid #ddd;
     background: #337ab7;
     border-radius: 8px 8px 0 0;
     flex-shrink: 0;
 }
 
-.vp-header-actions {
+.vp-header-top {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.35rem;
+    padding: 0.45rem 0.6rem;
+}
+
+.vp-header-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+}
+
+.vp-header-spacer {
+    flex: 1;
 }
 
 .vp-count {
@@ -58,25 +106,26 @@
 }
 
 .vp-revert-btn {
-    background: none;
+    background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.5);
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.7rem;
+    font-weight: 600;
     cursor: pointer;
-    padding: 0.1rem 0.35rem;
-    border-radius: 3px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
-    transition: color 0.1s, background-color 0.1s, border-color 0.1s;
+    transition: color 0.15s, background-color 0.15s, border-color 0.15s;
     white-space: nowrap;
 }
 
     .vp-revert-btn:hover:not(:disabled) {
-        color: #e67e22;
-        border-color: #e67e22;
-        background-color: rgba(230, 126, 34, 0.08);
+        color: #ffc107;
+        border-color: #ffc107;
+        background-color: rgba(255, 193, 7, 0.15);
     }
 
     .vp-revert-btn:disabled {
@@ -88,10 +137,10 @@
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.8);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     cursor: pointer;
-    padding: 0.15rem 0.35rem;
-    border-radius: 3px;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
     line-height: 1;
     transition: color 0.1s, background-color 0.1s;
 }
@@ -101,56 +150,54 @@
         background-color: rgba(255, 255, 255, 0.12);
     }
 
-/* -- Apply Changes button -------------------------------------------------- */
+/* -- Apply Changes button (prominent, full-width) -------------------------- */
 .vp-apply-btn {
-    background: #337ab7;
-    border: 1px solid #2e6da4;
+    background: linear-gradient(135deg, #198754, #20a366);
+    border: none;
     color: #fff;
-    font-size: 0.62rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
     cursor: pointer;
-    padding: 0.15rem 0.45rem;
-    border-radius: 3px;
+    padding: 0.5rem 0.75rem;
     line-height: 1;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.15rem;
+    justify-content: center;
+    gap: 0.3rem;
     transition: background 0.15s, box-shadow 0.15s;
     white-space: nowrap;
+    letter-spacing: 0.01em;
 }
 
     .vp-apply-btn:hover {
-        background: #286090;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        background: linear-gradient(135deg, #157347, #1a8a57);
+        box-shadow: 0 2px 8px rgba(25, 135, 84, 0.25);
     }
 
-/* -- Toggle button (used in both collapsed strip and header) --------------- */
-.vp-toggle-btn {
-    background-color: #ffffff;
-    border: 1px solid #dee2e6;
-    color: #6c757d;
-    border-radius: 6px;
-    width: 28px;
-    height: 28px;
+/* -- Collapse button (in header) ------------------------------------------- */
+.vp-collapse-btn {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    border-radius: 4px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    position: relative;
+    flex-shrink: 0;
     transition: background-color 0.12s, border-color 0.12s;
 }
 
-    .vp-toggle-btn:hover {
-        background-color: #e9ecef;
-        border-color: #adb5bd;
+    .vp-collapse-btn:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.5);
     }
 
-.vp-toggle-btn--in-header {
-    width: 24px;
-    height: 24px;
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: #ffffff;
+.vp-collapse-icon {
+    font-size: 0.65rem;
+    line-height: 1;
 }
 
 .vp-history-btn {
@@ -177,28 +224,6 @@
         opacity: 0.6;
         cursor: default;
     }
-
-.vp-toggle-icon {
-    font-size: 0.65rem;
-    line-height: 1;
-}
-
-.vp-badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: linear-gradient(135deg, #2b5ea7, #3a7bd5);
-    color: #ffffff;
-    font-size: 0.58rem;
-    border-radius: 999px;
-    padding: 0 4px;
-    min-width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-}
 
 /* -- Body ------------------------------------------------------------------ */
 .vp-body {
@@ -265,6 +290,7 @@
 
 .vp-entry--modified {
     border-left-color: #3a7bd5;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0,0,0,0) 10px);
 }
 
 .vp-entry--added {
@@ -741,10 +767,32 @@
 /*  DARK THEME — Variance Panel                                             */
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
+    .vp-strip {
+        background: rgba(96, 165, 250, 0.06);
+        border-right-color: rgba(96, 165, 250, 0.18);
+    }
+
+    .vp-strip:hover {
+        background: rgba(96, 165, 250, 0.12);
+        border-right-color: rgba(96, 165, 250, 0.35);
+    }
+
+    .vp-strip-icon {
+        color: #60a5fa;
+    }
+
+    .vp-strip-chevron {
+        color: #60a5fa;
+    }
+
     .vp-panel {
         background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
         border-color: rgba(148, 163, 184, 0.15);
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+
+            min-width: 500px;
+            min-height: 600px;
+
     }
 
     .vp-header {
@@ -762,13 +810,13 @@
         color: #60a5fa;
     }
 
-    .vp-toggle-btn {
+    .vp-collapse-btn {
         background-color: #333;
         border-color: #334155;
         color: #94a3b8;
     }
 
-    .vp-toggle-btn:hover {
+    .vp-collapse-btn:hover {
         background-color: #334155;
         border-color: #777;
     }
@@ -883,7 +931,7 @@
 }
 
 @keyframes vp-slide-in {
-    0%   { transform: translateX(100%); opacity: 0; }
+    0%   { transform: translateX(-100%); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
 }
 
@@ -893,6 +941,6 @@
 }
 
 @keyframes vp-panel-slide-in {
-    0%   { transform: translateX(100%); opacity: 0; }
+    0%   { transform: translateX(-100%); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
 }
