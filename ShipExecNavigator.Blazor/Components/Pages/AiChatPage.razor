@@ -18,6 +18,7 @@
         <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
         @if (_messages.Count > 0)
         {
+            <button class="chat-export-btn" @onclick="ExportChatAsync" title="Save chat log">&#x1F4BE; Export</button>
             <button class="chat-clear-btn" @onclick="ClearChat" title="Clear conversation">&#x1F5D1; Clear</button>
         }
     </div>
@@ -26,14 +27,14 @@
         @foreach (var msg in _messages)
         {
             <div class="chat-bubble chat-bubble--@msg.Role">
-                <div class="chat-bubble-label">@(msg.Role == "user" ? "You" : "AI")</div>
+                <div class="chat-bubble-label">@(msg.Role == "user" ? "You" : "ShipExec Copilot")</div>
                 <div class="chat-bubble-body">@((MarkupString)FormatMessage(msg.Content))</div>
             </div>
         }
         @if (_thinking)
         {
             <div class="chat-bubble chat-bubble--assistant">
-                <div class="chat-bubble-label">AI</div>
+                <div class="chat-bubble-label">ShipExec Copilot</div>
                 <div class="chat-bubble-body chat-thinking">
                     <span></span><span></span><span></span>
                 </div>
@@ -208,6 +209,26 @@
         _messages.Clear();
         _error = null;
         await GreetAsync();
+    }
+
+    private async Task ExportChatAsync()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("ShipExec Copilot — Chat Log");
+        sb.AppendLine($"Exported: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine(new string('─', 60));
+        sb.AppendLine();
+
+        foreach (var msg in _messages)
+        {
+            var label = msg.Role == "user" ? "You" : "ShipExec Copilot";
+            sb.AppendLine($"[{label}]");
+            sb.AppendLine(msg.Content);
+            sb.AppendLine();
+        }
+
+        var fileName = $"ShipExec_ChatLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+        await JS.InvokeVoidAsync("downloadFile", fileName, sb.ToString(), "text/plain");
     }
 
     private async Task ScrollToBottomAsync()

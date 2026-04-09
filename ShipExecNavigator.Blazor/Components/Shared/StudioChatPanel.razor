@@ -29,7 +29,7 @@
                     disabled="@(_messages.Count == 0)">&#x1F5D1;</button>
             <button class="scp-btn-newtab" @onclick="OpenNewTabAsync" title="Open AI chat in a new tab">&#x1F5D7; New Tab</button>
             <button class="scp-btn-minimize" @onclick="ToggleMinimize"
-                    title="@(_minimized ? "Expand chat" : "Minimise chat")">@(_minimized ? "&#x25B6;" : "&#x25C0;")</button>
+                    title="@(_minimized ? "Expand chat" : "Minimise chat")">@(_minimized ? "▶" : "◀")</button>
         </div>
     </div>
 
@@ -38,7 +38,7 @@
         @foreach (var msg in _messages)
         {
             <div class="scp-bubble scp-bubble--@msg.Role">
-                <span class="scp-bubble-label">@(msg.Role == "user" ? "You" : "AI")</span>
+                <span class="scp-bubble-label">@(msg.Role == "user" ? "You" : "ShipExec Copilot")</span>
                 <div class="scp-bubble-body">@((MarkupString)FormatMessage(msg.Content))</div>
                 @if (msg.NodeLinks is { Count: > 0 })
                 {
@@ -58,7 +58,7 @@
         @if (_thinking)
         {
             <div class="scp-bubble scp-bubble--assistant">
-                <span class="scp-bubble-label">AI</span>
+                <span class="scp-bubble-label">ShipExec Copilot</span>
                 <div class="scp-bubble-body scp-thinking">
                     <span></span><span></span><span></span>
                 </div>

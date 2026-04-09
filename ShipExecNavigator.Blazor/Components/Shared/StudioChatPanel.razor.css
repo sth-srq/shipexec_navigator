@@ -99,10 +99,10 @@
 .scp-btn-minimize {
     background: transparent;
     border: none;
-    color: rgba(232,237,245,0.75);
-    font-size: 0.75rem;
+    color: rgba(232,237,245,0.85);
+    font-size: 1.1rem;
     cursor: pointer;
-    padding: 0.15rem 0.4rem;
+    padding: 0.2rem 0.45rem;
     border-radius: 4px;
     line-height: 1;
     transition: background 0.15s, color 0.15s;
@@ -117,10 +117,10 @@
     background: rgba(255,193,7,0.18);
     border: 1px solid rgba(255,193,7,0.45);
     color: rgba(255,236,153,0.95);
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    padding: 0.15rem 0.5rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 4px;
     line-height: 1;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -136,10 +136,10 @@
 .scp-btn-clear {
     background: transparent;
     border: none;
-    color: rgba(232,237,245,0.75);
-    font-size: 0.8rem;
+    color: rgba(232,237,245,0.85);
+    font-size: 1.1rem;
     cursor: pointer;
-    padding: 0.15rem 0.35rem;
+    padding: 0.2rem 0.4rem;
     border-radius: 4px;
     line-height: 1;
     transition: background 0.15s, color 0.15s;
@@ -155,10 +155,10 @@
     background: rgba(91,179,247,0.12);
     border: 1px solid rgba(91,179,247,0.35);
     color: rgba(200,222,255,0.95);
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    padding: 0.15rem 0.5rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 4px;
     line-height: 1;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -441,10 +441,10 @@
 .scp-btn-rag {
     background: transparent;
     border: none;
-    color: rgba(232,237,245,0.45);
-    font-size: 0.8rem;
+    color: rgba(232,237,245,0.55);
+    font-size: 1.1rem;
     cursor: pointer;
-    padding: 0.15rem 0.4rem;
+    padding: 0.2rem 0.45rem;
     border-radius: 4px;
     line-height: 1;
     transition: background 0.15s, color 0.15s;

@@ -108,7 +108,7 @@
     min-height: 260px;
 }
 
-/* ── Error ──────────────────────────────────────────────────────────────── */
+/* ── Error ──
 .connect-error {
     background-color: #fff5f5;
     border: 1px solid #fca5a5;

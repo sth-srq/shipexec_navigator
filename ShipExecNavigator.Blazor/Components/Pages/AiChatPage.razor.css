@@ -12,8 +12,25 @@
 
 /* ── Header / tab bar (global styles in app.css) ── */
 
-.chat-clear-btn {
+.chat-export-btn {
     margin-left: auto;
+    align-self: center;
+    background: transparent;
+    border: 1px solid #ccc;
+    color: #777;
+    border-radius: 4px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .chat-export-btn:hover {
+        background: #e8e8e8;
+        color: #333;
+    }
+
+.chat-clear-btn {
     align-self: center;
     background: transparent;
     border: 1px solid #ccc;
