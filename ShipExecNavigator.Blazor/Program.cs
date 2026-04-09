@@ -1,5 +1,6 @@
 using PSI.Sox;
 using PSI.Sox.Configuration;
+using QuestPDF.Infrastructure;
 using Serilog;
 using ShipExecNavigator.AppLogic;
 using ShipExecNavigator.Blazor.Components;
@@ -47,6 +48,9 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
     builder.Services.AddHttpClient();
     builder.Services.AddScoped<IAiChatService, SemanticKernelChatService>();
     builder.Services.AddScoped<ICbrAnalysisService, CbrAnalysisService>();
+    builder.Services.AddSingleton<SummaryPdfService>();
+
+    QuestPDF.Settings.License = LicenseType.Community;
 
     var app = builder.Build();
 

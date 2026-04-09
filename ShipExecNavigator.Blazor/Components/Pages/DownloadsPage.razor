@@ -5,6 +5,7 @@
 @inject ICbrAnalysisService CbrAnalysisService
 @inject IShipExecService ShipExecService
 @inject AlertService AlertService
+@inject SummaryPdfService PdfService
 @inject IJSRuntime JS
 
 <PageTitle>Tools — ShipExec™ Navigator</PageTitle>
@@ -55,9 +56,9 @@
                         Supports printer label submission, scale reads, and system information requests over HTTP or HTTPS.
                     </div>
                     <div class="tool-card-footer">
-                        <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ShipExecSupportClientChecker.html")'>
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_ShipExecSupportClientChecker.html" download>
                             &#x2B07;&#xFE0F; Download
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -74,9 +75,9 @@
                         transaction grouping, full-entry detail view, and re-export of visible rows.
                     </div>
                     <div class="tool-card-footer">
-                        <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ShipExecLogViewer.html")'>
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_ShipExecLogViewer.html" download>
                             &#x2B07;&#xFE0F; Download
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -165,9 +166,9 @@
                         live search, expandable row detail, and filtered CSV re-export.
                     </div>
                     <div class="tool-card-footer">
-                        <button class="tool-download-btn" @onclick='() => SaveAsHtmlAsync("/downloads/ShipExecNavigator_ProfilesDiffViewer.html")'>
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_ProfilesDiffViewer.html" download>
                             &#x2B07;&#xFE0F; Download
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -270,20 +271,11 @@
                     <div class="tool-card-desc">
                         Generate a comprehensive AI-powered report of the active company's configuration.
                         Includes profiles, shippers, users, business rules, adapters, and more.
-                        Downloads as a PDF summary.
                         @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
                     </div>
                     <div class="tool-card-footer">
-                        <button class="tool-download-btn" disabled="@(!connected || _isSummarizing)" @onclick="SummarizeCompanyAsync">
-                            @if (_isSummarizing)
-                            {
-                                <span class="spinner-border spinner-border-sm" role="status"></span>
-                                <span>Generating&hellip;</span>
-                            }
-                            else
-                            {
-                                <span>&#x1F4DD; Summarize</span>
-                            }
+                        <button class="tool-download-btn" disabled="@(!connected || _isSummarizing)" @onclick="() => _showSummarizeConfirm = true">
+                            &#x1F4DD; Summarize
                         </button>
                     </div>
                 </div>
@@ -441,6 +433,80 @@
 <CompareProfilesDialog IsVisible="_showCompareProfilesDialog"
                        OnClose="() => _showCompareProfilesDialog = false" />
 
+@* ── Summarize Company confirmation modal ── *@
+@if (_showSummarizeConfirm && !_isSummarizing)
+{
+    <div class="sum-backdrop" @onclick="() => _showSummarizeConfirm = false">
+        <div class="sum-modal" @onclick:stopPropagation>
+            <div class="sum-header">
+                <span class="sum-title">&#x1F4DD; Summarize Company</span>
+                <button class="sum-close" @onclick="() => _showSummarizeConfirm = false">&#x2715;</button>
+            </div>
+            <div class="sum-body">
+                <p>This will generate a comprehensive AI-powered summary of the entire company configuration including profiles, shippers, users, business rules, adapters, and more.</p>
+                <p class="sum-warning">&#x26A0;&#xFE0F; This is a <strong>long-running process</strong> that may take 1–3 minutes depending on company size. Please keep this page open until it completes.</p>
+            </div>
+            <div class="sum-footer">
+                <button class="sum-btn-confirm" @onclick="ConfirmSummarizeAsync">
+                    &#x1F4DD; Start Summarize
+                </button>
+                <button class="sum-btn-cancel" @onclick="() => _showSummarizeConfirm = false">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Summarize Company progress modal ── *@
+@if (_isSummarizing || _summarizePdfBytes is not null || _summarizeError is not null)
+{
+    <div class="sum-backdrop">
+        <div class="sum-modal" @onclick:stopPropagation>
+            <div class="sum-header">
+                <span class="sum-title">&#x1F4DD; Summarize Company</span>
+                @if (!_isSummarizing)
+                {
+                    <button class="sum-close" @onclick="CloseSummarizeProgress">&#x2715;</button>
+                }
+            </div>
+            <div class="sum-body">
+                @if (_isSummarizing)
+                {
+                    <div class="sum-progress-section">
+                        <div class="sum-status-icon">
+                            <span class="spinner-border" role="status" aria-hidden="true" style="width:2rem;height:2rem;"></span>
+                        </div>
+                        <div class="sum-status-text">@_summarizeStatus</div>
+                        <div class="sum-progress-bar-track">
+                            <div class="sum-progress-bar-fill" style="width: @(_summarizePercent)%"></div>
+                        </div>
+                        <div class="sum-progress-pct">@_summarizePercent%</div>
+                    </div>
+                }
+                else if (_summarizeError is not null)
+                {
+                    <div class="sum-error">&#9888; @_summarizeError</div>
+                }
+                else if (_summarizePdfBytes is not null)
+                {
+                    <div class="sum-success-section">
+                        <div class="sum-success-icon">&#x2705;</div>
+                        <div class="sum-success-text">PDF report generated successfully!</div>
+                        <button class="sum-download-btn" @onclick="DownloadSummarizeResult">
+                            &#x1F4C4; Download PDF
+                        </button>
+                    </div>
+                }
+            </div>
+            @if (!_isSummarizing)
+            {
+                <div class="sum-footer">
+                    <button class="sum-btn-cancel" @onclick="CloseSummarizeProgress">Close</button>
+                </div>
+            }
+        </div>
+    </div>
+}
+
 @code {
     private bool _showCbrHelper;
 
@@ -459,6 +525,14 @@
     private bool _isExportingShippers;
     private bool _isExportingUsers;
     private bool _isSummarizing;
+
+    // ── Summarize modal state ─────────────────────────────────────────────
+    private bool    _showSummarizeConfirm;
+    private string  _summarizeStatus  = string.Empty;
+    private int     _summarizePercent;
+    private byte[]? _summarizePdfBytes;
+    private string? _summarizeError;
+    private string? _summarizeFilename;
 
     protected override void OnParametersSet()
     {
@@ -579,11 +653,6 @@
         catch { }
     }
 
-    private async Task SaveAsHtmlAsync(string url)
-    {
-        await JS.InvokeVoidAsync("downloadAsPdf", url);
-    }
-
     private async Task ExportShippersAsync()
     {
         _isExportingShippers = true;
@@ -624,37 +693,102 @@
         }
     }
 
-    private async Task SummarizeCompanyAsync()
+    private async Task ConfirmSummarizeAsync()
     {
-        _isSummarizing = true;
+        _showSummarizeConfirm = false;
+        _isSummarizing    = true;
+        _summarizePdfBytes = null;
+        _summarizeError   = null;
+        _summarizePercent = 0;
+        _summarizeStatus  = "Preparing…";
         StateHasChanged();
+
         try
         {
             var company = ShipExecService.GetCurrentCompany();
-            if (company is null) return;
+            if (company is null)
+            {
+                _summarizeError = "No company connected.";
+                return;
+            }
 
+            // ── Phase 1: load company XML ──
+            await UpdateProgressAsync(10, "Loading company data…");
             var companyXml = await ShipExecService.GetCompanyXmlAsync(company.Id, company.Name ?? "");
+            await UpdateProgressAsync(30, "Company data loaded. Sending to AI…");
+
+            // ── Phase 2: AI analysis (long) — run a timer to simulate progress ──
+            var cts = new CancellationTokenSource();
+            var progressTask = SimulateProgressAsync(35, 85, "Generating summary…", cts.Token);
+
             var prompt = $"Generate a comprehensive summary report for this ShipExec company configuration. " +
                 $"Include sections for: Company Overview, Profiles, Shippers, Users, Business Rules (SBR and CBR), " +
                 $"Adapter Registrations, Clients, and any notable configuration items. " +
-                $"Format as a well-structured plain-text report with headers and bullet points.\n\n" +
+                $"Format as a well-structured plain-text report with headers and bullet points. " +
+                $"Use markdown-style headers (## Section) and bold (**text**) for emphasis.\n\n" +
                 $"Company XML:\n{companyXml}";
 
             var response = await CbrAnalysisService.AnalyzeCbrAsync(prompt);
 
-            // Download as text file (PDF generation would require a heavy library)
+            await cts.CancelAsync();
+            try { await progressTask; } catch (OperationCanceledException) { }
+
+            // ── Phase 3: generate PDF ──
+            await UpdateProgressAsync(90, "Generating PDF report…");
             var companySlug = (company.Name ?? "company").Replace(" ", "_");
-            var filename = $"{companySlug}_Summary_{DateTime.Now:yyyyMMdd}.txt";
-            await JS.InvokeVoidAsync("downloadFile", filename, response, "text/plain");
+            _summarizeFilename = $"{companySlug}_Summary_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            _summarizePdfBytes = await Task.Run(() => PdfService.GenerateSummaryPdf(company.Name ?? "Company", response));
+
+            await UpdateProgressAsync(100, "Complete!");
         }
         catch (Exception ex)
         {
-            await AlertService.ShowAlertAsync($"Summarize failed: {ex.Message}");
+            _summarizeError = ex.Message;
         }
         finally
         {
             _isSummarizing = false;
             StateHasChanged();
         }
+    }
+
+    private async Task SimulateProgressAsync(int from, int to, string status, CancellationToken ct)
+    {
+        var current = from;
+        while (current < to && !ct.IsCancellationRequested)
+        {
+            await Task.Delay(2500, ct);
+            current = Math.Min(current + 5, to);
+            await InvokeAsync(() =>
+            {
+                _summarizePercent = current;
+                _summarizeStatus  = status;
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task UpdateProgressAsync(int pct, string status)
+    {
+        _summarizePercent = pct;
+        _summarizeStatus  = status;
+        StateHasChanged();
+        await Task.Delay(50); // yield so UI renders
+    }
+
+    private async Task DownloadSummarizeResult()
+    {
+        if (_summarizePdfBytes is null || _summarizeFilename is null) return;
+        var base64 = Convert.ToBase64String(_summarizePdfBytes);
+        await JS.InvokeVoidAsync("downloadBase64File", _summarizeFilename, base64, "application/pdf");
+    }
+
+    private void CloseSummarizeProgress()
+    {
+        _summarizePdfBytes = null;
+        _summarizeError    = null;
+        _summarizeFilename = null;
+        _summarizePercent  = 0;
+        _summarizeStatus   = string.Empty;
     }
 }
