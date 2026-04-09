@@ -8,6 +8,5 @@ public class SbrInfo
     public string?      Version         { get; set; }
     public string?      Author          { get; set; }
     public string?      AuthorEmail     { get; set; }
-    public string?      FileBase64      { get; set; }
     public List<string> UsedByProfiles  { get; set; } = [];
 }

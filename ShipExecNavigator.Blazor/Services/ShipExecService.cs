@@ -519,9 +519,6 @@ public sealed class ShipExecService(
                                 Version        = r.Rule.Version,
                                 Author         = r.Rule.Author,
                                 AuthorEmail    = r.Rule.AuthorEmail,
-                                FileBase64     = r.Rule.FileBytes is { Length: > 0 }
-                                                    ? Convert.ToBase64String(r.Rule.FileBytes)
-                                                    : null,
                                 UsedByProfiles = r.ProfileNames,
                             }).ToList());
                     break;
@@ -1757,9 +1754,6 @@ public sealed class ShipExecService(
                     Version        = r.Rule.Version,
                     Author         = r.Rule.Author,
                     AuthorEmail    = r.Rule.AuthorEmail,
-                    FileBase64     = r.Rule.FileBytes is { Length: > 0 }
-                                        ? Convert.ToBase64String(r.Rule.FileBytes)
-                                        : null,
                     UsedByProfiles = r.ProfileNames,
                 }).ToList();
             }
@@ -1773,7 +1767,7 @@ public sealed class ShipExecService(
         });
     }
 
-    public Task<string?> GetServerBusinessRuleFileBase64Async(int sbrId)
+    public Task<string?> GetServerBusinessRuleFileBase64Async(string sbrName, string? sbrVersion)
     {
         if (_appManager is null)
             throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
@@ -1781,16 +1775,16 @@ public sealed class ShipExecService(
         return Task.Run(() =>
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            logger.LogInformation("GetServerBusinessRuleFileBase64 start | SbrId={SbrId}", sbrId);
+            logger.LogInformation("GetServerBusinessRuleFileBase64 start | SbrName={SbrName} SbrVersion={SbrVersion}", sbrName, sbrVersion);
             try
             {
-                var rule = _appManager.GetServerBusinessRuleById(sbrId);
-                var fileBytes = rule?.FileBytes;
+                var fileBytes = _appManager.GetServerBusinessRuleFileBytes(sbrName, sbrVersion);
+                System.Diagnostics.Debugger.Break(); // breakpoint: after fetching SBR file bytes (DLL or Project download)
                 sw.Stop();
                 bool hasFile = fileBytes is { Length: > 0 };
                 logger.LogInformation(
-                    "GetServerBusinessRuleFileBase64 complete | SbrId={SbrId} HasFile={HasFile} DurationMs={DurationMs}",
-                    sbrId, hasFile, sw.ElapsedMilliseconds);
+                    "GetServerBusinessRuleFileBase64 complete | SbrName={SbrName} HasFile={HasFile} DurationMs={DurationMs}",
+                    sbrName, hasFile, sw.ElapsedMilliseconds);
                 return hasFile
                     ? Convert.ToBase64String(fileBytes!)
                     : null;
@@ -1799,8 +1793,8 @@ public sealed class ShipExecService(
             {
                 sw.Stop();
                 logger.LogError(ex,
-                    "GetServerBusinessRuleFileBase64 failed | SbrId={SbrId} DurationMs={DurationMs}",
-                    sbrId, sw.ElapsedMilliseconds);
+                    "GetServerBusinessRuleFileBase64 failed | SbrName={SbrName} DurationMs={DurationMs}",
+                    sbrName, sw.ElapsedMilliseconds);
                 throw;
             }
         });

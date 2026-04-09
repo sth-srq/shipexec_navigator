@@ -16,11 +16,12 @@
 @inject IAiChatService AiChatService
 @inject ICbrAnalysisService CbrAnalysisService
 
-<PageTitle>ShipExec™ Management Studio</PageTitle>
+<PageTitle>ShipExec Navigator</PageTitle>
 
 <div class="viewer-page">
 
     <div class="page-tab-bar">
+        <span class="page-tab-brand">ShipExec Navigator</span>
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
         <span class="page-tab page-tab--active">&#x1F5FA; Navigator</span>
         <a class="page-tab" href="/downloads">&#x2B07;&#xFE0F; Downloads</a>
@@ -92,8 +93,10 @@
         <div class="viewer-tabs">
             <button class='viewer-tab @(_activeMainTab == "company" ? "viewer-tab--active" : "")'
                     @onclick='SwitchToCompanyTab'>&#x1F3E2; Company</button>
-            <button class='viewer-tab @(_activeMainTab == "business-rules" ? "viewer-tab--active" : "")'
-                    @onclick='SwitchToBusinessRulesTab'>&#x1F4DC; Business Rules</button>
+            <button class='viewer-tab @(_activeMainTab == "server-rules" ? "viewer-tab--active" : "")'
+                    @onclick='SwitchToServerRulesTab'>&#x1F5A5;&#xFE0F; Server Rules</button>
+            <button class='viewer-tab @(_activeMainTab == "client-rules" ? "viewer-tab--active" : "")'
+                    @onclick='SwitchToClientRulesTab'>&#x1F4BB; Client Rules</button>
             <button class='viewer-tab @(_activeMainTab == "logs" ? "viewer-tab--active" : "")'
                     @onclick='SwitchToLogsTab'>&#x1F4CB; Logs</button>
         </div>
@@ -207,24 +210,10 @@
             </div>
         </div>
         </div>
-        @if (_activeMainTab == "business-rules")
+        @if (_activeMainTab == "server-rules")
         {
             <div class="br-tab-content">
-                <div class="br-section @(_sbrExpanded ? "" : "br-section--collapsed")">
-                    <button class="br-section-header br-section-header--toggle" @onclick="() => _sbrExpanded = !_sbrExpanded">
-                        <span class="br-chevron @(_sbrExpanded ? "br-chevron--open" : "")">&#x25B6;</span>
-                        &#x1F5A5;&#xFE0F; Server Business Rules
-                        @if (_sbrLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
-                        }
-                        else if (_sbrs.Count > 0)
-                        {
-                            <span class="br-count-badge">@_sbrs.Count</span>
-                        }
-                    </button>
-                    @if (_sbrExpanded)
-                    {
+                <div class="br-section">
                         <div class="br-section-body">
                             @if (_sbrLoading)
                             {
@@ -264,6 +253,19 @@
                                                     else
                                                     {
                                                         <span>&#x2B07; @(sbr.Name).dll</span>
+                                                    }
+                                                </button>
+                                                <button class="sbr-download-btn @(_sbrDecompilingIds.Contains(sbr.Id) ? "sbr-download-btn--busy" : "")"
+                                                        @onclick="() => DownloadSbrProjectAsync(sbr)"
+                                                        disabled="@(_sbrDecompilingIds.Contains(sbr.Id))"
+                                                        title="Decompile and download @(sbr.Name) as a VS project (.zip)">
+                                                    @if (_sbrDecompilingIds.Contains(sbr.Id))
+                                                    {
+                                                        <span class="gt-spinner-sm"></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>&#x1F4E6; @(sbr.Name) Project</span>
                                                     }
                                                 </button>
                                             </div>
@@ -311,23 +313,13 @@
                                 </div>
                             }
                         </div>
-                    }
                 </div>
-                <div class="br-section @(_cbrExpanded ? (_selectedCbr is not null ? "br-section--viewer" : "") : "br-section--collapsed")">
-                    <button class="br-section-header br-section-header--toggle" @onclick="() => _cbrExpanded = !_cbrExpanded">
-                        <span class="br-chevron @(_cbrExpanded ? "br-chevron--open" : "")">&#x25B6;</span>
-                        &#x1F4BB; Client Business Rules
-                        @if (_cbrLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm ms-2" role="status"></span>
-                        }
-                        else if (_cbrs.Count > 0)
-                        {
-                            <span class="br-count-badge">@_cbrs.Count</span>
-                        }
-                    </button>
-                    @if (_cbrExpanded)
-                    {
+            </div>
+        }
+        @if (_activeMainTab == "client-rules")
+        {
+            <div class="br-tab-content">
+                <div class="br-section @(_selectedCbr is not null ? "br-section--viewer" : "")">
                         <div class="br-section-body">
                             @if (_cbrLoading)
                             {
@@ -509,7 +501,6 @@
                                 </div>
                             }
                         </div>
-                    }
                 </div>
             </div>
         }
@@ -889,14 +880,13 @@
     private List<SbrInfo> _sbrs             = [];
     private bool          _sbrLoading;
     private bool          _sbrLoaded;
-    private bool          _sbrExpanded      = true;
     private string?       _sbrError;
     private HashSet<int>  _sbrDownloadingIds = [];
+    private HashSet<int>  _sbrDecompilingIds = [];
 
     private List<CbrInfo> _cbrs        = [];
     private bool          _cbrLoading;
     private bool          _cbrLoaded;
-    private bool          _cbrExpanded = true;
     private string?       _cbrError;
     private CbrInfo?      _selectedCbr;
     private string        _cbrEditedScript   = string.Empty;
@@ -944,13 +934,19 @@
         _treeFilterCategory = null;
     }
 
-    // ── Business Rules tab ────────────────────────────────────────────────────
+    // ── Business Rules tabs ───────────────────────────────────────────────────
 
-    private async Task SwitchToBusinessRulesTab()
+    private async Task SwitchToServerRulesTab()
     {
-        _activeMainTab = "business-rules";
+        _activeMainTab = "server-rules";
         _treeFilterCategory = null;
         await LoadSbrAsync();
+    }
+
+    private async Task SwitchToClientRulesTab()
+    {
+        _activeMainTab = "client-rules";
+        _treeFilterCategory = null;
         await LoadCbrAsync();
     }
 
@@ -1138,19 +1134,87 @@
         StateHasChanged();
         try
         {
-            var fileBase64 = sbr.FileBase64;
+            var fileBase64 = await ShipExecService.GetServerBusinessRuleFileBase64Async(sbr.Name, sbr.Version);
             if (string.IsNullOrEmpty(fileBase64))
-                fileBase64 = await ShipExecService.GetServerBusinessRuleFileBase64Async(sbr.Id);
-            if (string.IsNullOrEmpty(fileBase64)) return;
+            {
+                _sbrError = $"No file data available for '{sbr.Name}'.";
+                return;
+            }
+            var dllBytes = Convert.FromBase64String(fileBase64);
             var safeName = string.IsNullOrWhiteSpace(sbr.Name)
                 ? "sbr"
                 : sbr.Name.Replace(" ", "_");
-            await JSRuntime.InvokeVoidAsync(
-                "downloadBase64File", $"{safeName}.dll", fileBase64, "application/octet-stream");
+            using var stream = new DotNetStreamReference(new MemoryStream(dllBytes));
+            await JSRuntime.InvokeVoidAsync("downloadFileFromStream", $"{safeName}.dll", stream);
+        }
+        catch (Exception ex)
+        {
+            _sbrError = $"Failed to download '{sbr.Name}': {ex.Message}";
         }
         finally
         {
             _sbrDownloadingIds.Remove(sbr.Id);
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadSbrProjectAsync(SbrInfo sbr)
+    {
+        if (_sbrDecompilingIds.Contains(sbr.Id)) return;
+        _sbrDecompilingIds.Add(sbr.Id);
+        StateHasChanged();
+
+        string? outputDir = null;
+        string? zipPath   = null;
+        try
+        {
+            var fileBase64 = await ShipExecService.GetServerBusinessRuleFileBase64Async(sbr.Name, sbr.Version);
+            if (string.IsNullOrEmpty(fileBase64))
+            {
+                _sbrError = $"No file data available for '{sbr.Name}'.";
+                return;
+            }
+
+            var dllBytes = Convert.FromBase64String(fileBase64);
+            var tempDir  = Path.GetTempPath();
+            var dllPath  = Path.Combine(tempDir, $"{sbr.Name}.dll");
+            await File.WriteAllBytesAsync(dllPath, dllBytes);
+
+            outputDir = Path.Combine(tempDir, $"sbr_project_{sbr.Id}_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(outputDir);
+
+            await Task.Run(() =>
+            {
+                using var module = new ICSharpCode.Decompiler.Metadata.PEFile(dllPath);
+                var targetFramework = ICSharpCode.Decompiler.Metadata.DotNetCorePathFinderExtensions
+                    .DetectTargetFrameworkId(module);
+                var resolver = new ICSharpCode.Decompiler.Metadata.UniversalAssemblyResolver(
+                    dllPath, throwOnError: false, targetFramework);
+                var decompiler = new ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler(resolver);
+                decompiler.DecompileProject(module, outputDir);
+            });
+
+            zipPath = Path.Combine(tempDir, $"{sbr.Name}_Project.zip");
+            if (File.Exists(zipPath)) File.Delete(zipPath);
+            System.IO.Compression.ZipFile.CreateFromDirectory(outputDir, zipPath);
+
+            var zipBytes = await File.ReadAllBytesAsync(zipPath);
+            var safeName = string.IsNullOrWhiteSpace(sbr.Name)
+                ? "sbr_project"
+                : sbr.Name.Replace(" ", "_");
+            using var stream = new DotNetStreamReference(new MemoryStream(zipBytes));
+            await JSRuntime.InvokeVoidAsync("downloadFileFromStream", $"{safeName}_Project.zip", stream);
+        }
+        catch (Exception ex)
+        {
+            _sbrError = $"Failed to decompile '{sbr.Name}': {ex.Message}";
+        }
+        finally
+        {
+            _sbrDecompilingIds.Remove(sbr.Id);
+            try { if (outputDir is not null && Directory.Exists(outputDir)) Directory.Delete(outputDir, true); } catch { }
+            try { if (zipPath is not null && File.Exists(zipPath)) File.Delete(zipPath); } catch { }
+            StateHasChanged();
         }
     }
 
@@ -2115,7 +2179,7 @@
     private async Task HandleAiCbrEditAsync(CbrEditItem item)
     {
         if (!_cbrLoaded)
-            await SwitchToBusinessRulesTab();
+            await SwitchToClientRulesTab();
 
         var cbr = _cbrs.FirstOrDefault(c => c.Id == item.Id);
         cbr ??= _cbrs.FirstOrDefault(c =>
@@ -2123,8 +2187,7 @@
 
         if (cbr is null) return;
 
-        _activeMainTab = "business-rules";
-        _cbrExpanded   = true;
+        _activeMainTab = "client-rules";
 
         SelectCbr(cbr);
         _cbrEditedScript = item.Script;

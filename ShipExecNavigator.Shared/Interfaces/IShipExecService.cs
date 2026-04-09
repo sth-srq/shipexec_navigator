@@ -84,7 +84,7 @@ public interface IShipExecService
 
     // ── Server Business Rules ────────────────────────────────────────────────
     Task<List<SbrInfo>> GetServerBusinessRulesAsync();
-    Task<string?> GetServerBusinessRuleFileBase64Async(int sbrId);
+    Task<string?> GetServerBusinessRuleFileBase64Async(string sbrName, string? sbrVersion);
 
     // ── Client Business Rules (connected company) ────────────────────────────
     Task<List<CbrInfo>> GetClientBusinessRulesAsync();

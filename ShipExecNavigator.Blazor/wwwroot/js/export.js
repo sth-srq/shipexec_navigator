@@ -39,6 +39,19 @@ window.downloadBase64File = function (fileName, base64, mimeType) {
     URL.revokeObjectURL(url);
 };
 
+window.downloadFileFromStream = async function (fileName, dotnetStreamRef) {
+    const arrayBuffer = await dotnetStreamRef.arrayBuffer();
+    const blob = new Blob([arrayBuffer]);
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
 window.scrollToNode = function (elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;

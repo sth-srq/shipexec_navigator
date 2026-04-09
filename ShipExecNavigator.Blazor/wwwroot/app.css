@@ -70,10 +70,10 @@ h1:focus {
 .page-tab-bar {
     display: flex;
     align-items: stretch;
-    height: 42px;
-    background: #f8f8f8;
-    border: 1px solid #e7e7e7;
-    border-radius: 4px;
+    height: 50px;
+    background: linear-gradient(135deg, #1e3a5f, #2a5a8a);
+    border: 1px solid #1a3050;
+    border-radius: 6px;
     flex-shrink: 0;
     padding-right: 1rem;
     position: relative;
@@ -84,31 +84,44 @@ h1:focus {
     display: none;
 }
 
+.page-tab-brand {
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    margin-right: 0.25rem;
+}
+
 .page-tab {
     display: flex;
     align-items: center;
-    padding: 0 1.15rem;
-    color: #777;
-    font-size: 0.84rem;
+    padding: 0 1.5rem;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.95rem;
     font-weight: 500;
     text-decoration: none;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
     transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
 }
 
 .page-tab:hover {
-    color: #333;
+    color: #fff;
     text-decoration: none;
-    background: #e8e8e8;
+    background: rgba(255,255,255,0.12);
 }
 
 .page-tab--active {
-    color: #333;
-    border-bottom-color: #337ab7;
-    background: #fff;
+    color: #fff;
+    border-bottom-color: #7ec8f8;
+    background: rgba(255,255,255,0.15);
     cursor: default;
     font-weight: 600;
 }
@@ -150,23 +163,23 @@ h1:focus {
 }
 
 .dark-theme .page-tab-bar {
-    background: #2a2a2a;
-    border-color: #444;
+    background: linear-gradient(135deg, #0f1f33, #1a3050);
+    border-color: #0d1a2d;
 }
 
 .dark-theme .page-tab {
-    color: #999;
+    color: rgba(255,255,255,0.6);
 }
 
 .dark-theme .page-tab:hover {
-    color: #ddd;
-    background: #333;
+    color: #fff;
+    background: rgba(255,255,255,0.1);
 }
 
 .dark-theme .page-tab--active {
     color: #fff;
     border-bottom-color: #6cb3e6;
-    background: #333;
+    background: rgba(255,255,255,0.12);
 }
 
 .dark-theme #blazor-error-ui {

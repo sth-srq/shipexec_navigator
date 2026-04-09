@@ -1,5 +1,6 @@
 using PSI.Sox;
 using PSI.Sox.Data;
+using PSI.Sox.Wcf;
 using PSI.Sox.Wcf.Administration;
 using PSI.Sox.Wcf.Authentication;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ShipExecNavigator.BusinessLogic
 {
@@ -940,35 +942,67 @@ namespace ShipExecNavigator.BusinessLogic
         }
 
         /// <summary>
-        /// Retrieves a single <see cref="ServerBusinessRule"/> by ID for the current company,
-        /// including its <see cref="ServerBusinessRule.FileBytes"/>.
+        /// Retrieves the <c>FileBytes</c> for a single <see cref="ServerBusinessRule"/> by
+        /// calling the <c>ExportCompanyConfiguration</c> endpoint, which returns the full
+        /// company configuration XML including SBR file data, and then extracting the
+        /// matching rule's byte array from the response.
         /// </summary>
-        public ServerBusinessRule? GetServerBusinessRuleById(int id)
+        public byte[]? GetServerBusinessRuleFileBytes(string name, string? version)
         {
-            _logger.LogTrace(">> GetServerBusinessRuleById | Id={Id} CompanyId={CompanyId}", id, _companyId);
+            System.Diagnostics.Debugger.Break();
+            _logger.LogTrace(">> GetServerBusinessRuleFileBytes | Name={Name} Version={Version} CompanyId={CompanyId}", name, version, _companyId);
 
             var accessToken = GetAccessToken();
-            var request = new GetServerBusinessRuleRequest
+            var request = new ExportCompanyConfigurationRequest { CompanyId = _companyId };
+
+            using var httpClient = new HttpClient();
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "ExportCompanyConfiguration");
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            string json = JsonHelper.Serialize(request);
+            requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+            httpResponse.EnsureSuccessStatusCode();
+
+            string content = httpResponse.Content.ReadAsStringAsync().Result;
+            var response = JsonHelper.Deserialize<ExportCompanyConfigurationResponse>(content);
+
+            if (string.IsNullOrEmpty(response?.CompanyConfiguration))
             {
-                CompanyId = _companyId,
-                Id        = id
-            };
-
-            using (var httpClient = new HttpClient())
-            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "GetServerBusinessRule"))
-            {
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                string json = JsonHelper.Serialize(request);
-                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
-                httpResponse.EnsureSuccessStatusCode();
-
-                string content = httpResponse.Content.ReadAsStringAsync().Result;
-                var response = JsonHelper.Deserialize<GetServerBusinessRuleResponse>(content);
-                _logger.LogTrace("<< GetServerBusinessRuleById | Id={Id} HasFile={HasFile}", id, response?.ServerBusinessRule?.FileBytes?.Length > 0);
-                return response?.ServerBusinessRule;
+                _logger.LogWarning("GetServerBusinessRuleFileBytes | ExportCompanyConfiguration returned empty for CompanyId={CompanyId}", _companyId);
+                return null;
             }
+
+            // The ExportCompanyConfiguration endpoint returns the XML as a
+            // Base64-encoded string.  Decode it before parsing.
+            var configString = response.CompanyConfiguration;
+            if (configString.Length > 0 && configString[0] != '<')
+            {
+                var xmlBytes = Convert.FromBase64String(configString);
+                configString = Encoding.UTF8.GetString(xmlBytes);
+            }
+
+            var doc = XDocument.Parse(configString);
+            var sbrElement = doc.Descendants("ServerBusinessRule")
+                                .FirstOrDefault(e => (string?)e.Element("Name") == name
+                                                  && (string?)e.Element("Version") == (version ?? string.Empty));
+
+            if (sbrElement is null)
+            {
+                _logger.LogWarning("GetServerBusinessRuleFileBytes | SBR Name={Name} Version={Version} not found in export", name, version);
+                return null;
+            }
+
+            var fileBytesValue = sbrElement.Element("ServerBusinessRule")?.Value;
+            if (string.IsNullOrEmpty(fileBytesValue))
+            {
+                _logger.LogInformation("GetServerBusinessRuleFileBytes | SBR Name={Name} Version={Version} has no FileBytes in export", name, version);
+                return null;
+            }
+
+            var fileBytes = Convert.FromBase64String(fileBytesValue);
+            _logger.LogTrace("<< GetServerBusinessRuleFileBytes | Name={Name} Version={Version} Length={Length}", name, version, fileBytes.Length);
+            return fileBytes;
         }
 
         /// <summary>
