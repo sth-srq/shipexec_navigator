@@ -276,6 +276,28 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x1F4E6;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Export Company XML</div>
+                    <div class="tool-card-desc">
+                        Download the full company configuration as an XML file with all entity IDs.
+                        Fetches every entity category (profiles, shippers, clients, sites, adapters, etc.)
+                        and serialises the Company object graph.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected || _isExportingCompanyXml)" @onclick="ExportCompanyXmlAsync">
+                            @if (_isExportingCompanyXml)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            }
+                            &#x1F4E6; Export Company XML
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
         }
         else
@@ -524,6 +546,7 @@
     private bool _isExportingShippers;
     private bool _isExportingUsers;
     private bool _isSummarizing;
+    private bool _isExportingCompanyXml;
 
     // ── Summarize modal state ─────────────────────────────────────────────
     private bool    _showSummarizeConfirm;
@@ -689,6 +712,48 @@
         finally
         {
             _isExportingUsers = false;
+        }
+    }
+
+    private async Task ExportCompanyXmlAsync()
+    {
+        _isExportingCompanyXml = true;
+        StateHasChanged();
+        try
+        {
+            var company = ShipExecService.GetCurrentCompany();
+            if (company is null)
+            {
+                await AlertService.ShowAlertAsync("No company connected.");
+                return;
+            }
+
+            var xml = await ShipExecService.GetCompanyXmlAsync(company.Id, company.Name ?? "", loadedSections: null);
+
+            // Build filename: <companyname>_<serverroot>_<yyyyMMdd_HHmmss>.xml
+            var companySlug = (company.Name ?? "company").Replace(" ", "_").ToLowerInvariant();
+            var serverRoot = "unknown";
+            try
+            {
+                var adminUrl = ShipExecService.GetAdminUrl();
+                if (!string.IsNullOrEmpty(adminUrl))
+                    serverRoot = new Uri(adminUrl).Host;
+            }
+            catch { }
+
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var filename = $"{companySlug}_{serverRoot}_{timestamp}.xml";
+
+            await JS.InvokeVoidAsync("downloadFile", filename, xml, "application/xml");
+        }
+        catch (Exception ex)
+        {
+            await AlertService.ShowAlertAsync($"Export failed: {ex.Message}");
+        }
+        finally
+        {
+            _isExportingCompanyXml = false;
+            StateHasChanged();
         }
     }
 

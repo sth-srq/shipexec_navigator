@@ -53,6 +53,7 @@ public interface IShipExecService
     CompanyInfo? GetCurrentCompany();
     List<CompanyInfo> GetCachedCompanies();
     string? GetManagementStudioUrl();
+    string? GetAdminUrl();
     void PrepareForApply(Guid companyId, string companyName);
 
     /// <summary>

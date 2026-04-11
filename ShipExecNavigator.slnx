@@ -60,6 +60,10 @@
     <File Path="Docs/CBRAnalysis/validation.txt" />
     <File Path="Docs/CBRAnalysis/validation_alerts.txt" />
   </Folder>
+  <Folder Name="/Docs/EnvironmentComparison/">
+    <File Path="Docs/EnvironmentComparison/markenllp_blackbox23_20260411_171250.xml" />
+    <File Path="Docs/EnvironmentComparison/markenllp_uat.api.managementstudio.shipexec.com_20260411_171642.xml" />
+  </Folder>
   <Folder Name="/Docs/Logon/">
     <File Path="Docs/Logon/loginpage.html" />
     <File Path="Docs/Logon/passwordpage.html" />

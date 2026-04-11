@@ -78,6 +78,15 @@ public sealed class ShipExecService(
     /// <summary>Underlying API client; created by <see cref="GetCompaniesAsync"/>.</summary>
     private AppManager? _appManager;
 
+    /// <summary>
+    /// Returns the current <see cref="AppManager"/> or throws if not connected.
+    /// Capture the result into a <b>local variable</b> before passing it into
+    /// <c>Task.Run</c> so that a concurrent <see cref="Disconnect"/> call cannot
+    /// null out the field while the background work is still running.
+    /// </summary>
+    private AppManager GetAppManagerOrThrow() =>
+        _appManager ?? throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
     /// <summary>Normalised admin URL (always trailing-slash) for building sub-service URLs.</summary>
     private string?     _adminUrl;
 
@@ -112,13 +121,14 @@ public sealed class ShipExecService(
         logger.LogTrace(">> GetCompaniesAsync | AdminUrl={AdminUrl}", adminUrl);
         _appManager = new AppManager(jwtJson, adminUrl);
         _adminUrl   = adminUrl.EndsWith('/') ? adminUrl : adminUrl + "/";
+        var appMgr = _appManager;
         return Task.Run(() =>
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             logger.LogInformation("GetCompanies start | AdminUrl={AdminUrl}", adminUrl);
             try
             {
-                var companies = _appManager.GetCompanies();
+                var companies = appMgr.GetCompanies();
                 sw.Stop();
                 logger.LogInformation(
                     "GetCompanies complete | AdminUrl={AdminUrl} CompanyCount={Count} DurationMs={DurationMs}",
@@ -147,13 +157,12 @@ public sealed class ShipExecService(
     public Task SetupCompanyAsync(Guid companyId, string companyName)
     {
         logger.LogTrace(">> SetupCompanyAsync({CompanyId}, {CompanyName})", companyId, companyName);
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         logger.LogInformation("SetupCompany | CompanyId={CompanyId} CompanyName={CompanyName}",
             companyId, companyName);
         _currentCompanyId = companyId;
-        _appManager.SetCompany(companyId, companyName);
+        appMgr.SetCompany(companyId, companyName);
         OnConnected?.Invoke();
         return Task.CompletedTask;
     }
@@ -161,12 +170,11 @@ public sealed class ShipExecService(
     public Task<XmlNodeViewModel> BuildCompanySkeletonAsync()
     {
         logger.LogTrace(">> BuildCompanySkeletonAsync");
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
-            var company = _appManager.GetCompanyBase();
+            var company = appMgr.GetCompanyBase();
 
             var root = new XmlNodeViewModel
             {
@@ -256,16 +264,15 @@ public sealed class ShipExecService(
     public Task<CompanyEntityIndex> BuildEntityIndexAsync()
     {
         logger.LogTrace(">> BuildEntityIndexAsync");
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             logger.LogInformation("BuildEntityIndex start | CompanyId={CompanyId}", _currentCompanyId);
 
-            var jwt = _appManager.GetAccessToken();
-            var url = _appManager.AdminUrl;
+            var jwt = appMgr.GetAccessToken();
+            var url = appMgr.AdminUrl;
             var cid = _currentCompanyId;
 
             var manifest = new Dictionary<string, object>();
@@ -291,14 +298,14 @@ public sealed class ShipExecService(
             }
 
             // ── Direct AppManager calls ──────────────────────────────────
-            try { IndexItems("Shippers",  _appManager.GetShippers());  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Shippers");  IndexItems("Shippers",  null); }
-            try { IndexItems("Clients",   _appManager.GetClients());   } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Clients");   IndexItems("Clients",   null); }
-            try { IndexItems("Profiles",  _appManager.GetFullProfiles()); } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Profiles"); IndexItems("Profiles",  null); }
-            try { IndexItems("Sites",     _appManager.GetSites(cid));  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Sites");     IndexItems("Sites",     null); }
+            try { IndexItems("Shippers",  appMgr.GetShippers());  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Shippers");  IndexItems("Shippers",  null); }
+            try { IndexItems("Clients",   appMgr.GetClients());   } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Clients");   IndexItems("Clients",   null); }
+            try { IndexItems("Profiles",  appMgr.GetFullProfiles()); } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Profiles"); IndexItems("Profiles",  null); }
+            try { IndexItems("Sites",     appMgr.GetSites(cid));  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Sites");     IndexItems("Sites",     null); }
             try
             {
-                var users = _appManager.GetUsers()
-                    .Select(u => { try { return _appManager.GetUserDetail(u.Id) ?? u; } catch { return u; } })
+                var users = appMgr.GetUsers()
+                    .Select(u => { try { return appMgr.GetUserDetail(u.Id) ?? u; } catch { return u; } })
                     .ToList();
                 IndexItems("Users", users);
             }
@@ -338,7 +345,7 @@ public sealed class ShipExecService(
             // ── Business rules (special model mapping) ───────────────────
             try
             {
-                var cbrs = _appManager.GetClientBusinessRulesWithProfilesForCompany()
+                var cbrs = appMgr.GetClientBusinessRulesWithProfilesForCompany()
                     .Select(r => new CbrInfo
                     {
                         Id             = r.Rule.Id,
@@ -354,7 +361,7 @@ public sealed class ShipExecService(
 
             try
             {
-                var sbrs = _appManager.GetServerBusinessRulesForCompany()
+                var sbrs = appMgr.GetServerBusinessRulesForCompany()
                     .Select(r => new SbrInfo
                     {
                         Id             = r.Rule.Id,
@@ -389,46 +396,45 @@ public sealed class ShipExecService(
     public Task LoadCategoryChildrenAsync(XmlNodeViewModel categoryNode)
     {
         logger.LogTrace(">> LoadCategoryChildrenAsync | Key={Key}", categoryNode.LazyLoadKey);
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         var key = categoryNode.LazyLoadKey;
         if (string.IsNullOrEmpty(key)) return Task.CompletedTask;
 
         return Task.Run(() =>
         {
-            var jwt = _appManager.GetAccessToken();
-            var url = _appManager.AdminUrl;
+            var jwt = appMgr.GetAccessToken();
+            var url = appMgr.AdminUrl;
             var cid = _currentCompanyId;
 
             switch (key)
             {
                 case "Shippers":
                     PopulateCategory(categoryNode, "Shipper",
-                        _appManager.GetShippers());
+                        appMgr.GetShippers());
                     break;
 
                 case "Clients":
                     PopulateCategory(categoryNode, "Client",
-                        _appManager.GetClients());
+                        appMgr.GetClients());
                     break;
 
                 case "Profiles":
                     PopulateCategory(categoryNode, "Profile",
-                        _appManager.GetFullProfiles());
+                        appMgr.GetFullProfiles());
                     break;
 
                 case "Sites":
                     PopulateCategory(categoryNode, "Site",
-                        _appManager.GetSites(cid));
+                        appMgr.GetSites(cid));
                     break;
 
                 case "Users":
-                    var summaryUsers = _appManager.GetUsers();
+                    var summaryUsers = appMgr.GetUsers();
                     var detailedUsers = summaryUsers
                         .Select(u =>
                         {
-                            try { return _appManager.GetUserDetail(u.Id) ?? u; }
+                            try { return appMgr.GetUserDetail(u.Id) ?? u; }
                             catch { return u; }
                         })
                         .ToList();
@@ -497,7 +503,7 @@ public sealed class ShipExecService(
 
                 case "ClientBusinessRules":
                     PopulateCategory(categoryNode, "ClientBusinessRule",
-                        _appManager.GetClientBusinessRulesWithProfilesForCompany()
+                        appMgr.GetClientBusinessRulesWithProfilesForCompany()
                             .Select(r => new CbrInfo
                             {
                                 Id             = r.Rule.Id,
@@ -511,7 +517,7 @@ public sealed class ShipExecService(
 
                 case "ServerBusinessRules":
                     PopulateCategory(categoryNode, "ServerBusinessRule",
-                        _appManager.GetServerBusinessRulesForCompany()
+                        appMgr.GetServerBusinessRulesForCompany()
                             .Select(r => new SbrInfo
                             {
                                 Id             = r.Rule.Id,
@@ -595,10 +601,9 @@ public sealed class ShipExecService(
 
     public Task<string> GetCompanyXmlAsync(Guid companyId, string companyName, string path = "", HashSet<string>? loadedSections = null)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        _appManager.SetCompany(companyId, companyName);
+        appMgr.SetCompany(companyId, companyName);
         return Task.Run(() =>
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -608,7 +613,7 @@ public sealed class ShipExecService(
                 loadedSections is null ? "all" : string.Join(",", loadedSections));
             try
             {
-                var companyXml = _appManager.GetCompanyXmlString(path, companyName, loadedSections);
+                var companyXml = appMgr.GetCompanyXmlString(path, companyName, loadedSections);
                 _lastCompanyXml = companyXml;
                 sw.Stop();
                 logger.LogInformation(
@@ -629,8 +634,7 @@ public sealed class ShipExecService(
 
     public Task<DiffResult> GetDiffAsync(string originalXml, string modifiedXml)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
@@ -643,7 +647,7 @@ public sealed class ShipExecService(
                 var cleanOriginal = StripUsersNode(originalXml);
                 var cleanModified = StripUsersNode(NormalizeForShipperDiff(originalXml, modifiedXml));
 
-                var result = _appManager!.GetVariancesAndRequests(cleanOriginal, cleanModified);
+                var result = appMgr.GetVariancesAndRequests(cleanOriginal, cleanModified);
                 var variances = result.Item1;
                 var requests  = result.Item2;
 
@@ -754,12 +758,11 @@ public sealed class ShipExecService(
 
     public async Task<List<ApplyResultItem>> ApplyChangesAsync(IReadOnlyList<int> selectedVarianceIndices, string? comments = null)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
         if (_lastVariances is null || _lastModifiedXml is null)
             throw new InvalidOperationException("No diff computed. Call GetDiffAsync first.");
 
-        var companyId = _appManager.GetCurrentCompanyId();
+        var companyId = appMgr.GetCurrentCompanyId();
         var variances = selectedVarianceIndices
             .Where(i => i >= 0 && i < _lastVariances.Count)
             .Select(i => _lastVariances[i])
@@ -773,7 +776,7 @@ public sealed class ShipExecService(
             companyId, variances.Count, comments);
 
         var results = await Task.Run(() =>
-            _appManager.ApplyChanges(modifiedXml, variances)
+            appMgr.ApplyChanges(modifiedXml, variances)
                         .Select(r => new ApplyResultItem
                         {
                             EntityName = r.EntityName,
@@ -805,7 +808,7 @@ public sealed class ShipExecService(
         {
             try
             {
-                await Task.Run(() => _appManager.UpdateUser(user));
+                await Task.Run(() => appMgr.UpdateUser(user));
                 results.Add(new ApplyResultItem
                 {
                     EntityName = user.UserName ?? user.Id.ToString(),
@@ -833,17 +836,15 @@ public sealed class ShipExecService(
 
     public Task<List<PSI.Sox.User>> GetUsersAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetUsers());
+        return Task.Run(() => appMgr.GetUsers());
     }
 
     public void PrepareForApply(Guid companyId, string companyName)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
-        _appManager.SetCompany(companyId, companyName);
+        var appMgr = GetAppManagerOrThrow();
+        appMgr.SetCompany(companyId, companyName);
     }
 
     private async Task LogVariancesAsync(List<Variance> variances, List<ApplyResultItem> results, string? comments, Guid companyId, string? endpoint)
@@ -961,37 +962,33 @@ public sealed class ShipExecService(
 
     public Task<List<PSI.Sox.Profile>> GetProfilesAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetProfiles());
+        return Task.Run(() => appMgr.GetProfiles());
     }
 
     public Task<PSI.Sox.Profile> GetFullProfileAsync(int profileId)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetFullProfile(profileId));
+        return Task.Run(() => appMgr.GetFullProfile(profileId));
     }
 
     public Task<List<PSI.Sox.Shipper>> GetShippersAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetShippers());
+        return Task.Run(() => appMgr.GetShippers());
     }
 
     public Task<string> ExportShippersCsvAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
-            var shippers    = _appManager.GetShippers();
-            var sites       = _appManager.GetSites(_appManager.GetCurrentCompanyId());
+            var shippers    = appMgr.GetShippers();
+            var sites       = appMgr.GetSites(appMgr.GetCurrentCompanyId());
             var clientLogic = ShipExecNavigator.ClientSpecificLogic.ClientLogicResolver.Resolve(GetCurrentCompany()?.Name);
 
             var siteNames = sites
@@ -1113,15 +1110,14 @@ public sealed class ShipExecService(
 
     public Task<List<ApplyResultItem>> ApplyShipperVariancesAsync(List<Variance> variances)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         if (_lastCompanyXml is null)
             throw new InvalidOperationException("No company XML cached. Call GetCompanyXmlAsync first.");
 
         var xml = _lastCompanyXml;
         return Task.Run(() =>
-            _appManager.ApplyChanges(xml, variances)
+            appMgr.ApplyChanges(xml, variances)
                        .Select(r => new ApplyResultItem
                        {
                            EntityName = r.EntityName,
@@ -1253,72 +1249,63 @@ public sealed class ShipExecService(
 
     public Task<PSI.Sox.User?> GetUserDetailAsync(Guid userId)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => (PSI.Sox.User?)_appManager.GetUserDetail(userId));
+        return Task.Run(() => (PSI.Sox.User?)appMgr.GetUserDetail(userId));
     }
 
     public Task<List<PSI.Sox.Permission>> GetPermissionsAsync(Guid userId)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetPermissions(userId));
+        return Task.Run(() => appMgr.GetPermissions(userId));
     }
 
     public Task UpdateUserPermissionsAsync(PSI.Sox.User user, List<PSI.Sox.Permission> permissions)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.UpdateUserPermissions(user, permissions));
+        return Task.Run(() => appMgr.UpdateUserPermissions(user, permissions));
     }
 
     public Task<List<PSI.Sox.Role>> GetRolesAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetRoles());
+        return Task.Run(() => appMgr.GetRoles());
     }
 
     public Task UpdateUserRolesAsync(PSI.Sox.User user, List<PSI.Sox.Role> roles)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.UpdateUserRoles(user, roles));
+        return Task.Run(() => appMgr.UpdateUserRoles(user, roles));
     }
 
     public Task UpdateUserAsync(PSI.Sox.User user)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.UpdateUser(user));
+        return Task.Run(() => appMgr.UpdateUser(user));
     }
 
     public Task<Guid> CreateUserAsync(PSI.Sox.User user)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.CreateUser(user));
+        return Task.Run(() => appMgr.CreateUser(user));
     }
 
     public Task DeleteUserAsync(Guid userId)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.DeleteUser(userId));
+        return Task.Run(() => appMgr.DeleteUser(userId));
     }
 
     public async Task<List<ApplyResultItem>> ApplyUserVariancesAsync(List<UserVariance> variances)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         var results = new List<ApplyResultItem>();
         foreach (var v in variances)
@@ -1328,7 +1315,7 @@ public sealed class ShipExecService(
                 switch (v.Kind)
                 {
                     case UserVarianceKind.Delete:
-                        await Task.Run(() => _appManager.DeleteUser(v.UserId));
+                        await Task.Run(() => appMgr.DeleteUser(v.UserId));
                         results.Add(new ApplyResultItem
                         {
                             EntityName = v.Username,
@@ -1340,7 +1327,7 @@ public sealed class ShipExecService(
 
                     case UserVarianceKind.Edit:
                         if (v.EditItem is null) break;
-                        var user = await Task.Run(() => _appManager.GetUserDetail(v.UserId));
+                        var user = await Task.Run(() => appMgr.GetUserDetail(v.UserId));
                         if (user is null)
                         {
                             results.Add(new ApplyResultItem
@@ -1358,7 +1345,7 @@ public sealed class ShipExecService(
                         user.Permissions          ??= [];
                         user.Roles                ??= [];
                         ApplyUserEditFields(user, v.EditItem.Edits, [], []);
-                        await Task.Run(() => _appManager.UpdateUser(user));
+                        await Task.Run(() => appMgr.UpdateUser(user));
                         results.Add(new ApplyResultItem
                         {
                             EntityName = v.Username,
@@ -1493,13 +1480,12 @@ public sealed class ShipExecService(
 
     public Task<List<CsvUserCreateResult>> CreateUsersFromCsvAsync(List<CsvUserRow> rows)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
-            var allRoles = _appManager.GetRoles();
-            var allPerms = _appManager.GetPermissions(Guid.Empty);
+            var allRoles = appMgr.GetRoles();
+            var allPerms = appMgr.GetPermissions(Guid.Empty);
             var results = new List<CsvUserCreateResult>();
 
             foreach (var row in rows.Where(r => r.IsValid))
@@ -1531,7 +1517,7 @@ public sealed class ShipExecService(
                         DefaultConfiguration = BuildDefaultConfig(row),
                     };
 
-                    var newId = _appManager.CreateUser(user);
+                    var newId = appMgr.CreateUser(user);
                     result.Success = true;
                     result.UserId = newId;
                     result.Message = "Created successfully.";
@@ -1568,13 +1554,12 @@ public sealed class ShipExecService(
 
     public Task<string> ExportUsersCsvAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
-            var users = _appManager.GetUsers();
-            var profiles = _appManager.GetProfiles();
+            var users = appMgr.GetUsers();
+            var profiles = appMgr.GetProfiles();
             var profileLookup = profiles.ToDictionary(p => p.Id, p => p.Name ?? string.Empty);
             var sb = new System.Text.StringBuilder();
 
@@ -1582,7 +1567,7 @@ public sealed class ShipExecService(
 
             foreach (var user in users)
             {
-                var detail = _appManager.GetUserDetail(user.Id) ?? user;
+                var detail = appMgr.GetUserDetail(user.Id) ?? user;
                 var addr = detail.Address;
                 var config = detail.DefaultConfiguration;
 
@@ -1672,10 +1657,9 @@ public sealed class ShipExecService(
 
     public Task<List<PSI.Sox.Site>> GetSitesAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
-        return Task.Run(() => _appManager.GetSites(_appManager.GetCurrentCompanyId()));
+        return Task.Run(() => appMgr.GetSites(appMgr.GetCurrentCompanyId()));
     }
 
     public Task<List<TemplateInfo>> GetCompanyTemplatesAsync(Guid companyId, string jwtJson, string adminUrl)
@@ -1732,8 +1716,7 @@ public sealed class ShipExecService(
 
     public Task<List<SbrInfo>> GetServerBusinessRulesAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
@@ -1741,7 +1724,7 @@ public sealed class ShipExecService(
             logger.LogInformation("GetServerBusinessRules start | CompanyId={CompanyId}", _currentCompanyId);
             try
             {
-                var results = _appManager.GetServerBusinessRulesForCompany();
+                var results = appMgr.GetServerBusinessRulesForCompany();
                 sw.Stop();
                 logger.LogInformation(
                     "GetServerBusinessRules complete | Count={Count} DurationMs={DurationMs}",
@@ -1770,8 +1753,7 @@ public sealed class ShipExecService(
 
     public Task<string?> GetServerBusinessRuleFileBase64Async(string sbrName, string? sbrVersion)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
@@ -1779,7 +1761,7 @@ public sealed class ShipExecService(
             logger.LogInformation("GetServerBusinessRuleFileBase64 start | SbrName={SbrName} SbrVersion={SbrVersion}", sbrName, sbrVersion);
             try
             {
-                var fileBytes = _appManager.GetServerBusinessRuleFileBytes(sbrName, sbrVersion);
+                var fileBytes = appMgr.GetServerBusinessRuleFileBytes(sbrName, sbrVersion);
                 //System.Diagnostics.Debugger.Break(); // breakpoint: after fetching SBR file bytes (DLL or Project download)
                 sw.Stop();
                 bool hasFile = fileBytes is { Length: > 0 };
@@ -1803,8 +1785,7 @@ public sealed class ShipExecService(
 
     public Task<List<CbrInfo>> GetClientBusinessRulesAsync()
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
@@ -1812,7 +1793,7 @@ public sealed class ShipExecService(
             logger.LogInformation("GetClientBusinessRules start | CompanyId={CompanyId}", _currentCompanyId);
             try
             {
-                var results = _appManager.GetClientBusinessRulesWithProfilesForCompany();
+                var results = appMgr.GetClientBusinessRulesWithProfilesForCompany();
                 sw.Stop();
                 logger.LogInformation(
                     "GetClientBusinessRules complete | Count={Count} DurationMs={DurationMs}",
@@ -1927,12 +1908,11 @@ public sealed class ShipExecService(
 
     public Task<(int Total, List<LogEntry> Logs)> GetApplicationLogsAsync(DateTime startDate, DateTime endDate)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
-            var json = _appManager.GetApplicationLogsJson(startDate, endDate);
+            var json = appMgr.GetApplicationLogsJson(startDate, endDate);
             var response = JsonConvert.DeserializeObject<LogsApiResponse>(json);
             return (response?.TotalRecords ?? 0, response?.Logs ?? new List<LogEntry>());
         });
@@ -1949,12 +1929,11 @@ public sealed class ShipExecService(
 
     public Task<(int Total, List<SecurityLogEntry> Logs)> GetSecurityLogsAsync(DateTime startDate, DateTime endDate)
     {
-        if (_appManager is null)
-            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+        var appMgr = GetAppManagerOrThrow();
 
         return Task.Run(() =>
         {
-            var json = _appManager.GetSecurityLogsJson(startDate, endDate);
+            var json = appMgr.GetSecurityLogsJson(startDate, endDate);
             var response = JsonConvert.DeserializeObject<SecurityLogsApiResponse>(json);
             return (response?.TotalRecords ?? 0, response?.Logs ?? new List<SecurityLogEntry>());
         });
@@ -2014,6 +1993,8 @@ public sealed class ShipExecService(
             return null;
         }
     }
+
+    public string? GetAdminUrl() => _adminUrl;
 
     private static string SerializeUsersXml(IEnumerable<PSI.Sox.User> users)
     {
