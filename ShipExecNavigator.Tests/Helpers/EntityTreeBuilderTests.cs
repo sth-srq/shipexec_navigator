@@ -46,6 +46,19 @@ public class EntityTreeBuilderTests
         public string Hidden { get; set; } = "no";
     }
 
+    private class EntityWithXmlArrayItem
+    {
+        public string Name { get; set; } = "parent";
+        [XmlArrayItem("Gadget")]
+        public List<SimpleEntity> Widgets { get; set; } = [];
+    }
+
+    private class EntityWithNullComplex
+    {
+        public string Label { get; set; } = "root";
+        public SimpleEntity? Child { get; set; }
+    }
+
     // ── FromObject ────────────────────────────────────────────────────────────
 
     [Fact]
@@ -90,24 +103,57 @@ public class EntityTreeBuilderTests
     }
 
     [Fact]
-    public void FromObject_NullScalarPropertyIsSkipped()
+    public void FromObject_NullScalarPropertyIsShownWithNullValue()
     {
         var entity = new EntityWithNullable { OptionalName = null, RequiredId = 7 };
         var node = EntityTreeBuilder.FromObject("N", entity, 0, null);
 
-        Assert.DoesNotContain(node.Children, c => c.NodeName == "OptionalName");
+        var optionalChild = node.Children.FirstOrDefault(c => c.NodeName == "OptionalName");
+        Assert.NotNull(optionalChild);
+        Assert.Null(optionalChild.NodeValue);
+        Assert.Null(optionalChild.OriginalNodeValue);
         Assert.Contains(node.Children, c => c.NodeName == "RequiredId");
     }
 
     [Fact]
-    public void FromObject_CollectionPropertyIsSkipped()
+    public void FromObject_CollectionPropertyCreatesContainerNode()
     {
         var entity = new EntityWithCollection { Label = "L" };
         entity.Items.Add(new SimpleEntity { Name = "child" });
         var node = EntityTreeBuilder.FromObject("P", entity, 0, null);
 
-        Assert.DoesNotContain(node.Children, c => c.NodeName == "Items");
+        // Collection is shown as a container node with children
+        var itemsNode = node.Children.FirstOrDefault(c => c.NodeName == "Items");
+        Assert.NotNull(itemsNode);
+        Assert.Single(itemsNode.Children);
+        Assert.Equal("SimpleEntity", itemsNode.Children[0].NodeName);
         Assert.Contains(node.Children, c => c.NodeName == "Label");
+    }
+
+    [Fact]
+    public void FromObject_EmptyCollectionCreatesEmptyContainerNode()
+    {
+        var entity = new EntityWithCollection { Label = "L" };
+        var node = EntityTreeBuilder.FromObject("P", entity, 0, null);
+
+        // Empty collection still appears as a container node (so users can add items)
+        var itemsNode = node.Children.FirstOrDefault(c => c.NodeName == "Items");
+        Assert.NotNull(itemsNode);
+        Assert.Empty(itemsNode.Children);
+    }
+
+    [Fact]
+    public void FromObject_CollectionUsesXmlArrayItemAttributeForChildName()
+    {
+        var entity = new EntityWithXmlArrayItem { Name = "P" };
+        entity.Widgets.Add(new SimpleEntity { Name = "w1" });
+        var node = EntityTreeBuilder.FromObject("Root", entity, 0, null);
+
+        var widgetsNode = node.Children.FirstOrDefault(c => c.NodeName == "Widgets");
+        Assert.NotNull(widgetsNode);
+        Assert.Single(widgetsNode.Children);
+        // XmlArrayItem("Gadget") should be used instead of "SimpleEntity"
+        Assert.Equal("Gadget", widgetsNode.Children[0].NodeName);
     }
 
     [Fact]
@@ -140,6 +186,35 @@ public class EntityTreeBuilderTests
 
         Assert.Contains(node.Children, c => c.NodeName == "Visible");
         Assert.DoesNotContain(node.Children, c => c.NodeName == "Hidden");
+    }
+
+    [Fact]
+    public void FromObject_NullComplexObjectCreatesEmptyContainerNode()
+    {
+        var entity = new EntityWithNullComplex { Label = "root", Child = null };
+        var node = EntityTreeBuilder.FromObject("Root", entity, 0, null);
+
+        var childNode = node.Children.FirstOrDefault(c => c.NodeName == "Child");
+        Assert.NotNull(childNode);
+        Assert.Empty(childNode.Children);
+        Assert.Equal(1, childNode.Depth);
+        Assert.Same(node, childNode.Parent);
+    }
+
+    [Fact]
+    public void FromObject_NonNullComplexObjectRecursesNormally()
+    {
+        var entity = new EntityWithNullComplex
+        {
+            Label = "root",
+            Child = new SimpleEntity { Name = "inner", Count = 3 }
+        };
+        var node = EntityTreeBuilder.FromObject("Root", entity, 0, null);
+
+        var childNode = node.Children.FirstOrDefault(c => c.NodeName == "Child");
+        Assert.NotNull(childNode);
+        Assert.NotEmpty(childNode.Children);
+        Assert.Contains(childNode.Children, c => c.NodeName == "Name" && c.NodeValue == "inner");
     }
 
     [Fact]

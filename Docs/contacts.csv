@@ -1,0 +1,21 @@
+Name,ID,Address1,City,State,Zip,ISO_Country,ContactName,Email,Phone,Status,Latitude,Longitude,Notes,AccountNumber
+Harbor Shipping Co,LOC001,120 Pier Rd,San Diego,CA,92101,US,Amanda Rivers,amanda.rivers@harborship.com,619-555-0101,Active,32.7163,-117.1687,Preferred carrier,ACCT1001
+Northpoint Logistics,LOC002,88 Dockside Ave,Boston,MA,02110,US,Marcus Hale,marcus.hale@northpointlog.com,617-555-0102,Active,42.3601,-71.0589,24/7 gate,ACCT1002
+Pacific Freight,LOC003,450 Marine Way,Long Beach,CA,90802,US,Sophia Lin,sophia.lin@pacificfreight.com,562-555-0103,Active,33.7701,-118.1937,Reefer available,ACCT1003
+EuroCargo Terminal,LOC004,7 Hafenstrasse,Hamburg,,20457,DE,Peter Schmitt,p.schmitt@eurocargo.de,49-40-555-0104,Active,53.5511,9.9937,Customs cleared,ACCT1004
+Atlantic Exporters,LOC005,15 Quay St,New York,NY,10004,US,Lucia Gomez,lucia.gomez@atlanticexp.com,212-555-0105,Active,40.7039,-74.0176,High traffic area,ACCT1005
+Southern Port Ops,LOC006,900 Wharf Rd,Brisbane,QLD,4000,AU,Benjamin Coates,ben.coates@southernport.au,61-7-5550-0106,Active,-27.4698,153.0251,Requires appointments,ACCT1006
+Viking Marine,LOC007,3 Brygga,Oslo,,0150,NO,Ingrid Nilsen,ingrid.nilsen@vikingmarine.no,47-22-555-0107,Active,59.9139,10.7522,RoRo capable,ACCT1007
+Canal Terminals,LOC008,22 Locks Rd,Rotterdam,,3011,NL,Hans de Vries,hans.devries@canalterm.nl,31-10-555-0108,Active,51.9244,4.4777,24h security,ACCT1008
+Baltic Shipping,LOC009,5 Strandgatan,Stockholm,,11130,SE,Erik Andersson,erik.andersson@balticship.se,46-8-555-0109,Active,59.3293,18.0686,Cold storage,ACCT1009
+Mediterranean Cargo,LOC010,18 Porto Vecchio,Genoa,,16121,IT,Francesca Rossi,francesca.rossi@medcargo.it,39-010-555-0110,Active,44.4056,8.9463,Limited truck access,ACCT1010
+Gulf Importers,LOC011,200 Dockline Rd,Houston,TX,77002,US,David Khan,david.khan@gulfic.com,713-555-0111,Active,29.7604,-95.3698,Heavy lift crane,ACCT1011
+Lakeside Distribution,LOC012,77 Harbor View,Chicago,IL,60601,US,Olivia Park,olivia.park@lakesidedist.com,312-555-0112,Active,41.8781,-87.6298,Intermodal yard,ACCT1012
+Arctic Freight,LOC013,9 North Pier,Reykjavik,,101,IS,Jon Magnusson,jon.magnusson@arcticfrt.is,354-1-555-0113,Active,64.1466,-21.9426,Seasonal constraints,ACCT1013
+Emerald Ports,LOC014,305 Seaway Blvd,Seattle,WA,98101,US,Grace Kim,grace.kim@emeraldports.com,206-555-0114,Active,47.6062,-122.3321,Environmental rules,ACCT1014
+TransAtlantic Lines,LOC015,401 Union Quay,Dublin,,D02,IE,Connor O'Brien,connor.obrien@tal.ie,353-1-555-0115,Active,53.3498,-6.2603,RoRo only,ACCT1015
+Suez Marine Services,LOC016,12 Canal Plaza,Cairo,,11511,EG,Mohamed El-Sayed,m.el-sayed@suezmarine.eg,20-2-555-0116,Active,30.0444,31.2357,High tariff region,ACCT1016
+Red Sea Logistics,LOC017,60 Coral Ave,Jeddah,,21462,SA,Aisha Al-Farsi,a.al-farsi@redsealog.sa,966-12-555-0117,Active,21.4858,39.1925,Dangerous goods ok,ACCT1017
+Capri Cargo,LOC018,2 Marina Grande,Naples,,80132,IT,Luca Bianchi,luca.bianchi@capricargo.it,39-081-555-0118,Active,40.8518,14.2681,Small vessel only,ACCT1018
+Maple Leaf Terminals,LOC019,120 Bay St,Toronto,ON,M5J2S1,CA,Emily Clarke,emily.clarke@mapleterm.ca,416-555-0119,Active,43.6532,-79.3832,Winter closures possible,ACCT1019
+Shetland Haulage,LOC020,11 North Road,Shetland,,ZE1,GB,Sc Ross,sc.ross@shetlandhaul.co.uk,44-1595-555-0120,Active,60.3913,-1.3296,Remote location,ACCT1020

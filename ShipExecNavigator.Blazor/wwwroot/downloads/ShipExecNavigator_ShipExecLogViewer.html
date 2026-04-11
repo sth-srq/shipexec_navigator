@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShipExec API Log Viewer</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3248;
+    --text: #d4d8f0;
+    --text-muted: #7880a4;
+    --accent: #5b7cf6;
+    --accent2: #7c5bf6;
+    --trace-bg: #1c1e2a;
+    --trace-text: #8898cc;
+    --trace-badge: #2a2f4a;
+    --info-bg: #0d2035;
+    --info-text: #5ba8f5;
+    --info-badge: #0d2a4a;
+    --warn-bg: #221800;
+    --warn-text: #f5c542;
+    --warn-badge: #3a2a00;
+    --error-bg: #250d0d;
+    --error-text: #f55b5b;
+    --error-badge: #4a1010;
+    --debug-bg: #1a0d25;
+    --debug-text: #c55bf5;
+    --debug-badge: #2e1445;
+    --begin-text: #4ecfa8;
+    --end-text: #f0855a;
+    --radius: 6px;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header { background: linear-gradient(135deg, var(--surface) 0%, #1f2235 100%); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 16px; font-weight: 600; color: #fff; letter-spacing: .3px; }
+  .header .sub { color: var(--text-muted); font-size: 11px; margin-top: 1px; }
+  .logo { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+
+  /* ── PASTE PANEL ── */
+  #pastePanel { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .paste-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .paste-label span { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+  #rawLog { width: 100%; height: 130px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font-mono); font-size: 11px; padding: 10px 12px; resize: vertical; outline: none; transition: border-color .2s; }
+  #rawLog:focus { border-color: var(--accent); }
+  #rawLog::placeholder { color: var(--text-muted); }
+  .paste-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  button { cursor: pointer; border: none; border-radius: var(--radius); padding: 7px 16px; font-size: 12px; font-weight: 500; transition: all .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #7491f8; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: transparent; color: var(--error-text); border: 1px solid var(--error-badge); }
+  .btn-danger:hover { background: var(--error-bg); }
+  .btn-small { padding: 4px 10px; font-size: 11px; }
+  #fileInput { display: none; }
+  .file-label { cursor: pointer; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 16px; font-size: 12px; font-weight: 500; transition: all .15s; }
+  .file-label:hover { background: var(--border); }
+
+  /* ── STATS BAR ── */
+  #statsBar { display: none; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .stat { display: flex; align-items: center; gap: 6px; }
+  .stat-value { font-weight: 600; font-size: 14px; }
+  .stat-label { color: var(--text-muted); font-size: 11px; }
+  .stat-sep { color: var(--border); }
+
+  /* ── CONTROLS ── */
+  #controls { display: none; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .control-group { display: flex; align-items: center; gap: 6px; }
+  .control-label { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+  input[type=text], input[type=search], select {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-size: 12px; padding: 5px 10px; outline: none; transition: border-color .2s;
+  }
+  input[type=text]:focus, input[type=search]:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  .search-input { width: 200px; }
+  .txid-input { width: 180px; font-family: var(--font-mono); font-size: 11px; }
+  .controls-right { margin-left: auto; display: flex; gap: 8px; }
+
+  /* ── VIEW TABS ── */
+  #viewTabs { display: none; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 0; }
+  .tab { padding: 9px 18px; font-size: 12px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-muted); transition: all .15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── COLUMN TOGGLES ── */
+  #colToggles { display: none; padding: 8px 20px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .col-toggle-label { color: var(--text-muted); font-size: 11px; margin-right: 4px; }
+  .col-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; cursor: pointer; user-select: none; transition: all .15s; }
+  .col-chip.active { background: var(--info-badge); border-color: var(--accent); color: var(--info-text); }
+  .col-chip:hover { border-color: var(--text-muted); }
+
+  /* ── TABLE VIEW ── */
+  #tableContainer { overflow: auto; }
+  #logTable { width: 100%; border-collapse: collapse; }
+  #logTable thead th {
+    background: var(--surface); color: var(--text-muted); font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .6px; padding: 8px 12px;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+    cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 1;
+  }
+  #logTable thead th:hover { color: var(--text); }
+  #logTable thead th .sort-icon { opacity: .4; margin-left: 4px; }
+  #logTable thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+  #logTable tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+  #logTable tbody tr:hover { filter: brightness(1.15); }
+  #logTable tbody td { padding: 7px 12px; vertical-align: top; white-space: nowrap; max-width: 300px; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+  #logTable tbody td.wrap { white-space: normal; word-break: break-word; }
+
+  /* level row coloring */
+  tr.level-trace { background: var(--trace-bg); }
+  tr.level-info  { background: var(--info-bg); }
+  tr.level-warn, tr.level-warning { background: var(--warn-bg); }
+  tr.level-error { background: var(--error-bg); }
+  tr.level-debug { background: var(--debug-bg); }
+
+  /* level badge */
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+  .badge-trace { background: var(--trace-badge); color: var(--trace-text); }
+  .badge-info  { background: var(--info-badge);  color: var(--info-text); }
+  .badge-warn, .badge-warning { background: var(--warn-badge); color: var(--warn-text); }
+  .badge-error { background: var(--error-badge); color: var(--error-text); }
+  .badge-debug { background: var(--debug-badge); color: var(--debug-text); }
+
+  .action-begin { color: var(--begin-text); font-weight: 600; }
+  .action-end   { color: var(--end-text);   font-weight: 600; }
+
+  .tx-id { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+  .tx-id:hover { color: var(--accent); text-decoration: underline; }
+
+  .row-num { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+
+  /* ── TRANSACTION VIEW ── */
+  #txContainer { padding: 16px 20px; display: none; }
+  .tx-group { margin-bottom: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .tx-group-header { background: var(--surface2); padding: 9px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+  .tx-group-header:hover { background: var(--border); }
+  .tx-group-id { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+  .tx-group-count { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1px 8px; font-size: 10px; color: var(--text-muted); }
+  .tx-group-time { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+  .tx-rows { display: none; }
+  .tx-rows.open { display: block; }
+  .tx-row { padding: 7px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; font-size: 12px; }
+  .tx-row:hover { background: rgba(255,255,255,.03); }
+  .tx-row-time { color: var(--text-muted); font-size: 11px; width: 72px; flex-shrink: 0; }
+  .tx-row-msg  { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── DETAIL MODAL ── */
+  #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; display: none; align-items: center; justify-content: center; }
+  #overlay.open { display: flex; }
+  #modal { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: min(800px, 96vw); max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  #modal-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  #modal-header h2 { font-size: 14px; font-weight: 600; flex: 1; }
+  #modal-body { overflow-y: auto; padding: 14px 18px; }
+  .detail-grid { display: grid; grid-template-columns: 160px 1fr; gap: 0; }
+  .detail-row { display: contents; }
+  .detail-row .dk { padding: 5px 0; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid rgba(255,255,255,.04); font-weight: 600; }
+  .detail-row .dv { padding: 5px 0 5px 12px; font-family: var(--font-mono); font-size: 12px; word-break: break-all; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .detail-row .dv.empty { color: var(--text-muted); font-style: italic; }
+  .hide-empty-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer; margin-bottom: 10px; user-select: none; }
+  input[type=checkbox] { accent-color: var(--accent); }
+
+  /* ── EMPTY / ERROR STATES ── */
+  #emptyState { display: none; padding: 60px 20px; text-align: center; color: var(--text-muted); }
+  #emptyState .icon { font-size: 48px; margin-bottom: 14px; }
+  #emptyState p { font-size: 13px; }
+  #errorBanner { display: none; margin: 8px 20px; background: var(--error-bg); border: 1px solid var(--error-badge); border-radius: var(--radius); padding: 8px 14px; color: var(--error-text); font-size: 12px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  #main { display: flex; flex-direction: column; height: calc(100vh - 0px); }
+  #viewArea { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  #tableContainer { flex: 1; overflow: auto; }
+</style>
+</head>
+<body>
+<div id="main">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">🚢</div>
+  <div>
+    <h1>ShipExec API Log Viewer</h1>
+    <div class="sub">Paste log data below or open a .txt file — no server required</div>
+  </div>
+</div>
+
+<!-- PASTE PANEL -->
+<div id="pastePanel">
+  <div class="paste-label">
+    <span>Log Data</span>
+    <span id="lineCount" style="color:var(--text-muted);font-size:11px;"></span>
+  </div>
+  <textarea id="rawLog" placeholder="Paste ShipExec API log lines here…&#10;&#10;Format: DATE:3:46 PM|LogId:…|LogLevel:Info|TransactionId:…|Message:…|…"></textarea>
+  <div class="paste-actions">
+    <button class="btn-primary" onclick="parseLog()">⚡ Parse Log</button>
+    <label class="file-label" for="fileInput">📂 Open File</label>
+    <input type="file" id="fileInput" accept=".txt,.log" onchange="loadFile(event)">
+    <button class="btn-secondary" onclick="loadSample()">📄 Load Sample</button>
+    <button class="btn-danger" onclick="clearAll()">✕ Clear</button>
+    <span id="parseStatus" style="margin-left:6px;font-size:12px;color:var(--text-muted);"></span>
+  </div>
+</div>
+
+<div id="errorBanner"></div>
+
+<!-- STATS BAR -->
+<div id="statsBar" style="display:none;">
+  <div class="stat"><span class="stat-value" id="st-total">0</span><span class="stat-label">total</span></div>
+  <span class="stat-sep">│</span>
+  <div class="stat"><span class="stat-value" style="color:var(--info-text)" id="st-info">0</span><span class="stat-label">Info</span></div>
+  <div class="stat"><span class="stat-value" style="color:var(--trace-text)" id="st-trace">0</span><span class="stat-label">Trace</span></div>
+  <div class="stat"><span class="stat-value" style="color:var(--warn-text)" id="st-warn">0</span><span class="stat-label">Warn</span></div>
+  <div class="stat"><span class="stat-value" style="color:var(--error-text)" id="st-error">0</span><span class="stat-label">Error</span></div>
+  <div class="stat"><span class="stat-value" style="color:var(--debug-text)" id="st-debug">0</span><span class="stat-label">Debug</span></div>
+  <span class="stat-sep">│</span>
+  <div class="stat"><span class="stat-value" id="st-tx">0</span><span class="stat-label">transactions</span></div>
+  <span class="stat-sep">│</span>
+  <div class="stat" id="st-users-wrap"><span class="stat-value" id="st-users">0</span><span class="stat-label">users</span></div>
+  <span class="stat-sep" id="st-app-sep">│</span>
+  <div class="stat" id="st-app-wrap"><span class="stat-value" id="st-app" style="color:var(--accent);">—</span><span class="stat-label">app</span></div>
+  <div style="margin-left:auto">
+    <button class="btn-secondary btn-small" onclick="exportFiltered()">⬇ Export CSV</button>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div id="controls" style="display:none;">
+  <div class="control-group">
+    <span class="control-label">Level</span>
+    <select id="filterLevel" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="Info">Info</option>
+      <option value="Trace">Trace</option>
+      <option value="Warning">Warning</option>
+      <option value="Error">Error</option>
+      <option value="Debug">Debug</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <span class="control-label">Action</span>
+    <select id="filterAction" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="BEGIN">BEGIN</option>
+      <option value="END">END</option>
+      <option value="(empty)">(none)</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <span class="control-label">Message</span>
+    <input type="search" id="filterMsg" class="search-input" placeholder="Search message…" oninput="applyFilters()">
+  </div>
+  <div class="control-group">
+    <span class="control-label">Transaction&nbsp;ID</span>
+    <input type="text" id="filterTx" class="txid-input" placeholder="Paste/type GUID…" oninput="applyFilters()">
+  </div>
+  <div class="control-group">
+    <span class="control-label">User</span>
+    <input type="text" id="filterUser" style="width:130px" placeholder="UserId or name…" oninput="applyFilters()">
+  </div>
+  <div class="controls-right">
+    <button class="btn-secondary btn-small" onclick="resetFilters()">Reset Filters</button>
+    <span id="filteredCount" style="font-size:11px;color:var(--text-muted);padding:0 4px;"></span>
+  </div>
+</div>
+
+<!-- VIEW TABS -->
+<div id="viewTabs" style="display:none;">
+  <div class="tab active" onclick="switchView('table')" id="tab-table">📋 Table</div>
+  <div class="tab" onclick="switchView('tx')" id="tab-tx">🔗 By Transaction</div>
+</div>
+
+<!-- COLUMN TOGGLES -->
+<div id="colToggles" style="display:none;">
+  <span class="col-toggle-label">Columns:</span>
+</div>
+
+<!-- VIEW AREA -->
+<div id="viewArea">
+  <!-- TABLE VIEW -->
+  <div id="tableContainer" style="display:none;">
+    <table id="logTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div id="emptyState" style="display:none;">
+      <div class="icon">🔍</div>
+      <p>No entries match the current filters.</p>
+    </div>
+  </div>
+
+  <!-- TRANSACTION VIEW -->
+  <div id="txContainer" style="display:none; overflow:auto; flex:1;"></div>
+</div>
+
+</div><!-- /main -->
+
+<!-- DETAIL MODAL -->
+<div id="overlay" onclick="closeModal(event)">
+  <div id="modal">
+    <div id="modal-header">
+      <h2 id="modal-title">Log Entry Detail</h2>
+      <label class="hide-empty-toggle"><input type="checkbox" id="hideEmpty" checked onchange="renderModalBody()"> Hide empty fields</label>
+      <button class="btn-secondary btn-small" onclick="closeModalDirect()" style="margin-left:8px;">✕ Close</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── FIELD DEFINITIONS ──────────────────────────────────────────────
+const FIELDS = [
+  { key: 'DATE',              label: 'Date/Time' },
+  { key: 'LogId',             label: 'Log ID' },
+  { key: 'LogLevel',          label: 'Level' },
+  { key: 'TransactionId',     label: 'Transaction ID' },
+  { key: 'LogEventAction',    label: 'Action' },
+  { key: 'Message',           label: 'Message' },
+  { key: 'UserId',            label: 'User ID' },
+  { key: 'UserName',          label: 'Username' },
+  { key: 'UserAgentString',   label: 'User Agent' },
+  { key: 'ClientAddress',     label: 'Client IP' },
+  { key: 'CompanyId',         label: 'Company ID' },
+  { key: 'CompanyName',       label: 'Company' },
+  { key: 'SiteId',            label: 'Site ID' },
+  { key: 'SiteName',          label: 'Site' },
+  { key: 'EnterpriseId',      label: 'Enterprise ID' },
+  { key: 'EnterpriseName',    label: 'Enterprise' },
+  { key: 'LogEventType',      label: 'Event Type' },
+  { key: 'HTTPStatusCode',    label: 'HTTP Status' },
+  { key: 'ServerEnvironment', label: 'Server OS' },
+  { key: 'ServerIp',          label: 'Server IP' },
+  { key: 'ApplicationName',   label: 'Application' },
+];
+
+// Default visible columns in table view
+const DEFAULT_VISIBLE = new Set([
+  'DATE','LogLevel','LogEventAction','Message','TransactionId',
+  'UserId','ClientAddress','ApplicationName'
+]);
+
+// ── STATE ──────────────────────────────────────────────────────────
+let allRows = [];
+let filteredRows = [];
+let sortCol = null;
+let sortAsc = true;
+let currentView = 'table';
+let visibleCols = new Set(DEFAULT_VISIBLE);
+let modalEntry = null;
+
+// ── PARSE ──────────────────────────────────────────────────────────
+function parseLine(line, idx) {
+  if (!line.trim()) return null;
+  const entry = { _idx: idx };
+  // Fields are separated by | but values can contain | (rare) — we split on known field names
+  // Robust split: split on |FieldName: boundaries
+  const fieldNames = FIELDS.map(f => f.key);
+  // Build a regex that splits on |KEY:
+  const segRegex = new RegExp('\\|(' + fieldNames.join('|') + '):');
+  // First segment starts with DATE:
+  const firstColon = line.indexOf(':');
+  if (firstColon === -1) return null;
+  const full = line;
+  // Split into [key, value, key, value, ...] via lookahead
+  const parts = full.split(/\|(?=[A-Za-z]+:)/);
+  for (const part of parts) {
+    const ci = part.indexOf(':');
+    if (ci === -1) continue;
+    const k = part.substring(0, ci);
+    const v = part.substring(ci + 1);
+    entry[k] = v;
+  }
+  return entry;
+}
+
+function parseLog() {
+  const raw = document.getElementById('rawLog').value;
+  if (!raw.trim()) { showError('Nothing to parse — paste log data first.'); return; }
+  clearError();
+  const lines = raw.split('\n');
+  allRows = [];
+  let bad = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const e = parseLine(lines[i], i + 1);
+    if (e && e.LogLevel) allRows.push(e);
+    else if (lines[i].trim()) bad++;
+  }
+  if (allRows.length === 0) { showError('No valid log entries found. Ensure the data matches the ShipExec log format.'); return; }
+  document.getElementById('parseStatus').textContent = `✓ Parsed ${allRows.length} entries${bad ? ` (${bad} skipped)` : ''}`;
+  buildUI();
+}
+
+// ── UI BUILDER ─────────────────────────────────────────────────────
+function buildUI() {
+  updateStats();
+  buildColToggles();
+  buildTableHead();
+  applyFilters();
+  showControls();
+}
+
+function showControls() {
+  ['statsBar','controls','viewTabs','colToggles'].forEach(id => {
+    document.getElementById(id).style.display = 'flex';
+  });
+  switchView('table');
+}
+
+function updateStats() {
+  const counts = { info:0, trace:0, warn:0, error:0, debug:0 };
+  const txSet = new Set();
+  const userSet = new Set();
+  const apps = new Set();
+  for (const r of allRows) {
+    const lv = (r.LogLevel || '').toLowerCase();
+    if (lv === 'info') counts.info++;
+    else if (lv === 'trace') counts.trace++;
+    else if (lv === 'warning' || lv === 'warn') counts.warn++;
+    else if (lv === 'error') counts.error++;
+    else if (lv === 'debug') counts.debug++;
+    if (r.TransactionId && r.TransactionId !== '00000000-0000-0000-0000-000000000000') txSet.add(r.TransactionId);
+    if (r.UserId && r.UserId !== '00000000-0000-0000-0000-000000000000') userSet.add(r.UserId);
+    if (r.ApplicationName) apps.add(r.ApplicationName);
+  }
+  document.getElementById('st-total').textContent = allRows.length;
+  document.getElementById('st-info').textContent = counts.info;
+  document.getElementById('st-trace').textContent = counts.trace;
+  document.getElementById('st-warn').textContent = counts.warn;
+  document.getElementById('st-error').textContent = counts.error;
+  document.getElementById('st-debug').textContent = counts.debug;
+  document.getElementById('st-tx').textContent = txSet.size;
+  document.getElementById('st-users').textContent = userSet.size;
+  document.getElementById('st-app').textContent = apps.size === 1 ? [...apps][0] : apps.size > 1 ? [...apps].join(', ') : '—';
+  document.getElementById('statsBar').style.display = 'flex';
+}
+
+// ── COLUMN TOGGLES ─────────────────────────────────────────────────
+function buildColToggles() {
+  const wrap = document.getElementById('colToggles');
+  wrap.innerHTML = '<span class="col-toggle-label">Columns:</span>';
+  for (const f of FIELDS) {
+    const chip = document.createElement('span');
+    chip.className = 'col-chip' + (visibleCols.has(f.key) ? ' active' : '');
+    chip.textContent = f.label;
+    chip.dataset.key = f.key;
+    chip.onclick = () => { toggleCol(f.key); chip.classList.toggle('active'); buildTableHead(); applyFilters(); };
+    wrap.appendChild(chip);
+  }
+}
+
+function toggleCol(key) {
+  if (visibleCols.has(key)) { if (visibleCols.size > 1) visibleCols.delete(key); }
+  else visibleCols.add(key);
+}
+
+// ── TABLE HEAD ─────────────────────────────────────────────────────
+function buildTableHead() {
+  const thead = document.getElementById('tableHead');
+  let html = '<tr><th onclick="sortBy(\'_idx\')"># <span class="sort-icon">↕</span></th>';
+  for (const f of FIELDS) {
+    if (!visibleCols.has(f.key)) continue;
+    const sorted = sortCol === f.key;
+    html += `<th onclick="sortBy('${f.key}')" class="${sorted?'sorted':''}">${f.label} <span class="sort-icon">${sorted?(sortAsc?'↑':'↓'):'↕'}</span></th>`;
+  }
+  html += '</tr>';
+  thead.innerHTML = html;
+}
+
+// ── FILTERS & RENDER ───────────────────────────────────────────────
+function applyFilters() {
+  const lv  = document.getElementById('filterLevel').value.toLowerCase();
+  const act = document.getElementById('filterAction').value;
+  const msg = document.getElementById('filterMsg').value.toLowerCase();
+  const tx  = document.getElementById('filterTx').value.toLowerCase();
+  const usr = document.getElementById('filterUser').value.toLowerCase();
+
+  filteredRows = allRows.filter(r => {
+    if (lv && (r.LogLevel || '').toLowerCase() !== lv) return false;
+    if (act) {
+      const ra = (r.LogEventAction || '').toUpperCase();
+      if (act === '(empty)') { if (ra) return false; }
+      else if (ra !== act) return false;
+    }
+    if (msg && !(r.Message || '').toLowerCase().includes(msg)) return false;
+    if (tx  && !(r.TransactionId || '').toLowerCase().includes(tx)) return false;
+    if (usr && !(r.UserId || '').toLowerCase().includes(usr) && !(r.UserName || '').toLowerCase().includes(usr)) return false;
+    return true;
+  });
+
+  if (sortCol) {
+    filteredRows.sort((a, b) => {
+      const av = (a[sortCol] || '').toString();
+      const bv = (b[sortCol] || '').toString();
+      return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+  }
+
+  document.getElementById('filteredCount').textContent =
+    filteredRows.length < allRows.length ? `${filteredRows.length} of ${allRows.length}` : `${allRows.length} entries`;
+
+  if (currentView === 'table') renderTable();
+  else renderTxView();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  buildTableHead();
+  applyFilters();
+}
+
+// ── TABLE RENDER ───────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('tableContainer').style.display = 'flex';
+  document.getElementById('txContainer').style.display = 'none';
+
+  if (filteredRows.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const html = filteredRows.map(r => {
+    const lv = (r.LogLevel || '').toLowerCase();
+    const cls = 'level-' + lv;
+    const lvBadge = `<span class="badge badge-${lv}">${r.LogLevel||''}</span>`;
+    const action = r.LogEventAction
+      ? `<span class="${r.LogEventAction==='BEGIN'?'action-begin':'action-end'}">${r.LogEventAction}</span>` : '';
+    const txShort = r.TransactionId && r.TransactionId.length > 8
+      ? `<span class="tx-id" title="${esc(r.TransactionId)}" onclick="filterByTx(event,'${esc(r.TransactionId)}')">${r.TransactionId.substring(0,8)}…</span>`
+      : `<span class="tx-id">${esc(r.TransactionId||'')}</span>`;
+
+    let cells = `<td class="row-num">${r._idx}</td>`;
+    for (const f of FIELDS) {
+      if (!visibleCols.has(f.key)) continue;
+      let val = r[f.key] || '';
+      if (f.key === 'LogLevel') val = lvBadge;
+      else if (f.key === 'LogEventAction') val = action;
+      else if (f.key === 'TransactionId') val = txShort;
+      else if (f.key === 'Message') {
+        const cls2 = val.length > 60 ? 'wrap' : '';
+        cells += `<td class="${cls2}" title="${esc(val)}">${esc(val)}</td>`;
+        continue;
+      }
+      else val = esc(val);
+      cells += `<td>${val}</td>`;
+    }
+    return `<tr class="${cls}" data-idx="${r._idx}" onclick="openDetail(${r._idx})">${cells}</tr>`;
+  }).join('');
+
+  tbody.innerHTML = html;
+}
+
+// ── TRANSACTION VIEW ───────────────────────────────────────────────
+function renderTxView() {
+  const con = document.getElementById('txContainer');
+  document.getElementById('tableContainer').style.display = 'none';
+  con.style.display = 'block';
+
+  const groups = new Map();
+  const nullKey = '(no transaction)';
+  for (const r of filteredRows) {
+    const key = r.TransactionId || nullKey;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  let html = '';
+  for (const [txId, rows] of groups) {
+    const times = rows.map(r => r.DATE || '').filter(Boolean);
+    const timeRange = times.length ? [...new Set(times)].join(' – ') : '';
+    const lv = (rows[0].LogLevel || '').toLowerCase();
+    const txDisp = txId === nullKey ? txId : `<span style="color:var(--accent)">${esc(txId)}</span>`;
+    html += `<div class="tx-group">
+      <div class="tx-group-header" onclick="this.nextElementSibling.classList.toggle('open')">
+        <span>${txDisp}</span>
+        <span class="tx-group-count">${rows.length}</span>
+        <span class="tx-group-time">${esc(timeRange)}</span>
+        <span style="margin-left:8px;color:var(--text-muted);font-size:14px;">▸</span>
+      </div>
+      <div class="tx-rows">
+        ${rows.map(r => {
+          const lv2 = (r.LogLevel||'').toLowerCase();
+          return `<div class="tx-row level-${lv2}" onclick="openDetail(${r._idx})" style="cursor:pointer">
+            <span class="tx-row-time">${esc(r.DATE||'')}</span>
+            <span class="badge badge-${lv2}">${r.LogLevel||''}</span>
+            ${r.LogEventAction ? `<span class="${r.LogEventAction==='BEGIN'?'action-begin':'action-end'}">${r.LogEventAction}</span>` : ''}
+            <span class="tx-row-msg">${esc(r.Message||'')}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  con.innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--text-muted)">No entries match filters.</div>';
+}
+
+// ── DETAIL MODAL ───────────────────────────────────────────────────
+function openDetail(idx) {
+  modalEntry = allRows.find(r => r._idx === idx);
+  if (!modalEntry) return;
+  const lv = (modalEntry.LogLevel || '').toLowerCase();
+  document.getElementById('modal-title').innerHTML =
+    `<span class="badge badge-${lv}" style="margin-right:8px;">${modalEntry.LogLevel||''}</span>${esc(modalEntry.Message||'Log Entry')}`;
+  renderModalBody();
+  document.getElementById('overlay').classList.add('open');
+}
+
+function renderModalBody() {
+  if (!modalEntry) return;
+  const hideEmpty = document.getElementById('hideEmpty').checked;
+  let html = '<div class="detail-grid">';
+  for (const f of FIELDS) {
+    const val = modalEntry[f.key] || '';
+    if (hideEmpty && !val) continue;
+    html += `<div class="detail-row">
+      <div class="dk">${esc(f.label)}</div>
+      <div class="dv${val?'':' empty'}">${val ? esc(val) : '—'}</div>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('modal-body').innerHTML = html;
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('overlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('overlay').classList.remove('open');
+  modalEntry = null;
+}
+
+// ── VIEW SWITCHING ─────────────────────────────────────────────────
+function switchView(v) {
+  currentView = v;
+  document.getElementById('tab-table').classList.toggle('active', v === 'table');
+  document.getElementById('tab-tx').classList.toggle('active', v === 'tx');
+  document.getElementById('colToggles').style.display = v === 'table' ? 'flex' : 'none';
+  applyFilters();
+}
+
+// ── TX FILTER SHORTCUT ─────────────────────────────────────────────
+function filterByTx(e, txId) {
+  e.stopPropagation();
+  document.getElementById('filterTx').value = txId;
+  applyFilters();
+}
+
+// ── RESET ──────────────────────────────────────────────────────────
+function resetFilters() {
+  document.getElementById('filterLevel').value = '';
+  document.getElementById('filterAction').value = '';
+  document.getElementById('filterMsg').value = '';
+  document.getElementById('filterTx').value = '';
+  document.getElementById('filterUser').value = '';
+  applyFilters();
+}
+
+function clearAll() {
+  document.getElementById('rawLog').value = '';
+  document.getElementById('parseStatus').textContent = '';
+  document.getElementById('lineCount').textContent = '';
+  allRows = []; filteredRows = [];
+  ['statsBar','controls','viewTabs','colToggles'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('tableContainer').style.display = 'none';
+  document.getElementById('txContainer').style.display = 'none';
+  clearError();
+}
+
+// ── EXPORT CSV ─────────────────────────────────────────────────────
+function exportFiltered() {
+  if (!filteredRows.length) return;
+  const cols = FIELDS.filter(f => visibleCols.has(f.key));
+  const header = cols.map(f => f.label).join(',');
+  const rows = filteredRows.map(r =>
+    cols.map(f => { const v = (r[f.key]||'').replace(/"/g,'""'); return `"${v}"`; }).join(',')
+  );
+  const csv = [header, ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'shipexec_log_export.csv'; a.click();
+}
+
+// ── FILE LOAD ──────────────────────────────────────────────────────
+function loadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('rawLog').value = ev.target.result;
+    updateLineCount();
+    parseLog();
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ── SAMPLE DATA ────────────────────────────────────────────────────
+function loadSample() {
+  const sample = `DATE:|LogId:a8879be96e304064b88479df94c7b333|LogLevel:Info|TransactionId:|LogEventAction:|Message:Initializing ShipExecWcfService.|UserId:|UserName:|UserAgentString:|ClientAddress:|CompanyId:|CompanyName:|SiteId:|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:|ServerIp:|ApplicationName:|
+DATE:|LogId:d1a261c541a64dfe8b15a81920e89da2|LogLevel:Info|TransactionId:|LogEventAction:|Message:Starting ShipExecWcfService.|UserId:|UserName:|UserAgentString:|ClientAddress:|CompanyId:|CompanyName:|SiteId:|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:|ServerIp:|ApplicationName:|
+DATE:11:16 AM|LogId:b5d4415ad172421ea9d73c1e7759982c|LogLevel:Trace|TransactionId:22344db1-8709-4144-9b50-dc3ab9a0eff0|LogEventAction:|Message:Begin GetSystemInformation()|UserId:00000000-0000-0000-0000-000000000000|UserName:|UserAgentString:|ClientAddress:|CompanyId:00000000-0000-0000-0000-000000000000|CompanyName:|SiteId:00000000-0000-0000-0000-000000000000|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:Microsoft Windows NT 6.2.9200.0|ServerIp:|ApplicationName:ShipExec|
+DATE:11:16 AM|LogId:381526bfabf24ec0a06bff9a1a7002f2|LogLevel:Trace|TransactionId:22344db1-8709-4144-9b50-dc3ab9a0eff0|LogEventAction:|Message:End GetSystemInformation()|UserId:00000000-0000-0000-0000-000000000000|UserName:|UserAgentString:|ClientAddress:|CompanyId:00000000-0000-0000-0000-000000000000|CompanyName:|SiteId:00000000-0000-0000-0000-000000000000|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:Microsoft Windows NT 6.2.9200.0|ServerIp:|ApplicationName:ShipExec|
+DATE:3:46 PM|LogId:286fe5f0c80f41b189b2d2d4e55a3307|LogLevel:Info|TransactionId:00000000-0000-0000-0000-000000000000|LogEventAction:BEGIN|Message:AddRefreshToken|UserId:00000000-0000-0000-0000-000000000000|UserName:|UserAgentString:|ClientAddress:|CompanyId:00000000-0000-0000-0000-000000000000|CompanyName:|SiteId:00000000-0000-0000-0000-000000000000|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:APPLICATION|HTTPStatusCode:|ServerEnvironment:|ServerIp:|ApplicationName:|
+DATE:3:46 PM|LogId:ae249e0df37e4f30b3eff852c8e82aa0|LogLevel:Info|TransactionId:00000000-0000-0000-0000-000000000000|LogEventAction:END|Message:AddRefreshToken|UserId:00000000-0000-0000-0000-000000000000|UserName:|UserAgentString:|ClientAddress:|CompanyId:00000000-0000-0000-0000-000000000000|CompanyName:|SiteId:00000000-0000-0000-0000-000000000000|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:APPLICATION|HTTPStatusCode:|ServerEnvironment:|ServerIp:|ApplicationName:|
+DATE:3:46 PM|LogId:144ef3817c5245f39a1ee5ce1093742d|LogLevel:Trace|TransactionId:e2cb6991-0339-4b97-9d30-e23bd1f4d5c3|LogEventAction:|Message:Begin GetUser()|UserId:a3101a85-6a1a-472a-bdab-f81153d04de8|UserName:|UserAgentString:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36|ClientAddress:172.26.159.100|CompanyId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|CompanyName:|SiteId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:Microsoft Windows NT 6.2.9200.0|ServerIp:|ApplicationName:ShipExec|
+DATE:3:46 PM|LogId:101eca4ebb374857bfecf9f7e82d753e|LogLevel:Trace|TransactionId:e2cb6991-0339-4b97-9d30-e23bd1f4d5c3|LogEventAction:|Message:End GetUser()|UserId:a3101a85-6a1a-472a-bdab-f81153d04de8|UserName:|UserAgentString:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36|ClientAddress:172.26.159.100|CompanyId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|CompanyName:|SiteId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:Microsoft Windows NT 6.2.9200.0|ServerIp:|ApplicationName:ShipExec|
+DATE:3:46 PM|LogId:f58d746c905e44238c855d61e3efae0f|LogLevel:Trace|TransactionId:996c3546-6d43-4ed4-b787-4f235aef4432|LogEventAction:|Message:Begin GetCompanies()|UserId:a3101a85-6a1a-472a-bdab-f81153d04de8|UserName:|UserAgentString:|ClientAddress:fe80::66a4:7bf9:b0ac:24a5%7|CompanyId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|CompanyName:|SiteId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:|HTTPStatusCode:|ServerEnvironment:Microsoft Windows NT 6.2.9200.0|ServerIp:|ApplicationName:ShipExec|
+DATE:3:46 PM|LogId:f1b95fce0caa4639b1f79fb826efc32a|LogLevel:Trace|TransactionId:996c3546-6d43-4ed4-b787-4f235aef4432|LogEventAction:END|Message:End GetCompanies()|UserId:a3101a85-6a1a-472a-bdab-f81153d04de8|UserName:|UserAgentString:|ClientAddress:fe80::66a4:7bf9:b0ac:24a5%7|CompanyId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|CompanyName:|SiteId:b0cf2f04-e9c2-4ec7-8a46-117bc16ca8c5|SiteName:|EnterpriseId:|EnterpriseName:|LogEventType:APPLICATION|HTTPStatusCode:|ServerEnvironment:Microsoft Windows NT 6.2.9200.0|ServerIp:|ApplicationName:ShipExec|`;
+  document.getElementById('rawLog').value = sample;
+  updateLineCount();
+  parseLog();
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+function clearError() { document.getElementById('errorBanner').style.display = 'none'; }
+
+function updateLineCount() {
+  const lines = (document.getElementById('rawLog').value.match(/\n/g)||[]).length + 1;
+  document.getElementById('lineCount').textContent = lines + ' lines';
+}
+
+document.getElementById('rawLog').addEventListener('input', updateLineCount);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+</script>
+</body>
+</html>

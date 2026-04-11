@@ -1,22 +1,31 @@
 @page "/"
 @page "/ask"
 @layout ChatLayout
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@implements IDisposable
 
 @using ShipExecNavigator.Shared.Interfaces
 @inject IAiChatService AiChat
 @inject IJSRuntime JS
+@inject IShipExecService ShipExecService
 
-<PageTitle>Ask AI — Management Studio Pro</PageTitle>
+<PageTitle>ShipExec Navigator</PageTitle>
 
 <div class="chat-page">
+
+    @{ var _currentCompany = ShipExecService.GetCurrentCompany(); }
+    @if (_currentCompany is not null)
+    {
+        <div class="company-heading">@_currentCompany.DisplayName</div>
+    }
+
     <div class="page-tab-bar">
         <span class="page-tab page-tab--active">&#x1F916; ShipExec Copilot</span>
         <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
-        <a class="page-tab" href="/tools">&#x1F9F0; Tools</a>
-        <a class="page-tab" href="/debug">&#x1F41B; Debug</a>
+        <a class="page-tab" href="/tools">&#x1F527; Tools</a>
+        <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
         @if (_messages.Count > 0)
         {
+            <button class="chat-export-btn" @onclick="ExportChatAsync" title="Save chat log">&#x1F4BE; Export</button>
             <button class="chat-clear-btn" @onclick="ClearChat" title="Clear conversation">&#x1F5D1; Clear</button>
         }
     </div>
@@ -25,14 +34,14 @@
         @foreach (var msg in _messages)
         {
             <div class="chat-bubble chat-bubble--@msg.Role">
-                <div class="chat-bubble-label">@(msg.Role == "user" ? "You" : "AI")</div>
+                <div class="chat-bubble-label">@(msg.Role == "user" ? "You" : "ShipExec Copilot")</div>
                 <div class="chat-bubble-body">@((MarkupString)FormatMessage(msg.Content))</div>
             </div>
         }
         @if (_thinking)
         {
             <div class="chat-bubble chat-bubble--assistant">
-                <div class="chat-bubble-label">AI</div>
+                <div class="chat-bubble-label">ShipExec Copilot</div>
                 <div class="chat-bubble-body chat-thinking">
                     <span></span><span></span><span></span>
                 </div>
@@ -41,20 +50,15 @@
     </div>
 
     <div class="chat-input-row">
-        <button class="chat-rag-btn @(_useRag ? "chat-rag-btn--on" : "")"
-                @onclick="() => _useRag = !_useRag"
-                title="@(_useRag ? "RAG document search ON — click to disable" : "RAG document search OFF — click to enable")"
-                disabled="@_thinking">
-            &#x1F4DA; RAG
-        </button>
         <textarea class="chat-textarea"
                   id="chat-textarea"
-                  rows="2"
-                  placeholder="Type your message… (Enter to send, Shift+Enter for new line)"
+                  placeholder="Type your message…"
                   @bind="_input"
                   @bind:event="oninput"
                   @onkeydown="HandleKeyDown"
-                  disabled="@_thinking" />
+                  @onkeydown:preventDefault="_suppressEnter"
+                  rows="1"
+                  disabled="@_thinking"></textarea>
         <button class="chat-send-btn" @onclick="SendAsync" disabled="@(string.IsNullOrWhiteSpace(_input) || _thinking)">
             &#x27A4; Send
         </button>
@@ -71,18 +75,53 @@
     private readonly List<string> _inputHistory = [];
     private string _input = string.Empty;
     private bool _thinking = true;
-    private bool _useRag = true;
     private string? _error;
     private int _historyIndex = -1;
     private string _historyDraft = string.Empty;
+    private bool _suppressEnter;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            ShipExecService.OnDisconnected += HandleDisconnected;
+            ShipExecService.OnConnected    += HandleConnected;
             await JS.InvokeVoidAsync("initChatInputHistory", "chat-textarea", DotNetObjectReference.Create(this));
             await GreetAsync();
         }
+    }
+
+    public void Dispose()
+    {
+        ShipExecService.OnDisconnected -= HandleDisconnected;
+        ShipExecService.OnConnected    -= HandleConnected;
+    }
+
+    private void HandleDisconnected()
+    {
+        InvokeAsync(() =>
+        {
+            _messages.Clear();
+            _inputHistory.Clear();
+            _input = string.Empty;
+            _error = null;
+            _thinking = false;
+            _historyIndex = -1;
+            _historyDraft = string.Empty;
+            StateHasChanged();
+        });
+    }
+
+    private void HandleConnected()
+    {
+        InvokeAsync(async () =>
+        {
+            // Re-greet when a new company is connected
+            _messages.Clear();
+            _error = null;
+            StateHasChanged();
+            await GreetAsync();
+        });
     }
 
     private async Task GreetAsync()
@@ -98,7 +137,7 @@
                 [],
                 "greet yourself",
                 useRag: false);
-            _messages.Add(new ChatMessage("assistant", reply));
+            _messages.Add(new ChatMessage("assistant", reply.Message));
         }
         catch (Exception ex)
         {
@@ -109,6 +148,7 @@
             _thinking = false;
             StateHasChanged();
             await ScrollToBottomAsync();
+            await JS.InvokeVoidAsync("eval", "document.getElementById('chat-textarea')?.focus()");
         }
     }
 
@@ -134,8 +174,8 @@
 
         try
         {
-            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, useRag: _useRag);
-            _messages.Add(new ChatMessage("assistant", reply));
+            var reply = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, useRag: true);
+            _messages.Add(new ChatMessage("assistant", reply.Message));
         }
         catch (Exception ex)
         {
@@ -146,13 +186,21 @@
             _thinking = false;
             StateHasChanged();
             await ScrollToBottomAsync();
+            await JS.InvokeVoidAsync("eval", "document.getElementById('chat-textarea')?.focus()");
         }
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            _suppressEnter = true;
             await SendAsync();
+        }
+        else
+        {
+            _suppressEnter = false;
+        }
     }
 
     [JSInvokable]
@@ -207,6 +255,26 @@
         await GreetAsync();
     }
 
+    private async Task ExportChatAsync()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("ShipExec Copilot — Chat Log");
+        sb.AppendLine($"Exported: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine(new string('─', 60));
+        sb.AppendLine();
+
+        foreach (var msg in _messages)
+        {
+            var label = msg.Role == "user" ? "You" : "ShipExec Copilot";
+            sb.AppendLine($"[{label}]");
+            sb.AppendLine(msg.Content);
+            sb.AppendLine();
+        }
+
+        var fileName = $"ShipExec_ChatLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+        await JS.InvokeVoidAsync("downloadFile", fileName, sb.ToString(), "text/plain");
+    }
+
     private async Task ScrollToBottomAsync()
     {
         await JS.InvokeVoidAsync("eval",
@@ -215,25 +283,212 @@
 
     private static string FormatMessage(string text)
     {
-        // Basic: escape HTML, convert newlines to <br>, wrap code blocks
-        var escaped = System.Net.WebUtility.HtmlEncode(text);
+        // ── Strip JSON action payloads and dangerous structures ───────────
+        try
+        {
+            if (text.TrimStart().StartsWith("{") && text.TrimEnd().EndsWith("}"))
+            {
+                var json = System.Text.Json.JsonDocument.Parse(text);
+                if (json.RootElement.TryGetProperty("message", out var msgProp))
+                {
+                    text = msgProp.GetString() ?? text;
+                }
+            }
+        }
+        catch
+        {
+            // Not JSON or invalid, continue with original text
+        }
 
-        // Convert ```...``` code blocks
-        escaped = System.Text.RegularExpressions.Regex.Replace(
-            escaped,
-            @"```[\w]*\n?([\s\S]*?)```",
-            m => $"<pre class=\"chat-code\">{m.Groups[1].Value.Trim()}</pre>",
-            System.Text.RegularExpressions.RegexOptions.Multiline);
+        // ── Normalize line endings ────────────────────────────────────────
+        text = text.Replace("\r\n", "\n").Replace("\r", "\n");
 
-        // Inline `code`
-        escaped = System.Text.RegularExpressions.Regex.Replace(
-            escaped,
-            @"`([^`]+)`",
+        var lines  = text.Split('\n');
+        var sb     = new System.Text.StringBuilder();
+        int i      = 0;
+        int total  = lines.Length;
+
+        while (i < total)
+        {
+            var raw = lines[i];
+            var line = raw.TrimEnd();
+
+            // ── Fenced code block  ```lang … ``` ──────────────────────────
+            if (line.StartsWith("```"))
+            {
+                var lang = line.Length > 3 ? line[3..].Trim() : string.Empty;
+                var code = new System.Text.StringBuilder();
+                i++;
+                while (i < total && !lines[i].TrimEnd().StartsWith("```"))
+                {
+                    code.AppendLine(lines[i]);
+                    i++;
+                }
+                var codeHtml = System.Net.WebUtility.HtmlEncode(code.ToString().TrimEnd('\n'));
+                var langLabel = string.IsNullOrWhiteSpace(lang)
+                    ? string.Empty
+                    : $"<span class=\"chat-code-lang\">{System.Net.WebUtility.HtmlEncode(lang)}</span>";
+                sb.Append($"<div class=\"chat-code-wrap\">{langLabel}<pre class=\"chat-code\">{codeHtml}</pre></div>");
+                i++; // consume closing ```
+                continue;
+            }
+
+            // ── Heading  #, ##, ###, ####  ──────────────────────────────
+            var headMatch = System.Text.RegularExpressions.Regex.Match(line, @"^(#{1,4})\s+(.+)$");
+            if (headMatch.Success)
+            {
+                int level = headMatch.Groups[1].Length;
+                var content = InlineFormat(headMatch.Groups[2].Value);
+                sb.Append($"<h{level} class=\"chat-h{level}\">{content}</h{level}>");
+                i++;
+                continue;
+            }
+
+            // ── Horizontal rule  --- / *** / ___  ────────────────────────
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"^(\-{3,}|\*{3,}|_{3,})$"))
+            {
+                sb.Append("<hr class=\"chat-hr\" />");
+                i++;
+                continue;
+            }
+
+            // ── Blockquote  > text  ───────────────────────────────────────
+            if (line.StartsWith(">"))
+            {
+                var bq = new System.Text.StringBuilder();
+                while (i < total && lines[i].TrimEnd().StartsWith(">"))
+                {
+                    bq.Append("<p>" + InlineFormat(lines[i].TrimEnd().TrimStart('>').TrimStart()) + "</p>");
+                    i++;
+                }
+                sb.Append($"<blockquote class=\"chat-blockquote\">{bq}</blockquote>");
+                continue;
+            }
+
+            // ── Unordered list  - / * / +  ────────────────────────────────
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"^(\s*)([-*+])\s+"))
+            {
+                sb.Append("<ul class=\"chat-ul\">");
+                while (i < total && System.Text.RegularExpressions.Regex.IsMatch(lines[i].TrimEnd(), @"^(\s*)([-*+])\s+"))
+                {
+                    var itemText = System.Text.RegularExpressions.Regex.Replace(lines[i].TrimEnd(), @"^\s*[-*+]\s+", "");
+                    sb.Append($"<li>{InlineFormat(itemText)}</li>");
+                    i++;
+                }
+                sb.Append("</ul>");
+                continue;
+            }
+
+            // ── Ordered list  1. / 1)  ────────────────────────────────────
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"^\s*\d+[.)]\s+"))
+            {
+                sb.Append("<ol class=\"chat-ol\">");
+                while (i < total && System.Text.RegularExpressions.Regex.IsMatch(lines[i].TrimEnd(), @"^\s*\d+[.)]\s+"))
+                {
+                    var itemText = System.Text.RegularExpressions.Regex.Replace(lines[i].TrimEnd(), @"^\s*\d+[.)]\s+", "");
+                    sb.Append($"<li>{InlineFormat(itemText)}</li>");
+                    i++;
+                }
+                sb.Append("</ol>");
+                continue;
+            }
+
+            // ── Table  | col | col |  ─────────────────────────────────────
+            if (line.StartsWith("|") && line.EndsWith("|"))
+            {
+                // Collect all consecutive table lines
+                var tableLines = new List<string>();
+                while (i < total && lines[i].TrimEnd().StartsWith("|"))
+                {
+                    tableLines.Add(lines[i].TrimEnd());
+                    i++;
+                }
+
+                sb.Append("<div class=\"chat-table-wrap\"><table class=\"chat-table\">");
+                bool headerDone = false;
+                foreach (var tl in tableLines)
+                {
+                    // Skip separator row (contains only |, -, :, space)
+                    if (System.Text.RegularExpressions.Regex.IsMatch(tl, @"^\|[\s\-:|]+\|$"))
+                    {
+                        headerDone = true;
+                        continue;
+                    }
+                    var cells = tl.Split('|', StringSplitOptions.RemoveEmptyEntries)
+                                   .Select(c => c.Trim())
+                                   .ToArray();
+                    var tag = !headerDone ? "th" : "td";
+                    var rowClass = !headerDone ? "chat-thead-row" : "chat-tbody-row";
+                    sb.Append($"<tr class=\"{rowClass}\">");
+                    foreach (var cell in cells)
+                        sb.Append($"<{tag}>{InlineFormat(cell)}</{tag}>");
+                    sb.Append("</tr>");
+                }
+                sb.Append("</table></div>");
+                continue;
+            }
+
+            // ── Blank line ─────────────────────────────────────────────────
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                sb.Append("<div class=\"chat-spacer\"></div>");
+                i++;
+                continue;
+            }
+
+            // ── Normal paragraph line ──────────────────────────────────────
+            sb.Append($"<p class=\"chat-p\">{InlineFormat(line)}</p>");
+            i++;
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>Applies inline Markdown formatting to a single line of text.</summary>
+    private static string InlineFormat(string text)
+    {
+        // Encode HTML entities first to prevent XSS
+        text = System.Net.WebUtility.HtmlEncode(text);
+
+        // Bold+Italic  ***text*** or ___text___
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"\*\*\*(.+?)\*\*\*|___(.+?)___",
+            m => {
+                var v = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+                return $"<strong><em>{v}</em></strong>";
+            });
+
+        // Bold  **text** or __text__
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"\*\*(.+?)\*\*|__(.+?)__",
+            m => {
+                var v = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+                return $"<strong>{v}</strong>";
+            });
+
+        // Italic  *text* or _text_
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"\*([^*]+?)\*|(?<!\w)_([^_]+?)_(?!\w)",
+            m => {
+                var v = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+                return $"<em>{v}</em>";
+            });
+
+        // Strikethrough  ~~text~~
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"~~(.+?)~~",
+            m => $"<s>{m.Groups[1].Value}</s>");
+
+        // Inline code  `code`
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"`([^`]+)`",
             m => $"<code class=\"chat-inline-code\">{m.Groups[1].Value}</code>");
 
-        // Newlines outside pre blocks → <br>
-        escaped = escaped.Replace("\n", "<br />");
+        // Link  [text](url)
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"\[([^\]]+)\]\((https?://[^\)]+)\)",
+            m => $"<a class=\"chat-link\" href=\"{m.Groups[2].Value}\" target=\"_blank\" rel=\"noopener noreferrer\">{m.Groups[1].Value}</a>");
 
-        return escaped;
+        return text;
     }
 }

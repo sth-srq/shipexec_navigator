@@ -81,6 +81,9 @@ public sealed class ShipExecService(
     /// <summary>Normalised admin URL (always trailing-slash) for building sub-service URLs.</summary>
     private string?     _adminUrl;
 
+    /// <summary>Cached company list from the last <see cref="GetCompaniesAsync"/> call.</summary>
+    private List<CompanyInfo> _lastCompanies = [];
+
     /// <summary>GUID of the company currently in scope for this circuit.</summary>
     private Guid        _currentCompanyId;
 
@@ -131,6 +134,11 @@ public sealed class ShipExecService(
                     adminUrl, sw.ElapsedMilliseconds);
                 throw;
             }
+        }).ContinueWith(t =>
+        {
+            if (t.IsCompletedSuccessfully)
+                _lastCompanies = t.Result;
+            return t.Result;
         });
     }
 
@@ -146,6 +154,7 @@ public sealed class ShipExecService(
             companyId, companyName);
         _currentCompanyId = companyId;
         _appManager.SetCompany(companyId, companyName);
+        OnConnected?.Invoke();
         return Task.CompletedTask;
     }
 
@@ -178,8 +187,10 @@ public sealed class ShipExecService(
                 ("Clients",                   "Clients"),
                 ("Profiles",                  "Profiles"),
                 ("Sites",                     "Sites"),
+                ("Users",                     "Users"),
                 ("AdapterRegistrations",      "AdapterRegistrations"),
                 ("CarrierRoutes",             "CarrierRoutes"),
+                ("ClientBusinessRules",       "ClientBusinessRules"),
                 ("DataConfigurationMappings", "DataConfigurationMappings"),
                 ("DocumentConfigurations",    "DocumentConfigurations"),
                 ("Machines",                  "Machines"),
@@ -187,6 +198,7 @@ public sealed class ShipExecService(
                 ("PrinterDefinitions",        "PrinterDefinitions"),
                 ("ScaleConfigurations",       "ScaleConfigurations"),
                 ("Schedules",                 "Schedules"),
+                ("ServerBusinessRules",       "ServerBusinessRules"),
                 ("SourceConfigurations",      "SourceConfigurations"),
             };
 
@@ -196,6 +208,181 @@ public sealed class ShipExecService(
             }
 
             return root;
+        });
+    }
+
+    // ── Entity index (complete, API-sourced) ─────────────────────────────────
+
+    /// <summary>
+    /// Scalar types that <see cref="ExtractEntityFields"/> will include.
+    /// </summary>
+    private static readonly HashSet<Type> _indexScalarTypes =
+    [
+        typeof(string), typeof(int), typeof(long), typeof(short), typeof(byte),
+        typeof(float), typeof(double), typeof(decimal), typeof(bool),
+        typeof(Guid), typeof(DateTime), typeof(DateTimeOffset),
+    ];
+
+    /// <summary>
+    /// Extracts all scalar (primitive / simple) public properties from an object
+    /// into a <c>string → string?</c> dictionary via reflection.
+    /// </summary>
+    private static Dictionary<string, string?> ExtractEntityFields(object item)
+    {
+        var dict = new Dictionary<string, string?>();
+        foreach (var prop in item.GetType().GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!prop.CanRead) continue;
+            var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            if (!type.IsPrimitive && !_indexScalarTypes.Contains(type) && !type.IsEnum) continue;
+            try
+            {
+                var value = prop.GetValue(item);
+                dict[prop.Name] = value switch
+                {
+                    null => null,
+                    bool b => b ? "true" : "false",
+                    Enum e => Convert.ToInt32(e).ToString(),
+                    _ => value.ToString()
+                };
+            }
+            catch { /* skip properties that throw */ }
+        }
+        return dict;
+    }
+
+    /// <inheritdoc />
+    public Task<CompanyEntityIndex> BuildEntityIndexAsync()
+    {
+        logger.LogTrace(">> BuildEntityIndexAsync");
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("BuildEntityIndex start | CompanyId={CompanyId}", _currentCompanyId);
+
+            var jwt = _appManager.GetAccessToken();
+            var url = _appManager.AdminUrl;
+            var cid = _currentCompanyId;
+
+            var manifest = new Dictionary<string, object>();
+            var details  = new Dictionary<string, string>();
+            var jsonOpts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
+
+            // ── Helper: index a collection of domain objects ──────────────
+            void IndexItems(string category, System.Collections.IEnumerable? items)
+            {
+                if (items is null)
+                {
+                    manifest[category] = Array.Empty<object>();
+                    details[category]  = "[]";
+                    return;
+                }
+                var fields = items.Cast<object>().Select(ExtractEntityFields).ToList();
+                manifest[category] = fields.Select(f => new
+                {
+                    id   = f.GetValueOrDefault("Id") ?? f.GetValueOrDefault("Symbol") ?? "",
+                    name = f.GetValueOrDefault("Name") ?? f.GetValueOrDefault("UserName") ?? f.GetValueOrDefault("Symbol") ?? "",
+                }).ToArray();
+                details[category] = System.Text.Json.JsonSerializer.Serialize(fields, jsonOpts);
+            }
+
+            // ── Direct AppManager calls ──────────────────────────────────
+            try { IndexItems("Shippers",  _appManager.GetShippers());  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Shippers");  IndexItems("Shippers",  null); }
+            try { IndexItems("Clients",   _appManager.GetClients());   } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Clients");   IndexItems("Clients",   null); }
+            try { IndexItems("Profiles",  _appManager.GetFullProfiles()); } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Profiles"); IndexItems("Profiles",  null); }
+            try { IndexItems("Sites",     _appManager.GetSites(cid));  } catch (Exception ex) { logger.LogWarning(ex, "Index skipped Sites");     IndexItems("Sites",     null); }
+            try
+            {
+                var users = _appManager.GetUsers()
+                    .Select(u => { try { return _appManager.GetUserDetail(u.Id) ?? u; } catch { return u; } })
+                    .ToList();
+                IndexItems("Users", users);
+            }
+            catch (Exception ex) { logger.LogWarning(ex, "Index skipped Users"); IndexItems("Users", null); }
+
+            // ── Fetcher-based calls ──────────────────────────────────────
+            void IndexFetcher<TReq, TRes>(
+                string category,
+                EntityFetcher<TReq, TRes> fetcher,
+                Func<TRes, System.Collections.IEnumerable?> extract)
+                where TReq : PSI.Sox.Wcf.RequestBase, new()
+                where TRes : new()
+            {
+                try
+                {
+                    var response = fetcher.Fetch();
+                    IndexItems(category, extract(response));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Index skipped {Category}", category);
+                    IndexItems(category, null);
+                }
+            }
+
+            IndexFetcher("AdapterRegistrations",      new AdapterRegistrationFetcher(url, cid, jwt),          r => r?.AdapterRegistrations);
+            IndexFetcher("CarrierRoutes",             new CarrierRouteFetcher(url, cid, jwt),                  r => r?.CarrierRoute);
+            IndexFetcher("DataConfigurationMappings", new DataConfigurationMappingFetcher(url, cid, jwt),      r => r?.DataConfigurations);
+            IndexFetcher("DocumentConfigurations",    new DocumentConfigurationFetcher(url, cid, jwt),         r => r?.DocumentConfigurations);
+            IndexFetcher("Machines",                  new MachineFetcher(url, cid, jwt),                       r => r?.Machines);
+            IndexFetcher("PrinterConfigurations",     new PrinterConfigurationFetcher(url, cid, jwt),          r => r?.PrinterConfigurations);
+            IndexFetcher("PrinterDefinitions",        new PrinterDefinitionFetcher(url, cid, jwt),             r => r?.PrinterDefinitions);
+            IndexFetcher("ScaleConfigurations",       new ScaleConfigurationFetcher(url, cid, jwt),            r => r?.ScaleConfigurations);
+            IndexFetcher("Schedules",                 new ScheduleFetcher(url, cid, jwt),                      r => r?.Schedules);
+            IndexFetcher("SourceConfigurations",      new SourceConfigurationFetcher(url, cid, jwt),           r => r?.SourceConfigurations);
+
+            // ── Business rules (special model mapping) ───────────────────
+            try
+            {
+                var cbrs = _appManager.GetClientBusinessRulesWithProfilesForCompany()
+                    .Select(r => new CbrInfo
+                    {
+                        Id             = r.Rule.Id,
+                        Name           = r.Rule.Name ?? string.Empty,
+                        Description    = r.Rule.Description,
+                        Version        = r.Rule.Version,
+                        UsedByProfiles = r.ProfileNames,
+                        // Intentionally omit Script to keep index compact
+                    }).ToList();
+                IndexItems("ClientBusinessRules", cbrs);
+            }
+            catch (Exception ex) { logger.LogWarning(ex, "Index skipped ClientBusinessRules"); IndexItems("ClientBusinessRules", null); }
+
+            try
+            {
+                var sbrs = _appManager.GetServerBusinessRulesForCompany()
+                    .Select(r => new SbrInfo
+                    {
+                        Id             = r.Rule.Id,
+                        Name           = r.Rule.Name ?? string.Empty,
+                        Description    = r.Rule.Description,
+                        Version        = r.Rule.Version,
+                        Author         = r.Rule.Author,
+                        AuthorEmail    = r.Rule.AuthorEmail,
+                        UsedByProfiles = r.ProfileNames,
+                        // Intentionally omit FileBase64 to keep index compact
+                    }).ToList();
+                IndexItems("ServerBusinessRules", sbrs);
+            }
+            catch (Exception ex) { logger.LogWarning(ex, "Index skipped ServerBusinessRules"); IndexItems("ServerBusinessRules", null); }
+
+            sw.Stop();
+            var totalEntities = manifest.Values
+                .OfType<object[]>()
+                .Sum(a => a.Length);
+            logger.LogInformation(
+                "BuildEntityIndex complete | Categories={Categories} TotalEntities={TotalEntities} DurationMs={DurationMs}",
+                manifest.Count, totalEntities, sw.ElapsedMilliseconds);
+
+            return new CompanyEntityIndex
+            {
+                ManifestJson        = System.Text.Json.JsonSerializer.Serialize(manifest, jsonOpts),
+                CategoryDetailsJson = details,
+            };
         });
     }
 
@@ -228,12 +415,24 @@ public sealed class ShipExecService(
 
                 case "Profiles":
                     PopulateCategory(categoryNode, "Profile",
-                        _appManager.GetProfiles());
+                        _appManager.GetFullProfiles());
                     break;
 
                 case "Sites":
                     PopulateCategory(categoryNode, "Site",
                         _appManager.GetSites(cid));
+                    break;
+
+                case "Users":
+                    var summaryUsers = _appManager.GetUsers();
+                    var detailedUsers = summaryUsers
+                        .Select(u =>
+                        {
+                            try { return _appManager.GetUserDetail(u.Id) ?? u; }
+                            catch { return u; }
+                        })
+                        .ToList();
+                    PopulateCategory(categoryNode, "User", detailedUsers);
                     break;
 
                 case "AdapterRegistrations":
@@ -294,6 +493,35 @@ public sealed class ShipExecService(
                     FetchAndPopulate(categoryNode, "SourceConfiguration",
                         new SourceConfigurationFetcher(url, cid, jwt),
                         r => r?.SourceConfigurations);
+                    break;
+
+                case "ClientBusinessRules":
+                    PopulateCategory(categoryNode, "ClientBusinessRule",
+                        _appManager.GetClientBusinessRulesWithProfilesForCompany()
+                            .Select(r => new CbrInfo
+                            {
+                                Id             = r.Rule.Id,
+                                Name           = r.Rule.Name ?? string.Empty,
+                                Description    = r.Rule.Description,
+                                Script         = r.Rule.Script,
+                                Version        = r.Rule.Version,
+                                UsedByProfiles = r.ProfileNames,
+                            }).ToList());
+                    break;
+
+                case "ServerBusinessRules":
+                    PopulateCategory(categoryNode, "ServerBusinessRule",
+                        _appManager.GetServerBusinessRulesForCompany()
+                            .Select(r => new SbrInfo
+                            {
+                                Id             = r.Rule.Id,
+                                Name           = r.Rule.Name ?? string.Empty,
+                                Description    = r.Rule.Description,
+                                Version        = r.Rule.Version,
+                                Author         = r.Rule.Author,
+                                AuthorEmail    = r.Rule.AuthorEmail,
+                                UsedByProfiles = r.ProfileNames,
+                            }).ToList());
                     break;
 
                 default:
@@ -1079,6 +1307,185 @@ public sealed class ShipExecService(
         return Task.Run(() => _appManager.CreateUser(user));
     }
 
+    public Task DeleteUserAsync(Guid userId)
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() => _appManager.DeleteUser(userId));
+    }
+
+    public async Task<List<ApplyResultItem>> ApplyUserVariancesAsync(List<UserVariance> variances)
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        var results = new List<ApplyResultItem>();
+        foreach (var v in variances)
+        {
+            try
+            {
+                switch (v.Kind)
+                {
+                    case UserVarianceKind.Delete:
+                        await Task.Run(() => _appManager.DeleteUser(v.UserId));
+                        results.Add(new ApplyResultItem
+                        {
+                            EntityName = v.Username,
+                            Operation  = "Remove",
+                            Endpoint   = "RemoveUser",
+                            Success    = true,
+                        });
+                        break;
+
+                    case UserVarianceKind.Edit:
+                        if (v.EditItem is null) break;
+                        var user = await Task.Run(() => _appManager.GetUserDetail(v.UserId));
+                        if (user is null)
+                        {
+                            results.Add(new ApplyResultItem
+                            {
+                                EntityName = v.Username,
+                                Operation  = "Update",
+                                Endpoint   = "UpdateUser",
+                                Success    = false,
+                                Message    = "User not found",
+                            });
+                            break;
+                        }
+                        user.Address              ??= new PSI.Sox.NameAddress();
+                        user.DefaultConfiguration ??= new PSI.Sox.DefaultConfiguration();
+                        user.Permissions          ??= [];
+                        user.Roles                ??= [];
+                        ApplyUserEditFields(user, v.EditItem.Edits, [], []);
+                        await Task.Run(() => _appManager.UpdateUser(user));
+                        results.Add(new ApplyResultItem
+                        {
+                            EntityName = v.Username,
+                            Operation  = "Update",
+                            Endpoint   = "UpdateUser",
+                            Success    = true,
+                        });
+                        break;
+
+                    case UserVarianceKind.Create:
+                        // Create variances are handled by the dialog in the UI; skip here.
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                results.Add(new ApplyResultItem
+                {
+                    EntityName = v.Username,
+                    Operation  = v.Kind.ToString(),
+                    Endpoint   = v.Kind == UserVarianceKind.Delete ? "RemoveUser" : "UpdateUser",
+                    Success    = false,
+                    Message    = ex.Message,
+                });
+            }
+        }
+        return results;
+    }
+
+    /// <summary>
+    /// Applies a flat string-keyed edit dictionary to a fully-hydrated User object.
+    /// <paramref name="allPermissions"/> and <paramref name="allRoles"/> are used for
+    /// Permissions.Add / Roles.Add lookups; pass empty lists if not available.
+    /// </summary>
+    internal static void ApplyUserEditFields(
+        PSI.Sox.User user,
+        Dictionary<string, string> edits,
+        IReadOnlyList<PSI.Sox.Permission> allPermissions,
+        IReadOnlyList<PSI.Sox.Role> allRoles)
+    {
+        foreach (var (field, value) in edits)
+        {
+            switch (field.ToLowerInvariant())
+            {
+                case "email":       user.Email       = value; break;
+                case "username":    user.UserName    = value; break;
+                case "phonenumber": user.PhoneNumber = value; break;
+                case "passwordexpired":       if (bool.TryParse(value, out var pe))  user.PasswordExpired       = pe;  break;
+                case "lockoutenabled":        if (bool.TryParse(value, out var le))  user.LockoutEnabled        = le;  break;
+                case "emailconfirmed":        if (bool.TryParse(value, out var ec))  user.EmailConfirmed        = ec;  break;
+                case "phonenumberconfirmed":  if (bool.TryParse(value, out var pnc)) user.PhoneNumberConfirmed  = pnc; break;
+
+                case "address.company":        user.Address!.Company       = value; break;
+                case "address.contact":        user.Address!.Contact       = value; break;
+                case "address.address1":       user.Address!.Address1      = value; break;
+                case "address.address2":       user.Address!.Address2      = value; break;
+                case "address.address3":       user.Address!.Address3      = value; break;
+                case "address.city":           user.Address!.City          = value; break;
+                case "address.stateprovince":  user.Address!.StateProvince = value; break;
+                case "address.postalcode":     user.Address!.PostalCode    = value; break;
+                case "address.country":        user.Address!.Country       = value; break;
+                case "address.phone":          user.Address!.Phone         = value; break;
+                case "address.fax":            user.Address!.Fax           = value; break;
+                case "address.email":          user.Address!.Email         = value; break;
+                case "address.sms":            user.Address!.Sms           = value; break;
+                case "address.account":        user.Address!.Account       = value; break;
+                case "address.taxid":          user.Address!.TaxId         = value; break;
+                case "address.code":           user.Address!.Code          = value; break;
+                case "address.group":          user.Address!.Group         = value; break;
+                case "address.pobox":          if (bool.TryParse(value, out var pb))  user.Address!.PoBox       = pb;  break;
+                case "address.residential":    if (bool.TryParse(value, out var rb))  user.Address!.Residential = rb;  break;
+
+                // unqualified shorthands
+                case "company":        user.Address!.Company       = value; break;
+                case "contact":        user.Address!.Contact       = value; break;
+                case "address1":       user.Address!.Address1      = value; break;
+                case "address2":       user.Address!.Address2      = value; break;
+                case "address3":       user.Address!.Address3      = value; break;
+                case "city":           user.Address!.City          = value; break;
+                case "stateprovince":  user.Address!.StateProvince = value; break;
+                case "postalcode":     user.Address!.PostalCode    = value; break;
+                case "country":        user.Address!.Country       = value; break;
+                case "phone":          user.Address!.Phone         = value; break;
+                case "fax":            user.Address!.Fax           = value; break;
+
+                case "config.exportfiledelimiter":
+                    if (Enum.TryParse<PSI.Sox.Delimiter>(value, true, out var delim))
+                        user.DefaultConfiguration!.ExportFileDelimiter = delim; break;
+                case "config.exportfilequalifier":
+                    if (Enum.TryParse<PSI.Sox.Qualifier>(value, true, out var qual))
+                        user.DefaultConfiguration!.ExportFileQualifier = qual; break;
+                case "config.exportfilegroupseparator":
+                    if (Enum.TryParse<PSI.Sox.GroupSeparator>(value, true, out var gs))
+                        user.DefaultConfiguration!.ExportFileGroupSeparator = gs; break;
+                case "config.exportfiledecimalseparator":
+                    if (Enum.TryParse<PSI.Sox.DecimalSeparator>(value, true, out var ds))
+                        user.DefaultConfiguration!.ExportFileDecimalSeparator = ds; break;
+
+                case "permissions.add":
+                {
+                    var perm = allPermissions.FirstOrDefault(p =>
+                        string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
+                    if (perm is not null && !(user.Permissions?.Any(p => p.Id == perm.Id) ?? false))
+                        user.Permissions!.Add(perm);
+                    break;
+                }
+                case "permissions.remove":
+                    user.Permissions?.RemoveAll(p =>
+                        string.Equals(p.Name, value, StringComparison.OrdinalIgnoreCase));
+                    break;
+
+                case "roles.add":
+                {
+                    var role = allRoles.FirstOrDefault(r =>
+                        string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
+                    if (role is not null && !(user.Roles?.Any(r => r.Id == role.Id) ?? false))
+                        user.Roles!.Add(role);
+                    break;
+                }
+                case "roles.remove":
+                    user.Roles?.RemoveAll(r =>
+                        string.Equals(r.Name, value, StringComparison.OrdinalIgnoreCase));
+                    break;
+            }
+        }
+    }
+
     public Task<List<CsvUserRow>> ParseCsvAsync(string csvContent)
     {
         return Task.FromResult(CsvUserParser.Parse(csvContent));
@@ -1306,6 +1713,171 @@ public sealed class ShipExecService(
     public Task<bool> CompanyHasStoredTemplatesAsync(Guid companyId)
         => templateManager.HasTemplatesAsync(companyId);
 
+    public Task<List<CbrInfo>> GetCompanyClientBusinessRulesAsync(Guid companyId, string jwtJson, string adminUrl)
+    {
+        var tempManager = new ShipExecNavigator.BusinessLogic.AppManager(jwtJson, adminUrl);
+        return Task.Run(() =>
+            tempManager.GetClientBusinessRulesForCompany(companyId)
+                       .Select(r => new CbrInfo
+                       {
+                           Id          = r.Id,
+                           Name        = r.Name        ?? string.Empty,
+                           Description = r.Description,
+                           Script      = r.Script,
+                           Version     = r.Version,
+                       })
+                       .ToList()
+        );
+    }
+
+    public Task<List<SbrInfo>> GetServerBusinessRulesAsync()
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("GetServerBusinessRules start | CompanyId={CompanyId}", _currentCompanyId);
+            try
+            {
+                var results = _appManager.GetServerBusinessRulesForCompany();
+                sw.Stop();
+                logger.LogInformation(
+                    "GetServerBusinessRules complete | Count={Count} DurationMs={DurationMs}",
+                    results.Count, sw.ElapsedMilliseconds);
+
+                return results.Select(r => new SbrInfo
+                {
+                    Id             = r.Rule.Id,
+                    Name           = r.Rule.Name        ?? string.Empty,
+                    Description    = r.Rule.Description,
+                    Version        = r.Rule.Version,
+                    Author         = r.Rule.Author,
+                    AuthorEmail    = r.Rule.AuthorEmail,
+                    UsedByProfiles = r.ProfileNames,
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                logger.LogError(ex,
+                    "GetServerBusinessRules failed | DurationMs={DurationMs}", sw.ElapsedMilliseconds);
+                throw;
+            }
+        });
+    }
+
+    public Task<string?> GetServerBusinessRuleFileBase64Async(string sbrName, string? sbrVersion)
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("GetServerBusinessRuleFileBase64 start | SbrName={SbrName} SbrVersion={SbrVersion}", sbrName, sbrVersion);
+            try
+            {
+                var fileBytes = _appManager.GetServerBusinessRuleFileBytes(sbrName, sbrVersion);
+                //System.Diagnostics.Debugger.Break(); // breakpoint: after fetching SBR file bytes (DLL or Project download)
+                sw.Stop();
+                bool hasFile = fileBytes is { Length: > 0 };
+                logger.LogInformation(
+                    "GetServerBusinessRuleFileBase64 complete | SbrName={SbrName} HasFile={HasFile} DurationMs={DurationMs}",
+                    sbrName, hasFile, sw.ElapsedMilliseconds);
+                return hasFile
+                    ? Convert.ToBase64String(fileBytes!)
+                    : null;
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                logger.LogError(ex,
+                    "GetServerBusinessRuleFileBase64 failed | SbrName={SbrName} DurationMs={DurationMs}",
+                    sbrName, sw.ElapsedMilliseconds);
+                throw;
+            }
+        });
+    }
+
+    public Task<List<CbrInfo>> GetClientBusinessRulesAsync()
+    {
+        if (_appManager is null)
+            throw new InvalidOperationException("Not connected. Call GetCompaniesAsync first.");
+
+        return Task.Run(() =>
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            logger.LogInformation("GetClientBusinessRules start | CompanyId={CompanyId}", _currentCompanyId);
+            try
+            {
+                var results = _appManager.GetClientBusinessRulesWithProfilesForCompany();
+                sw.Stop();
+                logger.LogInformation(
+                    "GetClientBusinessRules complete | Count={Count} DurationMs={DurationMs}",
+                    results.Count, sw.ElapsedMilliseconds);
+
+                return results.Select(r => new CbrInfo
+                {
+                    Id             = r.Rule.Id,
+                    Name           = r.Rule.Name        ?? string.Empty,
+                    Description    = r.Rule.Description,
+                    Script         = r.Rule.Script,
+                    Version        = r.Rule.Version,
+                    UsedByProfiles = r.ProfileNames,
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                logger.LogError(ex,
+                    "GetClientBusinessRules failed | DurationMs={DurationMs}", sw.ElapsedMilliseconds);
+                throw;
+            }
+        });
+    }
+
+    public async Task<List<CbrSaveResult>> SaveCbrScriptsAsync(
+        string folderPath,
+        IEnumerable<(string CompanyName, List<CbrInfo> Rules)> entries)
+    {
+        var results = new List<CbrSaveResult>();
+        Directory.CreateDirectory(folderPath);
+
+        foreach (var (companyName, rules) in entries)
+        {
+            foreach (var rule in rules)
+            {
+                var baseName = SanitizeFileName($"{companyName}_{rule.Name}_{rule.Id}");
+                var fileName = baseName + ".cs";
+                var filePath = Path.Combine(folderPath, fileName);
+
+                var result = new CbrSaveResult
+                {
+                    FileName    = fileName,
+                    CompanyName = companyName,
+                    RuleName    = rule.Name,
+                };
+
+                try
+                {
+                    await File.WriteAllTextAsync(filePath, rule.Script ?? string.Empty);
+                    result.Success = true;
+                }
+                catch (Exception ex)
+                {
+                    result.Success = false;
+                    result.Error   = ex.Message;
+                }
+
+                results.Add(result);
+            }
+        }
+
+        return results;
+    }
+
     public async Task<List<TemplateSaveResult>> SaveTemplatesToFolderAsync(string folderPath)
     {
         var templates = (await templateManager.GetAllAsync()).ToList();
@@ -1407,6 +1979,40 @@ public sealed class ShipExecService(
             Id = id,
             Name = _appManager.GetCurrentCompanyName(),
         };
+    }
+
+    public List<CompanyInfo> GetCachedCompanies() => _lastCompanies;
+
+    public event System.Action? OnDisconnected;
+    public event System.Action? OnConnected;
+
+    public void Disconnect()
+    {
+        logger.LogInformation("Disconnect | Resetting all connection state for this circuit");
+        _appManager       = null;
+        _adminUrl         = null;
+        _lastCompanies    = [];
+        _currentCompanyId = Guid.Empty;
+        _lastVariances    = null;
+        _lastModifiedXml  = null;
+        _lastCompanyXml   = null;
+        OnDisconnected?.Invoke();
+    }
+
+    public string? GetManagementStudioUrl()
+    {
+        if (string.IsNullOrEmpty(_adminUrl)) return null;
+        // Admin URL format: https://<server>/ShipExecManagementStudioApi/api/AdministrationService/
+        // Navigator: https://<server>/ShipExecManagementStudio/#!/company/
+        try
+        {
+            var uri = new Uri(_adminUrl);
+            return $"{uri.Scheme}://{uri.Authority}/ShipExecManagementStudio/#!/company/";
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string SerializeUsersXml(IEnumerable<PSI.Sox.User> users)

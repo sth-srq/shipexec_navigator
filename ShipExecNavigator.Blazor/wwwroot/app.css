@@ -1,0 +1,195 @@
+html, body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+a, .btn-link {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #23527c;
+    text-decoration: underline;
+}
+
+.content {
+    padding-top: 1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.btn:focus, .btn:active:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 2px rgba(51, 122, 183, 0.25);
+    outline: none;
+}
+
+.blazor-error-boundary {
+    background-color: #fff5f5;
+    border-top: 1px solid #e53e3e;
+    padding: 0.75rem 1rem 0.75rem 3.5rem;
+    color: #c53030;
+    position: relative;
+}
+
+.blazor-error-boundary::before {
+    content: "⚠";
+    position: absolute;
+    left: 1rem;
+    font-size: 1.4rem;
+}
+
+.blazor-error-boundary::after {
+    content: "An unhandled error has occurred.";
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c9d4;
+    border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ── Page tab bar (shared across all pages) ─────────────────────────────── */
+.page-tab-bar {
+    display: flex;
+    align-items: stretch;
+    height: 50px;
+    background: linear-gradient(135deg, #1e3a5f, #2a5a8a);
+    border: 1px solid #1a3050;
+    border-radius: 6px;
+    flex-shrink: 0;
+    padding-right: 1rem;
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.page-tab-bar::before {
+    display: none;
+}
+
+.page-tab-brand {
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    margin-right: 0.25rem;
+}
+
+.page-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+}
+
+.page-tab:hover {
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255,255,255,0.12);
+}
+
+.page-tab--active {
+    color: #fff;
+    border-bottom-color: #7ec8f8;
+    background: rgba(255,255,255,0.15);
+    cursor: default;
+    font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/*  DARK THEME — class-based toggle                                         */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.dark-theme,
+.dark-theme body {
+    background: #1a1a1a;
+    color: #ddd;
+}
+
+.dark-theme a, .dark-theme .btn-link {
+    color: #6cb3e6;
+}
+
+.dark-theme a:hover {
+    color: #8fcef5;
+}
+
+.dark-theme .btn:focus, .dark-theme .btn:active:focus,
+.dark-theme .form-control:focus, .dark-theme .form-check-input:focus {
+    box-shadow: 0 0 0 2px rgba(108, 179, 230, 0.25);
+}
+
+.dark-theme .blazor-error-boundary {
+    background-color: rgba(248, 113, 113, 0.08);
+    border-top-color: #ef4444;
+    color: #f87171;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+.dark-theme .page-tab-bar {
+    background: linear-gradient(135deg, #0f1f33, #1a3050);
+    border-color: #0d1a2d;
+}
+
+.dark-theme .page-tab {
+    color: rgba(255,255,255,0.6);
+}
+
+.dark-theme .page-tab:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+}
+
+.dark-theme .page-tab--active {
+    color: #fff;
+    border-bottom-color: #6cb3e6;
+    background: rgba(255,255,255,0.12);
+}
+
+.dark-theme #blazor-error-ui {
+    background: #2a2a2a;
+    border-top-color: #ef4444;
+    color: #f87171;
+}
+
+/* ── Dark-theme company heading ── */
+.dark-theme .company-heading {
+    color: #c9d1d9;
+}

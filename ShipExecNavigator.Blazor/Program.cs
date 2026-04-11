@@ -1,5 +1,6 @@
 using PSI.Sox;
 using PSI.Sox.Configuration;
+using QuestPDF.Infrastructure;
 using Serilog;
 using ShipExecNavigator.AppLogic;
 using ShipExecNavigator.Blazor.Components;
@@ -43,8 +44,14 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
     builder.Services.AddScoped<IShipExecService, ShipExecService>();
     builder.Services.AddScoped<IXmlRefLookupService, XmlRefLookupService>();
     builder.Services.AddSingleton<AlertService>();
+    builder.Services.AddScoped<PendingImportService>();
     builder.Services.AddSingleton<IVectorSearchService, InMemoryRagService>();
+    builder.Services.AddHttpClient();
     builder.Services.AddScoped<IAiChatService, SemanticKernelChatService>();
+    builder.Services.AddScoped<ICbrAnalysisService, CbrAnalysisService>();
+    builder.Services.AddSingleton<SummaryPdfService>();
+
+    QuestPDF.Settings.License = LicenseType.Community;
 
     var app = builder.Build();
 
@@ -71,6 +78,15 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
             diag.Set("RequestHost", http.Request.Host.Value);
             diag.Set("RequestScheme", http.Request.Scheme);
         };
+    });
+
+    // ── Content-Security-Policy: block inline scripts and eval ──────────
+    app.Use(async (context, next) =>
+    {
+        var cspPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'sha256-dQxdeGZjFqPCswiIiPV57iSY1ejBiU7sWgV6E0c1fqw='; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; connect-src 'self' http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;";
+
+        context.Response.Headers["Content-Security-Policy"] = cspPolicy;
+        await next();
     });
 
     app.UseAntiforgery();

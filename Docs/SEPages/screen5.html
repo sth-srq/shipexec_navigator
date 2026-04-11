@@ -1,0 +1,584 @@
+<html lang="en"><head><style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style><style type="text/css">.uib-time input{width:50px;}</style><style type="text/css">[uib-tooltip-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-html-popup].tooltip.right-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.top-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-left > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.bottom-right > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.left-bottom > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-top > .tooltip-arrow,[uib-tooltip-template-popup].tooltip.right-bottom > .tooltip-arrow,[uib-popover-popup].popover.top-left > .arrow,[uib-popover-popup].popover.top-right > .arrow,[uib-popover-popup].popover.bottom-left > .arrow,[uib-popover-popup].popover.bottom-right > .arrow,[uib-popover-popup].popover.left-top > .arrow,[uib-popover-popup].popover.left-bottom > .arrow,[uib-popover-popup].popover.right-top > .arrow,[uib-popover-popup].popover.right-bottom > .arrow,[uib-popover-html-popup].popover.top-left > .arrow,[uib-popover-html-popup].popover.top-right > .arrow,[uib-popover-html-popup].popover.bottom-left > .arrow,[uib-popover-html-popup].popover.bottom-right > .arrow,[uib-popover-html-popup].popover.left-top > .arrow,[uib-popover-html-popup].popover.left-bottom > .arrow,[uib-popover-html-popup].popover.right-top > .arrow,[uib-popover-html-popup].popover.right-bottom > .arrow,[uib-popover-template-popup].popover.top-left > .arrow,[uib-popover-template-popup].popover.top-right > .arrow,[uib-popover-template-popup].popover.bottom-left > .arrow,[uib-popover-template-popup].popover.bottom-right > .arrow,[uib-popover-template-popup].popover.left-top > .arrow,[uib-popover-template-popup].popover.left-bottom > .arrow,[uib-popover-template-popup].popover.right-top > .arrow,[uib-popover-template-popup].popover.right-bottom > .arrow{top:auto;bottom:auto;left:auto;right:auto;margin:0;}[uib-popover-popup].popover,[uib-popover-html-popup].popover,[uib-popover-template-popup].popover{display:block !important;}</style><style type="text/css">.uib-datepicker-popup.dropdown-menu{display:block;float:none;margin:0;}.uib-button-bar{padding:10px 9px 2px;}</style><style type="text/css">.uib-position-measure{display:block !important;visibility:hidden !important;position:absolute !important;top:-9999px !important;left:-9999px !important;}.uib-position-scrollbar-measure{position:absolute !important;top:-9999px !important;width:50px !important;height:50px !important;overflow:scroll !important;}.uib-position-body-scrollbar-measure{overflow:scroll !important;}</style><style type="text/css">.uib-datepicker .uib-title{width:100%;}.uib-day button,.uib-month button,.uib-year button{min-width:100%;}.uib-left,.uib-right{width:100%}</style><style type="text/css">.ng-animate.item:not(.left):not(.right){-webkit-transition:0s ease-in-out left;transition:0s ease-in-out left}</style><style>@charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/ShipExecThinClient/Content/img/favicon.ico" type="image/x-icon">
+    <title>ShipExec™ Thin Client</title>
+    <link href="/ShipExecThinClient/Content/css?v=nzxb7NxSdFp4T_Ga40dJU9-XI3G6k4fweY7RofxTzu81" rel="stylesheet">
+
+    
+    <base href="/ShipExecThinClient/">
+
+<style type="text/css">.clearable {background-image: url(data:image/gif;base64,R0lGODlhBwAHAIAAAP///5KSkiH5BAAAAAAALAAAAAAHAAcAAAIMTICmsGrIXnLxuDMLADs=);background-repeat: no-repeat;background-attachment: initial;background-position: right -10px center;}.clearable.x {transition: background 0.4s;background-position: right 10px center;}.clearable.onX {cursor: pointer;}</style></head>
+<body class="">
+    <div class="main-container">
+        <div class="navbar navbar-default navbar-fixed-top" style="padding-right:2%">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="/ShipExecThinClient/" class="navbar-brand">
+                        <img alt="ShipExec™ Thin Client" src="/ShipExecThinClient/Content/img/ShipExecLogo.png">
+                    </a>
+                </div>
+                    <div class="navbar-collapse collapse">
+
+
+<div>
+    <ul class="nav navbar-nav">
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="">
+                    Shipping
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                        <li><a href="/ShipExecThinClient/#!/shipping">Shipping and Rating</a></li>
+
+                        <li role="separator" class="divider"></li>
+
+                        <li><a href="/ShipExecThinClient/#!/scanship">Scan Ship</a></li>
+
+                        <li role="separator" class="divider"></li>
+
+                        <li><a href="/ShipExecThinClient/#!/batchmanager">Batch Manager</a></li>
+                                            <li><a href="/ShipExecThinClient/#!/createbatch">Create a Batch</a></li>
+
+                        <li role="separator" class="divider"></li>
+
+                        <li><a href="/ShipExecThinClient/#!/addressbook">Address Book</a></li>
+                                            <li><a href="/ShipExecThinClient/#!/distributionList">Distribution Lists</a></li>
+                </ul>
+            </li>
+
+
+            <li><a href="/ShipExecThinClient/#!/history">History</a></li>
+
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="">
+                    End of Day
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu">
+                    
+                        <li><a href="/ShipExecThinClient/#!/closemanifest">Close Manifest</a></li>
+                                            <li><a href="/ShipExecThinClient/#!/manifestdocuments">Manifest Documents</a></li>
+                                            <li><a href="/ShipExecThinClient/#!/transmit">Transmit</a></li>
+                                            <li><a href="/ShipExecThinClient/#!/groupmanager">Group Manager</a></li>
+                                            <li><a href="/ShipExecThinClient/#!/managedata">Manage Data</a></li>
+                </ul>
+            </li>
+
+
+    </ul>
+
+</div>
+
+
+
+                        <form action="/ShipExecThinClient/Account/LogOff" class="navbar-right ng-pristine ng-valid" id="logoutForm" method="post"><input name="__RequestVerificationToken" type="hidden" value="tqui237jZacLJSdrLgQbRPZNLWBcfxfzsMrPbTWdO6FyBnJufu57HCLsi-gBRd8zcSbuBFYORaevU7TfY1CUxH1ZruD532TsWLOTVVUrLZ-olnexWiJ7n3oN5an4_A8ZmAZydwq0EBb-3jRFkOVMtw2" autocomplete="off"><ul class="nav navbar-nav navbar-right" style="padding-bottom:3% !important">
+    <li>
+
+        <a href="/ShipExecThinClient/Manage" title="Manage">Hello fas_user2@navdemo.com!</a>
+
+    </li>
+    <li><a href="#" onclick="javascript:logOff();" id="btnLogOff">Log Off</a></li>
+
+</ul>
+</form>
+<script type="text/javascript">
+        function removeAlerts() {
+        $('[class*=alert-]').each(function (index, element) {
+            element.remove();
+        });
+    }
+
+    function logOff() {
+
+        removeAlerts();
+        setTimeout(removeAlerts, 75);
+
+        var token = JSON.parse(localStorage.getItem('MSToken'));
+        if (token) {
+            $.ajax({
+                url: window.location.origin + window.location.pathname + "Account/RemoveRefreshToken",
+                type: "POST",
+                data: {
+                    'AccessToken': token.access_token,
+                    'RefreshToken': token.refresh_token
+                },
+                dataType: "json",
+                //contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    localStorage.removeItem('TCToken');
+                    document.getElementById('logoutForm').submit();
+                },
+                error: function (data) {
+                }
+            });
+        } else {
+            document.getElementById('logoutForm').submit();
+        }
+    }
+</script>
+
+<form action="/ShipExecThinClient/Account/ChangeCulture" id="LocaleForm" method="post" class="ng-pristine ng-valid">                            <ul class="nav navbar-nav navbar-right">
+                                <li class="dropdown">
+                                    <div style="display: flex; padding-top: 2%">
+                                        <input name="__RequestVerificationToken" type="hidden" value="EWTou1EKba9Jqtd1V2_IDtv220W8twDOx4mhwM40XO4VUvToDwzeo1clGj1BHPFJFEcDl4ZvKFQsb-EhWlyU6ofDc0A8-d3j7WGyr3QOjy0hSWczk20nevJLQcC83rNf4bGxZ3rvfrh9ikU78pJBdQ2" autocomplete="off">
+                                        <select class="form-control localeSelect" id="Locales" name="Locale"><option value="de-DE">Deutsch-Germany</option><option value="en-US">English-United States</option><option value="es-MX">español-Mexico</option></select>
+                                        <em class="glyphicon glyphicon-globe" style="color: white; align-self: center; font-size: 1.5em;"></em>
+                                    </div>
+
+                                </li>
+                            </ul>
+</form>
+                    </div>
+            </div>
+        </div>
+        <div class="container-fluid body-content body">
+            
+<div>
+
+    <!-- ngRepeat: notification in notifications -->
+    <!-- ngView: --><div ng-view="" class="ng-scope">
+<div class="panel panel-primary ng-scope">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-3">
+                <h4 class="ng-binding">History</h4>
+            </div>
+            <div class="col-md-6"></div>
+            <div class="col-md-2">
+                <select id="reports" class="form-control srch-inputfld ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.report" ng-change="vm.reportTemplateChange = true" ng-options="report as report.Name for report in vm.reports"><option value="" class="" selected="selected">Default</option><option label="Detailed Report" value="object:739">Detailed Report</option><option label="Upgrade Report" value="object:740">Upgrade Report</option><option label="Void Report" value="object:741">Void Report</option><option label="Daily Report by Shipper Reference" value="object:742">Daily Report by Shipper Reference</option><option label="Daily Report by Site" value="object:743">Daily Report by Site</option></select>
+            </div>
+            <div class="col-md-1 ng-hide" ng-hide="vm.hideSearchResult || vm.profile.ProfileSetting.DisableExportReport || vm.report == null">
+                <button class="btn btn-default ng-binding" value="Export" ng-click="vm.export()" ng-hide="vm.hideButtonExport" ng-disabled="vm.disableButtonExport">Export</button>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body full-width">
+        <div class="col-md-3 padding-zero">
+            <form class="form-horizontal ng-pristine ng-valid ng-valid-date ng-valid-required" name="generalForm">
+
+                <!--Delete -->
+                <!--<div class="form-group-sm">
+                    <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.ThinClient.StartShipDate}}</label>
+                    <div class="col-sm-6 padding-left-right-zero">
+                        <p class="input-group padding-left-zero ">
+                            <input type="text" class="form-control srch-inputfld" uib-datepicker-popup="yyyy-MM-dd" ng-click="vm.openstartship()" ng-model="vm.dtstart" is-open="vm.startshipdate.opened" datepicker-options="vm.startshipdateOptions" close-text={{vm.translations.Common.Close}} clear-text={{vm.translations.Common.Clear}} current-text={{vm.translations.Common.Today}} alt-input-formats="altInputFormats" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default form-control srch-inputfld" ng-click="vm.openstartship()"><i class="glyphicon glyphicon-calendar"></i></button>
+                            </span>
+                        </p>
+                    </div>
+                </div>-->
+
+                <!--Srart Date Directive -->
+                <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.StartShipDate" caption="Start Ship Date" form-type="Horizontal" model="vm.dtstart" name="startShipDate" is-open="vm.startshipdate.opened" datepicker-options="vm.startshipdateOptions" open-date-picker-function="vm.openstartship()" isrequired="true" message="Start ShipDate is required."><label class="col-md-4 control-label no-left-padding ng-binding">Start Ship Date</label><div class="col-sm-8 no-left-right-padding"><div class="input-group"><input type="text" class="form-control disablelink ng-pristine ng-untouched ng-valid ng-isolate-scope ng-not-empty ng-valid-date ng-valid-required" ng-model="vm.dtstart" uib-datepicker-popup="" close-text="Close" clear-text="Clear" current-text="Today" is-open="vm.startshipdate.opened" datepicker-options="vm.startshipdateOptions" name="startShipDate" required="required" alt-input-formats="altInputFormats"><div uib-datepicker-popup-wrap="" ng-model="date" ng-change="dateSelection(date)" template-url="uib/template/datepickerPopup/popup.html" class="ng-pristine ng-untouched ng-valid ng-scope ng-not-empty"><!-- ngIf: isOpen -->
+</div><span class="input-group-btn"><button type="button" class="btn btn-sm btn-default form-control" ng-click="vm.openstartship()"><i class="glyphicon glyphicon-calendar"></i></button></span></div><span ng-show="generalForm.startShipDate.$error.required" class="text-danger ng-binding ng-hide">Start ShipDate is required.</span></div></div>
+
+                <!--Delete -->
+                <!--<div class="form-group-sm">
+                    <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.ThinClient.EndShipDate}}</label>
+                    <div class="col-sm-6 padding-left-right-zero">
+                        <p class="input-group padding-left-zero">
+                            <input type="text" class="form-control srch-inputfld" uib-datepicker-popup="yyyy-MM-dd" ng-click="vm.openendship()" ng-model="vm.dtend" is-open="vm.endshipdate.opened" datepicker-options="vm.endshipdateOptions" close-text={{vm.translations.Common.Close}} clear-text={{vm.translations.Common.Clear}} current-text={{vm.translations.Common.Today}} alt-input-formats="altInputFormats" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default form-control srch-inputfld" ng-click="vm.openendship()"><i class="glyphicon glyphicon-calendar"></i></button>
+                            </span>
+                        </p>
+                    </div>
+                </div>-->
+                <!--Srart Date Directive -->
+                <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.EndShipDate" caption="End Ship Date" form-type="Horizontal" model="vm.dtend" name="endShipDate" is-open="vm.endshipdate.opened" datepicker-options="vm.endshipdateOptions" open-date-picker-function="vm.openendship()" isrequired="true" message=""><label class="col-md-4 control-label no-left-padding ng-binding">End Ship Date</label><div class="col-sm-8 no-left-right-padding"><div class="input-group"><input type="text" class="form-control disablelink ng-pristine ng-untouched ng-valid ng-isolate-scope ng-not-empty ng-valid-date ng-valid-required" ng-model="vm.dtend" uib-datepicker-popup="" close-text="Close" clear-text="Clear" current-text="Today" is-open="vm.endshipdate.opened" datepicker-options="vm.endshipdateOptions" name="endShipDate" required="required" alt-input-formats="altInputFormats"><div uib-datepicker-popup-wrap="" ng-model="date" ng-change="dateSelection(date)" template-url="uib/template/datepickerPopup/popup.html" class="ng-pristine ng-untouched ng-valid ng-scope ng-not-empty"><!-- ngIf: isOpen -->
+</div><span class="input-group-btn"><button type="button" class="btn btn-sm btn-default form-control" ng-click="vm.openendship()"><i class="glyphicon glyphicon-calendar"></i></button></span></div><span ng-show="generalForm.endShipDate.$error.required" class="text-danger ng-binding ng-hide"></span></div></div>
+
+                <div>
+    <div class="row form-group-sm col-md-12 no-left-right-padding " property="HistorySearch.Site" model="vm.site" options="site.Id as site.Name for site in vm.sites" caption="Site" form-type="Horizontal" ng-hide="vm.userContext.SiteId"><label class="col-md-4 control-label no-left-padding ng-binding">Site</label><div class="col-sm-8 no-left-right-padding"><select class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.site" ng-options="site.Id as site.Name for site in vm.sites"><option value="" name="" class="" selected="selected"></option></select></div></div>
+
+    <!--<div class="form-group-sm" ng-show="(vm.permissions | filter:{ Permission:'CanViewUserTextbox'})[0].IsValid">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.User}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.user">
+            </div>
+        </div>
+        <div class="form-group-sm" ng-show="(vm.permissions | filter:{ Permission:'CanViewMachineTextbox'})[0].IsValid">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.ThinClient.Machine}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.machine">
+            </div>
+        </div>-->
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding " property="HistorySearch.Shipper" model="vm.selectedShipper" options="shipper as shipper.Name for shipper in vm.shippers track by shipper.Symbol" caption="Shipper" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Shipper</label><div class="col-sm-8 no-left-right-padding"><select class="form-control ng-pristine ng-untouched ng-valid ng-not-empty" ng-model="vm.selectedShipper" ng-options="shipper as shipper.Name for shipper in vm.shippers track by shipper.Symbol"><option value="?" selected="selected"></option><option value="" name="" class=""></option><option label="FL_Shipper" value="FLS">FL_Shipper</option><option label="FL_Shipper2" value="FLS2">FL_Shipper2</option></select></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding " property="HistorySearch.Carrier" model="vm.selectedCarrier" options="carrier as carrier.Name for carrier in vm.carriers track by carrier.Symbol" caption="Carrier" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Carrier</label><div class="col-sm-8 no-left-right-padding"><select class="form-control ng-pristine ng-untouched ng-valid ng-not-empty" ng-model="vm.selectedCarrier" ng-options="carrier as carrier.Name for carrier in vm.carriers track by carrier.Symbol"><option value="?" selected="selected"></option><option value="" name="" class=""></option><option label="UPS (CSAdapter)" value="CONNECTSHIP_UPS.UPS">UPS (CSAdapter)</option><option label="USPS (CSAdapter)" value="TANDATA_USPS.USPS">USPS (CSAdapter)</option></select></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding " property="HistorySearch.Service" model="vm.selectedService" options="service as service.Name for service in vm.services track by service.Symbol" caption="Service" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Service</label><div class="col-sm-8 no-left-right-padding"><select class="form-control ng-pristine ng-untouched ng-valid ng-not-empty" ng-model="vm.selectedService" ng-options="service as service.Name for service in vm.services track by service.Symbol"><option value="?" selected="selected"></option><option value="" name="" class=""></option><option label="UPS 3 Day Select (CSAdapter)" value="CONNECTSHIP_UPS.UPS.3DA">UPS 3 Day Select (CSAdapter)</option><option label="UPS Ground (CSAdapter)" value="CONNECTSHIP_UPS.UPS.GND">UPS Ground (CSAdapter)</option></select></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.GlobalMSN" model="vm.msn" caption="Global MSN" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Global MSN</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.msn"></div></div>
+
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.GlobalBundleID" model="vm.bundleId" caption="Global Bundle ID" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Global Bundle ID</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.bundleId"></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.ShipId" model="vm.shipId" caption="Ship Id" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Ship Id</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.shipId"></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.TrackingNumber" model="vm.trackingNumber" caption="Tracking Number" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Tracking Number</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.trackingNumber"></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.BatchReference" model="vm.batchReference" caption="Batch Reference" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Batch Reference</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.batchReference"></div></div>
+
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.BatchItemReference" model="vm.batchItemReference" caption="Batch Item Reference" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Batch Item Reference</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.batchItemReference"></div></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.ShipperReference" model="vm.shipperReference" caption="Shipper Reference" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Shipper Reference</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.shipperReference"></div></div>
+    <div class="form-check" font-size="small" property="HistorySearch.ShipperReferenceSearchMode" model="vm.shipperReferenceMode" caption="Exact Match"><input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.shipperReferenceMode"><label class="form-check-label" style="padding-left: 6px;">Exact Match</label></div>
+
+    <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.ConsigneeReference" model="vm.consigneeReference" caption="Consignee Reference" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Consignee Reference</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.consigneeReference"></div></div>
+    <div class="form-check" property="HistorySearch.ConsigneeReferenceSearchMode" model="vm.consigneeReferenceMode" caption="Exact Match"><input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.consigneeReferenceMode"><label class="form-check-label" style="padding-left: 6px;">Exact Match</label></div>
+
+    <!--<div class="form-group-sm">
+        <label class="control-label col-sm-6 padding-left-right-zero">Package Status</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <select class="form-control srch-inputfld"
+                    ng-model="vm.voided">
+                <option value="null" selected="selected">Show All</option>
+                <option value="true">Voided</option>
+                <option value="false">Not Voided</option>
+                <option value="ServiceChange">Service Changed</option>
+            </select>
+        </div>
+    </div>-->
+    <div class="form-group-sm row">
+        <button type="button" class="panel-accordion ng-binding" ng-click="vm.hideConsignee = !vm.hideConsignee" style="min-width: 100%">Consignee</button>
+    </div>
+    <div ng-hide="vm.hideConsignee" class="ng-hide">
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.CompanyName" model="vm.companyName" caption="Company Name" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Company Name</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.companyName"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.Contact" model="vm.contact" caption="Contact" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Contact</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.contact"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.City" model="vm.city" caption="City" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">City</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.city"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.StateProvince" model="vm.state" caption="State/Province" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">State/Province</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.state"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding " property="HistorySearch.CountryTerritory" model="vm.country" options="country.Iso2 as country.Name for country in vm.countries" caption="Country / Territory" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Country / Territory</label><div class="col-sm-8 no-left-right-padding"><select class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.country" ng-options="country.Iso2 as country.Name for country in vm.countries"><option value="" name="" class="" selected="selected"></option><option label="Canada" value="string:CA">Canada</option></select></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.PostalCode" model="vm.postalCode" caption="Postal Code" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Postal Code</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.postalCode"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.Phone" model="vm.phone" caption="Phone" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Phone</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.phone"></div></div>
+    </div>
+
+    <div class="form-group-sm row">
+        <button type="button" class="panel-accordion ng-binding" ng-click="vm.showReferences()" style="min-width: 100%">Show Misc References</button>
+    </div>
+    <div ng-hide="vm.hideReferences" class="ng-hide">
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference1" model="vm.miscRef1" caption="Misc Reference 1" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 1</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef1"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference2" model="vm.miscRef2" caption="Misc Reference 2" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 2</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef2"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference3" model="vm.miscRef3" caption="Misc Reference 3" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 3</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef3"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference4" model="vm.miscRef4" caption="Misc Reference 4" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 4</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef4"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference5" model="vm.miscRef5" caption="Misc Reference 5" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 5</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef5"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference6" model="vm.miscRef6" caption="Misc Reference 6" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 6</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef6"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference7" model="vm.miscRef7" caption="Misc Reference 7" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 7</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef7"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference8" model="vm.miscRef8" caption="Misc Reference 8" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 8</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef8"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference9" model="vm.miscRef9" caption="Misc Reference 9" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 9</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef9"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference10" model="vm.miscRef10" caption="Misc Reference 10" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 10</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef10"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference11" model="vm.miscRef11" caption="Misc Reference 11" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 11</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef11"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference12" model="vm.miscRef12" caption="Misc Reference 12" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 12</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef12"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference13" model="vm.miscRef13" caption="Misc Reference 13" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 13</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef13"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference14" model="vm.miscRef14" caption="Misc Reference 14" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 14</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef14"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference15" model="vm.miscRef15" caption="Misc Reference 15" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 15</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef15"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference16" model="vm.miscRef16" caption="Misc Reference 16" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 16</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef16"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference17" model="vm.miscRef17" caption="Misc Reference 17" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 17</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef17"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference18" model="vm.miscRef18" caption="Misc Reference 18" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 18</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef18"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference19" model="vm.miscRef19" caption="Misc Reference 19" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 19</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef19"></div></div>
+
+        <div class="row form-group-sm col-md-12 no-left-right-padding" property="HistorySearch.MiscReference20" model="vm.miscRef20" caption="Misc Reference 20" form-type="Horizontal"><label class="col-md-4 control-label no-left-padding ng-binding">Misc Reference 20</label><div class="col-sm-8 no-left-right-padding"><input type="text" class="form-control ng-pristine ng-untouched ng-valid ng-empty" ng-model="vm.miscRef20"></div></div>
+    </div>
+</div>
+                <div class="form-group-sm">
+                    <div class="col-sm-offset-2 col-sm-10 text-right padding-left-right-zero">
+                        <button type="submit" class="btn btn-primary ng-binding" ng-click="vm.changeReport()" ng-hide="vm.hideButtonSearch" ng-disabled="vm.disableButtonSearch || generalForm.$invalid  || generalForm.length &gt; 0">Search</button>
+                        <button type="button" class="btn btn-default ng-binding" ng-click="vm.clear()" ng-hide="vm.hideButtonClear" ng-disabled="vm.disableButtonClear">Clear</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-9">
+            <search-result report=""><div class="col-md-12 scrollbarxy ng-scope">
+    <table ng-table="vm.tableParamsForDetailed" class="table table-bordered table-striped table-responsive ng-scope ng-table" show-filter="false" ng-hide="vm.hideSearchResult" role="presentation"><!-- ngInclude: templates.header --><thead ng-include="templates.header" class="ng-scope"><!-- ngIf: params.hasGroup() --> <tr class="ng-table-sort-header"> <!-- ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Action</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Global MSN</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Tracking Number</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Shipper Reference</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Consignee Reference</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Ship Date</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Weight</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Rated Weight</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th title="" ng-repeat="$column in $columns" ng-class="{
+                    'sortable': $column.sortable(this),
+                    'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
+                    'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
+                  }" ng-click="$ctrl.sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template = $column.headerTemplateURL(this)" class="header "> <!-- ngIf: !template --><div ng-if="!template" class="ng-table-header ng-scope" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}"> <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}" class="ng-binding sort-indicator">Dimension</span> </div><!-- end ngIf: !template --> <!-- ngIf: template --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --> </tr> <tr ng-show="show_filter" class="ng-table-filters ng-hide"> <!-- ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Action" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Global MSN" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Tracking Number" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Shipper Reference" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Consignee Reference" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Ship Date" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Weight" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Rated Weight" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --><!-- ngIf: $column.show(this) --><th data-title-text="Dimension" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter " ng-class="params.settings().filterOptions.filterLayout === 'horizontal' ? 'filter-horizontal' : ''"> <!-- ngRepeat: (name, filter) in $column.filter(this) --> </th><!-- end ngIf: $column.show(this) --><!-- end ngRepeat: $column in $columns --> </tr> </thead>
+        <tbody><!-- ngRepeat: package in vm.dataWithServerSidePagination --><tr ng-repeat="package in vm.dataWithServerSidePagination" class="ng-scope">
+            <!-- ngIf: $columns[0].show(this) --><td title="vm.actionCaption" class="row ng-scope" ng-if="$columns[0].show(this)" data-title-text="Action">
+                <a ng-click="vm.openPopupModal('view',package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;">
+                    <span class="glyphicon glyphicon-search" tooltip-placement="top" uib-tooltip="View"></span>
+                </a>
+                <a ng-click="vm.runVoid(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-remove-sign" tooltip-placement="top" uib-tooltip="Void"></span>
+                </a>
+                <a ng-click="vm.print(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-print" tooltip-placement="top" uib-tooltip="Reprint"></span>
+                </a>
+            </td><!-- end ngIf: $columns[0].show(this) -->
+            <!-- ngIf: $columns[1].show(this) --><td title="Global MSN" ng-attr-title="{{vm.translations.ThinClient.GlobalMSN}}" ng-if="$columns[1].show(this)" data-title-text="Global MSN" class="ng-binding ng-scope">
+                511
+            </td><!-- end ngIf: $columns[1].show(this) -->
+            <!-- ngIf: $columns[2].show(this) --><td title="Tracking Number" ng-attr-title="{{vm.translations.ThinClient.TrackingNumber}}" ng-if="$columns[2].show(this)" data-title-text="Tracking Number" class="ng-scope">
+                <div ng-show="package.IsTrackable &amp;&amp; !package.Voided" class="ng-hide">
+                    <a style="cursor: pointer;" ng-click="vm.track(package)" class="ng-binding">1Z1234231233333331 </a>
+                </div>
+                <div ng-show="!package.IsTrackable &amp;&amp; !package.Voided" class="ng-binding">
+                    1Z1234231233333331
+                </div>
+                <div ng-show="package.Voided" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                    1Z1234231233333331
+                </div>
+            </td><!-- end ngIf: $columns[2].show(this) -->
+            <!-- ngIf: $columns[3].show(this) --><td ng-attr-title="{{vm.translations.Common.ShipperReference}}" ng-if="$columns[3].show(this)" data-title-text="Shipper Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[3].show(this) -->
+            <!-- ngIf: $columns[4].show(this) --><td title="Consignee Reference" ng-attr-title="{{vm.translations.Common.ConsigneeReference}}" ng-if="$columns[4].show(this)" data-title-text="Consignee Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[4].show(this) -->
+            <!-- ngIf: $columns[5].show(this) --><td title="Ship Date" ng-attr-title="{{vm.translations.Common.ShipDate}}" ng-if="$columns[5].show(this)" data-title-text="Ship Date" class="ng-binding ng-scope">
+                2026-04-08
+            </td><!-- end ngIf: $columns[5].show(this) -->
+            <!-- ngIf: $columns[6].show(this) --><td title="Weight" ng-attr-title="{{vm.translations.ThinClient.Weight}}" ng-if="$columns[6].show(this)" data-title-text="Weight" class="ng-binding ng-scope">
+                30 LB
+            </td><!-- end ngIf: $columns[6].show(this) -->
+            <!-- ngIf: $columns[7].show(this) --><td title="Rated Weight" ng-attr-title="{{vm.translations.ThinClient.RatedWeight}}" ng-if="$columns[7].show(this)" data-title-text="Rated Weight" class="ng-binding ng-scope">
+                30 LBS
+            </td><!-- end ngIf: $columns[7].show(this) -->
+            <!-- ngIf: $columns[8].show(this) --><td title="Dimension" ng-attr-title="{{vm.translations.Common.Dimension}}" ng-if="$columns[8].show(this)" data-title-text="Dimension" class="ng-scope">
+                <div ng-show="package.Dimensions!=null" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                     x  x  
+                </div>
+            </td><!-- end ngIf: $columns[8].show(this) -->
+        </tr><!-- end ngRepeat: package in vm.dataWithServerSidePagination --><tr ng-repeat="package in vm.dataWithServerSidePagination" class="ng-scope">
+            <!-- ngIf: $columns[0].show(this) --><td title="vm.actionCaption" class="row ng-scope" ng-if="$columns[0].show(this)" data-title-text="Action">
+                <a ng-click="vm.openPopupModal('view',package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;">
+                    <span class="glyphicon glyphicon-search" tooltip-placement="top" uib-tooltip="View"></span>
+                </a>
+                <a ng-click="vm.runVoid(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-remove-sign" tooltip-placement="top" uib-tooltip="Void"></span>
+                </a>
+                <a ng-click="vm.print(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-print" tooltip-placement="top" uib-tooltip="Reprint"></span>
+                </a>
+            </td><!-- end ngIf: $columns[0].show(this) -->
+            <!-- ngIf: $columns[1].show(this) --><td title="Global MSN" ng-attr-title="{{vm.translations.ThinClient.GlobalMSN}}" ng-if="$columns[1].show(this)" data-title-text="Global MSN" class="ng-binding ng-scope">
+                510
+            </td><!-- end ngIf: $columns[1].show(this) -->
+            <!-- ngIf: $columns[2].show(this) --><td title="Tracking Number" ng-attr-title="{{vm.translations.ThinClient.TrackingNumber}}" ng-if="$columns[2].show(this)" data-title-text="Tracking Number" class="ng-scope">
+                <div ng-show="package.IsTrackable &amp;&amp; !package.Voided" class="ng-hide">
+                    <a style="cursor: pointer;" ng-click="vm.track(package)" class="ng-binding">1Z1234121222222224 </a>
+                </div>
+                <div ng-show="!package.IsTrackable &amp;&amp; !package.Voided" class="ng-binding">
+                    1Z1234121222222224
+                </div>
+                <div ng-show="package.Voided" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                    1Z1234121222222224
+                </div>
+            </td><!-- end ngIf: $columns[2].show(this) -->
+            <!-- ngIf: $columns[3].show(this) --><td ng-attr-title="{{vm.translations.Common.ShipperReference}}" ng-if="$columns[3].show(this)" data-title-text="Shipper Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[3].show(this) -->
+            <!-- ngIf: $columns[4].show(this) --><td title="Consignee Reference" ng-attr-title="{{vm.translations.Common.ConsigneeReference}}" ng-if="$columns[4].show(this)" data-title-text="Consignee Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[4].show(this) -->
+            <!-- ngIf: $columns[5].show(this) --><td title="Ship Date" ng-attr-title="{{vm.translations.Common.ShipDate}}" ng-if="$columns[5].show(this)" data-title-text="Ship Date" class="ng-binding ng-scope">
+                2026-04-08
+            </td><!-- end ngIf: $columns[5].show(this) -->
+            <!-- ngIf: $columns[6].show(this) --><td title="Weight" ng-attr-title="{{vm.translations.ThinClient.Weight}}" ng-if="$columns[6].show(this)" data-title-text="Weight" class="ng-binding ng-scope">
+                2 LB
+            </td><!-- end ngIf: $columns[6].show(this) -->
+            <!-- ngIf: $columns[7].show(this) --><td title="Rated Weight" ng-attr-title="{{vm.translations.ThinClient.RatedWeight}}" ng-if="$columns[7].show(this)" data-title-text="Rated Weight" class="ng-binding ng-scope">
+                2 LBS
+            </td><!-- end ngIf: $columns[7].show(this) -->
+            <!-- ngIf: $columns[8].show(this) --><td title="Dimension" ng-attr-title="{{vm.translations.Common.Dimension}}" ng-if="$columns[8].show(this)" data-title-text="Dimension" class="ng-scope">
+                <div ng-show="package.Dimensions!=null" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                     x  x  
+                </div>
+            </td><!-- end ngIf: $columns[8].show(this) -->
+        </tr><!-- end ngRepeat: package in vm.dataWithServerSidePagination --><tr ng-repeat="package in vm.dataWithServerSidePagination" class="ng-scope">
+            <!-- ngIf: $columns[0].show(this) --><td title="vm.actionCaption" class="row ng-scope" ng-if="$columns[0].show(this)" data-title-text="Action">
+                <a ng-click="vm.openPopupModal('view',package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;">
+                    <span class="glyphicon glyphicon-search" tooltip-placement="top" uib-tooltip="View"></span>
+                </a>
+                <a ng-click="vm.runVoid(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-remove-sign" tooltip-placement="top" uib-tooltip="Void"></span>
+                </a>
+                <a ng-click="vm.print(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-print" tooltip-placement="top" uib-tooltip="Reprint"></span>
+                </a>
+            </td><!-- end ngIf: $columns[0].show(this) -->
+            <!-- ngIf: $columns[1].show(this) --><td title="Global MSN" ng-attr-title="{{vm.translations.ThinClient.GlobalMSN}}" ng-if="$columns[1].show(this)" data-title-text="Global MSN" class="ng-binding ng-scope">
+                509
+            </td><!-- end ngIf: $columns[1].show(this) -->
+            <!-- ngIf: $columns[2].show(this) --><td title="Tracking Number" ng-attr-title="{{vm.translations.ThinClient.TrackingNumber}}" ng-if="$columns[2].show(this)" data-title-text="Tracking Number" class="ng-scope">
+                <div ng-show="package.IsTrackable &amp;&amp; !package.Voided" class="ng-hide">
+                    <a style="cursor: pointer;" ng-click="vm.track(package)" class="ng-binding">1Z1234560344444441 </a>
+                </div>
+                <div ng-show="!package.IsTrackable &amp;&amp; !package.Voided" class="ng-binding">
+                    1Z1234560344444441
+                </div>
+                <div ng-show="package.Voided" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                    1Z1234560344444441
+                </div>
+            </td><!-- end ngIf: $columns[2].show(this) -->
+            <!-- ngIf: $columns[3].show(this) --><td ng-attr-title="{{vm.translations.Common.ShipperReference}}" ng-if="$columns[3].show(this)" data-title-text="Shipper Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[3].show(this) -->
+            <!-- ngIf: $columns[4].show(this) --><td title="Consignee Reference" ng-attr-title="{{vm.translations.Common.ConsigneeReference}}" ng-if="$columns[4].show(this)" data-title-text="Consignee Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[4].show(this) -->
+            <!-- ngIf: $columns[5].show(this) --><td title="Ship Date" ng-attr-title="{{vm.translations.Common.ShipDate}}" ng-if="$columns[5].show(this)" data-title-text="Ship Date" class="ng-binding ng-scope">
+                2026-04-08
+            </td><!-- end ngIf: $columns[5].show(this) -->
+            <!-- ngIf: $columns[6].show(this) --><td title="Weight" ng-attr-title="{{vm.translations.ThinClient.Weight}}" ng-if="$columns[6].show(this)" data-title-text="Weight" class="ng-binding ng-scope">
+                20 LB
+            </td><!-- end ngIf: $columns[6].show(this) -->
+            <!-- ngIf: $columns[7].show(this) --><td title="Rated Weight" ng-attr-title="{{vm.translations.ThinClient.RatedWeight}}" ng-if="$columns[7].show(this)" data-title-text="Rated Weight" class="ng-binding ng-scope">
+                20 LBS
+            </td><!-- end ngIf: $columns[7].show(this) -->
+            <!-- ngIf: $columns[8].show(this) --><td title="Dimension" ng-attr-title="{{vm.translations.Common.Dimension}}" ng-if="$columns[8].show(this)" data-title-text="Dimension" class="ng-scope">
+                <div ng-show="package.Dimensions!=null" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                     x  x  
+                </div>
+            </td><!-- end ngIf: $columns[8].show(this) -->
+        </tr><!-- end ngRepeat: package in vm.dataWithServerSidePagination --><tr ng-repeat="package in vm.dataWithServerSidePagination" class="ng-scope">
+            <!-- ngIf: $columns[0].show(this) --><td title="vm.actionCaption" class="row ng-scope" ng-if="$columns[0].show(this)" data-title-text="Action">
+                <a ng-click="vm.openPopupModal('view',package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;">
+                    <span class="glyphicon glyphicon-search" tooltip-placement="top" uib-tooltip="View"></span>
+                </a>
+                <a ng-click="vm.runVoid(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-remove-sign" tooltip-placement="top" uib-tooltip="Void"></span>
+                </a>
+                <a ng-click="vm.print(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-print" tooltip-placement="top" uib-tooltip="Reprint"></span>
+                </a>
+            </td><!-- end ngIf: $columns[0].show(this) -->
+            <!-- ngIf: $columns[1].show(this) --><td title="Global MSN" ng-attr-title="{{vm.translations.ThinClient.GlobalMSN}}" ng-if="$columns[1].show(this)" data-title-text="Global MSN" class="ng-binding ng-scope">
+                508
+            </td><!-- end ngIf: $columns[1].show(this) -->
+            <!-- ngIf: $columns[2].show(this) --><td title="Tracking Number" ng-attr-title="{{vm.translations.ThinClient.TrackingNumber}}" ng-if="$columns[2].show(this)" data-title-text="Tracking Number" class="ng-scope">
+                <div ng-show="package.IsTrackable &amp;&amp; !package.Voided" class="ng-hide">
+                    <a style="cursor: pointer;" ng-click="vm.track(package)" class="ng-binding">1Z1234560311111111 </a>
+                </div>
+                <div ng-show="!package.IsTrackable &amp;&amp; !package.Voided" class="ng-binding">
+                    1Z1234560311111111
+                </div>
+                <div ng-show="package.Voided" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                    1Z1234560311111111
+                </div>
+            </td><!-- end ngIf: $columns[2].show(this) -->
+            <!-- ngIf: $columns[3].show(this) --><td ng-attr-title="{{vm.translations.Common.ShipperReference}}" ng-if="$columns[3].show(this)" data-title-text="Shipper Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[3].show(this) -->
+            <!-- ngIf: $columns[4].show(this) --><td title="Consignee Reference" ng-attr-title="{{vm.translations.Common.ConsigneeReference}}" ng-if="$columns[4].show(this)" data-title-text="Consignee Reference" class="ng-binding ng-scope">
+                
+            </td><!-- end ngIf: $columns[4].show(this) -->
+            <!-- ngIf: $columns[5].show(this) --><td title="Ship Date" ng-attr-title="{{vm.translations.Common.ShipDate}}" ng-if="$columns[5].show(this)" data-title-text="Ship Date" class="ng-binding ng-scope">
+                2026-04-08
+            </td><!-- end ngIf: $columns[5].show(this) -->
+            <!-- ngIf: $columns[6].show(this) --><td title="Weight" ng-attr-title="{{vm.translations.ThinClient.Weight}}" ng-if="$columns[6].show(this)" data-title-text="Weight" class="ng-binding ng-scope">
+                1 LB
+            </td><!-- end ngIf: $columns[6].show(this) -->
+            <!-- ngIf: $columns[7].show(this) --><td title="Rated Weight" ng-attr-title="{{vm.translations.ThinClient.RatedWeight}}" ng-if="$columns[7].show(this)" data-title-text="Rated Weight" class="ng-binding ng-scope">
+                1 LBS
+            </td><!-- end ngIf: $columns[7].show(this) -->
+            <!-- ngIf: $columns[8].show(this) --><td title="Dimension" ng-attr-title="{{vm.translations.Common.Dimension}}" ng-if="$columns[8].show(this)" data-title-text="Dimension" class="ng-scope">
+                <div ng-show="package.Dimensions!=null" ng-class="{strike: package.Voided}" class="ng-binding ng-hide">
+                     x  x  
+                </div>
+            </td><!-- end ngIf: $columns[8].show(this) -->
+        </tr><!-- end ngRepeat: package in vm.dataWithServerSidePagination -->
+    </tbody></table><div ng-table-pagination="params" template-url="templates.pagination" class="ng-scope ng-isolate-scope"><!-- ngInclude: templateUrl --><div ng-include="templateUrl" class="ng-scope"><!-- ngIf: params.data.length --><div class="ng-table-pager ng-scope" ng-if="params.data.length"> <!-- ngIf: params.settings().counts.length --><div ng-if="params.settings().counts.length" class="ng-table-counts btn-group pull-right ng-scope"> <!-- ngRepeat: count in params.settings().counts --><button ng-repeat="count in params.settings().counts" type="button" ng-class="{'active':params.count() == count}" ng-click="params.count(count)" class="btn btn-default ng-scope active"> <span ng-bind="count" class="ng-binding">10</span> </button><!-- end ngRepeat: count in params.settings().counts --><button ng-repeat="count in params.settings().counts" type="button" ng-class="{'active':params.count() == count}" ng-click="params.count(count)" class="btn btn-default ng-scope"> <span ng-bind="count" class="ng-binding">25</span> </button><!-- end ngRepeat: count in params.settings().counts --><button ng-repeat="count in params.settings().counts" type="button" ng-class="{'active':params.count() == count}" ng-click="params.count(count)" class="btn btn-default ng-scope"> <span ng-bind="count" class="ng-binding">50</span> </button><!-- end ngRepeat: count in params.settings().counts --><button ng-repeat="count in params.settings().counts" type="button" ng-class="{'active':params.count() == count}" ng-click="params.count(count)" class="btn btn-default ng-scope"> <span ng-bind="count" class="ng-binding">100</span> </button><!-- end ngRepeat: count in params.settings().counts --> </div><!-- end ngIf: params.settings().counts.length --> <!-- ngIf: pages.length --> </div><!-- end ngIf: params.data.length --> </div></div>
+    <div ng-show="vm.hideSearchResult" class="ng-binding ng-hide">
+        No Search Result Found!
+    </div>
+</div></search-result>
+        </div>
+    </div>
+</div>
+</div>
+    <div ng-show="loader" class="loading ng-hide">
+        <img src="/ShipExecThinClient/Content/img/spinner-transparent.gif" class="loader-style" alt="Working">
+    </div>
+</div>
+
+        </div>
+        <div id="localeUrl" data-request-url="/ShipExecThinClient/Account/GetLocales"></div>
+    </div>
+    <footer>
+        <p>Copyright © 2026 UPS Professional Services, Inc. All rights reserved.</p>
+        <a href="#!">ShipExec™ Thin Client 2.3.24256.1</a>
+    </footer>
+
+    <script src="/ShipExecThinClient/Scripts/bundles/jquery?v=ude-zEDQfWuwZazDBGtB_I0FlJazDuB34JJfdajeTRY1"></script>
+
+    <script src="/ShipExecThinClient/Scripts/bundles/bootstrap?v=7k-mK_Lw6GRA4MkvIrgrWipUHc3KUDohIwN2DDpspCI1"></script>
+
+    <script src="/ShipExecThinClient/Scripts/bundles/js?v=KUwnkbR7SGkplER3EIiVQY_D1UsU3ePr7IJiVF7gufI1"></script>
+
+    
+    <script src="/ShipExecThinClient/Scripts/bundles/angular?v=nYe0zp1nPhxnm7KFcaY84HVGH57Hh0rjDj0kjmTLfRA1"></script>
+
+
+
+
+
+</body></html>

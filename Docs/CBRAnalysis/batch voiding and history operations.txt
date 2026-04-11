@@ -1,0 +1,3483 @@
+// Source: #TEST (RONITEST)_Client Business Rules_2468.cs
+// PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: 2.2 Update 4 (21UPDATE4)_cbr doc ready_1721.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: ABB DIGITAL EYE LAB (ABBDigitalEyeLab)_ABB Digital Eye Lab Reference Rule_1566.cs
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    };
+
+// Source: ABB OPTICAL GROUP (ABBOptical)_ABB Optical Group Reference Rule_22.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        var userContext = this.GetUserContext();
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    }
+
+// GetUserContext() // returns user context object or undefined
+    this.GetUserContext = function () {
+        if (this.vm.userContext) return this.vm.userContext;
+        if (this.vm.UserInformation) return this.vm.UserInformation;
+    }
+
+// Source: ACCENTURE (ACCENTUREV5)_UserOnlyData_1572.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+    };
+
+// compare(key) // returns function(a, b) comparison callback
+    function compare(key) {
+        return function(a, b) {
+            if (a[key] > b[key]) return 1;
+            if (a[key] < b[key]) return -1;
+            return 0;
+        };
+    }
+
+// Source: Alight Solutions (ALISOL)_AlightSolutions Client Rules_1842.cs
+// PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function (batchReference, actions, params) {
+    };
+
+// PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function (batchResponse) {
+    };
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function (pkg, userParams) {
+    };
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function (pkg) {
+    };
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    };
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    };
+
+// Source: Alight Solutions (ALISOL)_DirectToMobileCBR_2434.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function (batchReference, actions, params) {
+    };
+
+// this.PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function (batchResponse) {
+    };
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function (pkg, userParams) {
+    };
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function (pkg) {
+    };
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    };
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    };
+
+// Source: AlstonBird (ALBI)_TEST_2505.cs
+// function PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: AM Best (AMBEST)_AMBest Default CBR_2488.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// this.PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: AMERICAN INTERNATIONAL GROUP (AIG)_Shipper Ref = Custom1_25.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    }; 
+
+// Source: American Spoon Foods (ASFW)_ASFCBR_1639.cs
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// Source: Amplifon (AMPN)_Amplifon CBR_1917.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// this.PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: AppliedImaging (APIM)_Appliedimageing_Rule_1853.cs
+// PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(loadValue, shipmentRequest) // returns undefined
+    this.PostVoid = function(loadValue, shipmentRequest) {
+       
+      // $('[name="company"]:eq(0)').val(shipmentRequest.PackageDefaults.Consignee.Company);
+       $('input[ng-model="nameaddress.Email"]').val(shipmentRequest.PackageDefaults.Consignee.Email);
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Barnes & Noble Education, Inc. (BNEDUCAT)_BarnesAndNoble Client BR_1588.cs
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 5 });
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: bhargavitest (BHARGAVITEST)_ClientScriptTest_1591.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Boston Scientific (BOSTON)_Admin_Profile_CBR_2481.cs
+// PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// function history() // returns undefined
+        function history() {
+            vm.history = {
+                searchButton: 'button:contains("Search")',
+                reportSelector: '#reports'
+            };
+
+            $(document).on('click', vm.history.searchButton, selectReportChange);
+            $(document).on('change', vm.history.reportSelector, selectReportChange);
+
+            activate();
+
+            function activate() {
+                if (vm.profile.Name != vm.thinClient.adminProfileName) {
+                    vm.hideButtonExport = true;
+
+                    let reports = [ 'Default', 'Detailed Report', 'Void Report', 'Summary Report' ];
+                    vm.reports = vm.reports.filter(function(report) {
+                        report.TemplateHtml = report.TemplateHtml.replace(/<span.*glyphicon-search.*<\/span>/g, '');
+                        return reports.includes(report.Name);
+                    });
+                }
+            }
+
+            function selectReportChange(event) {
+                if (vm.report?.Name == 'Summary Report') {
+                    vm.hideButtonExport = true;
+                    vm.history.carrierAcceptTableContainer = {
+                        'height': $('.panel-body').height() + 'px',
+                        'overflow-y': 'auto'
+                    };
+
+                    let payload = {
+                        Action: 'summaryReport',
+                        Data: {
+                            startDate: vm.dtstart.toLocaleDateString('en-CA'),
+                            endDate: vm.dtend.toLocaleDateString('en-CA'),
+                            sites: getSites()
+                        }
+                    };
+                    let data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                    thinClient.httpClient('UserMethod', data).then(function (ret) {
+                        debugger;
+                        vm.history.carrierAcceptReport = JSON.parse(atob(ret.Data));
+                        vm.thinClient.loadData.show();
+                    });
+                } else {
+                    vm.hideButtonExport = false;
+                }
+
+                function getSites() {
+                    let sites = vm.UserInformation.SiteId ? vm.sites.filter(function(site) { return site.Id == vm.UserInformation.SiteId;}) : vm.sites;
+                    return sites.map(function(site) { return { name: site.Name }; });
+                }
+            }
+        }
+
+// Source: CBR Doc Ready (CBRDOCREADY)_cbr doc ready_1722.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Chrysler (Chrysler)_Chrysler Reference Rule_26.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+    //    userDataOnlyHistoryView(searchCriteria);    // set in profiles 
+    };
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// function PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// function PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// function CloseAllShippers() // returns void
+     function CloseAllShippers() {
+        debugger;
+        
+        var getManifestItemsList,getManifestItemsemethod,methodParams,authorizationToken;
+        var allOrdersSelectedCarrier = [];
+        var allShipperSelectedCarrier,getShipperCarriersmethod,getShipperCarriersmethodParams,CloseAllShippersResponse,CloseAllShippersResults
+        
+            getShipperCarriersmethod='api/ShippingService/GetShipperCarriers';
+            getManifestItemsemethod='api/ShippingService/GetManifestItems';
+            authorizationToken = clientService.authorizationToken();
+            
+        
+            let selectedValCarrier = AllCarriersList.find(Carriers => Carriers.Id == $("#CarriersList option:selected").val()).Symbol;
+           
+            $.each(Array(AllShipperList.length), function(i)
+            {
+                
+                 getShipperCarriersmethodParams = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                 allShipperSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getShipperCarriersmethod, data: getShipperCarriersmethodParams, async: false, headers: authorizationToken }).responseJSON;
+    
+               if(allShipperSelectedCarrier.Carriers && allShipperSelectedCarrier.Carriers.length !=0){ 
+               
+                    methodParams = {"Carrier":selectedValCarrier,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                    getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + getManifestItemsemethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                    
+                   
+                    if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                    {
+                        debugger;
+                      var CloseManifestmethod,methodParams,CloseAllShippersResults
+                        CloseManifestmethod='api/ShippingService/CloseManifest';
+                         $.each(Array(getManifestItemsList.ManifestItems.length), function(j)
+                          {
+                                  
+                                  
+                                   allOrdersSelectedCarrier.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                              });
+                              methodParams ={"Carrier":selectedValCarrier,"ManifestItems":allOrdersSelectedCarrier,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                              CloseAllShippersResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseManifestmethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                              allOrdersSelectedCarrier = [];
+                    }
+               }
+               
+          
+            });
+            
+            if(CloseAllShippersResponse != undefined)
+            {
+                    if(CloseAllShippersResponse.ErrorCode==-1){
+                            
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers');
+                            
+                        }else
+                        {
+                                CloseAllShippersResults = CloseAllShippersResponse.CloseManifestResults[0].ErrorCode;
+                                if(CloseAllShippersResults!=0){
+                                    
+                                      $('#divAllshippersErrorMsg').hide();
+                                      $('#divAllshippersunsuccessfulcloseoutMsg').show();
+                                      $('#divAllshippersAndCarriersErrorMsg').hide();
+                                      $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                      
+                                      ShowAlert('ErrorModalCloseShippers');
+                                     
+                                }else if(CloseAllShippersResults==0){
+                                    
+                                     $('#divsuccessfulAllShippers').show();
+                                     $('#divsuccessfulAllShippersAndAllCarriers').hide();
+                                     
+                                      ShowAlert('successfulModalCloseShippers');
+                                     
+                                }
+                        }
+           }else
+           {
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers'); 
+                            
+           }
+                         
+       $('#loaderspinnerImg').hide();
+       
+        
+    }
+
+// function ClosecOutAllShippersAndAllCarriers() // returns void
+    function ClosecOutAllShippersAndAllCarriers() {
+        
+                        var CloseAllShippersAllCarrierResponse,closeallgetManifestItemsemethod,CloseAllShippersAllCarriermethod,methodParams,authorizationToken,CloseAllShippersAllCarrierResults,getallShipperallCarriersmethod
+                             CloseAllShippersAllCarriermethod='api/ShippingService/CloseManifest';
+                             getallShipperallCarriersmethod='api/ShippingService/GetShipperCarriers';
+                             closeallgetManifestItemsemethod='api/ShippingService/GetManifestItems';
+                            
+                             var allOrdersSelectedCarrierfromallclose = [];
+                             debugger;
+       
+         $.each(Array(AllCarriersList.length), function(k)
+        {
+             $.each(Array(AllShipperList.length), function(i)
+            {
+                       var getShipperCarriersmethodParameters = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                         authorizationToken = clientService.authorizationToken();
+                         var allShipperallCarrierSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getallShipperallCarriersmethod, data: getShipperCarriersmethodParameters, async: false, headers: authorizationToken }).responseJSON;
+            
+                       if(allShipperallCarrierSelectedCarrier.Carriers && allShipperallCarrierSelectedCarrier.Carriers.length !=0){ 
+                       
+                           var closeallmethodParams = {"Carrier":AllCarriersList[k].Symbol,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                           var getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + closeallgetManifestItemsemethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                            
+                            if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                            {
+                                var CloseManifestmethod,methodParams,authorizationToken,CloseAllShippersResults
+                                    authorizationToken = clientService.authorizationToken();
+                                
+                                       $.each(Array( getManifestItemsList.ManifestItems.length), function(j)
+                                      {
+                                          
+                                           allOrdersSelectedCarrierfromallclose.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                                      });
+                                      var closeallmethodParams ={"Carrier":AllCarriersList[k].Symbol,"ManifestItems":allOrdersSelectedCarrierfromallclose,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                                      CloseAllShippersAllCarrierResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseAllShippersAllCarriermethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                                       allOrdersSelectedCarrierfromallclose = [];
+                            }
+                       }
+             });                  
+        });
+        
+            if(CloseAllShippersAllCarrierResponse != undefined){
+                                 if(CloseAllShippersAllCarrierResponse.ErrorCode==-1){
+                                    
+                                     $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+                                }else
+                                {
+                                        CloseAllShippersAllCarrierResults = CloseAllShippersAllCarrierResponse.CloseManifestResults[0].ErrorCode;
+                                        if(CloseAllShippersAllCarrierResults!=0){
+                                            
+                                        $('#divAllshippersErrorMsg').hide();
+                                        $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                        $('#divAllshippersAndCarriersErrorMsg').hide();
+                                        $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').show();
+                                      
+                                        ShowAlert('ErrorModalCloseShippers');
+                                        }else if(CloseAllShippersAllCarrierResults==0){
+                                            
+                                        $('#divsuccessfulAllShippers').hide();
+                                        $('#divsuccessfulAllShippersAndAllCarriers').show();
+                                      
+                                        ShowAlert('successfulModalCloseShippers');
+                                        }
+                                 }
+            }else{
+                
+                                    $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+            }
+            $('#loaderspinnerImg').hide();
+           
+        
+    }
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function (batchReference, actions, params, vm) {
+    };
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function (batchResponse, vm) {
+    };
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function (pkg, userParams) {
+    };
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function (pkg) {
+    };
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    };
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    };
+
+// Source: Conduent (CONDUENT)_Conduent_CBR_1659.cs
+// function historyDuplicateOnClick() // returns undefined
+function historyDuplicateOnClick() {
+            $('body').delegate('table a[action-duplicate]', 'click', function () {
+            cbr.historyShipment = $(this).attr('action-duplicate');
+            debugger;
+            document.location = '#!/shipping'
+        });
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+this.PreVoid = function (pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+this.PostVoid = function (pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function (packages) {
+    }
+
+// Source: Consumer Health (CONSUMERHEALTH)_Glasko Smith BR_1711.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+        var whereClauses = searchCriteria.WhereClauses;
+        whereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    }
+
+// Source: Customer Solutions Internal Shipping (CSIS)_Client Business Rule_2490.cs
+// PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Demo Company Import (DMCO1)_ClientScriptTest_1605.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+        params.key1 = 'value1';
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DemotestUAT (734934577)_CBR Void Test_1620.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+        params.key1 = 'value1';
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+        alert("Test Test")
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DemotestUAT (734934577)_KeyStroke_1621.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DH_Pace_Trial (DHPACE)_Test_1809.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DRF (DRF)_Test_2448.cs
+// PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Edward Jones  (EdwardJones)_Edward Jones Reference Rules_4.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+//        debugger;
+//        var branchNo = getKeyValue('Custom3', userCustomData)
+		var branchNo = client.getValueByKey('Custom3', this.vm.profile.UserInformation.Address.CustomData);
+        if (branchNo) {
+            searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: branchNo, Operator: 5 });
+        }
+    }
+
+// Source: F Schumacher (FSCHUMAC)_Product Area (8942X4) CBR with PV_1816.cs
+// GetOrderInformationFromCustomer(OrderList, CallBack) // returns undefined
+      GetOrderInformationFromCustomer: function (OrderList, CallBack)
+      {
+        var dataObject = {
+          ServerMethod: 'GetOrderInformation',
+          OrderList: OrderList
+        };
+
+        var ajaxObject = {
+          UserContext: SessionData.GetCurrentUserContext(),
+          Data: JSON.stringify(dataObject)
+        };
+
+        var ajaxRequest = $.ajax(
+        {
+          url: 'api/ShippingService/UserMethod',
+          method: 'POST',
+          contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+          dataType: 'json',
+          data: ajaxObject
+        });
+
+        ajaxRequest.done(function (data)
+        {
+          var jsonData = JSON.parse(data.Data);
+
+          for (var x = 0; x < jsonData.length; x++)
+          {
+            if (PackVerify.CheckForMatchingConsignee(jsonData[x]) === true)
+            {
+              PackVerify.AddCommoditiesToTable(jsonData[x].Details);
+              PackVerify.UpdateReferencesWithOrderNumbers(jsonData[x].Header.Order_Number);
+            }
+            else
+            {
+              /* Add a note to the footer of the dialog. */
+              $('#spanPackVerifyFooter').text('Could not add commodities for order ' + jsonData[x].Header.Order_Number);
+            }
+          }
+        });
+
+        ajaxRequest.fail(function (jqXHR, textStatus)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: { name: 'AjaxError', message: jqXHR.ResponseText } });
+        });
+
+        ajaxRequest.always(function (jqXHR, textStatus, jqXHRError)
+        {
+          if (CallBack && typeof (CallBack) == "function")
+          {
+            CallBack();
+          }
+        });
+      }
+
+// AddCommoditiesToTable(CommodityContents) // returns undefined
+      AddCommoditiesToTable: function (CommodityContents)
+      {
+        /* Incoming CommodityContents Structure - ARRAY. */
+        /*
+          "COMMODITY_CONTENTS_QUANTITY": 2.0,
+          "COMMODITY_CONTENTS_QUANTITY_UNIT_MEASURE": "EACH",
+          "COMMODITY_CONTENTS_UNIT_VALUE": 0.01,
+          "COMMODITY_CONTENTS_PRODUCT_CODE": "MS66184",
+          "COMMODITY_CONTENTS_ORIGIN_COUNTRY": "US",
+          "Order_Number": "50980336.4",
+          "COMMODITY_CONTENTS_DESCRIPTION": "DONT FRET",
+          "COMMODITY_CONTENTS_COMMENTS": null,
+          "COMMODITY_CONTENTS_TARRIFFCODE1": null,
+          "COMMODITY_CONTENTS_TARRIFCODE2": "",
+          "COMMODITY_CONTENTS_AVERAGEWEIGHT": 0.0
+        */
+        try
+        {
+          for (var x = 0; x < CommodityContents.length; x++)
+          {
+            /* Map the CommodityContent object here that will be used on the server.  By matching the structure here, hoping to push it straight to the viewmodel without any translation. */
+            var CommodityObject = {
+              UnitWeight: { Amount: "1" },
+              Quantity: CommodityContents[x].COMMODITY_CONTENTS_QUANTITY,
+              ProductCode: CommodityContents[x].COMMODITY_CONTENTS_PRODUCT_CODE,
+              UnitValue: { Amount: CommodityContents[x].COMMODITY_CONTENTS_UNIT_VALUE, Currency: 'USD' },
+              QuantityUnitMeasure: GetTranslatedUnitOfMeasurement(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY_UNIT_MEASURE),
+              Description: CommodityContents[x].COMMODITY_CONTENTS_DESCRIPTION,
+              OriginCountry: (CommodityContents[x].COMMODITY_CONTENTS_ORIGIN_COUNTRY.length > 0 ? CommodityContents[x].COMMODITY_CONTENTS_ORIGIN_COUNTRY : 'US'),
+              ConsigneePostalCode: (CommodityContents[x].CONSIGNEE_POSTALCODE ? CommodityContents[x].CONSIGNEE_POSTALCODE.substring(0, 5) : null),
+              EntryId: GetRandomNumber(8),
+              OrderNumber: CommodityContents[x].Order_Number,
+              HarmonizedCode: CommodityContents[x].COMMODITY_CONTENTS_TARRIFFCODE1,
+              HarmonizedCode2: CommodityContents[x].COMMODITY_CONTENTS_TARRIFCODE2,
+              AverageWeight: CommodityContents[x].COMMODITY_CONTENTS_AVERAGEWEIGHT,
+              UserData1: CommodityContents[x].COMMODITY_CONTENTS_COMMENTS
+            };
+
+            $('#tablePackVerifyOrderDetails')
+              .append($('<tr />').addClass('not-packed').attr('title', 'Order Number: ' + CommodityObject.OrderNumber)
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_PRODUCT_CODE + ' ' + CommodityContents[x].COMMODITY_CONTENTS_DESCRIPTION))
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY))
+                .append($('<td />').text(0))
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY))
+                .append($('<td />').append('<span class="glyphicon glyphicon-plus trigger-icon add-box-item" title="Add this item to the current box." style="color: green;"></span>'))
+                .data(CommodityObject))
+              .promise().done(function ()
+              {
+                UpdateItemCounts();
+                HideLoader();
+              })
+          }
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'AddCommoditiesToTable()', Error: error, Data: CommodityContents });
+        }
+      }
+
+// ShowPackVerifyDialog(CommodityContents, ShipperReference) // returns undefined
+      ShowPackVerifyDialog: function (CommodityContents, ShipperReference)
+      {
+        /* Delete and re-create the individual container tables.
+          <table class="table-custom" id="tablePackVerifyCutTicketScanResults">
+            <tbody>
+              <tr>
+                <th>Order #</th>
+                <th>Item #</th>
+                <th>Qty</th>
+                <th>Total</th>
+                <th style="width: 32px;"></th>
+              </tr>
+              <tr class="empty-table">
+                <td colspan="6" style="text-align: center;">No items placed in container.</td>
+              </tr>
+            </tbody>
+          </table>
+        */
+        try
+        {
+          /* Get rid of any previous container tables, then create a new empty one. */
+          /* This is more efficient than looking for possible existing table(s) and dealing with them. */
+          $('div.table-box-contents').find('table').remove().promise().done(function (e)
+          {
+            var tableResults = $('<table />').addClass('table-custom').attr('id', 'tablePackVerifyCutTicketScanResults');
+
+            $(tableResults).append($('<tr />')
+              .append($('<th />').text('Order #'))
+              .append($('<th />').text('Item #'))
+              .append($('<th />').text('Qty'))
+              .append($('<th />').text('Total'))
+              .append($('<th />').css('width', '32px')));
+
+            $(tableResults).append($('<tr />').addClass('empty-table')
+              .append($('<td />')
+                .attr('colspan', '6')
+                .css('text-align', 'center')
+                .text('No items placed in container.')));
+
+            $('div.table-box-contents').append($(tableResults));
+
+          });
+
+          $('span.total-container-count').text('1');
+          $('span.current-container-index').text('1');
+          $('span.box-pkg-count').text('0');
+
+          $('#divModalPackVerify').fadeIn(200).promise().done(function ()
+          {
+            // $('body').delegate('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].BoxType"]', 'change', function (e)
+            // {
+            //   $('#selectClonedBoxTypes').first().prop('selectedIndex', $(this).prop('selectedIndex'));
+            //   $('#selectClonedBoxTypes').first().trigger('change').trigger('click');
+            // });
+
+            var i = $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].BoxType"]').prop('selectedIndex');
+
+            $('#selectClonedBoxTypes').prop('selectedIndex', i).trigger('change');
+            $('span.order-number-list').text(ShipperReference);
+
+            ShowOverlay();
+
+            PackVerify.AddCommoditiesToTable(CommodityContents);
+
+            $('#inputScanCutTicket').focus();
+
+          });
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: error, Data: CommodityContents });
+          HideOverlay();
+        }
+      }
+
+// ClosePackVerifyDialog() // returns undefined
+      ClosePackVerifyDialog: function ()
+      {
+        /* Need to reset all the elements on the page. */
+        ResetDivElements(true);
+        HideOverlay();
+      }
+
+// AddAllItemsToCurrentBox() // returns undefined
+      AddAllItemsToCurrentBox: function ()
+      {
+        var tableRows = $('#tablePackVerifyOrderDetails').find('tr.not-packed');
+
+        $(tableRows).each(function (e)
+        {
+          AddRowItemToCurrentBox($(this));
+        });
+      }
+
+// AddNewBoxToCurrentShipment() // returns undefined
+      AddNewBoxToCurrentShipment: function ()
+      {
+        try
+        {
+          /* No box type selected, return out. */
+          if ($('#selectClonedBoxTypes').prop('selectedIndex') === 0)
+          {
+            $('#selectClonedBoxTypes').css('border-color', 'crimson');
+            return false;
+          }
+
+          /* Trigger the button on the shipping screen. */
+          $('#buttonAddPackageToShipment').first().click();
+
+          //need to clone the tablePackVerifyCutTicketScanResults object, fill it with details, append it to table-box-contents
+          var newTable = $('<table />').addClass('table-custom').css('display', 'none');
+
+          $(newTable).append($('<tr />')
+            .append($('<th />').text('Order #'))
+            .append($('<th />').text('Item #'))
+            .append($('<th />').text('Qty'))
+            .append($('<th />').text('Total'))
+            .append($('<th />').css('width', '32px')));
+
+          $(newTable).append($('<tr />').addClass('empty-table')
+            .append($('<td />')
+              .attr('colspan', '6')
+              .css('text-align', 'center')
+              .text('No items placed in container.')));
+
+          /* Hide any visible tables, then show the new one. */
+          $('div.table-box-contents').find('table.table-custom').hide();
+          $('div.table-box-contents').append($(newTable).fadeIn().show());
+
+          /* Reset the box type select element. */
+          $('#selectClonedBoxTypes').prop('selectedIndex', 0).trigger('change');
+
+          UpdateContainerCounts();
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: error });
+        }
+      }
+
+// ParseCutTicket(inVal) // returns undefined
+      ParseCutTicket: function (inVal)
+      {
+        var splitArray = inVal.split(" ", 2);
+        var itemNumber = splitArray[0];
+        var itemQuantity = splitArray[1];
+        var remainingQuantity, shippedQuantity;
+        var matchingArray;
+
+        try
+        {
+          /* Now find the table row that corresponds to the item number passed into the function. */
+          var rowsArray = $('#tablePackVerifyOrderDetails').find('tr.not-packed, tr.not-complete');
+
+          matchingArray = $.grep(rowsArray, function (pVal, pIndex)
+          {
+            remainingQuantity = parseFloat($(pVal).find('td:eq(3)').text());
+            shippedQuantity = parseFloat($(pVal).find('td:eq(2)').text());
+            return (($(pVal).text().split(" ")[0] == itemNumber) && (itemQuantity == remainingQuantity));
+          })[0];
+
+          /* The matchingArray will contain rows that match the item needed with the quantity needed. */
+          /* If the array is empty, find rows that have enough material to use. */
+          if ($.isEmptyObject(matchingArray))
+          {
+            matchingArray = $.grep(rowsArray, function (pVal, pIndex)
+            {
+              remainingQuantity = parseFloat($(pVal).find('td:eq(3)').text());
+              shippedQuantity = parseFloat($(pVal).find('td:eq(2)').text());
+              return (($(pVal).text().split(" ")[0] == itemNumber) && (itemQuantity < remainingQuantity));
+            })[0];
+          }
+
+          /* If the matchingArray is still empty, then the user tried to scan something into the box that wasn't part of the order.  Raise an error. */
+          if ($.isEmptyObject(matchingArray))
+          {
+            this.ShowErrorAlert('ERROR: Item ' + itemNumber + ' not found within currently loaded order(s).');
+            return false;
+          }
+
+          $(matchingArray).data().ScanQuantity = itemQuantity;
+          $(matchingArray).data().ItemNumber = itemNumber;
+
+          this.AddRowItemToCurrentBox(matchingArray);
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'ParseCutTicket()', Error: error });
+        }
+      }
+
+// GetOrderInformationFromCustomer(OrderList, CallBack) // returns undefined
+      GetOrderInformationFromCustomer: function (OrderList, CallBack)
+      {
+        var dataObject = {
+          ServerMethod: 'GetOrderInformation',
+          OrderList: OrderList
+        };
+
+        var ajaxObject = {
+          UserContext: SessionData.GetCurrentUserContext(),
+          Data: JSON.stringify(dataObject)
+        };
+
+        var ajaxRequest = $.ajax(
+        {
+          url: 'api/ShippingService/UserMethod',
+          method: 'POST',
+          contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+          dataType: 'json',
+          data: ajaxObject
+        });
+
+        ajaxRequest.done(function (data)
+        {
+          var jsonData = JSON.parse(data.Data);
+
+          for (var x = 0; x < jsonData.length; x++)
+          {
+            if (PackVerify.CheckForMatchingConsignee(jsonData[x]) === true)
+            {
+              PackVerify.AddCommoditiesToTable(jsonData[x].Details);
+              PackVerify.UpdateReferencesWithOrderNumbers(jsonData[x].Header.Order_Number);
+            }
+            else
+            {
+              /* Add a note to the footer of the dialog. */
+              $('#spanPackVerifyFooter').text('Could not add commodities for order ' + jsonData[x].Header.Order_Number);
+            }
+          }
+        });
+
+        ajaxRequest.fail(function (jqXHR, textStatus)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: { name: 'AjaxError', message: jqXHR.ResponseText } });
+        });
+
+        ajaxRequest.always(function (jqXHR, textStatus, jqXHRError)
+        {
+          if (CallBack && typeof (CallBack) == "function")
+          {
+            CallBack();
+          }
+        });
+      }
+
+// AddCommoditiesToTable(CommodityContents) // returns undefined
+      AddCommoditiesToTable: function (CommodityContents)
+      {
+        /* Incoming CommodityContents Structure - ARRAY. */
+        /*
+          "COMMODITY_CONTENTS_QUANTITY": 2.0,
+          "COMMODITY_CONTENTS_QUANTITY_UNIT_MEASURE": "EACH",
+          "COMMODITY_CONTENTS_UNIT_VALUE": 0.01,
+          "COMMODITY_CONTENTS_PRODUCT_CODE": "MS66184",
+          "COMMODITY_CONTENTS_ORIGIN_COUNTRY": "US",
+          "Order_Number": "50980336.4",
+          "COMMODITY_CONTENTS_DESCRIPTION": "DONT FRET",
+          "COMMODITY_CONTENTS_COMMENTS": null,
+          "COMMODITY_CONTENTS_TARRIFFCODE1": null,
+          "COMMODITY_CONTENTS_TARRIFCODE2": "",
+          "COMMODITY_CONTENTS_AVERAGEWEIGHT": 0.0
+        */
+        try
+        {
+          for (var x = 0; x < CommodityContents.length; x++)
+          {
+            /* Map the CommodityContent object here that will be used on the server.  By matching the structure here, hoping to push it straight to the viewmodel without any translation. */
+            var CommodityObject = {
+              UnitWeight: { Amount: "1" },
+              Quantity: CommodityContents[x].COMMODITY_CONTENTS_QUANTITY,
+              ProductCode: CommodityContents[x].COMMODITY_CONTENTS_PRODUCT_CODE,
+              UnitValue: { Amount: CommodityContents[x].COMMODITY_CONTENTS_UNIT_VALUE, Currency: 'USD' },
+              QuantityUnitMeasure: GetTranslatedUnitOfMeasurement(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY_UNIT_MEASURE),
+              Description: CommodityContents[x].COMMODITY_CONTENTS_DESCRIPTION,
+              OriginCountry: (CommodityContents[x].COMMODITY_CONTENTS_ORIGIN_COUNTRY.length > 0 ? CommodityContents[x].COMMODITY_CONTENTS_ORIGIN_COUNTRY : 'US'),
+              ConsigneePostalCode: (CommodityContents[x].CONSIGNEE_POSTALCODE ? CommodityContents[x].CONSIGNEE_POSTALCODE.substring(0, 5) : null),
+              EntryId: GetRandomNumber(8),
+              OrderNumber: CommodityContents[x].Order_Number,
+              HarmonizedCode: CommodityContents[x].COMMODITY_CONTENTS_TARRIFFCODE1,
+              HarmonizedCode2: CommodityContents[x].COMMODITY_CONTENTS_TARRIFCODE2,
+              AverageWeight: CommodityContents[x].COMMODITY_CONTENTS_AVERAGEWEIGHT,
+              UserData1: CommodityContents[x].COMMODITY_CONTENTS_COMMENTS
+            };
+
+            $('#tablePackVerifyOrderDetails')
+              .append($('<tr />').addClass('not-packed').attr('title', 'Order Number: ' + CommodityObject.OrderNumber)
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_PRODUCT_CODE + ' ' + CommodityContents[x].COMMODITY_CONTENTS_DESCRIPTION))
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY))
+                .append($('<td />').text(0))
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY))
+                .append($('<td />').append('<span class="glyphicon glyphicon-plus trigger-icon add-box-item" title="Add this item to the current box." style="color: green;"></span>'))
+                .data(CommodityObject))
+              .promise().done(function ()
+              {
+                UpdateItemCounts();
+                HideLoader();
+              })
+          }
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'AddCommoditiesToTable()', Error: error, Data: CommodityContents });
+        }
+      }
+
+// CheckForMatchingConsignee(CustomerOrderObject) // returns boolean|undefined
+      CheckForMatchingConsignee: function (CustomerOrderObject)
+      {
+        try
+        {
+          var con = $('name-address[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]');
+          var a = {
+            conCompany: $(con).find('input[name="company"]').val().trim().toUpperCase(),
+            conAddress1: $(con).find('input[name="address1"]').val().trim().toUpperCase(),
+            conCity: $(con).find('input[name="city"]').val().trim().toUpperCase(),
+            conState: $(con).find('input[name="stateProvince"]').val().trim().toUpperCase(),
+            conPostalCode: $(con).find('input[name="postalCode"]').val().trim().substring(0, 5).toUpperCase()
+          };
+
+          var hdr = CustomerOrderObject.Header;
+          var b = {
+            conCompany: hdr.CONSIGNEE_COMPANY.trim().toUpperCase(),
+            conAddress1: hdr.CONSIGNEE_ADDRESS_LINE_1.trim().toUpperCase(),
+            conCity: hdr.CONSIGNEE_CITY.trim().toUpperCase(),
+            conState: hdr.CONSIGNEE_STATEPROVINCE.trim().toUpperCase(),
+            conPostalCode: hdr.CONSIGNEE_POSTALCODE.trim().substring(0, 5).toUpperCase()
+          };
+
+          if (JSON.stringify(a) != JSON.stringify(b))
+          {
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + hdr.SHIPPER_REFERENCE + '. Primary order data to follow.', Data: a });
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + hdr.SHIPPER_REFERENCE + '. Subsequent order data to follow.', Data: b });
+          }
+
+          /* Quick comparison to see if the strings match. */
+          return (JSON.stringify(a) == JSON.stringify(b));
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'CheckForMatchingConsignee()', Error: error });
+        }
+      }
+
+// CheckForCompletedPacking() // returns undefined
+      CheckForCompletedPacking: function ()
+      {
+        /* Enable the 'Done' button if the order is completely packed. */
+        if ($('#selectClonedBoxTypes').prop('selectedIndex') === 0)
+        {
+          $('#selectClonedBoxTypes').css('border-color', 'crimson');
+        }
+
+        if (($('#tablePackVerifyOrderDetails').find('tr.not-packed, tr.not-complete').length == 0) && ($('#selectClonedBoxTypes').prop('selectedIndex') > 0))
+        {
+          $('#divPackVerifyButtonGroup').find('input[type=button]').prop('disabled', false);
+        }
+      }
+
+// GetCurrentWeightFromScale() // returns undefined
+      GetCurrentWeightFromScale: function ()
+      {
+        var w;
+
+        if ($('input[type=button][ng-click="vm.getWeight()"]').attr('disabled') === 'disabled')
+        {
+          w = $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').val();
+          $('span.dim-val.dim-weight').text(w);
+        }
+        else
+        {
+          $('input[type=button][ng-click="vm.getWeight()"]').click(function ()
+          {
+            w = $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').val();
+            $('span.dim-val.dim-weight').text(w);
+          });
+        }
+      }
+
+// AddRowItemToCurrentBox(triggerElement) // returns undefined
+      AddRowItemToCurrentBox: function (triggerElement)
+      {
+        try
+        {
+          var tableRow = $(triggerElement).closest('tr');
+          var commodityContent = $(tableRow).data();
+
+          /* No box type selected, paint the border red. */
+          // if ($('#selectClonedBoxTypes').prop('selectedIndex') === 0)
+          // {
+          //   $('#selectClonedBoxTypes').css('border-color', 'crimson');
+          // }
+
+          /* This adds the commodities to the 'Goods' tab. */
+          var packageIndex = $('span.current-container-index').text();
+          packageIndex -= 1;
+          this.AddCommoditiesToPackage(packageIndex, commodityContent);
+
+          var newRow = $('<tr />').css('display', 'none');
+          var itemDescText = $(tableRow).find('td:eq(0)').text();
+          var itemNumber = itemDescText.split(' ')[0];
+          var tableCurrent = $('div.table-box-contents table.table-custom:visible');
+
+          var trData = {};
+          trData.OrderNumber = commodityContent.OrderNumber;
+          trData.ItemNumber = itemNumber;
+          trData.ItemDescription = itemDescText;
+          trData.StartVal = parseFloat($(tableRow).find('td:eq(1)').text());
+          trData.ShippedVal = parseFloat(commodityContent.ScanQuantity);
+          trData.RemainingVal = parseFloat(trData.StartVal - trData.ShippedVal);
+          trData.TotalVal = trData.ShippedVal;
+
+          /* For the total value, find each entry with the same item# and total the values and add the shipped value. */
+          $(tableCurrent).find('tr:gt(0)').find('td:eq(1)').each(function (e)
+          {
+            if ($(this).text() == trData.ItemNumber)
+            {
+              trData.TotalVal += parseFloat($(this).closest('tr').find('td:eq(2)').text());
+            }
+          });
+
+          /* Both html tables will have data objects on the tr's. */
+          /* Make the .EntryId element inside each tr data() object equal so it serves as a key between the two tables. */
+          trData.EntryId = $(tableRow).data().EntryId;
+
+          $(newRow).append($('<td />').text(commodityContent.OrderNumber))
+            .append($('<td />').text(itemNumber))
+            .append($('<td />').text(trData.ShippedVal))
+            .append($('<td />').text(trData.TotalVal))
+            .append($('<td />').append('<span class="glyphicon glyphicon-minus trigger-icon" title="Remove this item from the current box." style="color: crimson;"></span>'))
+            .data(trData);
+
+          /* If the destination table (container) is empty, get rid of the single '.empty-table' row. */
+          // if ($('tr.empty-table').is(':visible'))
+          // {
+            $('tr.empty-table').fadeOut().promise().done(function ()
+            {
+              $(tableCurrent).append($(newRow).fadeIn().show()).promise().done(function (e) { UpdateItemCounts(); });
+            });
+          // }
+          // else
+          // {
+          //   $(tableCurrent).append($(newRow).fadeIn().show());
+          // }
+
+          /* Now update the classes and amounts from the incoming order data (table on left side of screen). */
+          /* We can link the source and destination order by using the .EntryKey data() element. */
+
+          /* Update the shipped quantity. */
+          var previouslyShipped = parseFloat($(tableRow).find('td:eq(2)').text());
+
+          var a, b;
+          a = parseFloat(commodityContent.ScanQuantity) + parseFloat(previouslyShipped);
+          b = parseFloat(trData.StartVal) - a;
+
+          $(tableRow).find('td:eq(2)').text(a);
+          $(tableRow).find('td:eq(3)').text(b);
+
+          var trCount = ($('#tablePackVerifyOrderDetails').find('tr').length - 1);
+
+          /* Update the shipped amount, change the color to green. */
+          /* Set Shipped value to the value of the 2nd td. */
+          if ($(tableRow).find('td:eq(3)').text() > 0)
+          {
+            $(tableRow).removeClass('not-packed').addClass('not-complete');
+
+            // /* If there is only a single row then change the class and return. */
+            // if (trCount > 1)
+            // {
+            //   var insertTargetRow = $(tableRow).closest('table.table-custom').find('tr.packed').first();
+            //   if (insertTargetRow.length === 0)
+            //   {
+            //     insertTargetRow = $(tableRow).closest('table.table-custom').find('tr.not-packed').last();
+            //     //$(tableRow).detach().insertAfter(insertTargetRow);
+            //   }
+            //   else
+            //   {
+            //     //$(tableRow).detach().insertBefore(insertTargetRow);
+            //   }
+            // }
+          }
+          else
+          {
+            $(tableRow).removeClass('not-complete not-packed').addClass('packed').promise().done(function () { UpdateItemCounts(); });
+            /* Change the icon, don't allow a click. */
+            $(tableRow).find('td:eq(4) > span').removeClass('glyphicon-plus add-box-item').addClass('glyphicon-ban-circle').css('color', 'crimson').attr({ 'title': '' });
+
+            // if (trCount > 1)
+            // {
+            //   /* Now move the row we just added to the box to the end of the list. */
+            //   var lastRow = $(tableRow).closest('table.table-custom').find('tr').last();
+            //   //$(tableRow).detach().insertAfter(lastRow);
+            // }
+          }
+
+          this.CheckForCompletedPacking();
+
+          /* If the user clicked on the last row of the table, don't need to detach and append it.  Exit here. */
+          //if ($(tableRow).index() == ($(tableRow).closest('table.table-custom').find('tr').length - 1)) { return; }
+
+          // if ($(tableRow).closest('table.table-custom').find('tr').length > 2)
+          // {
+          //   /* Now move the row we just added to the box to the end of the list. */
+          //   var lastRow = $(tableRow).closest('table.table-custom').find('tr').last();
+          //   $(tableRow).detach().insertAfter(lastRow);
+          // }
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: error});
+        }
+      }
+
+// RemoveCurrentBoxFromShipment() // returns undefined
+      RemoveCurrentBoxFromShipment: function ()
+      {
+        /* If there is only a single box in this shipment, return out. */
+        var tableCount = $('div.table-box-contents table.table-custom').length;
+        if (tableCount <= 1) { UpdateItemCounts(); return false; }
+
+        /* Click the button on the main page to remove the box. */
+        $('#buttonRemovePackageFromShipment').first().trigger('click');
+
+        /* Send the items from the current box back to the list. */
+        var tableItemObjects = $('div.table-box-contents table.table-custom:visible tr:gt(1)');
+
+        $(tableItemObjects).each(function (e)
+        {
+          PackVerify.RemoveThisTableRow(this);
+        }).promise().done(function (e)
+        {
+          var prevContainerIndex = ($('div.table-box-contents table.table-custom:visible').index() - 1);
+
+          $('div.table-box-contents table.table-custom:visible').fadeOut().remove().promise().done(function ()
+          {
+            //$('div.table-box-contents table.table-custom:eq(' + prevContainerIndex + ')').fadeIn().show();
+            PackVerify.ShowContainerTable(prevContainerIndex);
+            UpdateContainerCounts();
+          });
+        });
+      }
+
+// AddOrderNumbersToList() // returns undefined
+      AddOrderNumbersToList: function ()
+      {
+        var inVal = $('#textOrderNumber').val();
+        var bExists;
+
+        /* Do not add duplicate entries to the select box. */
+        $('#selectConsolidatedOrders').find('option').each(function ()
+        {
+          if (this.text == inVal)
+          {
+            bExists = true;
+            /* Break out of the .each loop. */
+            return false;
+          }
+        });
+
+        if (bExists == true)
+        {
+          $('#textOrderNumber').val([]).focus();
+          return false;
+        }
+
+        if (inVal.length > 0)
+        {
+          $('#selectConsolidatedOrders').append($('<option />')
+            .val(inVal)
+            .text(inVal)
+            .trigger('change'))
+            .promise().done(function ()
+            {
+              $('#textOrderNumber').val([]).focus();
+            });
+        }
+      }
+
+// ShowConsolidatedOrderDialog() // returns undefined
+      ShowConsolidatedOrderDialog: function ()
+      {
+        /* Add the first order at the top of the list. */
+        /* The first order is already set by the user, then the 'Consolidate Orders' button on the Pack Verify dialog triggers this function. */
+        $('#divModalConsolidateShipments').fadeIn(400)
+          .promise().done(function ()
+          {
+            /* Clear the input box, then focus on it. */
+            $('#textOrderNumber').val([]).focus();
+          });
+      }
+
+// SaveConsolidatedOrderNumbers() // returns undefined
+      SaveConsolidatedOrderNumbers: function ()
+      {
+        try
+        {
+          /* Append the shipper reference with each item in the select list in csv format. */
+          /* Once this is done, change the SSBR on post load to loop through each option in the csv list. */
+          var inputShipperReference = $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]');
+          var shipperReferenceVal = $(inputShipperReference).val();
+
+          /* If the user closes the dialog box, then opens it back up, we don't want to check the same orders more than once so only process what was entered into the dialog box this time. */
+          var ordersToQuery = '';
+
+          /* Loop through all the orders in the select box and determine if they are already in the list. */
+          $('#selectConsolidatedOrders').find('option').each(function (i, v)
+          {
+            /* Remove the spaces before the commas for comparison. */
+            var arrayOrders = shipperReferenceVal.split(",").map(function (item)
+            {
+              return item.trim();
+            });
+
+            /* If the current option value is NOT in the list within the Shipper Reference field, add it. */
+            if ($.inArray(v.value.trim(), arrayOrders) == -1)
+            {
+              ordersToQuery += v.value.trim() + ',';
+              //shipperReferenceVal += ',' + v.value;
+            }
+
+            /* Remove the option once it is added to the input box. */
+            $(this).remove();
+
+          }).promise().done(function ()
+          {
+            /* Done creating the list of orders to get from the server which is now held in the ordersToQuery variable. */
+
+            /* Hide the div. */
+            $('#divModalConsolidateShipments').hide();
+
+            /* Make sure there are orders in the list. */
+            if (ordersToQuery.length > 0)
+            {
+              PackVerify.GetOrderInformationFromCustomer(ordersToQuery);
+            }
+            else
+            {
+              PackVerify.ShowErrorAlert('ERROR: No unique orders to pull from the server.  All consolidated orders have already been added to this shipment.');
+            }
+          });
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'SaveConsolidatedOrderNumbers()', Error: error });
+        }
+      }
+
+// UpdateReferencesWithOrderNumbers(OrderNumber) // returns undefined
+      UpdateReferencesWithOrderNumbers: function (OrderNumber)
+      {
+        var inputShipperReference = $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]');
+        var inputMiscReference07 = $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]');
+        var shipperReferenceVal = $(inputShipperReference).val() + ',' + OrderNumber;
+        //shipperReferenceVal += ',' + OrderNumber;
+
+        /* Set these input values.  ShipperReference is used by the customer, MiscReference7 is used by the SBR to update each record post-ship. */
+        /* ShipperReference ONLY keeps the first order number, before the comma, MiscReference7 keeps the entire string. */
+        /* On the server-side, if MiscReference7 contains a comma, each item in the csv list gets posted back.  If MiscReference7 is empty, the ShipperReference is used instead for a single post-back. */
+        $(inputShipperReference).val(shipperReferenceVal);
+        $(inputMiscReference07).val(shipperReferenceVal);
+        $('span.order-number-list').text(shipperReferenceVal);
+      }
+
+// RemoveThisTableRow(objElement) // returns undefined
+      RemoveThisTableRow: function (objElement)
+      {
+        var thisRow = $(objElement).closest('tr');
+        var tableObj = $(objElement).closest('table');
+        var tableRows = $(tableObj).find('tr').length;
+        var trData = $(thisRow).data();
+
+        var removedQuantity = parseFloat($(thisRow).find('td:eq(2)').text());
+
+        try
+        {
+          $(thisRow).fadeOut().promise().done(function ()
+          {
+            /* Now remove it from this table and add it to the item list table. */
+            $(this).remove();
+
+            var firstRow = $('#tablePackVerifyOrderDetails').find('tr').first();
+
+            $('#tablePackVerifyOrderDetails tr').filter(function (index)
+            {
+              return $(this).data().EntryId == trData.EntryId;
+
+            }).fadeOut('fast').promise().done(function ()
+            {
+              /* Need to remove commodities from current view model. */
+              var currentContainerIndex = (parseInt($('span.current-container-index').text()) - 1);
+              PackVerify.RemoveCommoditiesFromPackage(currentContainerIndex, $(this).data());
+
+              trData.ShippedVal -= removedQuantity;
+
+              $(this).find('td:eq(1)').text(trData.StartVal);
+              $(this).find('td:eq(2)').text(trData.ShippedVal);
+              $(this).find('td:eq(3)').text(trData.StartVal);
+
+              $(this).find('td:eq(4) > span').removeClass('glyphicon-ban-circle').addClass('glyphicon-plus add-box-item').attr({ 'title': 'Add this item to the current box.' });
+
+              $(this).removeClass('packed not-complete')
+                .addClass('not-packed')
+                .detach()
+                .insertAfter(firstRow)
+                .fadeIn('fast').promise().done(function (e) { UpdateItemCounts(); });
+            });
+
+            /* Show the 'Empty Table' text. */
+            if (tableRows <= 3)
+            {
+              $('#tablePackVerifyCutTicketScanResults').find($('tr.empty-table').fadeIn());
+            }
+
+          });
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: error });
+        }
+      }
+
+// ShowContainerTable(tableIndex) // returns undefined
+      ShowContainerTable: function (tableIndex)
+      {
+        try
+        {
+          var currentContainer = $('div.table-box-contents table.table-custom:visible');
+          var targetContainer;
+
+          /* fallbackContainer is used when the last table in the container is reached.  Go back to the beginning on 'next', to the end on 'prev'. */
+          //var fallbackContainer;
+          var uiNavButton;
+
+          //console.log($('span.current-container-index.container-val').text());
+          var currentContainerIndex = parseInt($('span.current-container-index.container-val').text());
+
+          switch (tableIndex)
+          {
+            case 'prev':
+              // targetContainer = $('div.table-box-contents table.table-custom:eq(' + ($(currentContainer).index() - 1) + ')');
+              targetContainer = $('div.table-box-contents table.table-custom:eq(' + (currentContainerIndex - 2) + ')');
+
+
+              //fallbackContainer = $('div.table-box-contents table.table-custom').last();
+              uiNavButton = $('button[type=button][ng-click="vm.previousPackage();"]').first();
+              break;
+
+            case 'next':
+              targetContainer = $('div.table-box-contents table.table-custom:eq(' + ($(currentContainer).index() + 1) + ')');
+              //fallbackContainer = $('div.table-box-contents table.table-custom').first();
+              uiNavButton = $('button[type=button][ng-click="vm.nextPackage();"]').first();
+              break;
+
+            default:
+              targetContainer = $('div.table-box-contents table.table-custom:eq(' + tableIndex + ')');
+              break;
+          }
+
+          // if (targetContainer.length === 0) {
+          //   targetContainer = fallbackContainer;
+          // }
+
+          $(uiNavButton).click();
+
+          $(currentContainer).fadeOut(200).hide().promise().done(function ()
+          {
+            var rows = $(targetContainer).find('tr').length;
+            if (rows > 2)
+            {
+              $(targetContainer).find('tr.empty-table').hide();
+            }
+            $(targetContainer).fadeIn(200).show().promise().done(function () { UpdateItemCounts(); });
+          });
+
+          /* Update the text to show 'Container X of Y'.  .index() + 1 as the index is 0 based. */
+          $('span.current-container-index').text($(targetContainer).index() + 1);
+
+          /* Now get the box associated with the table and change the select option. */
+          var selIndex = $(targetContainer).data().SelectedIndex;
+
+          $('#selectClonedBoxTypes').prop('selectedIndex', selIndex);
+
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: GetCallingFunctionName(), Error: error });
+        }
+      }
+
+// Source: FIS Global (FIS)_FIS Global Reference Rules_96.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference19', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+           var userId = userContext.UserId;
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference19 = userId;
+        }
+       };
+
+// Source: GAP (GAP)_Rule with Mail Innov. Billing_1888.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// this.PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: GAP INC (GAPMailrooms)_French changes_1862.cs
+// function PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: GAP INC (GAPMailrooms)_French RH_1871.cs
+// History() // returns void
+    this.History = function () {
+        'h4:contains("History")'.$textToFrench();
+        angular.element(document).ready(function () {
+            translateReportsToFrench();
+        });
+         
+        function translateReportsToFrench () {
+            $('#reports option').each(function () {
+                if (client.translateToFrench[this.text] !== undefined) {
+                    $(this).attr('label', client.translateToFrench[this.text]);
+                }
+            });
+        }
+    }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// function VoidAll(Package) // returns undefined
+  function VoidAll(Package)
+  {
+    console.log(Package);
+
+    $('#ShipID').val($(Package).data('custom-attribute4'));
+    $('#GlobalMSn').val($(Package).data('custom-attribute3'));
+    $('#Carrier').val($(Package).data('custom-attribute2'));
+
+    OpenModalClose()
+
+  }
+
+// function VoidReal() // returns undefined
+  function VoidReal()
+  {
+    var ShipID = $('#ShipID').val();
+    var GlobalMSn = $('#GlobalMSn').val();
+    var Carrier = $('#Carrier').val();
+
+    var searchParams =
+    {
+      "SearchCriteria": {
+        "Skip": 0,
+        "Take": 200,
+        "WhereClauses": [
+          {
+            "FieldName": "ShipId",
+            "FieldValue": ShipID,
+            "Operator": 0
+          }
+        ],
+        "OrderByClauses": [
+          {
+            "FieldName": "GlobalMsn",
+            "Direction": "desc"
+          }
+        ]
+      },
+      "CompanyId": "4cf9324f-c58c-4694-ad37-3adcd3056c9b"
+    };
+    var data = searchParams;
+    var response = client.thinClientAPIRequest('SearchPackageHistory', data, false).done(function (response)
+    {
+      console.log(response);
+      if (response.ErrorCode != 0)
+      {
+        client.alert.Danger(response.ErrorMessage);
+      } else
+      {
+        console.log(response.Packages.length)
+        console.log(response.Packages)
+        response.Packages.forEach((package2, idx, array) =>
+        {
+          console.log(package2.GlobalMsn);
+          var currentPackage = [];
+          currentPackage.push(package2.GlobalMsn);
+          var voidParams =
+          {
+            "GlobalMsns": currentPackage,
+            "CompanyId": "4cf9324f-c58c-4694-ad37-3adcd3056c9b"
+          };
+          console.log('Processing: ' + package2.GlobalMsn)
+          var data2 = voidParams;
+		  console.log(voidParams);
+          var response2 = client.thinClientAPIRequest('VoidPackages_History', data2, true).done(function (response2)
+          {
+            console.log(response2);
+            if (response2.Packages[0].ErrorCode != 0)
+            {
+              client.alert.Danger(response2.Packages[0].ErrorMessage)
+            }
+            if (idx === array.length - 1)
+            {
+              CloseModalClose();
+              var elemento = document.querySelector('button[ng-click="vm.changeReport()"]'); if (elemento) { elemento.click(); }
+            }
+
+          });
+        });
+       
+      }
+    });
+  }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    var checkExist = setInterval(function ()
+        {
+          if ($('table[ng-table="vm.tableParamsForDetailed"] tr').length > 1)
+          {
+            clearInterval(checkExist);
+            $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)').find('td:eq(2) > div:not(.ng-hide)').html(function() 
+            {
+                var trackingN = $(this).text().trim();
+                
+                
+              if(trackingN.startsWith('1Z')) {
+              return "<a href=https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }   else {
+              return "<a href=https://online.chrobinson.com/tracking/#/?trackingNumber=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }
+            });
+          }
+        }, 100);
+    }
+
+// Source: GlaxoSmithKline LLC (gsk)_Glasko Smith BR_69.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        debugger;
+        var whereClauses = searchCriteria.WhereClauses;
+        whereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 5 });
+    }
+
+// Source: Gordon Foods (GORDONFOODS)_GFS Client Script_2439.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: HandsOn (HANDSON)_Scanship_1744.cs
+// function(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// function(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// function(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// function(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: HARLEY DAVIDSON (HD)_HD CBR 2.3 Fix_1758.cs
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function (pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function (pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function (packages) {
+    }
+
+// Source: HARLEY DAVIDSON (HD)_Phase 2_2436.cs
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+        //debugger;
+        for (let i = 0; i < packages.length; i++)
+        {
+            const currentDate = new Date();
+            currentDate.setDate(currentDate.getDate());
+            
+            const shipDate = new Date(packages[i].Shipdate.Year,packages[i].Shipdate.Month-1,packages[i].Shipdate.Day);
+            //alert(packages[i].Shipdate.Year + " | " + packages[i].Shipdate.Month + " | " + packages[i].Shipdate.Day)
+            //alert(shipDate)
+            
+            const diffTime = Math.abs(shipDate - currentDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+            //console.log(diffTime + " milliseconds");
+            //alert(diffDays + " days");
+            if(diffDays > 30)
+            {
+                packages[i].CantPrint = true;
+            }
+        }
+    }
+
+// Source: Henry Schein (HS)_E42 Client Business Rules_1911.cs
+// PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Hyve Solutions (HYVE)_Hyve_Solutions_CBR_1593.cs
+// function PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// function PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function (batchReference, actions, params, vm) {
+    };
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function (batchResponse, vm) {
+    };
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function (pkg, userParams) {
+    };
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function (pkg) {
+    };
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: client.userContext.UserId, Operator: 0 });
+    };
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    };
+
+// Source: Joy Accessories Inc (JOY)_JOY CBR_1863.cs
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: KeithCo (KC)_roni_1720.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Lear Corporation (LEAR)_Lear_client_Businessrules_1810.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Level 9 Sports (LEVEL9SPORTS)_L9 Client Rules_1704.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// this.PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: LyondellBasell (LYON)_LYB_Company_Client_Side_1712.cs
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        console.log("postsearch");
+        console.log(this.vm.shippers);
+        
+        var s = this.vm.shippers;
+        for (var x=0; x < s.length -1; x++){
+            
+            var w = {};
+            w.FieldName = 'Shipper';
+            w.FieldValue = s[x].Symbol;
+            w.Operator = 0;
+        
+            searchCriteria.WhereClauses.push(w);
+        }
+
+
+        
+           
+            //s = this.vm.shippers[0].Symbol;
+            
+            //w.FieldValue = s[0];
+
+
+            //$('input[type=text][ng-model="vm.miscRef9"]').val(dealerNum);
+        
+
+        
+
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) 
+    {
+      var checkExist = setInterval(function ()
+      {
+        if ($('table[ng-table="vm.tableParamsForDetailed"] tr').length > 1)
+        {
+          clearInterval(checkExist);
+          $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)').find('td:eq(2) > div:not(.ng-hide)').html(function() 
+          {
+            return "<a href=https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+          });
+        }
+      }, 100);
+    }
+
+// Source: M&T Bank (MTBank)_MTBank_1506.cs
+// function historyReady() // returns undefined
+function historyReady() {
+    $('body').delegate('#CostCenterReport', 'click', function () {
+        getCostCenterReport(this);
+    });
+}
+
+// function getCostCenterReport(element) // returns jQuery promise from $.post or undefined
+function getCostCenterReport(element) {
+    debugger;
+    var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+    var authorizationToken = clientService.authorizationToken();
+    var context = client.userContext;
+    var costcenter = $(element).attr('data-costcenter');
+    if (costcenter) {
+        var searchCriteria = { DateStart: $('input[ng-model="vm.dtstart"]').val(), DateEnd: $('input[ng-model="vm.dtend"]').val(), CostCenter: costcenter };
+        var data = { Action: element.id, Content: JSON.stringify(searchCriteria) };
+       return $.post({ url:shipExecServiceUrl +'/UserMethod',
+              data: {UserContext: userContext, Data:JSON.stringify(data)}, headers: authorizationToken},
+            function (response, status, xhr) {
+                downloadFile(costcenter, response["Data"]);
+            }
+        ).done(function () {
+        });
+    }
+}
+
+// Source: Marchon (MARCHON)_Marchon Client Side Business Rules_1839.cs
+// function PageLoaded(location) // returns void
+this.PageLoaded = function(location) {
+        // Hide History and End of Day menus
+        angular.element('a:contains("End of Day")').hide();
+        angular.element('a:contains("History")').hide();
+        
+        // Go to Shipping screen
+        if (location === '/')
+        {
+            document.location = '#!/shipping';
+        }
+    }
+
+// function PreProcessBatch(batchReference, actions, params) // returns void
+this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns void
+this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Marchon (MARCHON)_MarchonCBR_Manager_1845.cs
+// PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Mazda (MAZDA)_CBR Mazda_1856.cs
+// PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: McIlHenny Revised (MCILHENNYREVISED)_McIlHenny Client Side Rules_1687.cs
+// function PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+this.PreProcessBatch = function (batchReference, actions, params, vm) {
+
+        //alert("batchReference:" + batchReference);
+
+        // Get the shipper from the shipper drop down and store in params for server side
+        var shipper = $('#shipperList').val();
+        //alert(shipper);
+        params.shipper = shipper;
+
+        // Get the order source from the radio button checked and store in params for server side
+        var source = $('#orderSource input[type=radio]:checked').val();
+        //alert(source);
+        params.source = source;
+
+        //console.log($.isArray(params));
+        //console.log(typeof params);
+
+        // Get the service from the service level drop down and store in params for server side
+        var service = $('#serviceList').val();
+        //alert(service);
+        params.service = service;
+
+        // Get the quantity/topx from the revised batch reference field
+        // Get the batch reference from the revised batch reference field
+
+        //var topx = $('#topX').val();
+        //alert(topx);
+
+        //var batchnumber = $('#batchNumber').val();
+        //alert(batchnumber);
+    }
+
+// function PostProcessBatch(batchResponse, vm) // returns undefined
+this.PostProcessBatch = function (batchResponse, vm) {
+        //alert(batchResponse);
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+this.PreVoid = function (pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+this.PostVoid = function (pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function (packages) {
+    }
+
+// Source: McLane Company, Inc (MCLANECO)_McLaneClientBussinessRules_1827.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// this.PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// Source: Meta Platforms (API Shipping) (METAPLATFORMSAPISHIPPING)_Meta Thin Client Profile CBR_1868.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {};
+
+// this.PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {};
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {};
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {};
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {};
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {};
+
+// Source: Nexus (NEXUS)_Nexus CBR 2.3 Fix_1760.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    };
+
+// PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    };
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    };
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    };
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    };
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    };
+
+// Source: Nexus (NEXUS)_Nexus CBR Aug 2022_1798.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    };
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    };
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    };
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    };
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    };
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    };
+
+// Source: NikeRevship (NIKEREVSHIP)_NikeRevshipClientBusinessRule_1786.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+this.PreProcessBatch = function(batchReference, actions, params, vm) {}
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+this.PostProcessBatch = function(batchResponse, vm) {
+		if (globalVar === '/createbatch') {
+			var checkExist = setInterval(function() {
+				if (window.jQuery) {
+					/* Stop the timer */
+					clearInterval(checkExist);
+					var emailText = "";
+					var tags = document.getElementsByTagName("a");
+					Array.from(tags).forEach(function(tag) {
+						if (tag.innerHTML.includes("Hello")) emailText = tag.innerHTML.replace("Hello", "").replace("!", "").trim();
+					});
+					let i = emailText.indexOf("@");
+					$('input[name="batchReference"]').val(emailText.substring(0, i) + GetDateTimeToString()).change();
+
+				}
+			}, 50);
+		}
+	}
+
+// this.PreVoid(pkg, userParams) // returns undefined
+this.PreVoid = function(pkg, userParams) {}
+
+// this.PostVoid(pkg) // returns undefined
+this.PostVoid = function(pkg) {}
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+
+
+		if (searchCriteria.WhereClauses !== null && searchCriteria.WhereClauses !== undefined) {
+			if (searchCriteria.WhereClauses.length > 0) {
+				var StartShipDate = null;
+				var EndShipDate = null;
+				var Shipper = "";
+				for (var i = 0; i <= searchCriteria.WhereClauses.length - 1; i++) {
+					if (searchCriteria.WhereClauses[i].FieldName == "Shipper") {
+						Shipper = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "Shipdate" && StartShipDate == null) {
+						StartShipDate = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "Shipdate" && StartShipDate != null) {
+						EndShipDate = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "MiscReference1") {
+						var miscReferenceObject = searchCriteria.WhereClauses[i];
+						searchCriteria.WhereClauses.splice(i, 1);
+						searchCriteria.WhereClauses.push({
+							"FieldName": "ConsolidationTrackingNumber",
+							"FieldValue": miscReferenceObject.FieldValue,
+							"Operator": miscReferenceObject.Operator
+						});
+					}
+				}
+
+
+
+				var data = {
+					UserContext: client.userContext,
+					Data: "ShipDate=" + StartShipDate + ";" + "Shipper=" + Shipper
+				}
+				if (StartShipDate == EndShipDate) {
+					sendSearchPackages("UserMethod", data, false)
+				} else {
+					var divResults = document.getElementById("divResults");
+					divResults.innerHTML = "Select one day only to show package count!";
+				}
+			}
+		}
+
+	}
+
+// this.PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+
+
+
+	}
+
+// Source: NikeRevship (NIKEREVSHIP)_Test CBR for Developer test_1823.cs
+// function PreProcessBatch(batchReference, actions, params) // returns void
+this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns void
+this.PostProcessBatch = function(batchResponse) {
+        alert('PostProcessBatch');
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Office Depot (ODP)_Sample_CBR_2454.cs
+// function PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {}
+
+// function PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {}
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {}
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {}
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {}
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {}
+
+// Source: Powder Valley (POWDER_VALLEY)_Powder Valley Client Business Rules_1658.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function (batchReference, actions, params, vm) {
+
+        // Get the custom fields and store them in the params so they can be passed to the server side
+        var dateAfter = $('#dateAfter').val();
+        params.dateAfter = dateAfter;
+
+        var dateBefore = $('#dateBefore').val();
+        params.dateBefore = dateBefore;
+
+        var batchType = $('#batchType').val();
+        params.batchType = batchType;
+
+        var batchShipDate = $('#batchShipDate').val();
+        params.batchShipDate = batchShipDate;
+
+        var ordersPerPage = $('#ordersPerPage').val();
+        params.ordersPerPage = ordersPerPage;
+
+        var pageNumber = $('#pageNumber').val();
+        params.pageNumber = pageNumber;
+    }
+
+// Source: Purolator (PURT)_PurolatorCBR_1906.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// this.PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// function HideHistory() // returns void
+    function HideHistory(){
+        var loaded = setInterval(function() {
+            var div = $('div[caption="Site"]');
+            if (div.length > 0) {
+                clearInterval(loaded);
+                div.hide();
+
+                var btnConsignee = $('button[ng-click="vm.hideConsignee = !vm.hideConsignee"]');
+                btnConsignee.hide();
+                var btnMiscRef = $('button[ng-click="vm.showReferences()"]');
+                btnMiscRef.hide();
+
+                $('#reports').prop('disabled',true);
+
+                var btnSearch = $('button[ng-click="vm.changeReport()"]');
+
+                var divDate = $('div[class="col-md-3 padding-zero"]');
+                //divDate.hide();
+                
+            }
+        }, 50);
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// function PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QA CS Adapter Company (CSA)_Ship CBR_1850.cs
+// function PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QA Label Validation (12345)_Test_2496.cs
+// function PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAManualTest (QACOMPANY)_CBR Test_1606.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+        params.key1 = 'value1';
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+        alert("Test Test")
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAManualTestImport (QACOMPANY1)_CBR Test_1685.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+        params.key1 = 'value1';
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+        alert("Test Test")
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAManualTestImport 2 (QACOMPANY2)_CBR Test_1656.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+        params.key1 = 'value1';
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+        alert("Test Test")
+    }
+
+// PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAScheduler (SCHTEST)_TestRules_1604.cs
+// function PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// function PostProcessBatch(batchResponse, vm) // returns void
+this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// function PreVoid(pkg, userParams) // returns void
+this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns void
+this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Rite Kem (RITEKEM)_RiteKem_1637.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+
+    };
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        if(selectedReport[0].innerText === "Hazmat Report"){
+            $('button[value=Export]').removeAttr('ng-click');
+            $('body').delegate('button[value=Export]', 'click', function(e) {
+               // getHazmatReport();
+            });
+        }
+    }
+
+// Source: RoniCo (RONI)_test_1896.cs
+// PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Russell Investments (RUSSELL)_Russell Investments Client Rules_1872.cs
+// function PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: SAVERS (SAVERS)_Savers Client Side Rules_1715.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+this.PreProcessBatch = function(batchReference, actions, params, vm) {
+}
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+this.PostProcessBatch = function(batchResponse, vm) {
+}
+
+// this.PreVoid(pkg, userParams) // returns undefined
+this.PreVoid = function(pkg, userParams) {
+}
+
+// this.PostVoid(pkg) // returns undefined
+this.PostVoid = function(pkg) {
+}
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+}
+
+// this.PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+}
+
+// Source: Scheels (SCHE)_Scheels_CBR_Vendors_1892.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function (batchReference, actions, params) {
+    }
+
+// this.PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function (batchResponse) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function (pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function (pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    }
+
+// Source: Schoolhouse Electric Co (SCHOOLHOUSEELECTRICCO)_SchoolHouse_1630.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// this.PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: ShipExec Essentials Demo (CF_DEMO)_Huntington Bank_1907.cs
+// PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: SJCom (SJCom1542)_Standard_CBR_1563.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: SPEEDTECH (SPEEDTECH)_SpeedTech Client Side Business Rules_1645.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// function PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// Source: Sysco CW Vendor Ship (SYSCOCWVS)_Client Side Business Rules 20240313_2437.cs
+// this.PreProcessBatch(batchReference, actions, params) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// this.PostProcessBatch(batchResponse) // returns void
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Sysco Foods (SYSCO)_Sysco_1674.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Sysco Guest Supply (SYSCOGS)_Sysco_1675.cs
+// function PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+
+// function PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: Target (TARGET)_Target CBR_2489.cs
+// function PreProcessBatch(batchReference, actions, params) // returns undefined
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+// function PostProcessBatch(batchResponse) // returns undefined
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Tesla (TES)_test 1_1869.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    }
+
+// PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    }
+
+// PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: The Ohio State University (OSU)_OSU Reference Configuration Rule_89.cs
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: userContext.UserId, Operator: 5 });
+    }
+
+// Source: Truist (BBANDT)_Truist Admin Business Rules_2463.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        //debugger;
+        if(selectedReport[0].innerText !=="All History"){
+            searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+        }
+    };
+
+// Source: Truist (BBANDT)_Truist Business Rules_2464.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        //debugger;
+        if(selectedReport[0].innerText !=="All History"){
+            searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+        }
+    }; 
+
+// Source: US Bank Revised (USBANKREVISED)_US Bank Revised Client Side Rules_1571.cs
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Volt Lighting (VOLT)_Volt_Business_Rules_1666.cs
+// this.PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+// this.PostVoid(pkg) // returns undefined
+    this.PostVoid = function(pkg) {
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: VW Group (VW)_VW Client Rules_1513.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference19', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// Source: WOODLAND MFG (WLMI)_WoodLand_CBR_1644.cs
+// this.PreProcessBatch(batchReference, actions, params, vm) // returns void
+    this.PreProcessBatch = function(batchReference, actions, params, vm) {
+    };
+
+// this.PostProcessBatch(batchResponse, vm) // returns void
+    this.PostProcessBatch = function(batchResponse, vm) {
+    };
+
+// this.PreVoid(pkg, userParams) // returns void
+    this.PreVoid = function(pkg, userParams) {
+    };
+
+// this.PostVoid(pkg) // returns void
+    this.PostVoid = function(pkg) {
+    };
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    };
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    };
+
+// this.PreCloseManifest(manifestItem, userParams) // returns void
+    this.PreCloseManifest = function(manifestItem, userParams) {
+    };
+
+// this.PostCloseManifest(manifestItem) // returns void
+    this.PostCloseManifest = function(manifestItem) {
+    };
+
+// Source: Xing Hung (XINGHUNG)_ClinetSideBussRules_1587.cs
+// function PreProcessBatch(batchReference, actions, params, vm) // returns undefined
+    this.PreProcessBatch = function (batchReference, actions, params, vm) {
+    }
+
+// function PostProcessBatch(batchResponse, vm) // returns undefined
+    this.PostProcessBatch = function (batchResponse, vm) {
+    }
+
+// function PreVoid(pkg, userParams) // returns undefined
+    this.PreVoid = function (pkg, userParams) {
+    }
+
+// function PostVoid(pkg) // returns undefined
+    this.PostVoid = function (pkg) {
+    }
+
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    }
+

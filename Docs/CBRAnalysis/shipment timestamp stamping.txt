@@ -1,0 +1,1620 @@
+// Source: AllCare Plus Pharmacy (ALLCAREPLUS)_AllCare Client Rules_2510.cs
+// vm.shippingProfileChange(shipmentRequest) // returns void
+        vm.shippingProfileChange = function (shipmentRequest)
+            {
+            var tmpShippingProfile = vm.shippingProfiles.find(({ ShippingProfileName }) => ShippingProfileName === this.currentShippingProfile);
+            var newShippingProfile = structuredClone(tmpShippingProfile);    
+            if( newShippingProfile !== null && newShippingProfile !== undefined) {
+                var selsvc = newShippingProfile.SelService;
+                var myservice = {Symbol: selsvc };
+                if( newShippingProfile.Packages[0].ProactiveRecovery === true) {
+                    newShippingProfile.Packages[0].SelectedProactiveRecoveryInstructions = [4096,2048,32];                    
+                }
+
+                var today = new Date();
+                var curdate = {Year: today.getFullYear(), Month: today.getMonth() + 1, Day: today.getDate()};
+                newShippingProfile.PackageDefaults.Shipdate = curdate;
+                this.currentShipment = newShippingProfile;
+                this.selectedServices[0] = myservice;
+                }
+            }
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {
+        // const today = new Date();
+        // const options = { timeZoneName: 'short', hour12: false };
+        // shipmentRequest.Packages[this.vm.packageIndex].MiscReference15 = today.toLocaleString('en-US', options);
+        shipmentRequest.Packages[this.vm.packageIndex].MiscReference15 = thinClient.dateTimeStamp();
+    }
+
+// PreLoad(loadValue, shipmentRequest, userParams) // returns void
+    this.PreLoad = function(loadValue, shipmentRequest, userParams) {
+        thinClient.loading.show();
+        thinClient.dismiss.All();
+        userParams.customer = this.vm.shipping.customer.value;
+        userParams.labelImage = this.vm.labelImage;
+
+        shipmentRequest.Packages[this.vm.packageIndex].MiscReference15 = thinClient.today();
+    }
+
+// dateTimeStamp() // returns current date/time stamp string
+        dateTimeStamp: function() { return this.date().toLocaleString('en-US', { timeZoneName: 'short', hour12: false }); }
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// function CloseAllShippers() // returns void
+function CloseAllShippers() {
+        debugger;
+        
+        var getManifestItemsList,getManifestItemsemethod,methodParams,authorizationToken;
+        var allOrdersSelectedCarrier = [];
+        var allShipperSelectedCarrier,getShipperCarriersmethod,getShipperCarriersmethodParams,CloseAllShippersResponse,CloseAllShippersResults
+        
+            getShipperCarriersmethod='api/ShippingService/GetShipperCarriers';
+            getManifestItemsemethod='api/ShippingService/GetManifestItems';
+            authorizationToken = clientService.authorizationToken();
+            
+        
+            let selectedValCarrier = AllCarriersList.find(Carriers => Carriers.Id == $("#CarriersList option:selected").val()).Symbol;
+           
+            $.each(Array(AllShipperList.length), function(i)
+            {
+                
+                 getShipperCarriersmethodParams = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                 allShipperSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getShipperCarriersmethod, data: getShipperCarriersmethodParams, async: false, headers: authorizationToken }).responseJSON;
+    
+               if(allShipperSelectedCarrier.Carriers && allShipperSelectedCarrier.Carriers.length !=0){ 
+               
+                    methodParams = {"Carrier":selectedValCarrier,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                    getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + getManifestItemsemethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                    
+                   
+                    if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                    {
+                        debugger;
+                      var CloseManifestmethod,methodParams,CloseAllShippersResults
+                        CloseManifestmethod='api/ShippingService/CloseManifest';
+                         $.each(Array(getManifestItemsList.ManifestItems.length), function(j)
+                          {
+                                  
+                                  
+                                   allOrdersSelectedCarrier.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                              });
+                              methodParams ={"Carrier":selectedValCarrier,"ManifestItems":allOrdersSelectedCarrier,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                              CloseAllShippersResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseManifestmethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                              allOrdersSelectedCarrier = [];
+                    }
+               }
+               
+          
+            });
+            
+            if(CloseAllShippersResponse != undefined)
+            {
+                    if(CloseAllShippersResponse.ErrorCode==-1){
+                            
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers');
+                            
+                        }else
+                        {
+                                CloseAllShippersResults = CloseAllShippersResponse.CloseManifestResults[0].ErrorCode;
+                                if(CloseAllShippersResults!=0){
+                                    
+                                      $('#divAllshippersErrorMsg').hide();
+                                      $('#divAllshippersunsuccessfulcloseoutMsg').show();
+                                      $('#divAllshippersAndCarriersErrorMsg').hide();
+                                      $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                      
+                                      ShowAlert('ErrorModalCloseShippers');
+                                     
+                                }else if(CloseAllShippersResults==0){
+                                    
+                                     $('#divsuccessfulAllShippers').show();
+                                     $('#divsuccessfulAllShippersAndAllCarriers').hide();
+                                     
+                                      ShowAlert('successfulModalCloseShippers');
+                                     
+                                }
+                        }
+           }else
+           {
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers'); 
+                            
+           }
+                         
+       $('#loaderspinnerImg').hide();
+       
+        
+    }
+
+// function ClosecOutAllShippersAndAllCarriers() // returns void
+function ClosecOutAllShippersAndAllCarriers() {
+        
+                        var CloseAllShippersAllCarrierResponse,closeallgetManifestItemsemethod,CloseAllShippersAllCarriermethod,methodParams,authorizationToken,CloseAllShippersAllCarrierResults,getallShipperallCarriersmethod
+                             CloseAllShippersAllCarriermethod='api/ShippingService/CloseManifest';
+                             getallShipperallCarriersmethod='api/ShippingService/GetShipperCarriers';
+                             closeallgetManifestItemsemethod='api/ShippingService/GetManifestItems';
+                            
+                             var allOrdersSelectedCarrierfromallclose = [];
+                             debugger;
+       
+         $.each(Array(AllCarriersList.length), function(k)
+        {
+             $.each(Array(AllShipperList.length), function(i)
+            {
+                       var getShipperCarriersmethodParameters = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                         authorizationToken = clientService.authorizationToken();
+                         var allShipperallCarrierSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getallShipperallCarriersmethod, data: getShipperCarriersmethodParameters, async: false, headers: authorizationToken }).responseJSON;
+            
+                       if(allShipperallCarrierSelectedCarrier.Carriers && allShipperallCarrierSelectedCarrier.Carriers.length !=0){ 
+                       
+                           var closeallmethodParams = {"Carrier":AllCarriersList[k].Symbol,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                           var getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + closeallgetManifestItemsemethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                            
+                            if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                            {
+                                var CloseManifestmethod,methodParams,authorizationToken,CloseAllShippersResults
+                                    authorizationToken = clientService.authorizationToken();
+                                
+                                       $.each(Array( getManifestItemsList.ManifestItems.length), function(j)
+                                      {
+                                          
+                                           allOrdersSelectedCarrierfromallclose.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                                      });
+                                      var closeallmethodParams ={"Carrier":AllCarriersList[k].Symbol,"ManifestItems":allOrdersSelectedCarrierfromallclose,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                                      CloseAllShippersAllCarrierResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseAllShippersAllCarriermethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                                       allOrdersSelectedCarrierfromallclose = [];
+                            }
+                       }
+             });                  
+        });
+        
+            if(CloseAllShippersAllCarrierResponse != undefined){
+                                 if(CloseAllShippersAllCarrierResponse.ErrorCode==-1){
+                                    
+                                     $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+                                }else
+                                {
+                                        CloseAllShippersAllCarrierResults = CloseAllShippersAllCarrierResponse.CloseManifestResults[0].ErrorCode;
+                                        if(CloseAllShippersAllCarrierResults!=0){
+                                            
+                                        $('#divAllshippersErrorMsg').hide();
+                                        $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                        $('#divAllshippersAndCarriersErrorMsg').hide();
+                                        $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').show();
+                                      
+                                        ShowAlert('ErrorModalCloseShippers');
+                                        }else if(CloseAllShippersAllCarrierResults==0){
+                                            
+                                        $('#divsuccessfulAllShippers').hide();
+                                        $('#divsuccessfulAllShippersAndAllCarriers').show();
+                                      
+                                        ShowAlert('successfulModalCloseShippers');
+                                        }
+                                 }
+            }else{
+                
+                                    $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+            }
+            $('#loaderspinnerImg').hide();
+           
+        
+    }
+
+// Source: CountryMax Stores (CNTM)_CountryMax Shipping CBR_1660.cs
+// function PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function (shipmentRequest, userParams) {
+		console.log("🚀 [PreShip] Starting PreShip function...");
+	    shipmentRequest = vmTemp.currentShipment;
+		// Validate shipmentRequest and Packages array
+		if (!shipmentRequest || !shipmentRequest.Packages || !Array.isArray(shipmentRequest.Packages)) {
+			console.error("❌ [PreShip Error] Shipment request is invalid or missing required properties.");
+			//alert("[PreShip Error] Shipment request is invalid or missing required properties.");
+			return;
+		}
+	
+		let validDimensions = [];
+	
+		console.log(`📦 [PreShip] Processing ${shipmentRequest.Packages.length} package(s)...`);
+	
+		// Retrieve current package dimensions from vmTemp
+		try {
+			let currentPackage = vmTemp.currentShipment.Packages[vmTemp.packageIndex];
+			if (!currentPackage || !currentPackage.Dimensions) {
+				console.warn("⚠️ [PreShip Warning] vmTemp.currentShipment package or dimensions not found.");
+			} else {
+				let dims = currentPackage.Dimensions;
+				console.log(`📏 [PreShip] Current Package Dimensions from vmTemp: ${dims.Length}x${dims.Width}x${dims.Height} 0`);
+			}
+		} catch (error) {
+			console.error("❌ [PreShip Error] Unable to retrieve package dimensions from vmTemp.");
+		}
+	
+		// Loop through all packages to validate their dimensions
+		for (let i = 0; i < shipmentRequest.Packages.length; i++) {
+			console.log(`🔍 [PreShip] Checking package at index ${i}...`);
+	
+			let packageData = shipmentRequest.Packages[i];
+	
+			if (!packageData) {
+				console.error(`❌ [PreShip Error] Package at index ${i} is undefined.`);
+				//alert(`[PreShip Error] Package at index ${i} is undefined.`);
+				return;
+			}
+	
+			if (!packageData.Dimensions) {
+				console.warn(`⚠️ [PreShip Warning] Package at index ${i} does not contain 'Dimensions'.`);
+				//alert(`[PreShip Error] Package at index ${i} does not contain 'Dimensions'.`);
+				return;
+			}
+	
+			let dims = packageData.Dimensions;
+	
+			// Ensure all dimension values exist and are valid numbers
+			if (dims.Length > 0 && dims.Width > 0 && dims.Height > 0) {
+				let dimensionString = `${dims.Length}x${dims.Width}x${dims.Height} 0`; // Always append "0"
+	
+				// Validate format (three numeric values + "0" at the end)
+				let dimParts = dimensionString.split(new RegExp("[x ]"), 4); // Split on 'x' and space
+	
+				if (dimParts.length === 4 && !isNaN(dimParts[0]) && !isNaN(dimParts[1]) && !isNaN(dimParts[2]) && dimParts[3] === "0") {
+					validDimensions.push(dimensionString);
+					console.log(`✅ [PreShip] Package ${i} Dimensions: ${dimensionString}`);
+				} else {
+					console.error(`❌ [PreShip Error] Package at index ${i} has incorrectly formatted dimensions: ${dimensionString}`);
+					//alert(`[PreShip Error] Package at index ${i} has incorrectly formatted dimensions.`);
+					return;
+				}
+			} else {
+				console.error(`❌ [PreShip Error] Package at index ${i} has invalid dimensions.`);
+				//alert(`[PreShip Error] Package at index ${i} has invalid dimensions.`);
+				return;
+			}
+		}
+	
+		// Store only valid dimensions in MiscReference5
+		if (validDimensions.length > 0) {
+			shipmentRequest.PackageDefaults.MiscReference5 = validDimensions.join(", ");
+			console.log(`✅ [PreShip] All dimensions successfully stored in MiscReference5: ${shipmentRequest.PackageDefaults.MiscReference5}`);
+		} else {
+			console.warn("⚠️ [PreShip Warning] No packages had valid dimensions.");
+		}
+	
+		// Retrieve weight and markup values
+		userParams.weight = $('div[caption="Weight"]').find('input[name="unitValue_txt"]').val();
+		userParams.markup = $("#custom_markup_id").val();
+		console.log(`📏 [PreShip] Retrieved weight: ${userParams.weight}, Markup: ${userParams.markup}`);
+	
+		// Custom code to hide/filter on postship errors - must be started here
+		$("<style> .alert-danger { display: none; } </style>").appendTo("head");
+		console.log("🚫 [PreShip] Hidden alert-danger elements to prevent UI issues.");
+	
+		alertInterval = setInterval(function () {
+			var errAlert = $('div.alert-danger');
+		
+			// Filter and show alert
+			if (errAlert.length > 0) {
+				clearInterval(alertInterval);
+				let msg = errAlert.text();
+				if (msg.indexOf('-1') === -1 && msg.indexOf('CONNECTSHIP') === -1) {
+					errAlert.show();
+					console.warn(`⚠️ [PreShip Warning] PostShip Alert Detected: ${msg}`);
+				}
+			}
+		}, 200);
+	
+		console.log("✅ [PreShip] Function completed successfully.");
+	};
+
+// Source: FalconNDX (FNDX)_Falcon_CBR_1794.cs
+// PageLoaded(location) // returns void
+this.PageLoaded = function(location) { 
+        debugger;
+        
+        //Days List
+        const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+         
+        // Current Date
+        var dt = new Date();  
+       //dt.setDate(dt.getDate()  +1);
+        //alert(dt);
+        
+        //Finding Last Date of the Month
+        var lastDate=new Date(dt.getFullYear(),dt.getMonth()+1 ,0);
+        var onlyDate_lastDate= lastDate.getDate();
+       
+        
+          
+        //Months List  
+        var month= dt.getMonth()+1;
+        var nextmonth =dt.getMonth()+1;  //Get the current month
+        
+        
+        //Year
+        var currentYear = dt.getFullYear();
+  
+        
+        
+                
+        var nextdate=dt.getDate()+1;    
+        var newdate=dt.getDate()+2;
+        
+        
+        
+        /* Comparing current date(saturday/sunday) with lastdate of the month
+        1. Current date and last date is saturday 
+        2. Next to Current date and last date is saturday */
+        
+        /* Scenarios
+        1. Current date - Saturday , Last date - Sunday 
+            Next to current date should match with last date.
+        2. Current date - Sunday , Last date - Sunday
+            Current date should match with last date.
+        3. Current date - Saturday , Last date - Saturday
+        4. Current date - Sunday , Last date - Saturday
+        
+        
+        
+        */
+        
+       if(dt.getDate()== onlyDate_lastDate && days[dt.getDay()] == "Saturday")
+       {
+           
+           if(month==12)
+            {
+                nextmonth=1; // Setting next month if current date is last date of the month eg: 31/07/2022 => 07 to 08
+                newdate=2;
+                currentYear=currentYear + 1;
+            }else
+            {
+                 nextmonth=month +1; 
+                  newdate=1;
+                  currentYear=currentYear;
+            }
+            
+            
+           
+           
+       }
+       
+     
+      else if(dt.getDate()== onlyDate_lastDate && days[dt.getDay()] == "Sunday")
+       {
+           
+           if(month==12)
+            {
+                nextmonth=1; // Setting next month if current date is last date of the month eg: 31/07/2022 => 07 to 08
+                newdate=1;
+                currentYear=currentYear + 1;
+            }else
+            {
+              
+                 nextmonth=month +1; 
+                  newdate=1;
+                  currentYear=currentYear;
+            }
+            
+            
+           
+           
+       }
+        else if(nextdate == onlyDate_lastDate )  
+       {
+            
+             if(month==12)
+            {
+                nextmonth=1; // Setting next month if current date is last date of the month eg: 31/07/2022 => 07 to 08
+                newdate=1;
+                currentYear=currentYear + 1;
+            }else
+            {
+                 nextmonth=month +1; 
+                  newdate=1;
+                  currentYear=currentYear;
+            }
+            
+             
+           
+       }
+       
+     //Saturday to Monday 
+       var monthIndex = nextmonth;
+                if(monthIndex<10)
+                monthIndex=('0'+monthIndex);
+                
+       var mondateIndex=newdate;
+                if(mondateIndex<10)
+                mondateIndex=('0'+mondateIndex);
+                
+       var lastdate=(currentYear+"-"+ monthIndex+"-"+mondateIndex);
+        
+     if(days[dt.getDay()] == "Saturday")
+        {
+            lastdate=(currentYear+"-"+ monthIndex+"-"+mondateIndex);
+            $('input[type=text][ng-model="vm.startshipdate.value"]').val(lastdate).change();
+        }
+         
+         
+      //Sunday to Monday   
+         var sundateIndex=dt.getDate();
+       
+         if(dt.getDate()==onlyDate_lastDate)
+            {
+              
+                 sundateIndex=newdate;   
+                   
+            }
+            else
+            {
+               
+                sundateIndex=dt.getDate()+1;
+            }
+
+        
+          if(sundateIndex<10)
+            sundateIndex=('0'+sundateIndex);
+                     
+           if(days[dt.getDay()] == "Sunday")
+            {
+                 lastdate=(currentYear+"-"+ monthIndex+"-"+sundateIndex);
+                 $('input[type=text][ng-model="vm.startshipdate.value"]').val(lastdate).change();
+            }
+           
+    }
+
+// Source: FortessaTS (FTS)_FortessaCBR_1897.cs
+// function checkAndSetShipDate(viewModel) // returns undefined
+function checkAndSetShipDate(viewModel) {
+            var hardCutoffTime = 6;
+            var currentDateTime = new Date();//can simulate it being other dates and times by changing this value
+            console.log("Current datetime returned: " + currentDateTime);
+            var hours = currentDateTime.getHours();
+            var dayOfWeek = currentDateTime.getDay();
+
+            console.log("Hours: " + hours);
+            console.log("Day: " + dayOfWeek);
+
+            
+
+            var dateInterval = setInterval(function () {
+                var $shipDt = $('[ng-model="vm.startshipdate.value"]');
+
+                if ($shipDt.length) {
+                    clearInterval(dateInterval);
+                    
+                    if (dayOfWeek == 6) {
+                        //day is saturday, add 2 days and return new date
+                        var newDate = addDays(2);
+						//var dateFinal = newDate.getFullYear()+'/'+(newDate.getMonth()+1)+'/'+newDate.getDate();
+                        console.log("New Date: " + dateFinal);
+						//var shipDate = { Month: 8, Day: 29, Year: 2024 }
+						viewModel.startshipdate.value = new Date(newDate.Year, newDate.Month, newDate.Day);
+						shipmentRequest.PackageDefaults.Shipdate = shipDate;
+						//$('[ng-model="vm.startshipdate.value"]').val(dateFinal).change();
+                        //viewModel.startshipdate.value = newDate;
+						//shipmentRequest.PackageDefaults.Shipdate = dateFinal;
+                        //return;
+                    }
+
+                    if (hours >= hardCutoffTime) {
+                        //cutoff time reached, change date as follows
+                        if (dayOfWeek == 5) {
+                            //add 3 days making Monday the ship date
+                            var newDate = addDays(3);
+							var dateFinal = newDate.getFullYear()+'/'+(newDate.getMonth()+1)+'/'+newDate.getDate();
+                            console.log("New Date: " + dateFinal);
+							viewModel.startshipdate.value = new Date(newDate.Year, newDate.Month, newDate.Day);
+							shipmentRequest.PackageDefaults.Shipdate = dateFinal;
+							//$('[ng-model="vm.startshipdate.value"]').val(dateFinal).change();
+                            //viewModel.startshipdate.value = newDate;
+							//shipmentRequest.PackageDefaults.Shipdate = dateFinal;
+                            //return;
+                        }
+
+                        else {
+                            //add 1 day to the date making tomorrow the ship date
+                            var newDate = addDays(1);
+							var dateFinal = newDate.getFullYear()+'/'+(newDate.getMonth()+1)+'/'+newDate.getDate();
+                            console.log("New Date: " + dateFinal);
+							viewModel.startshipdate.value = new Date(newDate.Year, newDate.Month, newDate.Day);
+							shipmentRequest.PackageDefaults.Shipdate = dateFinal;
+							//$('[ng-model="vm.startshipdate.value"]').val(dateFinal).change();
+                            //viewModel.startshipdate.value = newDate;
+							//shipmentRequest.PackageDefaults.Shipdate = dateFinal;
+                            //return;
+                        }
+                    }
+                }
+            });
+            
+
+            
+
+        }
+
+// function addDays(days) // returns Date
+function addDays(days) {
+            var date = new Date();
+            date.setDate(date.getDate() + days);
+			
+			console
+            return date;
+        }
+
+// function checkAndSetShipDateTest(viewModel) // returns undefined
+function checkAndSetShipDateTest(viewModel)
+		{
+			debugger;
+			var hardCutoffTime = 16;
+			var currentDateTime = new Date();
+			var hours = currentDateTime.getHours();
+            var dayOfWeek = currentDateTime.getDay();
+			
+			if (dayOfWeek == 6) {
+				var finalDate = addDays(2);
+				console.log("New date" + finalDate);
+				var month = finalDate.getMonth() + 1;
+				var day = finalDate.getDate();
+				var year = finalDate.getFullYear();
+				console.log("Month " + month + " Day " + day + " Year " + year);
+				//var shipDate = { Month: 8, Day: 30, Year: 2024 }
+				var shipDate = {Month: month, Day: day, Year: year};
+				viewModel.startshipdate.value = new Date(shipDate.Year, shipDate.Month, shipDate.Day);
+				shipmentRequest.PackageDefaults.Shipdate = shipDate;
+			}
+			
+			if (hours >= hardCutoffTime) {
+				if (dayOfWeek == 5) {
+					var finalDate = addDays(3);
+					console.log("New date" + finalDate);
+					var month = finalDate.getMonth() + 1;
+					var day = finalDate.getDate();
+					var year = finalDate.getFullYear();
+					console.log("Month " + month + " Day " + day + " Year " + year);
+					//var shipDate = { Month: 8, Day: 30, Year: 2024 }
+					var shipDate = {Month: month, Day: day, Year: year};
+					viewModel.startshipdate.value = new Date(shipDate.Year, shipDate.Month, shipDate.Day);
+					shipmentRequest.PackageDefaults.Shipdate = shipDate;
+				}
+				
+				else{
+					var finalDate = addDays(1);
+					console.log("New date" + finalDate);
+					var month = finalDate.getMonth() + 1;
+					var day = finalDate.getDate();
+					var year = finalDate.getFullYear();
+					console.log("Month " + month + " Day " + day + " Year " + year);
+					//var shipDate = { Month: 8, Day: 30, Year: 2024 }
+					var shipDate = {Month: month, Day: day, Year: year};
+					viewModel.startshipdate.value = new Date(shipDate.Year, shipDate.Month, shipDate.Day);
+					shipmentRequest.PackageDefaults.Shipdate = shipDate;
+				}
+				
+			}
+			
+		}
+
+// Source: GAP (GAP)_Rule with Mail Innov. Billing_1888.cs
+// this.PostShip(shipmentRequest, shipmentResponse) // returns void
+    this.PostShip = function(shipmentRequest, shipmentResponse) {
+        canadaSelected = false;
+        var misc3reference = "200.30.6035.5102.90059";
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference1 = shipmentRequest.Packages[i].ShipperReference;
+            shipmentRequest.Packages[i].ShipperReference = "";
+            //Address 1
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "1112 Turkey Mountain Rd.")
+            {
+                console.log('found 1/4 address');
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+            }
+             //Address 2
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "102R Demi Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+              //Address 3
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "17511 S. Susana Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+               //Address 4
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "200 Terminal St.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+            
+            var company = shipmentRequest.PackageDefaults.Consignee.Company.toLowerCase();
+            if(company.indexOf("mail innov") != -1 || company.startsWith("ups mi") || company.startsWith("ups mail"))
+            {
+                if (mi_tpb_stores.find(element => element == this.vm.profile.Shippers[0].Symbol) !== null)
+                {
+                    console.log("Billing MI as TPB");
+                    shipmentRequest.PackageDefaults.ThirdPartyBilling = true;
+                    var tpb = {};
+                    angular.copy(shipmentRequest.PackageDefaults.Consignee, tpb);
+                    tpb.Account = "7500YW";
+                    tpb.Company = "UPS MAIL INNOVATIONS";
+                    tpb.Contact = "REBECA CARBRERA";
+                    tpb.Address1 = "13050 MARLAY AVE";
+                    tpb.City = "FONTANA";
+                    tpb.StateProvince = "CA";
+                    tpb.PostalCode = "92337";
+                    tpb.Country = "US";
+                    tpb.Phone = "555-555-555";
+                    shipmentRequest.PackageDefaults.ThirdPartyBillingAddress = tpb;
+                }
+            }
+            
+        }
+        console.log('PRESHIP');
+        console.log(shipmentRequest);
+    }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// function PreLoad(loadValue, shipmentRequest, userParams) // returns undefined
+  this.PreLoad = function (loadValue, shipmentRequest, userParams)
+  {
+    this.NewShipment();
+  }
+
+// function PostLoad(loadValue, shipmentRequest) // returns undefined
+  this.PostLoad = function (loadValue, shipmentRequest)
+  {
+    try
+    {
+      //alert = function(){}
+      this.vm.getWeight();
+
+    }
+    catch (error)
+    {
+      console.log("Error getting weight")
+    }
+    if (!shipmentRequest.PackageDefaults.UserData1)
+    {
+      client.alert.Danger("Loaded Value " + loadValue + " not found")
+    } else
+    {
+      const Lines = JSON.parse(shipmentRequest.PackageDefaults.UserData1);
+      Lines.forEach(line =>
+      {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${line.LineNo}</td>
+            <td>${line.ItemNo}</td>
+            <td>${line.TotalOrderQuantity}</td>
+            <td>${line.SaleUnitOfMeasure}</td>
+            <td>${line.SaleUnitPrice}</td>
+            <td>${line.ItemDescription}</td>
+            <td></td>
+            <td>${line.UnitWeight}</td>
+            <td></td>
+            <td>0</td>
+            <td>0</td>
+            <td><button class='btn btn-xs btn-success glyphicon glyphicon-plus'></button></td>
+            <td hidden>${line.IsKitOrBundle}</td>
+            <td hidden>${line.KitDetails ? JSON.stringify(line.KitDetails) : "[]"}</td>
+            <td hidden>${line.InternationalDetails ? line.InternationalDetails.CountryOfOrigin : ""}</td>
+            <td hidden>${line.InternationalDetails ? line.InternationalDetails.ExportCurrencyCode : ""}</td>
+            <td hidden>${line.InternationalDetails ? line.InternationalDetails.ExportTariffCode : ""}</td>
+            <td hidden>${line.InternationalDetails ? line.InternationalDetails.ExportUnitPrice : ""}</td>
+            `;
+        if (line.IsKitOrBundle && line.KitDetails == null)
+        {
+          client.alert.Danger("WARNING: Kit Details are empty when Commodity Set to Kit");
+        }
+        document.querySelector("#miTabla").appendChild(fila);
+      });
+      editableTable();
+
+      const buttons = document.querySelectorAll("#miTabla button");
+      buttons.forEach(button =>
+      {
+        button.addEventListener("click", function ()
+        {
+          const fila = this.parentElement.parentElement;
+          AddCommodity(fila, 1, 0);
+        });
+      });
+      const tabla = document.querySelector("#miTabla");
+      tabla.classList.remove("hidden");
+    }
+    console.log(shipmentRequest.PackageDefaults.Shipdate)
+    var today = new Date();
+    shipmentRequest.PackageDefaults.Shipdate.Day = today.getDate();
+    shipmentRequest.PackageDefaults.Shipdate.Year = today.getFullYear();
+    shipmentRequest.PackageDefaults.Shipdate.Month = today.getMonth() + 1;
+    if (shipmentRequest.PackageDefaults.Consignee.Country != null && shipmentRequest.PackageDefaults.Consignee.Country != 'US')
+    {
+      for (var ii = 0; ii < shipmentRequest.Packages.length; ii++)
+      {
+        shipmentRequest.Packages[ii].CommercialInvoiceMethod = 1;
+        if (shipmentRequest.PackageDefaults.Consignee.Country == 'GB')
+        {
+            console.log(shipmentRequest.Packages[ii]);
+            shipmentRequest.Packages[ii].AdditionalHardcopyDocumentation = false;
+        }
+      }
+      
+    }
+
+  }
+
+// Source: Imagine Print Solutions (IPS)_Imagine Print CBR_1725.cs
+// this.BatchManager() // returns undefined
+    this.BatchManager = function() {
+        debugger;
+
+        // set user email
+        var userEmail = $("div.navbar-collapse").text();
+        userEmail = userEmail.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi).toString();
+        $("#email").val(userEmail);
+        $("#email").change();
+
+        IPSUploadFile();
+
+        function IPSUploadFile() {
+            $('body').delegate('#ipsUploadFile', 'click', function () {
+                alertMessage('info', "Rate Process Started, an email will be sent upon completion");
+                showSpinner();
+                var vm = $(this).attr('vm')
+                if (ensureLoadIPS(vm)) {
+                    var fileName = cbr.loadIPS.file.name.split('.')[0];
+                    debugger;
+                    var reader = new FileReader();
+                    reader.readAsDataURL(cbr.loadIPS.file);
+                    reader.onload = function () {
+                        var data = {
+                            'UserContext': cbr.userContext,
+                            'Data' : JSON.stringify({
+                                'Action': 'Rate',
+                                'Shipper': cbr.loadIPS.shipper,
+                                'ShipDate': cbr.loadIPS.shipDate,
+                                'Email': cbr.loadIPS.email,
+                                'FileName': fileName,
+                                'EncodedFile': this.result.split(',')[1],
+                            })
+                        }
+
+                        $.post({ 
+                            url: clientService.config.ShipExecServiceUrl + '/UserMethod',
+                            data,
+                            headers: clientService.authorizationToken()
+                        }).done(function (result) {
+                            hideSpinner();
+                            if (result.ErrorCode > 0) {
+                                alertMessage('danger', response.ErrorMessage);
+                            } else {
+                                alertMessage('success', "Rate Completed");
+                                loadIPSReset();
+                            }
+                        }).fail(function (err) {
+                            hideSpinner();
+                            alertMessage('danger',"The process is taking longer than usual to complete but will continue to run on the server until the rate file is complete");
+                        });	
+                    }
+                }
+                // hide the spinner after 15 seconds
+                setTimeout(function(){
+                    hideSpinner();
+                }, 15000);
+            });
+        }
+
+        function loadIPSReset() {
+            $.each( cbr.loadIPS, function(name, value){
+                $('[ng-model="vm.loadIPS.' + name + '"]').val(null);
+            });
+        }
+
+        function ensureLoadIPS(vm) {
+            var msg = [];
+            var result = true;
+
+            if (vm == '') {
+                msg.push('Please update all options and try again.');
+            } else {
+                cbr.loadIPS = JSON.parse(vm);
+                //if (cbr.loadIPS.type == undefined) msg.push('\u2022Select Rate or Address Validation radio button.');
+                if (cbr.loadIPS.shipper == undefined) msg.push('\u2022Missing Shipper.');
+                if (cbr.loadIPS.shipDate == undefined) msg.push("\u2022Missing Ship Date.");
+                if (cbr.loadIPS.email == undefined) {
+                    msg.push('\u2022Missing Email Address.');
+                } else {
+                    if (invalidEmailAddress(cbr.loadIPS.email)) msg.push('\u2022Email Address is invalid.')
+                }
+
+                var files = $('#ipsFileInputField').prop('files');
+                if (files.length == 0) {
+                    msg.push('\u2022Missing File.')
+                } else {
+                    cbr.loadIPS.file = files[0];
+                }
+            }
+
+            if (msg.length > 0) {
+                result = false;
+                alertMessage('danger', msg.join("<br />"));
+                hideSpinner();
+            }
+            
+            return result;
+        }
+    }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// PostShip(shipmentRequest, shipmentResponse) // returns void
+    this.PostShip = function (shipmentRequest, shipmentResponse) {
+        //debugger;
+        $('#Leg2LabelRequired').prop('checked', false);
+        $('#DryIceRequired').prop('checked', false);
+        $('#CentralLabsFrozenSamplesReturn').prop('checked', false);
+        $('#Leg2PackageWeight').val('');
+        $('#Leg2DryIceWeight').val('');
+        $('#Leg2DryIceWeight').hide();
+        $('#quantity').val('');
+        $('#EmptyPackaging').prop('checked', false);
+        $('#displayMessage').hide();
+
+        // Clear the upload error modal text
+        $('#uploadErrorModalLabel').html('');
+
+        var userData1 = shipmentResponse.Packages[0].UserData1;
+        var userData2 = shipmentResponse.Packages[0].UserData2;
+
+        if (userData1) {
+            var result = JSON.parse(userData1.replace(/'/g, '"'));
+            //debugger;
+            this.setResponseLabel('uploadSuccessLabel', result);
+        }
+
+        if (userData2) {
+            var result = JSON.parse(userData2.replace(/'/g, '"'));
+            //debugger;
+            this.setResponseLabel('uploadSuccessLabel', result);
+        }
+
+    }
+
+// convertFileInputToBase64(inputId, leg) // returns Promise resolving upload payload data
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// Source: MarkenLLP2 (MLLP2)_Inbound Returns CBR_EU_TO_UK_1916.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {
+          debugger;
+        //If the user profile is EU to UK, then Pickup LatestTimeReady can be calculated.
+        if (shipmentRequest.Packages[0].MiscReference8 == "2") {
+          
+            var MiscRef10 = formatNumberToTime(shipmentRequest.Packages[0].MiscReference10);
+
+            // Split the times into hours and minutes
+            var parts1 = shipmentRequest.Packages[0].MiscReference9.split(":");
+            var parts2 = MiscRef10.split(":");
+
+            // Parse the hours and minutes as integers
+            var hours1 = parseInt(parts1[0], 10);
+            var minutes1 = parseInt(parts1[1], 10);
+            var hours2 = parseInt(parts2[0], 10);
+            var minutes2 = parseInt(parts2[1], 10);
+
+            // Add the hours and minutes together
+            var totalHours = hours1 + hours2;
+            var totalMinutes = minutes1 + minutes2;
+
+            // Handle carryover from minutes to hours
+            if (totalMinutes >= 60) {
+                totalHours += Math.floor(totalMinutes / 60);
+                totalMinutes %= 60;
+            }
+
+            // Format the result as "hh:mm"
+            var result = totalHours.toString().padStart(2, '0') + ':' + totalMinutes.toString().padStart(2, '0');
+
+            shipmentRequest.Packages[0].MiscReference11 = result;
+            
+                if (shipmentRequest.Packages[0].MiscReference11 > shipmentRequest.Packages[0].MiscReference12) 
+                {
+                alert("Calculated Pickup Latest Time Ready is later than the Maximum Pickup Latest Time Ready for the user.");
+                throw new Error("Calculated Pickup Latest Time Ready is later than the Maximum Pickup Latest Time Ready for the user.");
+                }
+
+             //Format the number to HH:MM    
+             function formatNumberToTime(number) {
+            
+                            if (number < 0 || number > 23) {
+                                return "Invalid hour";
+                            }
+                            // Use String interpolation to format the number as "X:00"
+                            return `${number}:00`;
+                        }
+                        
+                        
+            $('[ng-click="vm.createPickupRequestClick()"]').trigger('click');
+            // Assigning the Pickup request properties.
+            this.vm.pickup.ContactName = $('input[ng-model="nameaddress.Contact"]').val();
+            this.vm.pickup.ContactPhone = $('input[ng-model="nameaddress.Phone"]').val();
+            this.vm.pickup.PaymentType = "PAY_BY_SHIPPER_ACCOUNT";
+            this.vm.pickup.EarliestTimeReady = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference9"]').val();
+            this.vm.pickup.LatestTimeReady = shipmentRequest.Packages[0].MiscReference11;
+
+            if (this.vm.pickup != null) {
+                setTimeout(() => {
+                    $('[ng-click="vm.ok()"]').trigger('click');
+                }, 100);
+            }
+        }
+
+
+// Source: Meta Platforms (API Shipping) (METAPLATFORMSAPISHIPPING)_Meta Thin Client Profile CBR_1868.cs
+// this.PostRate(shipmentRequest, rateResults) // returns undefined
+    this.PostRate = function(shipmentRequest, rateResults) 
+    {   
+        const dateToday = new Date();
+
+        var selectedDeliverDate = this.vm.deliverDate;
+
+        LogRateInformationToConsole(shipmentRequest, rateResults);
+        if (!shipmentRequest.PackageDefaults.Service) 
+        {
+            ApplyRulesWithoutServiceRequested(shipmentRequest,rateResults,dateToday);
+        }
+        if (shipmentRequest.PackageDefaults.Service) 
+        {
+            ApplyRulesWithServiceRequested(shipmentRequest,rateResults,dateToday);
+        }
+        if (rateResults)        
+        {
+            var ratedServiceArrivalDateString = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+            var ratedServiceArrivalAsDate = stringToDate(ratedServiceArrivalDateString, dateFormat, "-");    
+            var expectedDeliveryDate = stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-");
+            if (expectedDeliveryDate <= ratedServiceArrivalAsDate)
+            {
+                $('input[ng-model="vm.deliverDate.value"]').val(formatDate(ratedServiceArrivalAsDate)).change();   
+            }
+        }
+    };
+
+// this.NewShipment(shipmentRequest) // returns undefined
+    this.NewShipment = function(shipmentRequest) 
+    {            
+        //Services configured in Pending Shipments Profile Field Options
+        var backup2DADomesticService = shipmentRequest.Packages[0].MiscReference17; //UPSAPI.UPS.2DA        
+        var backupNDADomesticService = shipmentRequest.Packages[0].MiscReference18; //UPSAPI.UPS.NDA        
+        var backupExpeditedIntlService = shipmentRequest.Packages[0].MiscReference19; //UPSAPI.UPS.EXPEDITED        
+        var backupExpressIntlService = shipmentRequest.Packages[0].MiscReference20; //UPSAPI.UPS.EXPRESS        
+
+        $('body').on('click', 'table[aria-describedby="Pending Shipments"] input[type="button"]', this.vm, 
+        function(e) 
+        {
+            $('input[ng-model="vm.deliverDate.value"]').val(e.data.currentShipment.Packages[0].MiscReference5).change();
+            if (e.data.currentShipment.PackageDefaults.Service) 
+            {
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference8"]').val(e.data.currentShipment.PackageDefaults.Service.Symbol).change();
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference17"]').val(backup2DADomesticService).change();
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference18"]').val(backupNDADomesticService).change();
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference19"]').val(backupExpeditedIntlService).change();
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]').val(backupExpressIntlService).change();
+            }
+        });
+    };
+
+// function ApplyRulesWithoutServiceRequested(shipmentRequest, rateResults, dateToday) // returns undefined
+    function ApplyRulesWithoutServiceRequested(shipmentRequest,rateResults,dateToday)
+    {            
+        if (stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-") <= dateToday) 
+            {
+                $('input[ng-model="vm.deliverDate.value"]').val(formatDate(getTomorrowDate())).change();
+
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(formatDate(getTomorrowDate())).change();
+            } 
+            else if (rateResults) 
+            {                
+                var fullArriveDate = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(fullArriveDate).change();
+            }   
+    }
+
+// function UpdateFields(dateValue, applyBackupService) // returns undefined
+    function UpdateFields(dateValue,applyBackupService)
+    {
+        $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(dateValue).change();
+        
+        if(applyBackupService)
+        {
+            $('input[ng-model="vm.deliverDate.value"]').val(formatDate(getTomorrowDate())).change();
+        }
+        
+    }
+
+// function BackupServiceRequired(rateResults, shipmentRequest) // returns boolean
+    function BackupServiceRequired(rateResults,shipmentRequest)
+    {
+        var ratedArriveDate = GetStringArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+        var formattedArriveDate = stringToDate(ratedArriveDate, dateFormat, "-");
+
+        var requestedDeliveryDate = stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-");
+
+        var applyBackupService = (requestedDeliveryDate < formattedArriveDate);
+
+        return applyBackupService;
+    }
+
+// function ApplyRulesWithServiceRequested(shipmentRequest, rateResults, dateToday) // returns undefined
+    function ApplyRulesWithServiceRequested(shipmentRequest,rateResults,dateToday)
+    {
+        var requestedServiceSymbol = shipmentRequest.PackageDefaults.Service.Symbol;
+        var backupNDADomesticService = shipmentRequest.Packages[0].MiscReference18; //UPSAPI.UPS.NDA        
+        var backupExpressIntlService = shipmentRequest.Packages[0].MiscReference20; //UPSAPI.UPS.EXPRESS  
+        var serviceToBeReturned = '';
+        var domestic = shipmentRequest.PackageDefaults.Consignee.Country === "US";
+
+        rateResults.slice()
+                   .forEach(function(item, index, object) 
+        {            
+            if (!requestedServiceSymbol) 
+            {
+                requestedServiceSymbol = shipmentRequest.PackageDefaults.Service.Symbol;
+            }
+
+            serviceToBeReturned = requestedServiceSymbol;
+
+            var requestedServiceIsFoundAsRateResult = (item.PackageDefaults.Service.Symbol === shipmentRequest.PackageDefaults.Service.Symbol);
+
+            if (requestedServiceIsFoundAsRateResult) 
+            {                                           
+                console.log("Found requested service in position: " + index + "of rate results");
+
+                var applyBackupService = BackupServiceRequired(rateResults,shipmentRequest);
+
+                if (applyBackupService)
+                {
+                    if (domestic) 
+                    {
+                        serviceToBeReturned = backupNDADomesticService;                
+
+                        UpdateFields(formatDate(getTomorrowDate(),true));  
+                    }                
+                    else
+                    {
+                        serviceToBeReturned = backupExpressIntlService;
+
+                        rateResults.forEach(function(item, index, object) 
+                        {
+                            if (item.PackageDefaults.Service.Symbol === backupExpressIntlService) 
+                            {
+                                UpdateFields(formatDate(GetArriveDate(item.PackageDefaults.ArriveDate)),applyBackupService);                  
+                            }
+                        });                       
+                    }
+                }
+                else
+                {
+                    if (rateResults) 
+                    {
+                        var fullArriveDate = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+                        UpdateFields(fullArriveDate,false);                         
+                    }
+                }
+            }
+        });
+    }
+
+// Source: NikeRevship (NIKEREVSHIP)_NikeRevshipClientBusinessRule_1786.cs
+// GetDateTimeToString() // returns a formatted timestamp string
+function GetDateTimeToString() {
+		var date = new Date();
+		return date.getFullYear().toString() + (date.getMonth() + 1).toString().padStart(2, "0") + date.getDate().toString().padStart(2, "0") + date.getHours().toString().padStart(2, "0") + date.getMinutes().toString().padStart(2, "0") + date.getSeconds().toString().padStart(2, "0") + date.getMilliseconds().toString().padStart(3, "0");
+	}
+
+// Source: Purolator (PURT)_PurolatorCBR_1906.cs
+// function PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {     
+        /**
+        var date = new Date();
+        var dateStr = date.getFullYear() + "-" + ("00" + (date.getMonth() + 1)).slice(-2) + "-" + ("00" + date.getDate()).slice(-2);
+        shipmentRequest.PackageDefaults.Shipdate = dateStr;
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        */
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        
+        debugger;
+        var brokerCode = "";
+        for(var i=0; i<shipmentRequest.Packages.length; i++) {
+            if (shipmentRequest.Packages[i].DocumentsOnly === true)
+            {
+                shipmentRequest.Packages[i].CommercialInvoiceMethod = 0;
+                shipmentRequest.Packages[i].Description = 'Document Only';
+            }
+            else
+            {
+                shipmentRequest.Packages[i].CommercialInvoiceMethod = 1;
+                //Commodities Description
+                if (i == 0 && shipmentRequest.Packages[i].CommodityContents)
+                {
+                    //debugger;
+                    for (var indx = 0; indx < shipmentRequest.Packages[i].CommodityContents.length; indx++)
+                    {
+                        if (shipmentRequest.Packages[i].CommodityContents[indx].Description)
+                        {
+                            shipmentRequest.Packages[i].CommodityContents[indx].Description = shipmentRequest.Packages[i].CommodityContents[indx].Description.replace(/[\r\n\t]/g, "");
+                        }
+                    }
+                }
+                else                
+                {
+                    //alert("Missing Commodity Contents");
+                }
+            }
+
+            //WorldEase Flag to assign to all packages
+            shipmentRequest.Packages[i].WorldEaseFlag = shipmentRequest.Packages[0].WorldEaseFlag;
+            
+            //WorldEase Additional Documents
+            //debugger;
+            shipmentRequest.Packages[i].AdditionalHardcopyDocumentation = shipmentRequest.Packages[0].AdditionalHardcopyDocumentation;
+            shipmentRequest.Packages[i].Comments = shipmentRequest.Packages[0].Comments;
+            shipmentRequest.Packages[i].ExportDeclarationStatement = shipmentRequest.Packages[0].ExportDeclarationStatement;
+
+            /**
+            //WorldEase Importer of Records
+            if (shipmentRequest.Packages[i].WorldEaseFlag === true && shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[i].ImporterOfRecord === undefined)
+            {
+                debugger;
+                //var na = shipmentRequest.PackageDefaults.ReturnAddress;
+                if (shipmentRequest.PackageDefaults.Shipper.includes("AB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F41";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("BC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F4X";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("MB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F45";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("ON"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "A4206Y";
+                    const nIOR = new IOR("The Orthotic Group", "160 Markland Street", "Markham ON L6C0C6" ,"Buffalo","NY", "14206", "US","A4206Y"); 
+                    shipmentRequest.Packages[i].ImporterOfRecord = nIOR;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("QC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F52";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+            }
+            **/
+            
+            //Exporter
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined)
+            {
+                shipmentRequest.Packages[i].Exporter = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Custom Broker
+            if (shipmentRequest.Packages[0].CustomsBroker !== undefined)
+            {
+                if (i===0)
+                    {
+                        brokerCode = shipmentRequest.Packages[0].CustomsBroker.Code !== undefined ? (shipmentRequest.Packages[0].CustomsBroker.Code.length > 3 ? shipmentRequest.Packages[0].CustomsBroker.Code.substring(2) : shipmentRequest.Packages[0].CustomsBroker.Code) : '';
+                    }
+                shipmentRequest.Packages[i].CustomsBroker = shipmentRequest.Packages[0].CustomsBroker;   
+                shipmentRequest.Packages[i].CustomsBroker.Code = brokerCode;                    
+            }
+
+            //debugger;
+            //Hazmat Signatory Address
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[0].HazmatContents !== undefined)
+            {
+                shipmentRequest.Packages[i].HazmatSignatoryAddress = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Capture Email and assign them to MiscRef10
+            var form = $('form[id="logoutForm"]');
+            const ahref = form.find('a[href="/ShipExecThinClient/Manage"]');
+            var indx = ahref.text().indexOf(' ');
+            shipmentRequest.Packages[i].MiscReference10 = $.trim(ahref.text().replace('!','').substring(indx));
+
+            //General Description
+            //shipmentRequest.Packages[i].Description = shipmentRequest.Packages[i].Description.replace(/[\r\n\t]/g, "");
+        }
+
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {     
+        /**
+        var date = new Date();
+        var dateStr = date.getFullYear() + "-" + ("00" + (date.getMonth() + 1)).slice(-2) + "-" + ("00" + date.getDate()).slice(-2);
+        shipmentRequest.PackageDefaults.Shipdate = dateStr;
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        */
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        
+        debugger;
+        var brokerCode = "";
+        for(var i=0; i<shipmentRequest.Packages.length; i++) {
+            if (shipmentRequest.Packages[i].DocumentsOnly === true)
+            {
+                shipmentRequest.Packages[i].CommercialInvoiceMethod = 0;
+                shipmentRequest.Packages[i].Description = 'Document Only';
+            }
+            else
+            {
+                //shipmentRequest.Packages[i].CommercialInvoiceMethod = 1;
+                //Commodities Description
+                if (i == 0)
+                {
+                    //debugger;
+                    for (var indx = 0; indx < shipmentRequest.Packages[i].CommodityContents.length; indx++)
+                    {
+                        shipmentRequest.Packages[i].CommodityContents[indx].Description = shipmentRequest.Packages[i].CommodityContents[indx].Description.replace(/[\r\n\t]/g, "");
+                    }
+                }
+            }
+
+            //WorldEase Flag to assign to all packages
+            shipmentRequest.Packages[i].WorldEaseFlag = shipmentRequest.Packages[0].WorldEaseFlag;
+            
+            //WorldEase Additional Documents
+            //debugger;
+            shipmentRequest.Packages[i].AdditionalHardcopyDocumentation = shipmentRequest.Packages[0].AdditionalHardcopyDocumentation;
+            shipmentRequest.Packages[i].Comments = shipmentRequest.Packages[0].Comments;
+            shipmentRequest.Packages[i].ExportDeclarationStatement = shipmentRequest.Packages[0].ExportDeclarationStatement;
+
+            /**
+            //WorldEase Importer of Records
+            if (shipmentRequest.Packages[i].WorldEaseFlag === true && shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[i].ImporterOfRecord === undefined)
+            {
+                debugger;
+                //var na = shipmentRequest.PackageDefaults.ReturnAddress;
+                if (shipmentRequest.PackageDefaults.Shipper.includes("AB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F41";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("BC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F4X";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("MB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F45";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("ON"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "A4206Y";
+                    const nIOR = new IOR("The Orthotic Group", "160 Markland Street", "Markham ON L6C0C6" ,"Buffalo","NY", "14206", "US","A4206Y"); 
+                    shipmentRequest.Packages[i].ImporterOfRecord = nIOR;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("QC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F52";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+            }
+            **/
+            
+            //Exporter
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined)
+            {
+                shipmentRequest.Packages[i].Exporter = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Custom Broker
+            if (shipmentRequest.Packages[0].CustomsBroker !== undefined)
+            {
+                if (i===0)
+                    {
+                        brokerCode = shipmentRequest.Packages[0].CustomsBroker.Code !== undefined ? (shipmentRequest.Packages[0].CustomsBroker.Code.length > 3 ? shipmentRequest.Packages[0].CustomsBroker.Code.substring(2) : shipmentRequest.Packages[0].CustomsBroker.Code) : '';
+                    }
+                shipmentRequest.Packages[i].CustomsBroker = shipmentRequest.Packages[0].CustomsBroker;   
+                shipmentRequest.Packages[i].CustomsBroker.Code = brokerCode;                    
+            }
+
+            //debugger;
+            //Hazmat Signatory Address
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[0].HazmatContents !== undefined)
+            {
+                shipmentRequest.Packages[i].HazmatSignatoryAddress = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Capture Email and assign them to MiscRef10
+            var form = $('form[id="logoutForm"]');
+            const ahref = form.find('a[href="/ShipExecThinClient/Manage"]');
+            var indx = ahref.text().indexOf(' ');
+            shipmentRequest.Packages[i].MiscReference10 = $.trim(ahref.text().replace('!','').substring(indx));
+
+            //General Description
+            //shipmentRequest.Packages[i].Description = shipmentRequest.Packages[i].Description.replace(/[\r\n\t]/g, "");
+        }
+
+    }
+
+// Source: SE Demo (SE_DEMO)_CBR_SE_Demo_1818.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {   
+
+		shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00";
+		debugger;
+   
+        if (shipmentRequest.PackageDefaults.Service.Symbol == "CONNECTSHIP_ROADIE.ROADIE.SD")
+            {
+                var today = new Date();
+		        shipmentRequest.Packages[0].MiscReference13 = today.toLocaleDateString();    
+                var tomorrow = new Date(today);
+                tomorrow.setDate(today.getDate() + 1)
+                debugger;
+                //shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00";
+                shipmentRequest.Packages[0].SpecialDelivery = true;
+                if (shipmentRequest.Packages[0].ReturnDelivery)
+                {shipmentRequest.Packages[0].CarrierInstructions = "Recovery mission - gold accomplished!"}
+                else
+                {shipmentRequest.Packages[0].CarrierInstructions = "Treasure hunt level - scuba required!"};
+                shipmentRequest.Packages[0].EarliestDeliveryDate = {Month: tomorrow.getMonth()+1, Day: tomorrow.getDate(), Year: tomorrow.getFullYear()};
+                shipmentRequest.Packages[0].EarliestDeliveryTime = '08:00';
+                shipmentRequest.Packages[0].LatestDeliveryDate = {Month: tomorrow.getMonth()+1, Day: tomorrow.getDate(), Year: tomorrow.getFullYear()};
+                shipmentRequest.Packages[0].LatestDeliveryTime = '17:00';
+                debugger;
+                
+            };
+        debugger;
+
+    }
+
+// PreRate(shipmentRequest, userParams) // returns void
+    this.PreRate = function(shipmentRequest, userParams) {   
+
+/*        for (const service of shipmentRequest.services)
+        {
+            if (service == "CONNECTSHIP_ROADIE.ROADIE.SD")
+            {
+                var today = new Date();
+		        shipmentRequest.Packages[0].MiscReference13 = today.toLocaleDateString();    
+                var tomorrow = new Date(today);
+                tomorrow.setDate(today.getDate() + 1)
+                debugger;
+                //shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00";
+                shipmentRequest.Packages[0].SpecialDelivery = true;
+                if (shipmentRequest.Packages[0].ReturnDelivery == true)
+                {shipmentRequest.Packages[0].CarrierInstructions = "carrier Pidgeon Homecoming!"}
+                else
+                {shipmentRequest.Packages[0].CarrierInstructions = "Fly like an eagle - to the scene!"};
+                shipmentRequest.Packages[0].EarliestDeliveryDate = {Month: tomorrow.getMonth()+1, Day: tomorrow.getDate(), Year: tomorrow.getFullYear()};
+                shipmentRequest.Packages[0].EarliestDeliveryTime = '08:00';
+                shipmentRequest.Packages[0].LatestDeliveryDate = {Month: tomorrow.getMonth()+1, Day: tomorrow.getDate(), Year: tomorrow.getFullYear()};
+                shipmentRequest.Packages[0].LatestDeliveryTime = '17:00';
+                debugger;
+                
+            }
+        };
+        debugger;
+        */
+
+    }
+
+// Source: SE Demo APAC (SE_DEMO_APAC)_CBR_SE_Demo_1873.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {   
+        shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00"
+    }
+
+// Source: ShipExec Essentials Demo (CF_DEMO)_CBR_SE_Demo_1854.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {   
+        shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00"
+    }
+
+// Source: Tesla (TES)_test 1_1869.cs
+// GetDateTimeToString() // returns a timestamp string in YYYYMMDDHHMMSS format
+function GetDateTimeToString()
+        {
+            var date_ = new Date();
+            var year = date_.getFullYear();
+            var month = date_.getMonth()+1;
+            var day = date_.getDate();
+            if(month<10) month = "0"+month;
+            if(day<10) day = "0"+day;
+
+            var hours = date_.getHours();
+            var mins = date_.getMinutes();
+            var secs = date_.getSeconds();
+            var msecs = date_.getMilliseconds();
+            if(hours<10) hours = "0"+hours;
+            if(mins<10) mins = "0"+mins;
+            if(secs<10) secs = "0"+secs;
+            if(msecs<10) msecs = "0"+msecs;
+            return year+month+day+hours+mins+secs;
+        }
+
+// Source: Volt Lighting (VOLT)_Volt_Business_Rules_1666.cs
+// function UserMethod(logoNumber) // returns void
+    function UserMethod(logoNumber) {
+
+		if (logoNumber == 4) {
+
+			var orderNumber = $('[ng-model="vm.loadValue"]').val();
+
+			if (orderNumber === undefined || orderNumber === null || orderNumber === "") {
+
+				client.alert.Danger("Missing or invalid Order Number, no update made.  Please enter a valid order number and try again.");
+			}
+			else {
+			
+				var usermethodParams = { "action": 4, "orderNumber": orderNumber, "percentageComplete":"0", "trailerNumber":"", "shipper":""};
+				var results;
+				var data = { UserContext: userContext, "Data": JSON.stringify(usermethodParams) };
+				var response = client.thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+					if (response.ErrorCode != 0) {
+						client.alert.Danger(response.ErrorMessage);
+					} else {
+						results = response["Data"];
+					}
+				});
+				
+				
+				/*$.ajax({
+                    type: "POST",
+                    url: "api/ShippingService/UserMethod",
+                    async: false,
+                    cache: false,
+                    dataType: "json",
+                    data: { UserContext: userContext, "Data": JSON.stringify(usermethodParams) },
+                    success: function(response) {
+                        results = response["Data"];
+                        ;
+                    },
+                    error: function (error) {
+                        alert("Finalize Shipment has failed, no update made to the system.  Contact Support.");
+                    }
+                });*/
+			}
+		}
+		else {
+
+			$("#fileLoader").click();
+
+			var encodedBase64Logo;
+
+			var filesSelected = document.getElementById("fileLoader").files;
+
+			if (filesSelected.length > 0) {
+				var fileToLoad = filesSelected[0];
+
+				var fileReader = new FileReader();
+
+				fileReader.readAsDataURL(fileToLoad);
+
+				fileReader.onload = function (event) {
+					var encodedBase64Logo = logoNumber + event.target.result;
+
+					SoxOnWcfDblHop.userMethod(encodedBase64Logo,
+						function (result) {
+							// Do something with the data
+
+							DisplayLogoSaveMessage(result);
+
+						},
+						function (e) {
+							// Do something with the error
+
+							alert(e.message);
+						});
+				};
+			}
+		}
+	}
+
+// Source: VW Group (VW)_VW Client Rules_1513.cs
+// PreShip(shipmentRequest, userParams) // returns undefined
+this.PreShip = function (shipmentRequest, userParams) {
+        var userId = userContext.UserId;
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference19 = userId;
+        }
+    }
+

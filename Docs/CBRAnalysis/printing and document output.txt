@@ -1,0 +1,2221 @@
+// Source: #TEST (RONITEST)_Client Business Rules_2468.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: 2.2 Update 4 (21UPDATE4)_cbr doc ready_1721.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Alight Solutions (ALISOL)_AlightSolutions Client Rules_1842.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function (document, localPort) {
+    };
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function (document) {
+    };
+
+// Source: Alight Solutions (ALISOL)_DirectToMobileCBR_2434.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function (document, localPort) {
+    };
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function (document) {
+    };
+
+// Source: AlstonBird (ALBI)_ClientBusinessRules_1866.cs
+// delegateTravelerLabel(shipmentRequest) // returns void
+        function delegateTravelerLabel(shipmentRequest) {
+
+            //vm.currentShipment.PackageDefaults.Service = vm.selectedServices[0];            
+            var data = { Data: JSON.stringify(shipmentRequest) };
+            
+            debugger;
+            
+            var result = client.thinClientAPIRequest('UserMethod', data, false).responseJSON;
+            var travelerlabelresp = JSON.parse(atob(result.Data));
+            var travelerlabelpdf64 = travelerlabelresp.DocumentResponses[0].PdfData[0];
+            
+            // This works but only when the user switches to the new tab and refereshes page
+            var dataURI = "data:application/pdf;base64," + travelerlabelpdf64;
+            window.open(dataURI, '_blank');
+
+            // This also fails
+            //let pdfWindow = window.open("")
+            //setTimeout(() => pdfWindow.document.title = 'Delegate Label',50);
+            //const iframe = pdfWindow.document.createElement('iframe');
+            //iframe.width = '100%';
+            //iframe.height = '100%';
+            //iframe.title = 'PDF Viewer';  
+            //iframe.src = 'data:application/pdf;base64, ' + encodeURI(travelerlabelpdf64);
+            //pdfWindow.document.body.appendChild(iframe);
+            
+            
+            // Original code that fails on the document.write call
+            //let pdfWindow = window.open("")
+            //setTimeout(() => pdfWindow.document.title = 'Delegate Label',50);
+            //pdfWindow.document.write(
+            //    "<iframe width='100%' height='100%' src='data:application/pdf;base64, " +
+            //    encodeURI(travelerlabelpdf64) + "'></iframe>"
+            //    )            
+
+            alert("Delegate Label Created");
+        }
+
+// Source: AlstonBird (ALBI)_TEST_2505.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: AM Best (AMBEST)_AMBest Default CBR_2488.cs
+// function PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: American Spoon Foods (ASFW)_ASFCBR_1639.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Amplifon (AMPN)_Amplifon CBR_1917.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: AppliedImaging (APIM)_Appliedimageing_Rule_1853.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+
+// Source: Asia Waterjet FZCO (ASIAWATERJETFZCO)_Asia_WaterJet_CBR_1870.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {}
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {}
+
+// Source: Barnes & Noble Education, Inc. (BNEDUCAT)_BarnesAndNoble Client BR_1588.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: bhargavitest (BHARGAVITEST)_ClientScriptTest_1591.cs
+// PrePrint(document, localPort) // returns void
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+this.PostPrint = function(document) {
+    }
+
+// Source: Bulgari MX (BULGARIMX)_BulgariMx Reference Rules_1778.cs
+// function PrePrint(doc, localPort, viewModel) // returns void
+    this.PrePrint = function(doc, localPort, viewModel){
+        // WORKAROUND for bug where printer profile doesn't send optional settings
+    	// attach control string to set defaults to start of document string
+    	if((doc.DocumentSymbol == 'UPSAPI.UPS.PACKAGE_LABEL.STANDARD') && doc.RawData){
+        	var printerDefaults = "^XA^LH0,0^XSY,Y^MD30^XZ\n";
+        	var oldraw = atou(doc.RawData);
+        	var newraw = printerDefaults + oldraw;
+        	doc.RawData[0] = utoa(newraw);
+    	}
+    };
+
+// Source: Cabinet Works Group (MASCO)_Masco Client Side Business Rules_1752.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function (document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function (document) {
+    }
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// selectDownloadFile(event) // returns void
+            function selectDownloadFile(event) {
+                this.menu.guide.selectedDownloadFile = event.target.innerText;
+                if (this.menu.guide.inputFile.selected) {
+                    if (this.menu.guide.selectedDownloadFile.slice(-3) == this.menu.guide.inputFile.selected.name.slice(-3))
+                        updateFile();
+                } else {
+                    var payload = { Action: 'downloadFile', Data: this.menu.guide.selectedDownloadFile };
+                    var data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                    thinClient.httpClient('UserMethod', data).then(function (ret) {
+                        if (ret.ErrorCode === 0) {
+                            var data = JSON.parse(atob(ret.Data));
+
+                            let linkData = `data:${data.fileType};base64,${data.encodedFile}`;
+                            let downloadLink = document.createElement("a");
+                            downloadLink.style.display = "none";
+                            downloadLink.download = data.fileName;
+                            downloadLink.href = linkData;
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                        }
+                    });
+                }
+
+                function updateFile() {
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var request = {
+                            Key: vm.shipping.menu.guide.selectedDownloadFile,
+                            Value: JSON.stringify({
+                                fileType: vm.shipping.menu.guide.inputFile.selected.type,
+                                fileName: vm.shipping.menu.guide.inputFile.selected.name,
+                                encodedFile: this.result.split(',')[1]
+                            })
+                        }
+                        var payload = { Action: 'updateFile', Data: request };
+                        var data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                        thinClient.httpClient('UserMethod', data).then(function (ret) {
+                            if (ret.ErrorCode !== 0)
+                                vm.notificationService.notifyDanger(ret.ErrorCode + " - " + ret.ErrorMessage);
+                        }).catch(function (response) {
+                            vm.notificationService.notifyDanger(vm.translations.Common.ErrorConnectingWCFService + ": " + response.status + " " + response.statusText);
+                        })
+                        vm.shipping.menu.guide.inputFile.selected = null;
+                        $(vm.shipping.menu.guide.inputFile.selector).val(null);
+                        vm.thinClient.loadData.show();
+
+                    }
+                    if (vm.shipping.menu.guide.inputFile.selected) reader.readAsDataURL(vm.shipping.menu.guide.inputFile.selected);
+                }
+            }
+
+// Source: CBR Doc Ready (CBRDOCREADY)_cbr doc ready_1722.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: Chrysler (Chrysler)_Chrysler Reference Rule_26.cs
+// function PrePrint(doc, localPort, viewModel) // returns void
+ this.PrePrint = function(doc, localPort, viewModel){
+ // WORKAROUND for bug where printer profile doesn't send optional settings
+ // attach control string to set defaults to start of document string
+ if((doc.DocumentSymbol == 'UPSAPI.UPS.PACKAGE_LABEL.STANDARD') &&
+doc.RawData){
+ var printerDefaults = "^XA^LH0,0^XSY,Y^MD30^XZ\n";
+ var oldraw = atou(doc.RawData[0]);
+ var newraw = printerDefaults + oldraw;
+ doc.RawData[0] = utoa(newraw);
+ }
+ };
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function (document, localPort) {
+    };
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function (document) {
+    };
+
+// Source: Conduent (CONDUENT)_Conduent_CBR_1659.cs
+// function PrePrint(document, localPort) // returns undefined
+this.PrePrint = function (document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+this.PostPrint = function (document) {
+    }
+
+// Source: CountryMax Stores (CNTM)_CountryMax Shipping CBR_1660.cs
+// PostShip(shipmentRequest, shipmentResponse) // returns void
+	this.PostShip = function(shipmentRequest, shipmentResponse) {
+		//debugger;
+		if (shipmentResponse.PackageDefaults.ErrorCode !== undefined && shipmentResponse.PackageDefaults.ErrorCode !== 0) {
+			showLoading(false);
+			alert("Shipping error: " + shipmentResponse.PackageDefaults.ErrorMessage);
+		}
+		this.vm.currentShipment.Packages[this.vm.packageIndex].MiscReference20 = false;		// autoship
+		$("#custom_markup_id").val("");
+/**
+		labelInterval = setInterval(function () {
+			var labelDialog = $('[uib-modal-window="modal-window"]');
+		
+			// close label popup if displayed after shipping
+			if (labelDialog.length > 0) {
+				clearInterval(labelInterval);
+				$('[uib-modal-window="modal-window"]').find('.modal-header .row button').click();
+			}
+		}, 20);
+*/
+		// clear waiting on alert and dialog intervals
+		setTimeout(function() {
+			clearInterval(alertInterval);
+			clearInterval(labelInterval);
+		}, 5000);
+	};
+
+// Source: Customer Solutions Internal Shipping (CSIS)_Client Business Rule_2490.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Demo Company Import (DMCO1)_ClientScriptTest_1605.cs
+// function(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: DemotestUAT (734934577)_CBR Void Test_1620.cs
+// function PrePrint(document, localPort) // returns void
+this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns void
+this.PostPrint = function(document) {
+    }
+
+// Source: DemotestUAT (734934577)_KeyStroke_1621.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: DH_Pace_Trial (DHPACE)_Test_1809.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: DRF (DRF)_Test_2448.cs
+// PrePrint(document, localPort) // returns undefined; may suppress printing by setting document to null
+this.PrePrint = function(document, localPort) {
+        console.log(document.DocumentSymbol)
+        
+        if(document.DocumentSymbol === 'GEM_Packing_Slip_Report.STANDARD'){
+            console.log('hola');
+            document = null;
+        }
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: EATON CORPORATION (EATON)_Eaton Business Rules_1772.cs
+// PrePrint(doc, localPort, viewModel) // returns void
+    this.PrePrint = function(doc, localPort, viewModel){
+        // WORKAROUND for bug where printer profile doesn't send optional settings
+    	// attach control string to set defaults to start of document string
+    	if((doc.DocumentSymbol == 'UPSAPI.UPS.PACKAGE_LABEL.STANDARD') && doc.RawData){
+        	var printerDefaults = "^XA^LH0,0^XSY,Y^MD30^XZ\n";
+        	var oldraw = atou(doc.RawData[0]);
+        	var newraw = printerDefaults + oldraw;
+        	doc.RawData[0] = utoa(newraw);
+    	}
+    };
+
+// Source: FalconNDX (FNDX)_Falcon_CBR_1794.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Fluid Analysis Laboratory (POLARIS)_Polaris_1684.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: GAP (GAP)_Gap Reference rule with ON Hanger Pooler_2507.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    };
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+
+    };
+
+// Source: GAP (GAP)_Rule with Mail Innov. Billing_1888.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: GAP INC (GAPMailrooms)_DirectToMobileCBR_1918.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: GAP INC (GAPMailrooms)_French changes_1862.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: GAP INC (GAPMailrooms)_French RH_1871.cs
+// this.CloseManifest() // returns void
+this.CloseManifest = function () {
+        'div.panel-primary label'.$textToFrench();
+        'div.panel-primary button'.innerTextToFrench();
+        'shipper-carrier select option:contains("Select Shipper...")'.textToFrench();
+        'shipper-carrier select option:contains("Select Carrier...")'.textToFrench();
+    }
+
+// this.ManifestDocuments() // returns void
+this.ManifestDocuments = function () {
+        'div.panel-primary label'.$textToFrench();
+        'shipper-carrier select option:contains("Select Shipper...")'.textToFrench();
+        'shipper-carrier select option:contains("Select Carrier...")'.textToFrench();
+    }
+
+// this.Transmit() // returns void
+this.Transmit = function () {
+        'div.panel-primary label'.$textToFrench();
+        'div.panel-primary button'.innerTextToFrench();
+        'shipper-carrier select option:contains("Select Shipper...")'.textToFrench();
+        'shipper-carrier select option:contains("Select Carrier...")'.textToFrench();
+    }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// this.PrePrint(document, localPort) // returns void
+  this.PrePrint = function (document, localPort)
+  {
+     console.log(document);
+  }
+
+// downloadPdf(pdfDocuments) // returns void
+    function downloadPdf(pdfDocuments) {      
+      let pdfArray = pdfDocuments.PdfData;
+      let documentName = pdfDocuments.DocumentName;
+      let file = {};
+      console.log(pdfArray.length);
+      for (let count = 0; count < pdfArray.length; count++) {
+            if (navigator.userAgent.indexOf("MSIE ") > -1 || navigator.userAgent.indexOf("Trident/") > -1) {
+              let byteCharacters = atob(pdfArray[count]);
+              let byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                let byteArray = new Uint8Array(byteNumbers);
+                file = new Blob([byteArray], { type: 'application/pdf' });
+                window.navigator.msSaveOrOpenBlob(file, documentName + ".pdf");
+            } else {
+                let documentAfterConversion = base64ToArrayBuffer(pdfArray[count]);
+                let a = window.document.createElement("a");
+                file = new Blob([documentAfterConversion], { type: 'application/pdf' });
+                let fileUrl = URL.createObjectURL(file);
+                a.href = fileUrl;
+                a.download = documentName + ".pdf";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }          
+      }
+  }
+
+// printDocuments(printData) // returns void
+  function printDocuments(printData) {
+    let request = new XMLHttpRequest();
+    request.open('POST','https://localhost:5001/api/Printer/Print', true);
+    request.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+    /*request.onreadystatechange = function() {
+        if (this.readyState === 4) {
+            if (this.status === 200) {
+                if (printData.RawData.length === 1) {
+                    documents.shift();
+                } else {
+                    printData.RawData.shift();
+                    documents[0] = JSON.parse(JSON.stringify(printData));
+                }
+                printDocuments(documents);
+            } else {
+              console.log("Error");
+            }
+        }
+    };*/
+    request.send(JSON.stringify({
+        'PrinterName': printData.LocalPort,
+        'RawPrintData': printData.RawData[0]
+    }));
+        
+  }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Gordon Foods (GORDONFOODS)_GFS Client Script_2439.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: HandsOn (HANDSON)_Scanship_1744.cs
+// PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: HARLEY DAVIDSON (HD)_HD CBR 2.3 Fix_1758.cs
+// function ViewCheckedLabels() // returns undefined
+    function ViewCheckedLabels() {
+        $('#tableBatchDetails').find('input[type=checkbox]:checked').each(function () {
+            // console.log("Print");
+            var btnPrint = $(this).closest('tr').find('input[type="button"][value="Print"]').first().trigger('click');
+        });
+    }
+
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function (document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function (document) {
+    }
+
+// Source: HARLEY DAVIDSON (HD)_Phase 2_2436.cs
+// ViewCheckedLabels() // returns void
+    function ViewCheckedLabels() {
+        const batchItemArr = [];
+        $('#tableBatchDetails').find('input[type=checkbox]:checked').each(function () {
+            //debugger;
+            console.log("Print");
+            var btnPrint = $(this).closest('tr').find('input[type="button"][value="Print"]').first().trigger('click');
+            batchItemArr.push($(this).attr('data'))
+        });
+        var dataObject = {};
+        dataObject.Action = "RemoveBatchItem";
+        let bLen = batchItemArr.length;
+        for (let i = 0; i < bLen; i++) {
+            if (i == 0) {
+                dataObject.Content = batchItemArr[i];
+            } else {
+                dataObject.Content += "," + batchItemArr[i];
+            }
+        }
+        var data = { Data: JSON.stringify(dataObject), UserContext: client.userContext };
+        //debugger;
+        clientService.thinClientAPIRequest('UserMethod', data, false)
+    }
+
+// Source: Henry Schein (HS)_E42 Client Business Rules_1911.cs
+// PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// PrePrint(document, localPort) // returns void
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+this.PostPrint = function(document) {
+    }
+
+// Source: Hyve Solutions (HYVE)_Hyve_Solutions_CBR_1593.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function (document, localPort) {
+    };
+
+// PostPrint(document) // returns void
+    this.PostPrint = function (document) {
+    };
+
+// Source: Inditex (INDITEX)_Client Business Rules_2483.cs
+// ManifestDocuments() // returns void
+this.ManifestDocuments = function () {
+        testbutton();
+
+        function testbutton() {
+            $('body').delegate('#buttonExportCODFile', 'click', function () {
+                debugger;
+                var shipper = $(this).attr('shipper');
+                var carrier = $(this).attr('carrier');
+                var historyId = $(this).attr('historyId');
+                var historyShipDateYear = $(this).attr('shipDateYear');
+                var historyShipDateMonth = $(this).attr('shipDateMonth');
+                var historyShipDateDay = $(this).attr('shipDateDay');
+                var isSftpChecked = $('#SftprBtnId').prop('checked');
+                var isLocalChecked = $('#LocalrBtnId').prop('checked');
+                debugger;
+
+                // Send data to user method on the server side
+                var usermethodParams = { "action": 1, "usercontext": client.userContext, "shipper": shipper, "historyId": historyId, "historyShipDateYear": historyShipDateYear, "historyShipDateMonth": historyShipDateMonth, "historyShipDateDay": historyShipDateDay, "carrier": carrier, "sftpSelectrdStatus": isSftpChecked, "localSelectrdStatus": isLocalChecked };
+                var codFileString;
+
+                var data = { UserContext: client.userContext, "Data": JSON.stringify(usermethodParams) };
+                
+                clientService.thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+                    debugger;                  
+
+                    //****New code 01.24.2022****
+                    var jsonString = $("<textarea/>").html(response.Data).text();
+
+                    if (jsonString && isLocalChecked) {                        
+                        codFileString = jsonString;
+
+                        var data = new Blob([codFileString], { type: 'text/plain' });
+
+                        var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+                            ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+                            ieEdge = navigator.userAgent.match(/Edge/g),
+                            ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+
+                        // set the export file name 
+                        var exportFileName = "ShipmentRequest" + historyShipDateYear + historyShipDateMonth + historyShipDateDay + "_1_" + shipper + ".txt"
+
+                        if (ieVer > -1) {
+                            window.navigator.msSaveBlob(codFileString, exportFileName);
+
+                        } else {
+                            var downloadLink = document.createElement("a");
+                            downloadLink.download = exportFileName;
+                            downloadLink.href = window.URL.createObjectURL(data);
+                            downloadLink.style.display = "none";
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(link);
+                        }
+                    }
+                });          
+            })
+        }
+    }
+
+// Source: Integrated Marketing Tech (IMT)_shipment_CBR_IMT_PROD_1825.cs
+// PrePrint(document, localPort) // returns undefined
+     this.PrePrint = function(document, localPort)
+    {
+
+    }
+
+// PostPrint(document) // returns undefined
+     this.PostPrint = function(document)
+    {
+
+    }
+
+// printZpl(zpl) // returns undefined
+    function printZpl(zpl) 
+    {
+      //alert(zpl);
+      var printWindow = window.open();
+      printWindow.document.open('text/plain')
+      printWindow.document.write(zpl);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Joy Accessories Inc (JOY)_JOY CBR_1863.cs
+// function PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: KARTNERS BATHROOM ACCESSORIES (KARTNERS)_Kartners_CBR_2462.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: KeithCo (KC)_roni_1720.cs
+// function PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: Lear Corporation (LEAR)_Lear_client_Businessrules_1810.cs
+// function PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: Level 9 Sports (LEVEL9SPORTS)_L9 Client Rules_1704.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: LyondellBasell (LYON)_LYB_Company_Client_Side_1712.cs
+// PrePrint(document, localPort) // returns void
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+this.PostPrint = function(document) {
+    }
+
+// Source: M&T Bank (MTBank)_MTBank_1506.cs
+// function getCostCenterReport(element) // returns jQuery promise for posting and triggering file download
+function getCostCenterReport(element) {
+    debugger;
+    var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+    var authorizationToken = clientService.authorizationToken();
+    var context = client.userContext;
+    var costcenter = $(element).attr('data-costcenter');
+    if (costcenter) {
+        var searchCriteria = { DateStart: $('input[ng-model="vm.dtstart"]').val(), DateEnd: $('input[ng-model="vm.dtend"]').val(), CostCenter: costcenter };
+        var data = { Action: element.id, Content: JSON.stringify(searchCriteria) };
+       return $.post({ url:shipExecServiceUrl +'/UserMethod',
+              data: {UserContext: userContext, Data:JSON.stringify(data)}, headers: authorizationToken},
+            function (response, status, xhr) {
+                downloadFile(costcenter, response["Data"]);
+            }
+        ).done(function () {
+        });
+    }
+}
+
+// function downloadFile(exportFileName, encodedString) // returns undefined
+function downloadFile(exportFileName, encodedString) {
+    var decodedResult = atob(encodedString); // decode a base-64 encoded string
+    var csvFile = new Blob([decodedResult], { type: "text/csv" });
+
+    var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+        ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+        ieEdge = navigator.userAgent.match(/Edge/g),
+        ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+
+    exportFileName = exportFileName + '.csv';
+
+    if (ieVer > -1) {
+        window.navigator.msSaveBlob(csvFile, exportFileName);
+
+    } else {
+        var downloadLink = document.createElement("a");
+        downloadLink.download = exportFileName;
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+}
+
+// Source: Marchon (MARCHON)_Marchon Client Side Business Rules_1839.cs
+// PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: Marchon (MARCHON)_MarchonCBR_Manager_1845.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+
+// Source: Marchon (MARCHON)_MarchonCBR_SalesRep_1844.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_CA_TO_US_2497.cs
+// this.convertFileInputToBase64(inputId, leg) // returns Promise<object|undefined>
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_EU_TO_UK_2498.cs
+// setResponseLabel(responseLabelId, result, sessionStorageErrorFileName) // returns void
+    this.setResponseLabel = function (responseLabelId, result, sessionStorageErrorFileName) {
+        console.log("Upload Response: " + result);
+
+        var label = $('#' + responseLabelId);
+        if (label) {
+
+            //debugger;
+
+            if (sessionStorageErrorFileName) {
+                var errorMessage = "Upload failed for document "
+                    + sessionStorageErrorFileName
+                    + " - document exceeds maximum size (1.0 MB)";
+
+                $('#uploadErrorModalLabel').html(errorMessage);
+                $('#uploadErrorModal').modal('show');
+            }
+
+            else if (!result.Success) {
+                // If the call is not successful, display an error message in a modal
+                //debugger;
+                var existingMessage = $('#uploadErrorModalLabel').html();
+
+                // Creates the error message
+                var errorMessage = "Upload failed for document "
+                    + result.FileName
+                    + " during Leg "
+                    + result.Leg
+                    + ".";
+
+                // If there is an existing error message, append to it
+                if (existingMessage && existingMessage.length > 0) {
+                    errorMessage = existingMessage + '<br /><br />' + errorMessage;
+                }
+
+                $('#uploadErrorModalLabel').html(errorMessage);
+                $('#uploadErrorModal').modal('show');
+            }
+        }
+    }
+
+// convertFileInputToBase64(inputId, leg) // returns Promise<object|undefined>
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// setUploadDelegates() // returns void
+    function setUploadDelegates() {
+
+        $('body').undelegate('#btnUploadPdfGoods', 'click');
+        $('body').undelegate('#btnUploadPdfGoodsClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputGoods', 'change');
+        $('body').undelegate('#btnUploadPdfModal', 'click');
+        $('body').undelegate('#btnUploadPdfModalClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputModal', 'change');
+
+        $('body').delegate('#btnUploadPdfGoods', 'click', function (e) {
+
+            that.currentShipment.Packages[0].MiscReference11 = "true";
+
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfGoodsClear', 'click', function (e) {
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput
+                && uploadPDFGoodsInput.length == 1) {
+                uploadPDFGoodsInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference11 = "false";
+
+            var uploadSuccessLabel = $('#uploadSuccessLabel');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputGoods', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            //debugger;
+            sessionStorage.setItem('uploadDocumentDataGoods', '');
+            sessionStorage.setItem('uploadDocumentDataGoodsFileName', '');
+
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataGoodsFileName', e.target.files[0].name);
+
+                var uploadSuccessLabel = $('#uploadSuccessLabel');
+                if (uploadSuccessLabel) {
+                    uploadSuccessLabel.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    debugger;
+                    that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                    $('#btnUploadPdfGoodsClear').click();
+                }
+                else {
+
+                    //debugger;
+                    that.convertFileInputToBase64('paperlessUploadFileInputGoods', 1, e).then(function (ret, e) {
+                        //debugger;
+                        //that.currentShipment.MiscReference19 = JSON.stringify(ret);
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataGoods', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            //var test = this.setResponseLabel;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                            //debugger;
+                        }
+                    });
+                }
+            }
+        });
+
+        $('body').delegate('#btnUploadPdfModal', 'click', function (e) {
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfModalClear', 'click', function (e) {
+            var uploadPDFGoodsModalInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsModalInput
+                && uploadPDFGoodsModalInput.length == 1) {
+                uploadPDFGoodsModalInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference12 = "false";
+            var uploadSuccessLabel = $('#uploadSuccessLabelModal');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputModal', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            debugger;
+            sessionStorage.setItem('uploadDocumentDataModal', '');
+            sessionStorage.setItem('uploadDocumentDataModalFileName', '');
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataModalFileName', e.target.files[0].name);
+
+                var uploadSuccessLabelModal = $('#uploadSuccessLabelModal');
+                if (uploadSuccessLabelModal) {
+                    uploadSuccessLabelModal.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    var test2 = that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                }
+                else {
+                    that.convertFileInputToBase64('paperlessUploadFileInputModal', 2).then(function (ret) {
+                        //debugger;
+
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataModal', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataModalFileName'));
+                            //debugger;
+                        }
+
+
+                    });
+                }
+            }
+        });
+
+    };
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_PR_TO_US_2506.cs
+// convertFileInputToBase64(inputId, leg) // returns Promise resolving to upload payload data
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// setResponseLabel(responseLabelId, result, sessionStorageErrorFileName) // returns undefined
+    this.setResponseLabel = function (responseLabelId, result, sessionStorageErrorFileName) {
+        console.log("Upload Response: " + result);
+
+        var label = $('#' + responseLabelId);
+        if (label) {
+
+            //debugger;
+
+            if (sessionStorageErrorFileName) {
+                var errorMessage = "Upload failed for document "
+                    + sessionStorageErrorFileName
+                    + " - document exceeds maximum size (1.0 MB)";
+
+                $('#uploadErrorModalLabel').html(errorMessage);
+                $('#uploadErrorModal').modal('show');
+            }
+
+            else if (!result.Success) {
+                // If the call is not successful, display an error message in a modal
+                //debugger;
+                var existingMessage = $('#uploadErrorModalLabel').html();
+
+                // Creates the error message
+                var errorMessage = "Upload failed for document "
+                    + result.FileName
+                    + " during Leg "
+                    + result.Leg
+                    + ".";
+
+                // If there is an existing error message, append to it
+                if (existingMessage && existingMessage.length > 0) {
+                    errorMessage = existingMessage + '<br /><br />' + errorMessage;
+                }
+
+                $('#uploadErrorModalLabel').html(errorMessage);
+                $('#uploadErrorModal').modal('show');
+            }
+        }
+    }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function (document, localPort) { }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function (document) { }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase3_CBR_2501.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function (document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+    this.PostPrint = function (document) {
+    }
+
+// Source: Mazda (MAZDA)_CBR Mazda_1856.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: McIlHenny Revised (MCILHENNYREVISED)_McIlHenny Client Side Rules_1687.cs
+// PrePrint(document, localPort) // returns void
+this.PrePrint = function (document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+this.PostPrint = function (document) {
+    }
+
+// Source: McLane Company, Inc (MCLANECO)_McLaneClientBussinessRules_1827.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Meta Platforms (API Shipping) (METAPLATFORMSAPISHIPPING)_Meta Thin Client Profile CBR_1868.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {};
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {};
+
+// this.PreCloseManifest(manifestItem, userParams) // returns undefined
+    this.PreCloseManifest = function(manifestItem, userParams) {};
+
+// this.PostCloseManifest(manifestItem) // returns undefined
+    this.PostCloseManifest = function(manifestItem) {};
+
+// this.PreTransmit(transmitItem, userParams) // returns undefined
+    this.PreTransmit = function(transmitItem, userParams) {};
+
+// this.PostTransmit(transmitItem) // returns undefined
+    this.PostTransmit = function(transmitItem) {};
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {};
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {};
+
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {};
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {};
+
+// Source: MGMResorts (MGMRESOR)_Outbound Client Rules_1649.cs
+// appendDownloadMenu() // returns void
+    function appendDownloadMenu () {
+        $('body').on('click', '#sws-menu-item', function(e) {
+            $('#StrattonWarrenFileDownload').click();
+        })
+        
+        downloadMenu = true;
+        var html = [
+            '<li class="dropdown">',
+                '<a class="dropdown-toggle" data-toggle="dropdown" href="">Downloads<span class="caret"></span></a>',
+                '<ul class="dropdown-menu">',
+                    '<li id="sws-menu-item"><a>Stratton Warren File</a></li>',
+                    '<li role="separator" class="divider"></li>',
+                    '<li id="gl-menu-item"><a href="javascript:glCodeFileDownload()">GL Code File</a></li>',
+                '</ul>',
+            '</li>',
+            '<li id="download-loading">',
+                '<img src="/Content/img/spinner-transparent.gif" class="loading-spinner" />',
+                '<span class="loading-text"> Loading...</span>',
+            '</li>'
+        ].join("\n");
+
+        //$('div > div.navbar.navbar-default.navbar-fixed-top > div > div.navbar-collapse.collapse > ul').append(html);
+        $('div > div.navbar.navbar-default.navbar-fixed-top > div > div.navbar-collapse.collapse > div > ul').append(html);
+    }
+
+// toggleDownloadLoading(downloading, menuOption) // returns void
+    function toggleDownloadLoading(downloading, menuOption) {
+        let menuItem = "";
+
+        $('#download-loading').toggle();
+        
+        switch (menuOption) {
+            case "SWS" : menuItem = "#sws-menu-item"; break;
+            case "GLCODE" : menuItem = "#gl-menu-item"; break;
+        }
+        $(menuItem).toggleClass('disabled', downloading);
+    }
+
+// showModalDialog(thisRef, title, response, option) // returns void
+    function showModalDialog(thisRef, title, response, option) {
+        //debugger;
+        // hide loading spinner
+        toggleDownloadLoading(false, option);
+        decodeReturnString(response);
+
+        thisRef.AlertTitle = title;
+        if (response.ErrorCode == 0) {
+            thisRef.AlertMessage = response.Data;
+        } else {
+            thisRef.AlertMessage = response.ErrorMessage;
+        }
+        // setting dom values since ng-model isn't available
+        var responseText = response.ErrorCode == 0 || !response.ErrorMessage  ? response.Data : response.ErrorMessage
+        alertModal.find('h4').text(title);
+        alertModal.find('p').text(responseText);
+        alertModal.modal('show');
+    }
+
+// decodeReturnString(data) // returns data
+    // decode returned UserMethod data - SW 1/18/2022
+    function decodeReturnString(data) {
+        try {
+            data.Data = $('<div />').html(data.Data).text();
+            if (data.ErrorMessage) {
+                data.ErrorMessage = $('<div />').html(data.ErrorMessage).text();
+            }
+            return data;
+        }
+        catch (error) {
+            console.log(error);
+            //console.log(data);
+        }
+    }
+
+// Source: NAGINA INTERNATIONAL (NAGINA)_ISMEA_FTP_1585.cs
+// function getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Nexus (NEXUS)_Nexus CBR 2.3 Fix_1760.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    };
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    };
+
+// Source: Nexus (NEXUS)_Nexus CBR Aug 2022_1798.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    };
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    };
+
+// Source: NikeRevship (NIKEREVSHIP)_NikeRevshipClientBusinessRule_1786.cs
+// PrePrint(document, localPort) // returns undefined
+	this.PrePrint = function(document, localPort) {}
+
+// PostPrint(document) // returns undefined
+	this.PostPrint = function(document) {}
+
+// GetPreAlert(element, context) // returns undefined
+	function GetPreAlert(element, context) {
+		var jsonGroup = $(element).attr('group')
+		var group = JSON.parse(jsonGroup);
+
+		var data = {
+			UserContext: client.userContext,
+			Data: "GetPreAlert" + jsonGroup
+		}
+		sendPreAlertApi("UserMethod", data, false)
+	}
+
+// GetMasterInvoice(element, context) // returns undefined
+	function GetMasterInvoice(element, context) {
+		var jsonGroup = $(element).attr('group')
+		var group = JSON.parse(jsonGroup);
+
+		var data = {
+			UserContext: client.userContext,
+			Data: "GetMasterInvoice" + jsonGroup
+		}
+		sendMasterInvoiceApi("UserMethod", data, false)
+	}
+
+// GetDocBoxReport(element, context) // returns undefined
+	function GetDocBoxReport(element, context) {
+		var jsonGroup = $(element).attr('group')
+		var group = JSON.parse(jsonGroup);
+
+		var data = {
+			UserContext: client.userContext,
+			Data: "GetDocBoxReport" + jsonGroup
+		}
+		sendDocBoxReportApi("UserMethod", data, false)
+	}
+
+// sendPreAlertApi(method, data, isAsync) // returns the jQuery post promise
+	function sendPreAlertApi(method, data, isAsync) {
+		var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+		var authorizationToken = clientService.authorizationToken();
+		return $.post({
+				url: shipExecServiceUrl + '/' + method,
+				data: data,
+				async: isAsync,
+				headers: authorizationToken,
+				datatype: 'blob'
+			},
+			function(response, status, xhr) {
+				var preAlertObject = ParseReturnData(response["Data"])
+				const byteArr = base64ToArrayBuffer(preAlertObject.DataFile);
+				saveByteArray(preAlertObject.FileName, byteArr);
+			},
+		).done(function() {});
+	}
+
+// sendMasterInvoiceApi(method, data, isAsync) // returns the jQuery post promise
+	function sendMasterInvoiceApi(method, data, isAsync) {
+		var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+		var authorizationToken = clientService.authorizationToken();
+		return $.post({
+				url: shipExecServiceUrl + '/' + method,
+				data: data,
+				async: isAsync,
+				headers: authorizationToken,
+				datatype: 'blob'
+			},
+			function(response, status, xhr) {
+				var MasterInvoiceObject = ParseReturnData(response["Data"])
+				const byteArr = base64ToArrayBuffer(MasterInvoiceObject.DataFile);
+				saveByteArray(MasterInvoiceObject.FileName, byteArr);
+			},
+		).done(function() {});
+	}
+
+// sendDocBoxReportApi(method, data, isAsync) // returns the jQuery post promise
+	function sendDocBoxReportApi(method, data, isAsync) {
+		var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+		var authorizationToken = clientService.authorizationToken();
+		return $.post({
+				url: shipExecServiceUrl + '/' + method,
+				data: data,
+				async: isAsync,
+				headers: authorizationToken,
+				datatype: 'blob'
+			},
+			function(response, status, xhr) {
+				var DocBoxReportObject = ParseReturnData(response["Data"])
+				const byteArr = base64ToArrayBuffer(DocBoxReportObject.DataFile);
+				saveByteArray(DocBoxReportObject.FileName, byteArr);
+			},
+		).done(function() {});
+	}
+
+// Source: NikeRevship (NIKEREVSHIP)_Test CBR for Developer test_1823.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: OEM Connect (OEMCONNE)_OEM Connect 20220104_1692.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Office Depot (ODP)_Sample_CBR_2454.cs
+// function ClientBusinessRules() // returns void
+function ClientBusinessRules() {
+    var vm;
+    this.PageLoaded = function(location) {}
+
+    this.Keystroke = function(shipmentRequest, event) {}
+
+    this.PreShip = function(shipmentRequest, userParams) {
+       /* if (!ValidateCostCenterAccount()) {
+           throw new Error("User data: Total cost centers are not matching with the shippers.");
+        }*/
+    }
+    this.PostShip = function(shipmentRequest, shipmentResponse) {}
+
+    this.PreProcessBatch = function(batchReference, actions, params) {}
+
+    this.PostProcessBatch = function(batchResponse) {}
+
+    this.PreVoid = function(pkg, userParams) {}
+
+    this.PostVoid = function(pkg) {}
+
+    this.PrePrint = function(document, localPort) {}
+
+    this.PostPrint = function(document) {}
+
+    this.PreLoad = function(loadValue, shipmentRequest, userParams) {}
+
+    this.PostLoad = function(loadValue, shipmentRequest) {}
+
+    this.PreRate = function(shipmentRequest, userParams) {}
+
+    this.PostRate = function(shipmentRequest, rateResults) {}
+
+    this.PreCloseManifest = function(manifestItem, userParams) {}
+
+    this.PostCloseManifest = function(manifestItem) {}
+
+    this.PreTransmit = function(transmitItem, userParams) {}
+
+    this.PostTransmit = function(transmitItem) {}
+
+    this.PreSearchHistory = function(searchCriteria) {}
+
+    this.PostSearchHistory = function(packages) {}
+
+    this.NewShipment = function(shipmentRequest) {
+        vm = this.vm;
+        var validCostCenterExists = true;
+        if (!ValidateCostCenterAccount()) {
+            validCostCenterExists = false;
+        }
+        this.vm.currentShipment.Packages[vm.packageIndex].MiscReference2 = getEmployeeId();
+        this.vm.profile.Shippers = validCostCenterExists? getShippersFromCostCenter() : [];
+        checkElmLoaded('form[name="visibilityForm"]').then((elm) => {
+            if ($('[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeliveryMethod"]').length === 0) {
+                addShipperRelease();
+            }
+        });
+        if(!validCostCenterExists)
+        {
+             throw new Error("User data: Total cost centers are not matching with the shippers.");
+        }
+
+    };
+
+    this.PreBuildShipment = function(shipmentRequest) {}
+
+    this.PostBuildShipment = function(shipmentRequest) {}
+
+    this.RepeatShipment = function(currentShipment) {}
+
+    this.PreCreateGroup = function(group, userParams) {}
+
+    this.PostCreateGroup = function(group) {}
+
+    this.PreModifyGroup = function(group, userParams) {}
+
+    this.PostModifyGroup = function(group) {}
+
+    this.PreCloseGroup = function(group, userParams) {}
+
+    this.PostCloseGroup = function(group) {}
+
+    this.AddPackage = function(shipmentRequest, packageIndex) {}
+
+    this.CopyPackage = function(shipmentRequest, packageIndex) {}
+
+    this.RemovePackage = function(shipmentRequest, packageIndex) {}
+
+    this.PreviousPackage = function(shipmentRequest, packageIndex) {}
+
+    this.NextPackage = function(shipmentRequest, packageIndex) {}
+
+    this.PostSelectAddressBook = function(shipmentRequest, nameaddress) {}
+
+    this.PreShipOrder = function(value, shipmentRequest, userParams) {}
+
+    this.PostShipOrder = function(shipmentRequest, shipmentResponse) {}
+
+    var thinClientApiRequest = function(method, data, isAsync) {
+        $.getJSON('config.json', function(config) {
+            var shipExecServiceUrl = config.ShipExecServiceUrl;
+            var authorizationToken = shipExecServiceUrl.startsWith('http') ? {
+                'Authorization': 'Bearer ' + JSON.parse(window.localStorage.getItem("TCToken")).access_token
+            } : '';
+            return $.post({
+                url: shipExecServiceUrl + '/' + method,
+                data: data,
+                async: isAsync,
+                headers: authorizationToken
+            });
+        });
+    }
+    /**********Custom functions*************************/
+
+    $('body').delegate('[ng-model="vm.currentShipment.PackageDefaults.Shipper"]', 'change', this.vm, function(e) {
+
+        clearCustomData();
+        var shipper = e.currentTarget.value.replace("string:", "");
+        var costCenter = getCostCenterByShipper(shipper);
+        $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference1"]')[0].value = costCenter;
+        vm.currentShipment.Packages[vm.packageIndex].MiscReference1 = costCenter;
+    })
+
+    function clearCustomData() {
+        $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference1"]')[0].value = "";
+        vm.currentShipment.Packages[vm.packageIndex].MiscReference1 = "";
+        if ($('#shpperRelease') != null) {
+            if ($('#shipperRelease').is(":checked")) {
+                vm.currentShipment.Packages[vm.packageIndex].DeliveryMethod = false;
+                $('#shipperRelease').prop('checked', false);
+            }
+        }
+    }
+
+    function ValidateCostCenterAccount() {
+        
+        var customData = vm.profile.UserInformation.Address.CustomData;
+        
+        var returnValue = true;
+        if (customData.length > 0) {
+          
+            var costCenters = getValueByKey("CustomData1", customData)
+            var accounts = getValueByKey("CustomData3", customData);
+            var costCenterCount = 0;
+            if(costCenters != "")
+            { 
+                costCenterCount =  costCenters.indexOf(",") > 0 ? costCenters.split(",").length : 1;
+            }
+            var accountsCount = 0;
+            if(accounts != "")
+            { 
+                accountsCount =  accounts.indexOf(",") > 0 ? accounts.split(",").length : 1;
+            }
+            
+            if (costCenterCount != accountsCount) {
+                returnValue =  false;
+            }
+        }
+        return returnValue
+    }
+
+    function getShippersFromCostCenter() {
+        var returnData = [];
+        var customData = vm.profile.UserInformation.Address.CustomData;
+        var shippers = vm.profile.Shippers;
+        returnData = shippers;
+        if (customData.length > 0) {
+            var customShippers = getValueByKey("CustomData3", customData);
+            var customShipperData = customShippers.split(",");
+            if (customShipperData.length > 0) {
+                returnData = shippers.filter(item => customShipperData.some(cs => cs.toLowerCase()  === item.Symbol.toLowerCase()));
+            }
+        }
+
+        return returnData;
+    }
+
+    function getCostCenterByShipper(selectedShipper) {
+        
+        var customData = vm.profile.UserInformation.Address.CustomData;
+       
+        var shippers = getValueByKey("CustomData3", customData);
+       
+        var shipperData = shippers.split(",");
+        var index = shipperData.indexOf(selectedShipper);
+        var costCenters = getValueByKey("CustomData1", customData);
+        var costCenterData = costCenters.split(",");
+        var costCenter = ''
+        if (costCenterData.length > 0 && costCenterData.length >= index) {
+            costCenter = costCenterData[index].trim();
+        }
+        return costCenter;
+    }
+
+    function getEmployeeId() {
+        var customData = vm.profile.UserInformation.Address.CustomData;
+        var employeeId = getValueByKey("CustomData2", customData).trim();
+        return employeeId;
+    }
+
+    function checkElmLoaded(selector) {
+        return new Promise(resolve => {
+            if (document.querySelector(selector)) {
+                return resolve(document.querySelector(selector));
+            }
+            const observer = new MutationObserver(mutations => {
+                if (document.querySelector(selector)) {
+                    resolve(document.querySelector(selector));
+                    observer.disconnect();
+                }
+            });
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        });
+    }
+
+    function addShipperRelease() {
+        if(checkShipperReleaseAvailable())
+        {
+            var htmlShipperRelease = "<div class='form-check' property='DeliveryMethod' model='vm.currentShipment.Packages[vm.packageIndex].DeliveryMethod' caption='Require Shipper Release'>" +
+                "<input type='checkbox' id='shipperRelease' class='form-check-input ng-pristine ng-untouched ng-valid ng-empty' ng-model='vm.currentShipment.Packages[vm.packageIndex].DeliveryMethod'>" +
+                "<label class='form-check-label ng-binding' style='padding-left: 6px;'>Shipper Release</label>" +
+                "</div>"
+            $('[ng-model="proofofdeliverypane"]').children().first().after(htmlShipperRelease);
+    
+            $('#shipperRelease').prop('checked', vm.currentShipment.Packages[vm.packageIndex].DeliveryMethod);
+    
+            $('#shipperRelease').change(function() {
+                var shipperRelease = $('#shipperRelease').is(":checked");
+                vm.currentShipment.Packages[vm.packageIndex].DeliveryMethod = shipperRelease;
+            });
+        }
+    }
+    function checkShipperReleaseAvailable()
+    {
+        var profileName = vm.profile.Name;
+        var returnValue = false;
+        if(profileName == "Warehouse Operations Profile" 
+            || profileName == "Private Fleet Profile")
+            {
+                returnValue = true;
+            }
+        return returnValue;
+    }
+
+    function getValueByKey(key, arr) {
+        for (var index in arr) {
+            if (arr[index].Key.toLowerCase() === key.toLowerCase()) return arr[index].Value;
+        }
+        return '';
+    }
+
+}
+
+// Source: Parsons (Parsons)_Parsons Billing Rule_1580.cs
+// function jobAndWBSInPrintLabel(shipmentRequest) // returns undefined
+function jobAndWBSInPrintLabel(shipmentRequest)
+   {
+
+        
+        for(var i=0;i<shipmentRequest.Packages.length;i++)
+        {
+            var shipperReference = "";
+            //JOB input field
+            if(shipmentRequest.Packages[i].MiscReference1 != null || shipmentRequest.Packages[i].MiscReference1.length > 0)
+            {
+                shipperReference = shipmentRequest.Packages[i].MiscReference1;
+                shipperReference += "/";
+            }
+            
+            
+            //WBS
+             if(shipmentRequest.Packages[i].MiscReference2 != null || shipmentRequest.Packages[i].MiscReference2.length > 0)
+            {
+                shipperReference += shipmentRequest.Packages[i].MiscReference2;
+            }
+            shipmentRequest.Packages[i].ShipperReference = shipperReference;
+        }
+        
+       
+   }
+
+// Source: Promega (Promega)_Promega BR_36.cs
+// GetEmail() // returns the extracted email text as a string
+        GetEmail() {
+            var emailText = "";
+            var tags = document.getElementsByTagName("a");
+            Array.from(tags).forEach(function (tag) {
+                if (tag.innerHTML.includes("Hello")) emailText = tag.innerHTML.replace("Hello", "").replace("!", "").trim();
+            });
+            return emailText;
+        }
+
+// Source: Purolator (PURT)_PurolatorCBR_1906.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: QA CS Adapter Company (CSA)_Ship CBR_1850.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: QA Label Validation (12345)_Test_2496.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: QAManualTest (QACOMPANY)_CBR Test_1606.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: QAManualTestImport (QACOMPANY1)_CBR Test_1685.cs
+// PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: QAManualTestImport 2 (QACOMPANY2)_CBR Test_1656.cs
+// function PrePrint(document, localPort) // returns void
+this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns void
+this.PostPrint = function(document) {
+    }
+
+// Source: QAScheduler (SCHTEST)_TestRules_1604.cs
+// PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: R.BCC EXPORTERS PRIVATE LIMITED (R.BCC)_ISMEA_FTP_1716.cs
+// getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Rite Kem (RITEKEM)_RiteKem_1637.cs
+// downloadFile(exportFileName, encodedString) // returns undefined
+function downloadFile(exportFileName, encodedString) {
+        var decodedResult = atob(encodedString); // decode a base-64 encoded string
+        var csvFile = new Blob([decodedResult], { type: "text/csv" });
+    
+        var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+            ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+            ieEdge = navigator.userAgent.match(/Edge/g),
+            ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+    
+        exportFileName = exportFileName + '.csv';
+    
+        if (ieVer > -1) {
+            window.navigator.msSaveBlob(csvFile, exportFileName);
+    
+        } else {
+            var downloadLink = document.createElement("a");
+            downloadLink.download = exportFileName;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    }
+
+// Source: Roadie XD (ROADIEXD)_Company Client Business Rules_2453.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: RoniCo (RONI)_test_1896.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: Russell Investments (RUSSELL)_Russell Investments Client Rules_1872.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: SAVERS (SAVERS)_Savers Client Side Rules_1715.cs
+// this.PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+}
+
+// this.PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+}
+
+// Source: Scheels (SCHE)_Scheels_CBR_Vendors_1892.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function (document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function (document) {
+    }
+
+// Source: ShipExec Essentials Demo (CF_DEMO)_Huntington Bank_1907.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: SJCom (SJCom1542)_Standard_CBR_1563.cs
+// PrePrint(document, localPort) // returns undefined
+this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+this.PostPrint = function(document) {
+    }
+
+// Source: Soundoff Signal (SOS)_Warehouse Shipping CBR_1803.cs
+// PrintPackList(ContainerIndex) // returns void
+    PrintPackList: (ContainerIndex) => this.PrintContainerPackList(ContainerIndex)
+
+// GetPackingCompleteListItem(text) // returns string
+  GetPackingCompleteListItem = (text) =>
+  {
+    return `<li><a href="#"container-index="${text}"><span>Box ${text} LID</span></a></li>`;
+  }
+
+// Source: SPEEDTECH (SPEEDTECH)_SpeedTech Client Side Business Rules_1645.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Standard Industries (STANDARDINDUSTRIES)_GAF_CBR_2457.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Sunstar Americas (SUNSTARAMERICAS)_Sunstar_2491.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Sysco CW Vendor Ship (SYSCOCWVS)_Client Side Business Rules 20240313_2437.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Sysco Foods (SYSCO)_Client Side Business Rules 20240808_2450.cs
+// this.PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Sysco Foods (SYSCO)_Sysco_1674.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+
+// PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+
+// Source: Sysco Guest Supply (SYSCOGS)_Sysco_1675.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Tailor Made Compounding (TMC)_TailorMadeCompoundingClientTemplate_1691.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: Target (TARGET)_Target CBR_2489.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: Tesla (TES)_test 1_1869.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// function downloadFile(exportFileName, encodedString) // returns undefined
+function downloadFile(exportFileName, encodedString) {
+        var decodedResult = atob(encodedString); // decode a base-64 encoded string
+        var csvFile = new Blob([decodedResult], { type: "text/csv" });
+
+        var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+            ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+            ieEdge = navigator.userAgent.match(/Edge/g),
+            ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+
+        exportFileName = exportFileName + '.csv';
+
+        if (ieVer > -1) {
+            window.navigator.msSaveBlob(csvFile, exportFileName);
+
+        } else {
+            var downloadLink = document.createElement("a");
+            downloadLink.download = exportFileName;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    }
+
+// Source: US Bank Revised (USBANKREVISED)_US Bank Revised Client Side Rules_1571.cs
+// PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns undefined
+    this.PostPrint = function(document) {
+    }
+
+// Source: USBank (USBANK)_US Bank Client Side Rules_1697.cs
+// PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: Volt Lighting (VOLT)_Volt_Business_Rules_1666.cs
+// this.PrePrint(document, localPort) // returns void
+    this.PrePrint = function(document, localPort) {
+    }
+
+// this.PostPrint(document) // returns void
+    this.PostPrint = function(document) {
+    }
+
+// Source: VW Group (VW)_VW Client Rules_1513.cs
+// function PrePrint(doc, localPort, viewModel) // returns undefined
+this.PrePrint = function(doc, localPort, viewModel){
+        // WORKAROUND for bug #544 where printer profile doesn't send optional settings
+    	// attach control string to set defaults to start of document string
+    	//if(doc.RawData){  !!
+    	if((doc.DocumentSymbol == 'UPSAPI.UPS.PACKAGE_LABEL.STANDARD') && doc.RawData){
+        	var printerDefaults = "^XA^LH0,0^XSY,Y^MD30^XZ\n";
+        	var oldraw = atou(doc.RawData[0]);
+        	var newraw = printerDefaults + oldraw;
+        	doc.RawData[0] = utoa(newraw);
+    	}
+    };
+
+// Source: Xing Hung (XINGHUNG)_ClinetSideBussRules_1587.cs
+// function PrePrint(document, localPort) // returns undefined
+    this.PrePrint = function (document, localPort) {
+    }
+
+// function PostPrint(document) // returns undefined
+    this.PostPrint = function (document) {
+    }
+

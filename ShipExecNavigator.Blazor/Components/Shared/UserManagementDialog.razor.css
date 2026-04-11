@@ -11,6 +11,208 @@
     margin-bottom: 0.75rem;
 }
 
+/* ── Apply / Discard buttons ─────────────────────────────────────────────── */
+.um-apply-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #1a7a3a, #228b44);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+
+    .um-apply-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(26, 122, 58, 0.35);
+    }
+
+    .um-apply-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.um-discard-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #fff;
+    color: #c53030;
+    border: 1px solid #e57373;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+    .um-discard-btn:hover:not(:disabled) {
+        background: #fff5f5;
+        border-color: #c53030;
+    }
+
+    .um-discard-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+/* ── Pending-changes panel ────────────────────────────────────────────────── */
+.um-pending-panel {
+    border: 1px solid rgba(133, 100, 4, 0.3);
+    border-radius: 8px;
+    background: linear-gradient(135deg, #fffdf0 0%, #fffbe6 100%);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.um-pending-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    background: linear-gradient(135deg, #fff8d6 0%, #fff3b0 100%);
+    border-bottom: 1px solid rgba(133, 100, 4, 0.2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #7a5a00;
+}
+
+.um-pending-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.3rem 0;
+}
+
+.um-pending-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    border-bottom: 1px solid rgba(133, 100, 4, 0.08);
+}
+
+    .um-pending-item:last-child {
+        border-bottom: none;
+    }
+
+.um-pending-kind {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.um-pending-item--edit .um-pending-kind {
+    background: #e8f0fb;
+    color: #2b5ea7;
+}
+
+.um-pending-item--delete .um-pending-kind {
+    background: #fff0f0;
+    color: #c53030;
+}
+
+.um-pending-item--create .um-pending-kind {
+    background: #e8fbe8;
+    color: #1a7a3a;
+}
+
+.um-pending-desc {
+    flex: 1;
+    color: #495057;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.um-pending-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #868e96;
+    font-size: 0.75rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+    .um-pending-remove:hover {
+        color: #c53030;
+        background: rgba(197, 48, 48, 0.08);
+    }
+
+/* ── AI find banner ─────────────────────────────────────────────────────── */
+.um-find-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: linear-gradient(135deg, #e8f0fb 0%, #dceafe 100%);
+    border: 1px solid rgba(58, 123, 213, 0.3);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    color: #2b5ea7;
+    font-weight: 500;
+}
+
+.um-find-clear-btn {
+    margin-left: auto;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    background: rgba(43, 94, 167, 0.1);
+    color: #2b5ea7;
+    border: 1px solid rgba(43, 94, 167, 0.25);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .um-find-clear-btn:hover {
+        background: rgba(43, 94, 167, 0.2);
+    }
+
+/* ── Found user row highlight ────────────────────────────────────────────── */
+.um-row--found {
+    background-color: rgba(58, 123, 213, 0.12) !important;
+    outline: 1px solid rgba(58, 123, 213, 0.35);
+}
+
+/* ── AI delete banner ───────────────────────────────────────────────────── */
+.um-delete-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.um-delete-banner--progress {
+    background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+    border: 1px solid rgba(133, 100, 4, 0.3);
+    color: #856404;
+}
+
+.um-delete-banner--error {
+    background: linear-gradient(135deg, #fff0f0 0%, #ffe0e0 100%);
+    border: 1px solid rgba(197, 48, 48, 0.3);
+    color: #c53030;
+}
+
 .um-create-user-btn {
     padding: 0.4rem 0.9rem;
     font-size: 0.8rem;
@@ -114,7 +316,7 @@
     .um-table thead th {
         text-align: left;
         padding: 0.45rem 0.75rem;
-        background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+        background: #337ab7;
         border-bottom: 2px solid rgba(43, 63, 107, 0.12);
         color: #495057;
         font-weight: 600;
@@ -123,7 +325,7 @@
     .um-table tbody td {
         padding: 0.45rem 0.75rem;
         border-bottom: 1px solid #dee2e6;
-        color: #212529;
+        color: #333;
     }
 
 /* ── User rows ──────────────────────────────────────────────────────────── */
@@ -314,7 +516,7 @@
     .um-summary-table tbody td {
         padding: 0.3rem 0.6rem;
         border-bottom: 1px solid #d0ddf5;
-        color: #212529;
+        color: #333;
         vertical-align: middle;
     }
 
@@ -341,7 +543,7 @@
     align-items: center;
     gap: 0.4rem;
     font-size: 0.8rem;
-    color: #212529;
+    color: #333;
     cursor: pointer;
     user-select: none;
 }
@@ -471,7 +673,7 @@
     border: 1px solid #dee2e6;
     border-radius: 3px;
     background-color: #ffffff;
-    color: #212529;
+    color: #333;
     width: 100%;
     transition: border-color 0.12s;
 }
@@ -488,7 +690,7 @@
     border: 1px solid #dee2e6;
     border-radius: 3px;
     background-color: #ffffff;
-    color: #212529;
+    color: #333;
     width: 100%;
 }
 

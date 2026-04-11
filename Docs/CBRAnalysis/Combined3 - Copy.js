@@ -1,0 +1,1814 @@
+// ============================================================================
+// Combined3.js — Single Reusable CBR Helper Object
+//
+// Wraps all functionality from Combined2.js into a single object returned
+// by an IIFE (Immediately Invoked Function Expression).  Private helpers
+// live inside the closure and are not accessible from outside.
+//
+// Usage:
+//   var cbr = CBRHelper;                       // grab the object
+//   cbr.Utilities.dateTimeStamp();             // call a method
+//   cbr.Logger.Log({ Source: 'test' });        // use the logger
+//   var s = new cbr.Shipment(shipmentRequest); // create a Shipment
+//
+// Sections (sub-objects on CBRHelper):
+//   Utilities, Logger, UI, DOM, API, Context, Address, References,
+//   Notifications, Validation, Services, D2M, Commodities, Orders,
+//   History, Manifest, Batch, Profiles, LoadState, Billing,
+//   ReturnDelivery, Printing, Files, Camera, LTL, Shipment, PageInit
+// ============================================================================
+
+var CBRHelper = (function () {
+  'use strict';
+
+  // ==========================================================================
+  // PRIVATE — shared selectors, helpers, and state
+  // ==========================================================================
+
+  var _SEL = {
+    shipperRef:          'input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]',
+    miscRef7:            'input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]',
+    shipNotifEmail:      'input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipNotificationAddressEmail"]',
+    returnDeliveryEmail: 'input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDeliveryAddressEmail"]',
+    descriptionTextarea: 'textarea[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]',
+    descriptionInput:    'input[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]',
+    thirdPartyCheckbox:  'input[type=checkbox][ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]',
+    thirdPartyButton:    'input[type=button][ng-disabled="!vm.currentShipment.PackageDefaults.ThirdPartyBilling"]',
+    weightUnits:         'select[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Units"]',
+    dimensionUnits:      'select[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Units"]',
+    invoiceMethod:       'select[ng-model="vm.currentShipment.Packages[vm.packageIndex].CommercialInvoiceMethod"]',
+    consignee:           'name-address[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]',
+    consigneeEmail:      'input[ng-model="nameaddress.Email"]',
+    shipperChange:       'select[ng-change="vm.shipperChange()"]',
+    shipDate:            "[ng-model='vm.startshipdate.value']",
+    loadValue:           'input[type=text][ng-model="vm.loadValue"]',
+    batchSelect:         '#cboBatches select option:selected'
+  };
+
+  var _currentUserContext = {};
+
+  // ── Private helper functions ──────────────────────────────────────────────
+
+  function _pollForElement(selector, timeoutSeconds, intervalMs) {
+    timeoutSeconds = timeoutSeconds || 30;
+    intervalMs     = intervalMs || 50;
+    return new Promise(function (resolve, reject) {
+      var elapsed  = 0;
+      var interval = setInterval(function () {
+        var $el = $(selector);
+        if ($el.length) {
+          clearInterval(interval);
+          resolve($el);
+          return;
+        }
+        elapsed += intervalMs;
+        if (elapsed >= timeoutSeconds * 1000) {
+          clearInterval(interval);
+          reject(new Error('Timeout waiting for: ' + selector));
+        }
+      }, intervalMs);
+    });
+  }
+
+  function _buildUserMethodPayload(payload, userContext) {
+    var obj = { Data: JSON.stringify(payload) };
+    if (userContext !== undefined) obj.UserContext = userContext;
+    return obj;
+  }
+
+  function _decodeResponseData(base64Data) {
+    return JSON.parse(atob(base64Data));
+  }
+
+  function _setInputValue(selector, value) {
+    $(selector).val(value).trigger('change');
+  }
+
+  function _getSelectedBatchId() {
+    return $(_SEL.batchSelect).val().replace('string:', '');
+  }
+
+  function _ensureCommodityArray(shipmentRequest, packageIndex) {
+    if (!shipmentRequest.Packages[packageIndex].CommodityContents) {
+      shipmentRequest.Packages[packageIndex].CommodityContents = [];
+    }
+    return shipmentRequest.Packages[packageIndex].CommodityContents;
+  }
+
+  function _buildCommodityForExport(source) {
+    return {
+      UnitValue:                  source.UnitValue,
+      UnitWeight:                 source.UnitWeight,
+      QuantityUnitMeasure:        'PC',
+      ExportQuantityUnitMeasure1: 'PC',
+      ExportQuantityUnitMeasure2: 'PC',
+      LicenseUnitValue:           { Currency: 'USD' },
+      DdtcUnitMeasure:            'PC',
+      OriginCountry:              source.OriginCountry,
+      ProductCode:                source.ProductCode,
+      HarmonizedCode:             source.HarmonizedCode,
+      Quantity:                   source.Quantity,
+      Description:                source.Description,
+      LicenseExpirationDate:      null,
+      NaftaRvcAvgStartDate:       null,
+      nAFTARVCAvgEndDate:         null
+    };
+  }
+
+  function _buildSelectForCountry(attrs, list) {
+    var $select = $('<select />').attr(attrs);
+    $select.append(new Option('', ''));
+    $.each(list, function (val, text) {
+      $select.append(new Option(text, val));
+    });
+    return $select;
+  }
+
+  function _closeManifestForShipper(clientService, shipper, carrierSymbol, companyId) {
+    var authToken = clientService.authorizationToken();
+    var carrierParams = { ShipperId: shipper.Id, CompanyId: companyId };
+    var carrierResult = $.post({
+      url: clientService.config.ApiUrl + '/api/ShippingService/GetShipperCarriers',
+      data: carrierParams, async: false, headers: authToken
+    }).responseJSON;
+
+    if (!carrierResult.Carriers || carrierResult.Carriers.length === 0) return undefined;
+
+    var manifestParams = {
+      Carrier: carrierSymbol, Shipper: shipper.Symbol,
+      SearchCriteria: { OrderByClauses: [{ FieldName: 'ShipDate', Direction: 'DESC' }] },
+      IncludeImported: false, CompanyId: companyId
+    };
+    var manifestResult = $.post({
+      url: clientService.config.ApiUrl + '/api/ShippingService/GetManifestItems',
+      data: manifestParams, async: false, headers: authToken
+    }).responseJSON;
+
+    if (!manifestResult.ManifestItems || manifestResult.ManifestItems.length === 0) return undefined;
+
+    var items = manifestResult.ManifestItems.map(function (m) {
+      return { Attributes: m.Attributes, ShipDate: m.ShipDate, Symbol: m.Symbol, Name: m.Name };
+    });
+    var closeParams = {
+      Carrier: carrierSymbol, ManifestItems: items, Shipper: shipper.Symbol,
+      Print: true, UserParams: {}, CompanyId: companyId
+    };
+    return $.post({
+      url: clientService.config.ApiUrl + '/api/ShippingService/CloseManifest',
+      data: closeParams, async: false, headers: authToken
+    }).responseJSON;
+  }
+
+  function _setDescription(value) {
+    $(_SEL.descriptionTextarea).val(value);
+    $(_SEL.descriptionInput).val(value);
+  }
+
+  function _setReturnDeliveryCheckbox(enabled) {
+    $('select option[value="number:1"]').prop('selected', enabled);
+  }
+
+
+  // ==========================================================================
+  // PUBLIC — the returned object with all sub-objects
+  // ==========================================================================
+
+  return {
+
+    // ========================================================================
+    // Utilities — arrays, strings, comparators, dates
+    // ========================================================================
+    Utilities: {
+
+      getUniqueArrayFromString: function (inputString, delimiter) {
+        delimiter = delimiter || ',';
+        var parts = inputString.split(delimiter).filter(function (s) {
+          return s.trim().length > 0;
+        });
+        return parts.filter(function (value, index, self) {
+          return self.indexOf(value) === index;
+        });
+      },
+
+      getUniqueCSVStringFromArray: function (inputArray) {
+        var unique = inputArray.filter(function (value, index, self) {
+          return self.indexOf(value) === index;
+        });
+        var result = '';
+        unique.forEach(function (item) {
+          if (item.trim().length > 0) {
+            result += item.trim() + ',';
+          }
+        });
+        return result;
+      },
+
+      getUniqueCSVStringFromString: function (inputString) {
+        var self = CBRHelper.Utilities;
+        return self.getUniqueCSVStringFromArray(
+          self.getUniqueArrayFromString(inputString)
+        );
+      },
+
+      compareByKey: function (key) {
+        return function (a, b) {
+          if (a[key] > b[key]) return 1;
+          if (a[key] < b[key]) return -1;
+          return 0;
+        };
+      },
+
+      returnPropertyValue: function (value) {
+        return value || '';
+      },
+
+      getRandomAlphaNumericString: function () {
+        return 'id-' + Math.random().toString(36).substring(2, 10);
+      },
+
+      dateTimeStamp: function () {
+        return new Date().toLocaleString('en-US', {
+          timeZoneName: 'short',
+          hour12: false
+        });
+      },
+
+      todayString: function () {
+        return new Date().toLocaleDateString();
+      },
+
+      currentShipdate: function () {
+        var today = new Date();
+        return {
+          Year:  today.getFullYear(),
+          Month: today.getMonth() + 1,
+          Day:   today.getDate()
+        };
+      },
+
+      translateUnitOfMeasurement: function (value) {
+        var map = {
+          'EACH': 'EA', 'YARDS': 'YD', 'YARD': 'YD',
+          'METER': 'M', 'SF': 'SFT', 'PAIR': 'PR', 'SR': 'ROL'
+        };
+        return map[value.toUpperCase()] || value;
+      }
+    },
+
+
+    // ========================================================================
+    // Logger — LogLevel enum, console + server logging
+    // ========================================================================
+    Logger: {
+
+      LogLevel: {
+        Error: 'Error',
+        Info:  'Info',
+        Debug: 'Debug',
+        Trace: 'Trace',
+        Fatal: 'Fatal'
+      },
+
+      _serverLogging: false,
+
+      setServerDebugMode: function (enabled) {
+        console.log('Logging to server:', enabled);
+        this._serverLogging = enabled;
+      },
+
+      Log: function (entry) {
+        try {
+          if (entry.Error) {
+            entry.LogLevel = this.LogLevel.Error;
+            entry.Error = { name: entry.Error.name, message: entry.Error.message };
+          } else if (!entry.LogLevel) {
+            entry.LogLevel = this.LogLevel.Info;
+          }
+
+          if (entry.LogLevel === this.LogLevel.Error) {
+            console.error('Exception in', entry.Source);
+            console.error(entry.Error.name);
+            console.error(entry.Error.message);
+            if (entry.Data) console.log(entry.Data);
+          } else {
+            console.log('Output from', entry.Source);
+            console.log(entry.Message);
+            if (entry.Data) console.log(entry.Data);
+          }
+
+          if (this._serverLogging) {
+            var ajaxData = _buildUserMethodPayload(
+              { ServerMethod: 'AddClientEntry', MessageObject: entry },
+              CBRHelper.Context.getCurrentUserContext()
+            );
+            $.ajax({
+              url:         'api/ShippingService/UserMethod',
+              method:      'POST',
+              contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+              dataType:    'json',
+              data:        ajaxData,
+              async:       true
+            }).fail(function (jqXHR, textStatus) {
+              console.log('Unable to log message to server.', jqXHR, textStatus);
+            });
+          }
+
+          CBRHelper.UI.hideLoader();
+        } catch (error) {
+          console.log(error.message);
+        }
+      },
+
+      logStartMethod: function (method, calleeMethod) {
+        if (calleeMethod) {
+          console.log('...STARTING ' + method + ' called by ' + calleeMethod);
+        } else {
+          console.log('...STARTING ' + method);
+        }
+      },
+
+      logMethodInfo: function (message) {
+        console.log('      ' + message);
+      },
+
+      decodeReturnString: function (data) {
+        try {
+          return JSON.parse($('<div />').html(data).text());
+        } catch (error) {
+          console.log('DecodeReturnString Error: ' + error.name + ' ' + error.message);
+        }
+      }
+    },
+
+
+    // ========================================================================
+    // UI — loader, overlay, alerts, focus
+    // ========================================================================
+    UI: {
+
+      showLoader: function (callback) {
+        $('div.loading').removeClass('ng-hide').addClass('ng-show');
+        if (typeof callback === 'function') callback();
+      },
+
+      hideLoader: function () {
+        $('div.loading').removeClass('ng-show').addClass('ng-hide');
+        CBRHelper.UI.hideOverlay();
+      },
+
+      showOverlay: function () {
+        if ($('div.overlay').length === 0) {
+          $('div.body-content').first().append(
+            $('<div />')
+              .addClass('overlay')
+              .css({
+                content: '', position: 'fixed', top: 0, left: 0,
+                width: '100vw', height: '100vh',
+                backgroundColor: 'rgba(0, 0, 0, .25)', zIndex: 1049
+              })
+          ).show();
+        } else {
+          $('div.overlay').show();
+        }
+      },
+
+      hideOverlay: function () {
+        $('div.overlay').hide();
+      },
+
+      showErrorAlert: function (errorMessage) {
+        var id = CBRHelper.Utilities.getRandomAlphaNumericString();
+        var $alert = $('<div />')
+          .attr('id', id)
+          .addClass('alert alert-dismissible alert-bottom alert-danger ng-scope')
+          .css({ zIndex: 1550, cursor: 'pointer' })
+          .attr('role', 'alert')
+          .append(
+            $('<button />').attr('type', 'button').addClass('close')
+              .append($('<span />').attr('aria-hidden', 'false').text('x'))
+              .append($('<span />').addClass('sr-only').text('Close'))
+          )
+          .append(
+            $('<div />').append(
+              $('<div />').addClass('ng-scope alert-message')
+                .text(errorMessage)
+                .prepend(
+                  $('<span />').css('padding-right', '10px')
+                    .addClass('glyphicon glyphicon-alert custom-error-icon')
+                )
+            )
+          );
+        $('body').append($alert.show());
+      },
+
+      showModalAlert: function (title, message, $alertModal) {
+        vm.currentShipment.AlertTitle = title;
+        vm.currentShipment.AlertMessage = message;
+        $alertModal.modal('show');
+      },
+
+      setFocus: function (selector) {
+        $(selector).focus();
+      }
+    },
+
+
+    // ========================================================================
+    // DOM — poll / wait for elements, event helpers
+    // ========================================================================
+    DOM: {
+
+      waitForElement: async function (selector, focusAfter, defaultValue, timeoutSeconds, callback) {
+        try {
+          await _pollForElement(selector, timeoutSeconds);
+          if (defaultValue) $(selector).val(defaultValue);
+          if ($.isFunction(callback)) callback();
+          if (focusAfter) $(selector).focus();
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'waitForElement()', Error: error });
+        }
+      },
+
+      waitForSelectOptions: async function (selectSelector, minOptions, indexToSelect, valueToSelect, clearFirst, timeoutSeconds, callback) {
+        if (clearFirst) $(selectSelector).val([]);
+        var optionSelector = selectSelector + ' option:gt(' + (minOptions || 1) + ')';
+        try {
+          await _pollForElement(optionSelector, timeoutSeconds);
+          if ($.isFunction(callback)) callback();
+          if (indexToSelect != null) $(selectSelector + ' option').eq(indexToSelect).prop('selected', 'selected');
+          if (valueToSelect) $(selectSelector).val(valueToSelect);
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'waitForSelectOptions()', Error: error });
+        }
+      },
+
+      isEventAttached: function ($element, eventName, handler) {
+        var events = $._data($element.get(0), 'events');
+        if (!events) return false;
+        var handlerStr = handler.toString();
+        return events[eventName]?.some(function (ev) {
+          return ev.handler.toString() === handlerStr;
+        }) || false;
+      }
+    },
+
+
+    // ========================================================================
+    // API — thin-client requests, UserMethod, ajaxGet
+    // ========================================================================
+    API: {
+
+      thinClientApiRequestFromConfig: function (method, data, isAsync) {
+        $.getJSON('config.json', function (config) {
+          var url   = config.ShipExecServiceUrl;
+          var token = url.startsWith('http')
+            ? { Authorization: 'Bearer ' + JSON.parse(window.localStorage.getItem('TCToken')).access_token }
+            : '';
+          return $.post({ url: url + '/' + method, data: data, async: isAsync, headers: token });
+        });
+      },
+
+      thinClientApiRequest: function (method, data, isAsync, client) {
+        return $.post({
+          url:     client.config.ShipExecServiceUrl + '/' + method,
+          data:    data,
+          async:   isAsync,
+          headers: client.getAuthorizationToken()
+        });
+      },
+
+      makeUserMethodRequest: function (requestMethod, requestData, isAsync, callback) {
+        CBRHelper.UI.showLoader();
+        var retJson;
+        var dataObject = { ServerMethod: requestMethod, MethodData: requestData };
+        var ajaxObject = _buildUserMethodPayload(dataObject, CBRHelper.Context.getCurrentUserContext());
+
+        var request = $.ajax({
+          url:         'api/ShippingService/UserMethod',
+          method:      'POST',
+          contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+          dataType:    'json',
+          async:       isAsync !== false,
+          data:        ajaxObject
+        });
+
+        request.done(function (json) {
+          retJson = parseReturnData(json.Data);
+        });
+        request.fail(function (jqXHR) {
+          console.error('MakeUserMethodRequest failed:', jqXHR.responseText);
+        });
+        request.always(function () {
+          CBRHelper.UI.hideLoader();
+          if (typeof callback === 'function') callback(retJson);
+        });
+        return retJson;
+      },
+
+      ajaxGet: function (url) {
+        var result;
+        $.ajax({
+          type: 'GET', url: url, async: false,
+          success: function (response) { result = response; }
+        });
+        return result;
+      }
+    },
+
+
+    // ========================================================================
+    // Context — user session, mailroom/traveler, custom data, view model
+    // ========================================================================
+    Context: {
+
+      setCurrentUserContext: function (viewModel, includeUser) {
+        var ctx = {};
+        try {
+          if (viewModel.UserInformation) {
+            ctx.CompanyId = viewModel.UserInformation.CompanyId;
+            ctx.UserId    = viewModel.UserInformation.UserId;
+            _currentUserContext = ctx;
+            return;
+          }
+          if (!_currentUserContext.UserId && includeUser) {
+            $.ajax({ url: 'api/usercontext/GET', method: 'GET', async: false })
+              .done(function (data) { ctx = data; })
+              .fail(function (jqXHR) { console.error('SetCurrentUserContext failed:', jqXHR.responseText); });
+          } else if (!_currentUserContext.CompanyId) {
+            ctx.CompanyId = viewModel.profile.CompanyId;
+            ctx.UserId    = _currentUserContext.UserId;
+          }
+        } catch (error) {
+          console.error('SetCurrentUserContext error:', error.message);
+        }
+        _currentUserContext = ctx;
+      },
+
+      getCurrentUserContext: function () {
+        return _currentUserContext;
+      },
+
+      getUserContext: function (vmInstance) {
+        return vmInstance.userContext || vmInstance.UserInformation;
+      },
+
+      fetchUserContext: function (client) {
+        var url   = client.config.ShipExecServiceUrl.replace('ShippingService', 'usercontext/GET');
+        var token = client.getAuthorizationToken();
+        client.userContext = $.get({ url: url, headers: token, async: false }).responseJSON;
+      },
+
+      setMailroomOrTraveler: function (profileName) {
+        return {
+          IsMailroom:               profileName !== 'Traveler Profile',
+          IsTraveler:               profileName === 'Traveler Profile',
+          LoadRadioButtonsIsHidden: true
+        };
+      },
+
+      getCustomDataValue: function (key, customData) {
+        if (!customData) return '';
+        for (var i = 0; i < customData.length; i++) {
+          if (customData[i].Key.toLowerCase() === key.toLowerCase()) {
+            return customData[i].Value;
+          }
+        }
+        return '';
+      },
+
+      getCustomField: function (fieldName, source, shipmentRequest) {
+        var customData = null;
+        if (source === 'User') customData = shipmentRequest?.PackageDefaults?.OriginAddress?.CustomData;
+        if (source === 'To')   customData = shipmentRequest?.PackageDefaults?.Consignee?.CustomData;
+        return CBRHelper.Context.getCustomDataValue(fieldName, customData);
+      },
+
+      setCurrentViewModel: function (viewModel, setUserCtx, includeUser, callback) {
+        if (setUserCtx) {
+          CBRHelper.Context.setCurrentUserContext(viewModel, includeUser);
+        }
+        window._currentViewModel = viewModel;
+        if (typeof callback === 'function') callback();
+      }
+    },
+
+
+    // ========================================================================
+    // Address — consignee search triggers, address matching, copy
+    // ========================================================================
+    Address: {
+
+      bindConsigneeTabSearch: function () {
+        $(document).ready(function () {
+          $('[id="Consignee Name Address"]').on('keydown', 'input[name="code"]', function (e) {
+            var keyCode = e.keyCode || e.which;
+            if (keyCode === 9) {
+              e.preventDefault();
+              $('[caption="Consignee Name Address"]')
+                .find('button[ng-click="search(nameaddress)"]').click();
+            }
+          });
+        });
+      },
+
+      bindCodeInputLookup: function (codeInputSelector) {
+        $('body').delegate(codeInputSelector, 'keyup focusout', function (e) {
+          var keycode = e.keyCode || e.which;
+          if (keycode === 13 || e.type === 'focusout') {
+            var conSection   = '[nameaddress="vm.currentShipment.PackageDefaults.Consignee"] ';
+            var btnSearchAdd = conSection + 'button[ng-click="search(nameaddress)"]';
+            $(btnSearchAdd).trigger('click');
+          }
+        });
+      },
+
+      copyOriginToReturnAddress: function (vm) {
+        var originAddress = vm?.profile?.UserInformation?.Address;
+        if (!originAddress || $.isEmptyObject(originAddress)) {
+          console.log('Error: Origin Address not found.');
+          return;
+        }
+        vm.currentShipment.PackageDefaults.ReturnAddress = originAddress;
+        console.log('User Origin Address copied to Return Address.');
+      },
+
+      checkForMatchingConsignee: function (customerOrder) {
+        try {
+          var $con = $(_SEL.consignee);
+          var current = JSON.stringify({
+            address: $con.find('input[name="address1"]').val().trim().toUpperCase(),
+            city:    $con.find('input[name="city"]').val().trim().toUpperCase(),
+            state:   $con.find('input[name="stateProvince"]').val().trim().toUpperCase(),
+            zip:     $con.find('input[name="postalCode"]').val().trim().substring(0, 5)
+          }).replace(/ /g, '');
+          var incoming = JSON.stringify({
+            address: customerOrder.shipAddress1.trim().toUpperCase(),
+            city:    customerOrder.shipCity.trim().toUpperCase(),
+            state:   customerOrder.shipState.trim().toUpperCase(),
+            zip:     customerOrder.shipZipCode.trim().substring(0, 5)
+          }).replace(/ /g, '');
+          if (current !== incoming) {
+            CBRHelper.Logger.Log({
+              Source: 'checkForMatchingConsignee()',
+              Message: 'Address mismatch for order ' + customerOrder.orderNumber,
+              Data: { current: current, incoming: incoming }
+            });
+          }
+          return current === incoming;
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'checkForMatchingConsignee()', Error: error });
+          return false;
+        }
+      },
+
+      syncShipNotificationEmail: function (shipmentRequest) {
+        shipmentRequest.Packages[0].ShipNotificationAddressEmail = $(_SEL.shipNotifEmail).val();
+      },
+
+      setConsigneeByReference: function (shipmentRequest, referenceKey, addressMap, defaultAddress) {
+        var address   = addressMap[referenceKey] || defaultAddress;
+        var consignee = shipmentRequest.PackageDefaults.Consignee;
+        consignee.Company       = address.Company;
+        consignee.Contact       = address.Contact;
+        consignee.Address1      = address.Address1;
+        consignee.City          = address.City;
+        consignee.StateProvince = address.StateProvince;
+        consignee.PostalCode    = address.PostalCode;
+        if (address.Phone) consignee.Phone = address.Phone;
+      }
+    },
+
+
+    // ========================================================================
+    // References — ShipperReference, CustomData propagation
+    // ========================================================================
+    References: {
+
+      setShipperReferenceFromCustomData: function (shipmentRequest, packageIndex, customDataKey) {
+        var customData = shipmentRequest.PackageDefaults.OriginAddress.CustomData;
+        var value = CBRHelper.Context.getCustomDataValue(customDataKey, customData);
+        if (value !== '') {
+          shipmentRequest.Packages[packageIndex].ShipperReference = value;
+        }
+      },
+
+      updateReferencesWithOrderNumber: function (orderNumber) {
+        var $shipperRef = $(_SEL.shipperRef);
+        var $miscRef7   = $(_SEL.miscRef7);
+        var currentVal  = $shipperRef.val() + ',' + orderNumber;
+        var uniqueVal   = CBRHelper.Utilities.getUniqueCSVStringFromString(currentVal);
+        $shipperRef.val(uniqueVal);
+        $miscRef7.val(uniqueVal);
+      },
+
+      applyCompoundShipperReference: function (shipmentRequest, customValue, additionalRef, validationList) {
+        var referenceValue = (customValue + ' ' + (additionalRef || '')).trim();
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+          shipmentRequest.Packages[i].ShipperReference = referenceValue;
+        }
+        CBRHelper.Validation.validateAgainstFieldOptions(customValue, validationList);
+      },
+
+      stampMiscReference15: function (shipmentRequest, packageIndex, stampValue) {
+        shipmentRequest.Packages[packageIndex].MiscReference15 = stampValue;
+      },
+
+      applyOsuReferences: function (shipmentRequest, userId) {
+        var pkg0 = shipmentRequest.Packages[0];
+        var refs = [1, 2, 3, 4, 5, 6].map(function (n) {
+          return CBRHelper.Utilities.returnPropertyValue(pkg0['MiscReference' + n]);
+        });
+        var shipperRef   = refs.slice(0, 4).join('~');
+        var consigneeRef = refs.slice(4, 6).join('~');
+        shipmentRequest.Packages.forEach(function (pkg) {
+          pkg.ShipperReference   = shipperRef;
+          pkg.ConsigneeReference = consigneeRef;
+          pkg.MiscReference20    = userId;
+          pkg.ShipNotificationAddressEmail = '';
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Notifications — email notification defaults, checkbox bindings
+    // ========================================================================
+    Notifications: {
+
+      setNotificationDefaults: function (pkg, email) {
+        pkg.ShipNotificationEmail                     = true;
+        pkg.ShipNotificationAddressEmail              = email;
+        pkg.DeliveryNotificationEmail                 = true;
+        pkg.DeliveryNotificationAddressEmail          = email;
+        pkg.DeliveryExceptionNotificationEmail        = true;
+        pkg.DeliveryExceptionNotificationAddressEmail = email;
+      },
+
+      bindNotificationCheckboxes: function (vm, getUserName) {
+        var mappings = {
+          '[property="ShipNotificationEmail"]':              '[name="shipNotificationAddressEmail"]',
+          '[property="DeliveryExceptionNotificationEmail"]': '[name="DeliveryExceptionNotificationAddressEmail"]',
+          '[property="DeliveryNotificationEmail"]':          '[name="DeliveryNotificationEmail"]'
+        };
+        Object.keys(mappings).forEach(function (checkboxSelector) {
+          $('body').delegate(checkboxSelector, 'click', function () {
+            $(mappings[checkboxSelector]).val(getUserName()).change();
+          });
+        });
+      },
+
+      getShipNotificationEmail: function () {
+        return $(_SEL.shipNotifEmail).val();
+      },
+
+      persistNotificationEmail: function (shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipNotificationAddressEmail =
+          CBRHelper.Notifications.getShipNotificationEmail();
+      },
+
+      setReturnDeliveryAddressEmail: function (email) {
+        $(_SEL.returnDeliveryEmail).val(email);
+      },
+
+      getReturnDeliveryAddressEmail: function () {
+        return $(_SEL.returnDeliveryEmail).val();
+      }
+    },
+
+
+    // ========================================================================
+    // Validation — field validation, client-matter checks, state/province
+    // ========================================================================
+    Validation: {
+
+      validateAgainstFieldOptions: function (value, validationList) {
+        for (var i = 0; i < validationList.length; i++) {
+          if (validationList[i].Value === value) return;
+        }
+        throw { message: 'Unable to validate shipment', errorCode: '001' };
+      },
+
+      validateClientMatter: function (vm) {
+        var cm = vm.currentShipment.Packages[0].ShipperReference;
+        if (cm === null) {
+          alert('Client Matter field is required. Please enter a valid client matter number!');
+          CBRHelper.UI.setFocus('input[name="ShipperReference_txt"]');
+          return;
+        }
+        var validationList = vm.fieldOptions.ShipperReference.FieldOptionValidations;
+        try {
+          CBRHelper.Validation.validateAgainstFieldOptions(cm, validationList);
+          vm.saveLicensePlate();
+        } catch (e) {
+          alert('Client Matter field is invalid. Please enter a valid client matter number!');
+          CBRHelper.UI.setFocus('input[name="ShipperReference_txt"]');
+        }
+      },
+
+      initCustomStateProvinceSelect: function (stateProvinceSelector, usStates, canadianProvinces, changeCallback) {
+        _pollForElement(stateProvinceSelector, 30, 10).then(function ($original) {
+          if ($original.attr('name') === 'StateProvince') {
+            console.warn('Custom State/Province does not work with FieldOption validation');
+            return;
+          }
+          var attrs = {
+            'class': $original.attr('class'), name: $original.attr('name'),
+            type: $original.attr('type'),
+            required: $original.attr('required') !== undefined,
+            readonly: $original.attr('readonly') !== undefined
+          };
+          var $usSelect = _buildSelectForCountry(attrs, usStates);
+          var $caSelect = _buildSelectForCountry(attrs, canadianProvinces);
+          changeCallback($original, $usSelect, $caSelect);
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Services — weight-based selection, filtered lists, sort-index
+    // ========================================================================
+    Services: {
+
+      autoSelectServiceByWeight: function (shipmentRequest, freightThresholdLbs, expressServiceSymbol, freightServiceSymbol) {
+        var hasFreight = false;
+        var hasMixed   = false;
+        shipmentRequest.Packages.forEach(function (pkg) {
+          var weight = parseInt(pkg.Weight.Amount, 10);
+          if (weight >= freightThresholdLbs) { hasFreight = true; }
+          else if (hasFreight) { hasMixed = true; }
+        });
+        if (hasMixed) { alert('Cannot create one shipment with 2 different service levels.'); return; }
+        shipmentRequest.PackageDefaults.Service = {
+          Symbol: hasFreight ? freightServiceSymbol : expressServiceSymbol
+        };
+        if (hasFreight) {
+          shipmentRequest.Packages.forEach(function (pkg) {
+            pkg.Packaging = 'CUSTOMER_PALLET';
+            pkg.ImportDelivery = true;
+          });
+        }
+      },
+
+      buildFilteredServiceList: function (profile, serviceCodesCSV, getServiceSymbol) {
+        var filtered = [];
+        serviceCodesCSV.split(',').forEach(function (code) {
+          var symbol = getServiceSymbol(code.trim().toLowerCase());
+          if (!symbol) return;
+          for (var i = 0; i < profile.Services.length; i++) {
+            if (profile.Services[i].Symbol === symbol) { filtered.push(profile.Services[i]); break; }
+          }
+        });
+        return filtered;
+      },
+
+      selectServiceBySortIndex: function (rateResults) {
+        for (var i = 0; i < rateResults.length; i++) {
+          if (rateResults[i].SortIndex === 0) return rateResults[i].PackageDefaults.Service;
+        }
+      }
+    },
+
+
+    // ========================================================================
+    // D2M — Direct-to-Mobile checks and enablement
+    // ========================================================================
+    D2M: {
+
+      isCurrentShipperD2MEnabled: function (authorizedShippers) {
+        var currentSymbol = $(_SEL.shipperChange).val().substring(7).toUpperCase();
+        return authorizedShippers.some(function (s) { return s.ShipperSymbol === currentSymbol; });
+      },
+
+      isCurrentUserD2MEnabled: function (customData, d2mCustomDataKey, enabledValue) {
+        if (!customData) return false;
+        for (var i = 0; i < customData.length; i++) {
+          if (customData[i].Key === d2mCustomDataKey) {
+            return customData[i].Value.toUpperCase() === enabledValue.toUpperCase();
+          }
+        }
+        return false;
+      },
+
+      isCurrentShipmentD2M: function (config) {
+        var d2m = CBRHelper.D2M;
+        var userOk    = d2m.isCurrentUserD2MEnabled(config.customData, config.d2mKey, config.enabledValue);
+        var checked   = $('#' + config.checkboxId).is(':checked');
+        var shipperOk = d2m.isCurrentShipperD2MEnabled(config.authorizedShippers);
+        return userOk && checked && shipperOk;
+      },
+
+      enableD2MShipping: function (apiRequest, userContext, vm) {
+        var params   = { ActionMessage: 'EnableD2MShipping' };
+        var data     = _buildUserMethodPayload(params, userContext);
+        var response = apiRequest('UserMethod', data, false);
+        if (response && response.responseJSON.ErrorCode !== 0) {
+          alert('Error while executing UserMethod: ' + response.responseJSON.ErrorCode);
+        } else {
+          vm.profile = CBRHelper.Logger.decodeReturnString(response.responseJSON.Data);
+        }
+      },
+
+      hideD2MCheckbox: function (d2mTemplateId) {
+        _pollForElement(_SEL.shipDate, 30, 50).then(function () {
+          $('#' + d2mTemplateId).hide();
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Commodities — build, add, remove, move, consolidate
+    // ========================================================================
+    Commodities: {
+
+      buildCommodityContentObject: function (data) {
+        return {
+          Quantity: data.quantity, ProductCode: data.skuId,
+          QuantityUnitMeasure: 'EA',
+          UnitValue:  { Currency: 'USD', Amount: +data.unitPrice },
+          UnitWeight: { Units: 'LB', Amount: +data.weightLbs },
+          UniqueId: data.UniqueId, PkgIndex: data.PkgIndex || 1,
+          PVTotalWeight: +data.quantity * +data.weightLbs,
+          PVTotalValue:  +data.quantity * +data.unitPrice
+        };
+      },
+
+      addCommodityToPackage: function (shipmentRequest, packageIndex, commodity, refreshFn) {
+        try {
+          _ensureCommodityArray(shipmentRequest, packageIndex).push(commodity);
+          refreshFn(packageIndex);
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'addCommodityToPackage()', Error: error });
+        }
+      },
+
+      removeCommodityFromPackage: function (shipmentRequest, packageIndex, refreshFn) {
+        try {
+          _ensureCommodityArray(shipmentRequest, packageIndex).pop();
+          refreshFn(packageIndex);
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'removeCommodityFromPackage()', Error: error });
+        }
+      },
+
+      refreshCommodityDisplay: function () {
+        $('div.ui-tab-container > div.ng-isolate-scope > ul > li.active > a').click();
+        $('#goods').find('div.ng-table-counts.btn-group').find('button:not(.active):first').click();
+      },
+
+      showAssignGoodsPane: function (context, rawGoods) {
+        var self = CBRHelper.Commodities;
+        $('#listItemContainer li:gt(0)').remove();
+        $('div.ui-tab-container').toggleClass('col-md-8 col-md-6')
+          .siblings('div').toggleClass('col-md-4 col-md-6');
+        context.packages = context.viewModel.currentShipment.Packages;
+        context.goods    = rawGoods.sort(function (a, b) { return a.skuId - b.skuId; });
+        $(context.goods).each(function (index, item) {
+          var uniqueKey = 'e' + (Math.random() + 1).toString(36).substring(2);
+          item.UniqueId = uniqueKey;
+          var $item = $('#liClone').clone(true).data(item).attr('id', uniqueKey);
+          $item.find('.goods-sku').html('SKU: <strong>' + item.skuId + '</strong>');
+          $item.find('.goods-quantity').html('Quantity: <strong>' + item.quantity + '</strong>');
+          $item.find('.goods-declared-value').html('Unit Cost: <strong>$' + item.unitPrice + '</strong>');
+          $('#divAssignCommodities ul.list-group').append($item);
+          var commodity = self.buildCommodityContentObject(item);
+          context.packages[0].CommodityContents.push(commodity);
+          var pkg = context.packages[0];
+          pkg.Weight.Amount              = (pkg.Weight.Amount || 0) + commodity.PVTotalWeight;
+          pkg.DeclaredValueAmount.Amount = (pkg.DeclaredValueAmount.Amount || 0) +
+                                           Math.round(commodity.PVTotalValue * 100) / 100;
+          $item.show();
+        });
+        $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+        $('.scan-input:visible').first().focus();
+        $('#divAssignCommodities').find('[data-toggle="tooltip"]').tooltip();
+      },
+
+      moveGoodToBox: function (context, $li, destBox) {
+        var data     = $li.data();
+        var allGoods = context.packages.map(function (p) { return p.CommodityContents; }).flat();
+        var item     = allGoods.find(function (cc) { return cc.UniqueId === data.UniqueId; });
+        if (+item.PkgIndex === +destBox) { console.log('Item already in box.'); return; }
+        var srcIndex = item.PkgIndex - 1;
+        context.packages[srcIndex].CommodityContents =
+          context.packages[srcIndex].CommodityContents.filter(function (p) { return p.UniqueId !== data.UniqueId; });
+        item.PkgIndex = destBox;
+        (context.packages[destBox - 1].CommodityContents || []).push(item);
+        $li.find('.pkg-index-text').fadeOut().promise().done(function () { $(this).text(destBox).fadeIn(); });
+        allGoods = context.packages.map(function (p) { return p.CommodityContents; }).flat();
+        allGoods.sort(function (a, b) { return a.PkgIndex - b.PkgIndex; });
+        $(allGoods).each(function (idx, cc) {
+          var pkg = context.packages[cc.PkgIndex - 1];
+          if (idx === 0 || cc.PkgIndex !== allGoods[idx - 1].PkgIndex) {
+            pkg.Weight.Amount = 0; pkg.DeclaredValueAmount.Amount = 0;
+          }
+          pkg.Weight.Amount += +cc.PVTotalWeight;
+          pkg.DeclaredValueAmount.Amount += +cc.PVTotalValue;
+        });
+      },
+
+      consolidateInternationalCommodities: function (shipmentRequest) {
+        if (shipmentRequest.PackageDefaults.Consignee.Country === 'US') return;
+        var descriptionIndex = new Map();
+        var consolidated     = [];
+        shipmentRequest.Packages.forEach(function (pkg) {
+          if (!pkg.CommodityContents) return;
+          pkg.CommodityContents.forEach(function (commodity) {
+            if (descriptionIndex.has(commodity.Description)) {
+              var existing = consolidated[descriptionIndex.get(commodity.Description)];
+              existing.Quantity = String(parseInt(existing.Quantity) + parseInt(commodity.Quantity));
+            } else {
+              descriptionIndex.set(commodity.Description, consolidated.length);
+              consolidated.push(_buildCommodityForExport(commodity));
+            }
+          });
+          pkg.CommodityContents = [];
+        });
+        shipmentRequest.Packages[0].CommodityContents = consolidated;
+      },
+
+      addToCommodityList: function (vm, cellsOrBundle, packageIndex, isBundle) {
+        if (!cellsOrBundle || cellsOrBundle === '') { console.log('Error: Commodity data unavailable'); return; }
+        var commodity;
+        if (isBundle) {
+          var price = (cellsOrBundle.InternationalInfo && cellsOrBundle.InternationalInfo.ExportUnitPrice)
+            ? cellsOrBundle.InternationalInfo.ExportUnitPrice : cellsOrBundle.SaleUnitPrice;
+          commodity = {
+            UnitValue: { Currency: cellsOrBundle.InternationalInfo.ExportCurrencyCode, Amount: price },
+            UnitWeight: { Units: 'LB', Amount: cellsOrBundle.UnitWeight },
+            QuantityUnitMeasure: 'PC',
+            OriginCountry: cellsOrBundle.InternationalInfo.CountryOfOrigin,
+            ProductCode: cellsOrBundle.KitComponentPart,
+            HarmonizedCode: cellsOrBundle.InternationalInfo.ExportTariffCode,
+            Quantity: cellsOrBundle.UnitsPerAssembly,
+            Description: cellsOrBundle.KitComponentPartDesc,
+            packageIndex: packageIndex
+          };
+        } else {
+          var cells = cellsOrBundle;
+          var price = (cells[17].textContent || cells[17].textContent !== '')
+            ? cells[17].textContent : cells[4].textContent;
+          commodity = {
+            UnitValue: { Currency: cells[15].textContent, Amount: price },
+            UnitWeight: { Units: 'LB', Amount: cells[7].textContent },
+            QuantityUnitMeasure: 'PC',
+            OriginCountry: cells[14].textContent,
+            ProductCode: cells[1].textContent,
+            HarmonizedCode: cells[16].textContent,
+            Quantity: cells[10].textContent,
+            Description: cells[5].textContent,
+            packageIndex: packageIndex
+          };
+        }
+        _ensureCommodityArray(vm.currentShipment, packageIndex).push(commodity);
+      }
+    },
+
+
+    // ========================================================================
+    // Orders — consolidated orders dialog, save, process
+    // ========================================================================
+    Orders: {
+
+      showConsolidatedOrderDialog: function () {
+        CBRHelper.UI.showOverlay();
+        $('#selectConsolidatedOrders').empty();
+        var shipperRef     = $(_SEL.shipperRef).val();
+        var existingOrders = CBRHelper.Utilities.getUniqueArrayFromString(shipperRef);
+        existingOrders.forEach(function (order) {
+          $('#selectConsolidatedOrders').append(
+            $('<option />').val(order).text(order)
+              .removeClass('not-processed').addClass('processed').css('color', '#265ca1')
+          );
+        });
+        $('#divModalConsolidateShipments').fadeIn('fast').promise().done(function () {
+          $('#textOrderNumber').val('').focus();
+        });
+      },
+
+      addOrderNumberToList: function () {
+        var value = $('#textOrderNumber').val();
+        if (!value || value.length === 0) return false;
+        var exists = false;
+        $('#selectConsolidatedOrders option').each(function () {
+          if (this.text === value) { exists = true; return false; }
+        });
+        if (exists) { $('#textOrderNumber').val('').focus(); return false; }
+        $('#selectConsolidatedOrders').append(
+          $('<option />').val(value).text(value).addClass('not-processed').trigger('change')
+        ).promise().done(function () { $('#textOrderNumber').val('').focus(); });
+      },
+
+      saveConsolidatedOrderNumbers: function (makeRequest, processCallback) {
+        try {
+          var ordersToQuery = '';
+          $('#selectConsolidatedOrders > option.not-processed').each(function () {
+            ordersToQuery += $(this).text() + ',';
+          });
+          $('#divModalConsolidateShipments').hide();
+          if (ordersToQuery.length > 0) {
+            makeRequest('GetOrderInformation', ordersToQuery, true, processCallback);
+          } else {
+            CBRHelper.UI.showErrorAlert('ERROR: No unique orders to pull from the server.');
+          }
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'saveConsolidatedOrderNumbers()', Error: error });
+        }
+      },
+
+      processOrderData: function (orderDataArray) {
+        try {
+          orderDataArray.forEach(function (order) {
+            if (CBRHelper.Address.checkForMatchingConsignee(order)) {
+              CBRHelper.References.updateReferencesWithOrderNumber(order.orderNumber);
+            } else {
+              CBRHelper.UI.showErrorAlert('ERROR 500: Address mismatch for order ' + order.orderNumber);
+            }
+          });
+        } catch (error) {
+          CBRHelper.Logger.Log({ Source: 'processOrderData()', Error: error });
+        }
+      },
+
+      closeDialogWithoutSaving: function () {
+        $('#selectConsolidatedOrders').empty();
+        $('#divModalConsolidateShipments').hide();
+        CBRHelper.UI.hideLoader();
+      },
+
+      initConsolidatedOrdersButton: function (logToServer) {
+        $('div.top-tool-bar > div.pull-left').append(
+          $('<button />').addClass('btn btn-xs btn-primary')
+            .attr('id', 'buttonConsolidateOrders').text('Consolidate Orders').fadeIn()
+        );
+        CBRHelper.Logger.setServerDebugMode(logToServer);
+      }
+    },
+
+
+    // ========================================================================
+    // History — search filters, anonymisation, tracking links
+    // ========================================================================
+    History: {
+
+      filterHistoryByUser: function (searchCriteria, userId, operator) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userId, Operator: operator || 0 });
+      },
+
+      filterHistoryByBranch: function (searchCriteria, customDataKey, customData, getValueByKey) {
+        var branchNo = getValueByKey(customDataKey, customData);
+        if (branchNo) {
+          searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: branchNo, Operator: 5 });
+        }
+      },
+
+      enforceHistoryDateRange: function (vm, searchCriteria, daysBack) {
+        var startDate = new Date();
+        startDate.setDate(startDate.getDate() - daysBack);
+        vm.dtstart = startDate;
+        searchCriteria.WhereClauses.forEach(function (w) {
+          if (w.FieldName === 'Shipdate' && w.Operator === 3) {
+            w.FieldValue = startDate.toISOString().slice(0, 10);
+          }
+        });
+      },
+
+      anonymizeApportionedTotals: function (packages, currentProfile, adminProfileName) {
+        if (currentProfile === adminProfileName) return;
+        packages.forEach(function (pkg) { pkg.ApportionedTotal = { Amount: null, Currency: null }; });
+      },
+
+      maskTrackingNumbers: function () {
+        var observer = new MutationObserver(function () {
+          ['div.ng-binding', 'td.ng-binding'].forEach(function (sel) {
+            document.querySelectorAll(sel).forEach(function (el) {
+              var text = el.textContent.trim();
+              if (text.length === 18) {
+                el.textContent = text.substring(0, 3) + 'XXXXXX' + text.substring(9);
+              }
+            });
+          });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      },
+
+      restrictPrintByAge: function (packages, maxDays) {
+        var now = new Date();
+        packages.forEach(function (pkg) {
+          var shipDate = new Date(pkg.Shipdate.Year, pkg.Shipdate.Month - 1, pkg.Shipdate.Day);
+          var diffDays = Math.floor(Math.abs(shipDate - now) / (1000 * 60 * 60 * 24));
+          if (diffDays > maxDays) pkg.CantPrint = true;
+        });
+      },
+
+      addTrackingLinks: function () {
+        _pollForElement('table[ng-table="vm.tableParamsForDetailed"] tr:gt(0)', 30, 100).then(function () {
+          $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)')
+            .find('td:eq(2) > div:not(.ng-hide)')
+            .html(function () {
+              var trackingNo = $(this).text().trim();
+              var baseUrl = trackingNo.startsWith('1Z')
+                ? 'https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums='
+                : 'https://online.chrobinson.com/tracking/#/?trackingNumber=';
+              return '<a href="' + baseUrl + trackingNo + '" target="_new">' + trackingNo + '</a>';
+            });
+        });
+      },
+
+      applyBulkFilter: function (filterCriteria) {
+        $('#tableBatchDetailItems tr:gt(0)').each(function () {
+          var $tr = $(this);
+          for (var key in filterCriteria) {
+            var filterValue = filterCriteria[key].trim().toUpperCase();
+            if (filterValue === '') continue;
+            var cellText = $tr.find('td[title="' + key + '"]').text().trim().toUpperCase();
+            if (filterValue !== cellText) $tr.fadeOut('fast');
+          }
+        });
+      },
+
+      clearBulkFilter: function () {
+        $('#tableBatchDetailItems tr:hidden').fadeIn('fast');
+        $('div[title="Filter"] input[type="text"]').each(function () { $(this).val('').change(); });
+      },
+
+      initHistoryPage: function (vm, thinClient) {
+        vm.history = { searchButton: 'button:contains("Search")', reportSelector: '#reports' };
+        $(document).on('click', vm.history.searchButton, onReportChange);
+        $(document).on('change', vm.history.reportSelector, onReportChange);
+        if (vm.profile.Name !== thinClient.adminProfileName) {
+          vm.hideButtonExport = true;
+          var allowedReports = ['Default', 'Detailed Report', 'Void Report', 'Summary Report'];
+          vm.reports = vm.reports.filter(function (report) {
+            report.TemplateHtml = report.TemplateHtml.replace(/<span.*glyphicon-search.*<\/span>/g, '');
+            return allowedReports.includes(report.Name);
+          });
+        }
+        function onReportChange() {
+          if (vm.report?.Name !== 'Summary Report') { vm.hideButtonExport = false; return; }
+          vm.hideButtonExport = true;
+          vm.history.carrierAcceptTableContainer = {
+            height: $('.panel-body').height() + 'px', overflowY: 'auto'
+          };
+          var payload = {
+            Action: 'summaryReport',
+            Data: {
+              startDate: vm.dtstart.toLocaleDateString('en-CA'),
+              endDate:   vm.dtend.toLocaleDateString('en-CA'),
+              sites:     getSites()
+            }
+          };
+          thinClient.httpClient('UserMethod', _buildUserMethodPayload(payload)).then(function (ret) {
+            vm.history.carrierAcceptReport = _decodeResponseData(ret.Data);
+            if (thinClient.loadData) thinClient.loadData.show();
+          });
+        }
+        function getSites() {
+          var sites = vm.UserInformation.SiteId
+            ? vm.sites.filter(function (s) { return s.Id === vm.UserInformation.SiteId; })
+            : vm.sites;
+          return sites.map(function (s) { return { name: s.Name }; });
+        }
+      },
+
+      enableHistoryDuplicate: function (cbr) {
+        $('body').delegate('table a[action-duplicate]', 'click', function () {
+          cbr.historyShipment = $(this).attr('action-duplicate');
+          document.location = '#!/shipping';
+        });
+      },
+
+      applyHistoryDuplicate: function (cbr, vm, shipmentRequest, defaultDescription) {
+        if (cbr.historyShipment === null) return;
+        var historyRequest = JSON.parse(cbr.historyShipment);
+        vm.totalPackages = historyRequest.Packages.length;
+        shipmentRequest.PackageDefaults = historyRequest.PackageDefaults;
+        shipmentRequest.Packages        = historyRequest.Packages;
+        shipmentRequest.PackageDefaults.Description = defaultDescription;
+        shipmentRequest.Packages.forEach(function (pkg) {
+          pkg.ReturnDelivery             = true;
+          pkg.ReturnDeliveryMethod       = 4;
+          pkg.ReturnDeliveryAddressEmail = historyRequest.PackageDefaults.Consignee.Email;
+          pkg.Description                = defaultDescription;
+        });
+        cbr.historyShipment = null;
+        cbr.bulk.create.itemReferences = [];
+      }
+    },
+
+
+    // ========================================================================
+    // Manifest — close manifest, end-of-day
+    // ========================================================================
+    Manifest: {
+
+      closeAllShippers: function (clientService, allShippers, selectedCarrierSymbol, companyId, showAlert) {
+        var lastResponse;
+        allShippers.forEach(function (shipper) {
+          var result = _closeManifestForShipper(clientService, shipper, selectedCarrierSymbol, companyId);
+          if (result) lastResponse = result;
+        });
+        CBRHelper.Manifest.displayCloseManifestResult(lastResponse, showAlert, false);
+        $('#loaderspinnerImg').hide();
+      },
+
+      closeAllShippersAndCarriers: function (clientService, allShippers, allCarriers, companyId, showAlert) {
+        allCarriers.forEach(function (carrier) {
+          CBRHelper.Manifest.closeAllShippers(clientService, allShippers, carrier.Symbol, companyId, function () {});
+        });
+        CBRHelper.Manifest.displayCloseManifestResult(undefined, showAlert, true);
+        $('#loaderspinnerImg').hide();
+      },
+
+      displayCloseManifestResult: function (response, showAlert, isAllCarriers) {
+        var errorSel   = isAllCarriers ? '#divAllshippersAndCarriersErrorMsg' : '#divAllshippersErrorMsg';
+        var failSel    = isAllCarriers ? '#divAllshipperAndCarrierssunsuccessfulcloseoutMsg' : '#divAllshippersunsuccessfulcloseoutMsg';
+        var successSel = isAllCarriers ? '#divsuccessfulAllShippersAndAllCarriers' : '#divsuccessfulAllShippers';
+        $('#divAllshippersErrorMsg, #divAllshippersunsuccessfulcloseoutMsg, #divAllshippersAndCarriersErrorMsg, #divAllshipperAndCarrierssunsuccessfulcloseoutMsg, #divsuccessfulAllShippers, #divsuccessfulAllShippersAndAllCarriers').hide();
+        if (!response || response.ErrorCode === -1) { $(errorSel).show(); showAlert('ErrorModalCloseShippers'); }
+        else if (response.CloseManifestResults[0].ErrorCode !== 0) { $(failSel).show(); showAlert('ErrorModalCloseShippers'); }
+        else { $(successSel).show(); showAlert('successfulModalCloseShippers'); }
+      },
+
+      processEndOfDay: function (shipmentRequest, httpClient, $modal) {
+        shipmentRequest.Action = 'EOD';
+        httpClient('UserMethod', _buildUserMethodPayload(shipmentRequest)).then(function () {
+          $modal.modal('hide');
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Batch — lookup, selection, custom processing
+    // ========================================================================
+    Batch: {
+
+      getBatches: function (apiRequest, companyId) {
+        var batches;
+        apiRequest('GetBatches', { SearchCriteria: null, CompanyId: companyId }, false)
+          .done(function (response) { batches = response.Batches; });
+        return batches;
+      },
+
+      getSelectedBatchName: function () {
+        return _getSelectedBatchId();
+      },
+
+      bindCustomBatchProcessing: function (client) {
+        $('#btnCustomBatchProcessing').on('click', function () {
+          var data = _buildUserMethodPayload({ ActionMessage: 'CustomBatchProcessing' }, client.userContext);
+          $.post({
+            url: client.config.ShipExecServiceUrl + '/UserMethod',
+            data: data, async: false, headers: client.getAuthorizationToken()
+          });
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Profiles — CRUD, apply, return-label creation
+    // ========================================================================
+    Profiles: {
+
+      loadShippingProfiles: function (httpClient, callback) {
+        var data = _buildUserMethodPayload({ Action: 'L', ShippingProfileName: '' });
+        httpClient('UserMethod', data).then(function (ret) { callback(_decodeResponseData(ret.Data)); });
+      },
+
+      saveOrDeleteShippingProfile: function (action, shipmentRequest, profileName, selService, httpClient, callback) {
+        shipmentRequest.Action = action;
+        shipmentRequest.ShippingProfileName = profileName;
+        if (action === 'S') shipmentRequest.SelService = selService;
+        var data = _buildUserMethodPayload(shipmentRequest);
+        httpClient('UserMethod', data).then(function (ret) { callback(_decodeResponseData(ret.Data)); });
+      },
+
+      applyShippingProfile: function (vm, shippingProfiles, profileName) {
+        var template = shippingProfiles.find(function (p) { return p.ShippingProfileName === profileName; });
+        if (!template) return;
+        var profile = structuredClone(template);
+        var service = { Symbol: profile.SelService };
+        if (profile.Packages[0].ProactiveRecovery === true) {
+          profile.Packages[0].SelectedProactiveRecoveryInstructions = [4096, 2048, 32];
+        }
+        profile.PackageDefaults.Shipdate = CBRHelper.Utilities.currentShipdate();
+        vm.currentShipment     = profile;
+        vm.selectedServices    = vm.selectedServices || [];
+        vm.selectedServices[0] = service;
+      },
+
+      createReturnLabelFromPrevious: function (vm) {
+        vm.currentShipment = structuredClone(vm.lastShipmentRequest);
+        var pkg = vm.currentShipment.Packages[0];
+        pkg.ReturnDelivery = true; pkg.ReturnDeliveryMethod = 0;
+        pkg.ProactiveRecovery = false; pkg.DirectDelivery = false;
+        pkg.Proof = false; pkg.ProofRequireSignature = false;
+        vm.currentShipment.PackageDefaults.Service = { Symbol: 'CONNECTSHIP_UPS.UPS.2DA' };
+        if (!vm.selectedServices) vm.selectedServices = [];
+        vm.selectedServices.push(vm.currentShipment.PackageDefaults.Service);
+      }
+    },
+
+
+    // ========================================================================
+    // LoadState — capture / restore across PreLoad / PostLoad
+    // ========================================================================
+    LoadState: {
+
+      capturePreLoadState: function (shipmentRequest) {
+        return {
+          shipper:   shipmentRequest.PackageDefaults.Shipper,
+          batchName: shipmentRequest.Packages[0].MiscReference5,
+          batchId:   _getSelectedBatchId()
+        };
+      },
+
+      restorePostLoadState: function (shipmentRequest, savedState) {
+        shipmentRequest.PackageDefaults.Shipper    = savedState.shipper;
+        shipmentRequest.Packages[0].MiscReference5 = savedState.batchName;
+      },
+
+      showPostLoadError: function (shipmentRequest) {
+        if (shipmentRequest.PackageDefaults.ErrorCode === 1) {
+          alert(shipmentRequest.PackageDefaults.ErrorMessage);
+          shipmentRequest.PackageDefaults.ErrorCode = 0;
+        }
+      },
+
+      showPostLoadUserDataAlert: function (shipmentRequest, $alertModal, $newShipModal) {
+        var userData = shipmentRequest.Packages[0].UserData1;
+        if (!userData || userData.length === 0) return;
+        if (userData.charAt(0) === '~') {
+          shipmentRequest.AlertTitle   = 'ShipExec Alert';
+          shipmentRequest.AlertMessage = userData.substring(1);
+          $newShipModal.modal('show');
+        } else {
+          shipmentRequest.AlertTitle   = 'ShipExec Alert';
+          shipmentRequest.AlertMessage = userData;
+          $alertModal.modal('show');
+        }
+      },
+
+      restoreConsigneeEmail: function (shipmentRequest) {
+        $(_SEL.consigneeEmail).val(shipmentRequest.PackageDefaults.Consignee.Email);
+      }
+    },
+
+
+    // ========================================================================
+    // Billing — third-party billing rules, EU logic
+    // ========================================================================
+    Billing: {
+
+      applyThirdPartyBillingRules: function (shipmentRequest, isMemberOfEu) {
+        var shipFrom = shipmentRequest.PackageDefaults.OriginAddress.Country;
+        var shipTo   = shipmentRequest.PackageDefaults.Consignee.Country;
+        if (!shipTo || shipFrom === 'US' || shipFrom === 'CA') {
+          CBRHelper.Billing.disableThirdPartyBillingElements(); return;
+        }
+        var shouldEnable = (shipFrom !== shipTo) || (isMemberOfEu(shipFrom) && isMemberOfEu(shipTo));
+        if (shouldEnable) CBRHelper.Billing.setThirdPartyBilling(shipmentRequest);
+        if (shipFrom !== 'US') {
+          _setInputValue(_SEL.weightUnits, 'string:KG');
+          _setInputValue(_SEL.dimensionUnits, 'number:1');
+        }
+      },
+
+      setThirdPartyBilling: function (shipmentRequest) {
+        $(_SEL.thirdPartyButton).prop('disabled', false).attr('disabled', false);
+        $(_SEL.thirdPartyCheckbox).prop('checked', true).attr('checked', true).change();
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress = {
+          Company: 'PRA Global', Address1: '995 Research Park Blvd', Address2: 'Suite 300',
+          City: 'Charlottesville', StateProvince: 'VA', PostalCode: '22911',
+          Account: '883F79', Country: 'US'
+        };
+      },
+
+      disableThirdPartyBillingElements: function () {
+        $(_SEL.thirdPartyCheckbox).prop('checked', false).attr('checked', false);
+        $(_SEL.thirdPartyButton).prop('disabled', true).attr('disabled', true);
+      }
+    },
+
+
+    // ========================================================================
+    // ReturnDelivery — address, config toggle, insurance
+    // ========================================================================
+    ReturnDelivery: {
+
+      loadReturnAddressFromShipper: function (vm) {
+        _pollForElement('[name="company"]:eq(1)', 30, 150).then(function () {
+          var shipper = vm.profile.Shippers[0];
+          if (!shipper || !shipper.Company) return;
+          var fields = ['company', 'address1', 'city', 'stateProvince', 'postalCode', 'phone', 'contact'];
+          var props  = ['Company', 'Address1', 'City', 'StateProvince', 'PostalCode', 'Phone', 'Contact'];
+          fields.forEach(function (field, i) {
+            _setInputValue('[name="' + field + '"]:eq(1)', shipper[props[i]]);
+          });
+          _setInputValue('[name="Country"]:eq(1)', 'string:' + shipper.Country);
+        });
+      },
+
+      setReturnDeliveryConfiguration: function (vm) {
+        _setDescription('Returned Goods');
+        _setReturnDeliveryCheckbox(true);
+        CBRHelper.ReturnDelivery.loadReturnAddressFromShipper(vm);
+      },
+
+      clearReturnDeliveryConfiguration: function () {
+        _setDescription('');
+        CBRHelper.Notifications.setReturnDeliveryAddressEmail('');
+        _setReturnDeliveryCheckbox(false);
+        $(_SEL.invoiceMethod).val('');
+      },
+
+      setReturnDeliveryInsurance: function (enabled, shipmentRequest) {
+        if (!shipmentRequest || !enabled) return;
+        var country = shipmentRequest.PackageDefaults.Consignee.Country.toUpperCase();
+        $('select option[value="number:1"]').prop('selected', country !== 'US' && country !== 'USA');
+      },
+
+      onShipperChangeD2M: function (currentShipper, d2mShipperSymbol, isD2MCapable, vm) {
+        if (isD2MCapable && currentShipper === d2mShipperSymbol) {
+          _setDescription('Returned Goods');
+          CBRHelper.ReturnDelivery.loadReturnAddressFromShipper(vm);
+        } else {
+          _setDescription('');
+          CBRHelper.Notifications.setReturnDeliveryAddressEmail('');
+          $(_SEL.invoiceMethod).val('');
+        }
+      }
+    },
+
+
+    // ========================================================================
+    // Printing — traveler labels, ZPL, document download
+    // ========================================================================
+    Printing: {
+
+      printTravelerLabel: function (shipmentRequest, apiRequest) {
+        var data     = _buildUserMethodPayload(shipmentRequest);
+        var result   = apiRequest('UserMethod', data, false).responseJSON;
+        var response = _decodeResponseData(result.Data);
+        var pdf      = response.DocumentResponses[0].PdfData[0];
+        window.open('data:application/pdf;base64,' + pdf, '_blank');
+        alert('Delegate Label Created');
+      },
+
+      prependZplDefaults: function (doc, expectedSymbol) {
+        if (doc.DocumentSymbol !== expectedSymbol || !doc.RawData) return;
+        var printerDefaults = '^XA^LH0,0^XSY,Y^MD30^XZ\n';
+        var originalRaw     = atou(doc.RawData);
+        doc.RawData[0]      = utoa(printerDefaults + originalRaw);
+      },
+
+      downloadFile: function (fileName, httpClient) {
+        var data = _buildUserMethodPayload({ Action: 'downloadFile', Data: fileName });
+        httpClient('UserMethod', data).then(function (ret) {
+          if (ret.ErrorCode !== 0) return;
+          var fileData     = _decodeResponseData(ret.Data);
+          var linkData     = 'data:' + fileData.fileType + ';base64,' + fileData.encodedFile;
+          var downloadLink = document.createElement('a');
+          downloadLink.style.display = 'none';
+          downloadLink.download = fileData.fileName;
+          downloadLink.href    = linkData;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Files — upload, download, paperless
+    // ========================================================================
+    Files: {
+
+      uploadCarrierLabelFile: function (fileInputSelector, onReady) {
+        var $input    = $(fileInputSelector);
+        var imageFile = $input.prop('files')[0];
+        if (!imageFile) { $input.click(); return; }
+        var reader    = new FileReader();
+        reader.readAsDataURL(imageFile);
+        reader.onload = function () {
+          onReady(this.result.replace(/^data:.+;base64,/, ''));
+          $input.val(null);
+        };
+      },
+
+      uploadReplacementFile: function (file, serverKey, httpClient) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          var request = {
+            Key: serverKey,
+            Value: JSON.stringify({ fileType: file.type, fileName: file.name, encodedFile: this.result.split(',')[1] })
+          };
+          httpClient('UserMethod', _buildUserMethodPayload({ Action: 'updateFile', Data: request }));
+        };
+        reader.readAsDataURL(file);
+      },
+
+      bindPaperlessFileInput: function (fileInputSelector, vmInstance) {
+        $('body').on('change', fileInputSelector, vmInstance, function (e) {
+          var file = e.target.files[0];
+          if (!file) { e.data.paperless = null; return; }
+          var reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onloadend = function () {
+            e.data.paperless = { fileName: file.name, fileData: this.result.split(',')[1] };
+          };
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Camera — video stream, capture, stop
+    // ========================================================================
+    Camera: {
+
+      startVideoStream: function (videoElementId, videoModal) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error('Your browser does not support the getUserMedia API.'); return;
+        }
+        var constraints = {
+          audio: false,
+          video: { zoom: true, facingMode: 'environment', width: { ideal: 2560 }, height: { ideal: 1440 } }
+        };
+        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+          var video = document.getElementById(videoElementId);
+          video.srcObject = stream;
+          var track        = stream.getVideoTracks()[0];
+          var capabilities = track.getCapabilities();
+          videoModal.zoom = videoModal.zoom || {
+            min: capabilities.zoom.min, max: capabilities.zoom.max, current: track.getSettings().zoom
+          };
+          var savedZoom = localStorage.getItem('zoomLevel') || track.getSettings().zoom;
+          localStorage.setItem('zoomLevel', savedZoom);
+          track.applyConstraints({ advanced: [{ zoom: savedZoom }] });
+          videoModal.track = track;
+        }).catch(function (error) { console.error('Error accessing the camera:', error); });
+      },
+
+      captureImage: function (videoElementId) {
+        var video = document.getElementById(videoElementId);
+        var track = video.srcObject.getVideoTracks()[0];
+        return new ImageCapture(track).grabFrame().then(function (imageBitmap) {
+          var canvas = document.createElement('canvas');
+          var ctx    = canvas.getContext('2d');
+          canvas.width = imageBitmap.width; canvas.height = imageBitmap.height;
+          ctx.drawImage(imageBitmap, 0, 0);
+          return canvas.toDataURL('image/png', 1.0).replace(/^data:.+;base64,/, '');
+        });
+      },
+
+      stopVideoStream: function (videoElementId) {
+        var video = document.getElementById(videoElementId);
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(function (track) { track.stop(); });
+          video.srcObject = null;
+        }
+      }
+    },
+
+
+    // ========================================================================
+    // LTL — NMFC dimension matching, dry ice, package configuration
+    // ========================================================================
+    LTL: {
+
+      LTL_DIMENSION_TABLE: [
+        [34, 32], [48, 40], [52, 36],
+        [12, 52], [14, 44], [18, 32],
+        [18, 52], [28, 44], [37, 37]
+      ],
+
+      matchLtlDimensions: function (length, width, height) {
+        var dims = [length || 0, width || 0, height || 0];
+        dims.sort(function (a, b) { return b - a; });
+        if (dims[0] === 0 && dims[1] === 0 && dims[2] === 0) return '0x0x0';
+        var table = CBRHelper.LTL.LTL_DIMENSION_TABLE;
+        for (var i = 0; i < table.length; i++) {
+          var x = table[i][0], y = table[i][1];
+          if (i < 3) {
+            if (dims[0] === x && dims[1] === y) return x + 'x' + y + 'x' + dims[2];
+            if (dims[1] === x && dims[2] === y) return x + 'x' + y + 'x' + dims[0];
+          } else {
+            if (dims[0] === y && dims[1] === x) return x + 'x' + y + 'x' + dims[2];
+            if (dims[0] === y && dims[2] === x) return x + 'x' + y + 'x' + dims[1];
+            if (dims[1] === y && dims[2] === x) return x + 'x' + y + 'x' + dims[0];
+          }
+        }
+        return dims.join('x');
+      },
+
+      configureLtlPackage: function (shipmentRequest, packageIndex, nmfcDescription) {
+        var pkg = shipmentRequest.Packages[packageIndex - 1];
+        if (!pkg) return;
+        var d         = pkg.Dimensions || {};
+        var dimString = CBRHelper.LTL.matchLtlDimensions(d.Length, d.Width, d.Height);
+        if (dimString !== '0x0x0') {
+          pkg.BolComment = ((pkg.BolComment || '') + ' ' + dimString).trim();
+        }
+        pkg.Description = nmfcDescription + ' L' + packageIndex;
+        if (!pkg.WaybillBolNumber) pkg.WaybillBolNumber = pkg.MiscReference20;
+        if (pkg.MiscReference20 && !shipmentRequest.Packages[packageIndex]?.ParentContainerCode) {
+          shipmentRequest.Packages[packageIndex] = shipmentRequest.Packages[packageIndex] || {};
+          if (!shipmentRequest.Packages[packageIndex].ParentContainerCode) {
+            shipmentRequest.Packages[packageIndex].ParentContainerCode = 'P' + pkg.MiscReference20 + '-' + packageIndex;
+          }
+        }
+      },
+
+      configureDryIce: function (shipmentRequest) {
+        var rpv = CBRHelper.Utilities.returnPropertyValue;
+        var dryIceWeightRaw  = rpv(shipmentRequest.Packages[0].MiscReference8);
+        var consigneeCountry = shipmentRequest.PackageDefaults.Consignee.Country;
+        shipmentRequest.Packages.forEach(function (pkg) {
+          if (!pkg.MiscReference7) return;
+          if (shipmentRequest.Packages.length > 1) throw { message: 'Multiple Packages Not Supported with Dry Ice', errorCode: '' };
+          if (rpv(pkg.MiscReference8) === '') throw { message: 'Missing Dry Ice Weight', errorCode: '' };
+          pkg.DryIceWeight        = { Amount: dryIceWeightRaw.replace('kgs', ''), Units: 'KG' };
+          pkg.DryIceRegulationSet = (consigneeCountry === 'US') ? 1 : 2;
+          pkg.DryIcePurpose       = 2;
+        });
+      }
+    },
+
+
+    // ========================================================================
+    // Shipment — convenience class with CustomData getters
+    // ========================================================================
+    Shipment: (function () {
+      function ShipmentClass(shipmentRequest) {
+        this.ShipmentRequest = shipmentRequest;
+      }
+      ShipmentClass.prototype.GetCustom = function (fieldName, source) {
+        return CBRHelper.Context.getCustomField(fieldName, source, this.ShipmentRequest);
+      };
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(function (n) {
+        Object.defineProperty(ShipmentClass.prototype, 'UserRef' + n, {
+          get: function () { return this.GetCustom('Custom' + n, 'User'); }
+        });
+        Object.defineProperty(ShipmentClass.prototype, 'ToRef' + n, {
+          get: function () { return this.GetCustom('Custom' + n, 'To'); }
+        });
+      });
+      return ShipmentClass;
+    })(),
+
+
+    // ========================================================================
+    // PageInit — onPageLoaded, focus, IOR checkbox, commodity modal, cost center
+    // ========================================================================
+    PageInit: {
+
+      onPageLoaded: function (location, vm, options) {
+        options = options || {};
+        if (location === '/shipping') {
+          if (options.sortShippers) vm.profile.Shippers.sort(CBRHelper.Utilities.compareByKey('Name'));
+          if (typeof options.initShipping === 'function') options.initShipping();
+        }
+      },
+
+      focusOnLoadInput: function () {
+        CBRHelper.DOM.waitForElement(_SEL.loadValue, true, null, null, CBRHelper.PageInit.initializeCustomElements);
+      },
+
+      initializeCustomElements: function () {
+        $('#chkDoNotRateShop').prop('checked', false);
+      },
+
+      addIorSameAsConsigneeCheckbox: function (iorBtnSelector, onChecked) {
+        var $checkbox;
+        _pollForElement(iorBtnSelector, 30, 10).then(function ($target) {
+          $checkbox = $('<input type="checkbox">');
+          $checkbox.click(function (e) { onChecked(e.target.checked); });
+          $target.before($checkbox, '<label style="padding-left: 6px;">Same As Consignee</label>');
+        });
+        return $checkbox;
+      },
+
+      hideCommodityModalTabs: function ($commodityModal, hideIndexes) {
+        $commodityModal.find('li.uib-tab.nav-item').each(function () {
+          if (hideIndexes.indexOf(parseInt(this.getAttribute('index'))) > -1) $(this).hide();
+        });
+      },
+
+      loadCostCenter: function (vm, customKey) {
+        var customData = vm?.profile?.UserInformation?.Address?.CustomData;
+        if (!customData) return;
+        var entry = customData.find(function (item) { return item.Key === customKey; });
+        if (!entry) return;
+        vm.currentShipment.Packages[vm.packageIndex].ShipperReference = entry.Value;
+        $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]').prop('disabled', true);
+      }
+    }
+
+  }; // end of returned object
+
+})(); // end of IIFE

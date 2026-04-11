@@ -1,0 +1,281 @@
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+        if (this.vm.profile.Name != this.vm.thinClient.adminProfileName) {
+            packages.forEach(function(pkg) {
+                pkg.ApportionedTotal = {
+                    Amount: null,
+                    Currency: null
+                }
+            });
+        }
+    }
+
+// Source: COREBRIDGE (CORE)_Shipper Ref = Custom1_1815.cs
+// userDataOnlyHistoryView(searchCriteria) // returns undefined
+function userDataOnlyHistoryView(searchCriteria) {
+        var data_;
+        data_ = GetUserContext_(data_);
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: data_.UserId, Operator: 0 });
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function (searchCriteria) {
+        userDataOnlyHistoryView(searchCriteria);
+    };
+
+// Source: Edward Jones  (EdwardJones)_Edward Jones Reference Rules 2.0_2476.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+//        debugger;
+        //var branchNo = getKeyValue('Custom3', userCustomData)
+		var branchNo = client.getValueByKey('Custom3', this.vm.profile.UserInformation.Address.CustomData);
+        if (branchNo) {
+            searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: branchNo, Operator: 5 });
+        }
+    }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    var checkExist = setInterval(function ()
+        {
+          if ($('table[ng-table="vm.tableParamsForDetailed"] tr').length > 1)
+          {
+            clearInterval(checkExist);
+            $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)').find('td:eq(2) > div:not(.ng-hide)').html(function() 
+            {
+                var trackingN = $(this).text().trim();
+                
+                
+              if(trackingN.startsWith('1Z')) {
+              return "<a href=https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }   else {
+              return "<a href=https://online.chrobinson.com/tracking/#/?trackingNumber=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }
+            });
+          }
+        }, 100);
+    }
+
+// Source: HARLEY DAVIDSON (HD)_Phase 2_2436.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        var startShipdate = new Date();
+        startShipdate.setDate(startShipdate.getDate() - 90);    
+        this.vm.dtstart = startShipdate;
+        searchCriteria.WhereClauses.filter(function (w) {
+            if (w.FieldName == 'Shipdate' && w.Operator == 3) {
+                w.FieldValue = startShipdate.toISOString().slice(0, 10);                
+            }
+        });
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+        //debugger;
+        for (let i = 0; i < packages.length; i++)
+        {
+            const currentDate = new Date();
+            currentDate.setDate(currentDate.getDate());
+            
+            const shipDate = new Date(packages[i].Shipdate.Year,packages[i].Shipdate.Month-1,packages[i].Shipdate.Day);
+            //alert(packages[i].Shipdate.Year + " | " + packages[i].Shipdate.Month + " | " + packages[i].Shipdate.Day)
+            //alert(shipDate)
+            
+            const diffTime = Math.abs(shipDate - currentDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+            //console.log(diffTime + " milliseconds");
+            //alert(diffDays + " days");
+            if(diffDays > 30)
+            {
+                packages[i].CantPrint = true;
+            }
+        }
+    }
+
+// Source: JANIE & JACK (JanieJack)_JanieJack Reference Rule_82.cs
+// this.NewShipment(shipmentRequest) // returns void
+   this.NewShipment = function (shipmentRequest) {
+       var shipment = new Shipment(shipmentRequest);  
+       shipmentRequest.Packages[0].ShipperReference = shipment.UserEmail;
+   }
+
+// this.AddPackage(shipmentRequest, packageIndex) // returns void
+   this.AddPackage = function(shipmentRequest, packageIndex) {
+       shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference; 
+   }
+
+// Source: Land Home Financial Services (LHFS)_LHFS_Bus_Rules_1579.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        if (!userContext)
+        {
+            GetUserContext();
+
+        }
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// Source: NikeRevship (NIKEREVSHIP)_NikeRevshipClientBusinessRule_1786.cs
+// ReplaceAccountNumberWithXXXXXX() // returns void
+function ReplaceAccountNumberWithXXXXXX() {
+		const observer = new MutationObserver(() => {
+			// Select all child tracking numbers
+			const trackingNumberElements = document.querySelectorAll('div.ng-binding');
+			trackingNumberElements.forEach(element => {
+				const text = element.textContent.trim();
+				if (text.length === 18) {
+					element.textContent = text.substring(0, 3) + 'XXXXXX' + text.substring(9);
+				}
+			});
+
+			// Select all lead tracking numbers
+			const tableCells = document.querySelectorAll('td.ng-binding');
+			tableCells.forEach(cell => {
+				const text = cell.textContent.trim();
+				if (text.length === 18) {
+					cell.textContent = text.substring(0, 3) + 'XXXXXX' + text.substring(9);
+				}
+			});
+		});
+
+		// Start observing the body for changes
+		observer.observe(document.body, { childList: true, subtree: true });
+	}
+
+// Source: Truist (BBANDT)_Truist Admin Business Rules_2463.cs
+// this.PageLoaded(location) // returns undefined
+    this.PageLoaded = function(location) {
+        GetUserContext();
+        if(location==="/shipping"){
+            
+                    var checkExist = setInterval(function() {
+            var chkShipNotification = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipNotificationEmail"]');
+            if (chkShipNotification)
+            {
+                /* Stop the timer. */
+                clearInterval(checkExist);
+                //debugger;
+        $('body').delegate('[property="ShipNotificationEmail"]', 'click', function () {
+            $('[name="shipNotificationAddressEmail"]').val(getUserName()).change();
+            vm.currentShipment.Packages[vm.packageIndex].ShipNotificationAddressEmail = getUserName();
+        })
+
+        $('body').delegate('[property="DeliveryExceptionNotificationEmail"]', 'click', function () {
+            $('[name="DeliveryExceptionNotificationAddressEmail"]').val(getUserName()).change();
+            vm.currentShipment.Packages[vm.packageIndex].DeliveryExceptionNotificationAddressEmail = getUserName();
+        })
+
+        $('body').delegate('[property="DeliveryNotificationEmail"]', 'click', function () {
+            $('[name="DeliveryNotificationEmail"]').val(getUserName()).change();
+            vm.currentShipment.Packages[vm.packageIndex].DeliveryNotificationAddressEmail = getUserName();
+        })
+            }
+             
+         }, 50); 
+        }        
+        if(location==="/history"){
+                     var reports = $('select[id="reports"]:eq(0)');
+        var checkExist = setInterval(function() {
+            
+            if (reports)
+            {
+                /* Stop the timer. */
+                clearInterval(checkExist);
+                $('select[id="reports"]:eq(0) option:eq(0)').text("My History");
+            }
+             
+         }, 50); 
+            
+        }
+        
+
+        
+        
+    }
+
+// Source: Truist (BBANDT)_Truist Business Rules_2464.cs
+// PageLoaded(location) // returns void
+    this.PageLoaded = function(location) {
+        GetUserContext();
+        if(location==="/shipping"){
+            
+            var checkExist = setInterval(function() {
+            var chkShipNotification = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeliveryNotificationAddressEmail"]');
+            if (chkShipNotification)
+            {
+                /* Stop the timer. */
+                clearInterval(checkExist);
+                //debugger;
+        $('body').delegate('[property="ShipNotificationEmail"]', 'click', function () {
+             if($('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipNotificationEmail"]').prop("checked")){
+                $('[name="shipNotificationAddressEmail"]').val(getUserName()).change();
+                vm.currentShipment.Packages[vm.packageIndex].ShipNotificationAddressEmail = getUserName();
+             } else {
+                 vm.currentShipment.Packages[vm.packageIndex].ShipNotificationAddressEmail = "";
+             }
+        })
+
+        $('body').delegate('[property="DeliveryExceptionNotificationEmail"]', 'click', function () {
+            if($('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeliveryExceptionNotificationEmail"]').prop("checked")){
+                $('[name="DeliveryExceptionNotificationAddressEmail"]').val(getUserName()).change();
+                vm.currentShipment.Packages[vm.packageIndex].DeliveryExceptionNotificationAddressEmail = getUserName();
+            }else{
+                vm.currentShipment.Packages[vm.packageIndex].DeliveryExceptionNotificationAddressEmail = "";
+            }
+
+        })
+
+        $('body').delegate('[property="DeliveryNotificationEmail"]', 'click', function () {
+            if($('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeliveryNotificationEmail"]').prop("checked")){
+                $('[name="DeliveryNotificationEmail"]').val(getUserName()).change();
+                vm.currentShipment.Packages[vm.packageIndex].DeliveryNotificationAddressEmail = getUserName();               
+            }else{
+                vm.currentShipment.Packages[vm.packageIndex].DeliveryNotificationAddressEmail = "";     
+            }
+
+        })
+            }
+             
+         }, 50); 
+        }
+        if(location==="/history"){
+                     var reports = $('select[id="reports"]:eq(0)');
+        var checkExist = setInterval(function() {
+            
+            if (reports)
+            {
+                /* Stop the timer. */
+                clearInterval(checkExist);
+                $('select[id="reports"]:eq(0) option:eq(0)').text("My History");
+            }
+             
+         }, 50); 
+        }
+    }
+
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        //debugger;
+        if(selectedReport[0].innerText !=="All History"){
+            searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+        }
+    };
+
+// Source: VW Group (VW)_VW Client Rules_1513.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference19', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// PreShip(shipmentRequest, userParams) // returns undefined
+    this.PreShip = function (shipmentRequest, userParams) {
+        var userId = userContext.UserId;
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference19 = userId;
+        }
+    };
+
