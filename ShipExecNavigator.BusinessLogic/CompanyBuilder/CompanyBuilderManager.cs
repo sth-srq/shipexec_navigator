@@ -262,6 +262,13 @@ namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
                 if (shipperRequest.IsDelete)
                 {
                     result.Add(_shipperRequestGenerator.Remove((shipperRequest.Variance.OriginalObject as Shipper).Id, shipperRequest.Variance.ParentSiteId));
+
+                    // Attach cascade-deleted adapter-shipper mapping variances to the
+                    // parent shipper variance so they surface in the UI diff display.
+                    if (_shipperRequestGenerator.LastCascadeVariances.Count > 0)
+                    {
+                        shipperRequest.Variance.ChildVariances.AddRange(_shipperRequestGenerator.LastCascadeVariances);
+                    }
                 }
                 if (shipperRequest.IsAdd)
                 {
@@ -524,7 +531,19 @@ namespace ShipExecNavigator.BusinessLogic.CompanyBuilder
                     var newShipper  = variance.NewObject      as Shipper ?? DeserializeXml<Shipper>(variance.NewXML);
                     var origShipper = variance.OriginalObject as Shipper ?? DeserializeXml<Shipper>(variance.OriginalXML);
                     if (variance.IsUpdated) return _shipperRequestGenerator.Update(newShipper, variance.ParentSiteId);
-                    if (variance.IsRemove)  return _shipperRequestGenerator.Remove(origShipper.Id, variance.ParentSiteId);
+                    if (variance.IsRemove)
+                    {
+                        var response = _shipperRequestGenerator.Remove(origShipper.Id, variance.ParentSiteId);
+
+                        // Attach cascade-deleted adapter-shipper mapping variances
+                        // so they surface in the UI diff display.
+                        if (_shipperRequestGenerator.LastCascadeVariances.Count > 0)
+                        {
+                            variance.ChildVariances.AddRange(_shipperRequestGenerator.LastCascadeVariances);
+                        }
+
+                        return response;
+                    }
                     if (variance.IsAdd)     return _shipperRequestGenerator.Add(newShipper, variance.ParentSiteId);
                     break;
                 }

@@ -154,6 +154,7 @@ public sealed class ShipExecService(
             companyId, companyName);
         _currentCompanyId = companyId;
         _appManager.SetCompany(companyId, companyName);
+        OnConnected?.Invoke();
         return Task.CompletedTask;
     }
 
@@ -1981,6 +1982,22 @@ public sealed class ShipExecService(
     }
 
     public List<CompanyInfo> GetCachedCompanies() => _lastCompanies;
+
+    public event System.Action? OnDisconnected;
+    public event System.Action? OnConnected;
+
+    public void Disconnect()
+    {
+        logger.LogInformation("Disconnect | Resetting all connection state for this circuit");
+        _appManager       = null;
+        _adminUrl         = null;
+        _lastCompanies    = [];
+        _currentCompanyId = Guid.Empty;
+        _lastVariances    = null;
+        _lastModifiedXml  = null;
+        _lastCompanyXml   = null;
+        OnDisconnected?.Invoke();
+    }
 
     public string? GetManagementStudioUrl()
     {
