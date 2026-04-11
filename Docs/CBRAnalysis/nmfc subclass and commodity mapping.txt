@@ -1,0 +1,2667 @@
+// Source: Gem Group (GEM)_Gem_1843.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+  this.PreShip = function (shipmentRequest, userParams)
+  {
+    var url = new URL(window.location.href);
+    console.log(url);
+    if (url.hash.includes("batchReference"))
+    {
+      vm.currentShipment.Packages[0].MiscReference20 = "Batch-Manual";
+      var misc = $('[ng-model="vm.currentShipment.Packages[0].MiscReference20"]');
+      console.log(misc);
+    }
+    console.log(shipmentRequest.PackageDefaults.Service.Symbol);
+    if(shipmentRequest.PackageDefaults.Service.Symbol.indexOf("SHIPCONSOLE") !== -1){
+        console.log("Fedex");
+        if(shipmentRequest.PackageDefaults.Consignee.Country != null && shipmentRequest.PackageDefaults.Consignee.Country != "US"){
+            console.log("International")
+            let commodities = [];
+            let test = [];
+            let description = new Map();
+            let currIndex = 0;
+            shipmentRequest.Packages.forEach((item, index) => {
+                if(item.CommodityContents !== null && item.CommodityContents !== undefined && item.CommodityContents !== []){
+                    item.CommodityContents.forEach((commodity, commindex) => {
+                        if(description.get(commodity.Description) !== undefined){
+                            test[description.get(commodity.Description)].Quantity = String(parseInt(test[description.get(commodity.Description)].Quantity) + parseInt(commodity.Quantity));
+                            console.log("Adding: " + commodity.Description)
+                            console.log(commodity.Quantity)
+                        } else {
+                            
+                            description.set(commodity.Description, currIndex);
+                            let tempCommodity = {
+                                UnitValue: commodity.UnitValue,
+                                UnitWeight: commodity.UnitWeight,
+                                QuantityUnitMeasure: commodity.QuantityUnitMeasure,
+                                ExportQuantityUnitMeasure1: commodity.ExportQuantityUnitMeasure1,
+                                ExportQuantityUnitMeasure2: commodity.ExportQuantityUnitMeasure2,
+                                LicenseUnitValue: commodity.LicenseUnitValue,
+                                DdtcUnitMeasure: commodity.DdtcUnitMeasure,
+                                Origin: commodity.Origin,
+                                OriginCountry: commodity.OriginCountry,
+                                ProductCode: commodity.ProductCode,
+                                HarmonizedCode: commodity.HarmonizedCode,
+                                Quantity: commodity.Quantity,
+                                Description: commodity.Description,
+                                LicenseExpirationDate: commodity.LicenseExpirationDate,
+                                NaftaRvcAvgStartDate: commodity.NaftaRvcAvgStartDate,
+                                nAFTARVCAvgEndDate: commodity.nAFTARVCAvgEndDate
+                            }
+                            let anotherRandom = Date.now().toString(36) + Math.random().toString(36).substr(2, 12);
+                            let NewCommodity =
+                            {
+                              "UnitValue": commodity.UnitValue,
+                              "UnitWeight": commodity.UnitWeight,
+                              "QuantityUnitMeasure": "PC",
+                              "ExportQuantityUnitMeasure1": "PC",
+                              "ExportQuantityUnitMeasure2": "PC",
+                              "LicenseUnitValue": {
+                                "Currency": "USD"
+                              },
+                              "DdtcUnitMeasure": "PC",
+                              "packageIndex": commindex,
+                              "Origin": {
+                                "AddressBookIdToProcess": null
+                              },
+                              "OriginCountry": commodity.OriginCountry,
+                              "ProductCode": commodity.ProductCode,
+                              "HarmonizedCode": commodity.HarmonizedCode,
+                              "Quantity": commodity.Quantity,
+                              "Description": commodity.Description,
+                              "LicenseExpirationDate": null,
+                              "NaftaRvcAvgStartDate": null,
+                              "nAFTARVCAvgEndDate": null,
+                              "$$hashKey": "object:" + commindex + "1" + anotherRandom
+                            };
+        
+                            test[currIndex] = NewCommodity;
+                            console.log("Adding new comm");
+                            console.log(JSON.stringify(test, null, 2))
+                            currIndex+=1;
+                        }
+                    })
+                }
+                
+                //commodities.push(item.CommodityContents)
+                shipmentRequest.Packages[index].CommodityContents = []
+            })
+            shipmentRequest.Packages[0].CommodityContents = test;
+            console.log(JSON.stringify(test, null, 2))
+        } else {
+            console.log("Domestic")
+        }
+        
+    }
+}
+
+// function addToCommodityList(cells, index, isBundle) // returns void
+  function addToCommodityList(cells, index, isBundle)
+  {
+    var OldCommodity = vm.currentShipment.Packages[index].CommodityContents;
+    var NewCommodity;
+    let min = 5;
+    let max = 100;
+    let randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+    let anotherRandom = Date.now().toString(36) + Math.random().toString(36).substr(2, 12);
+    if (!cells || cells === "")
+    {
+      client.alert.Danger("Error: Commodity Data unavailable");
+      console.log(cells);
+      return;
+    }
+    if (isBundle)
+    {
+      let price = 0;
+      if (cells.InternationalInfo == null || cells.InternationalInfo.ExportUnitPrice == null)
+      {
+        price = cells.SaleUnitPrice
+        console.log('Value price updated to: ' + price)
+      }
+      else
+      {
+        price = cells.InternationalInfo.ExportUnitPrice
+        console.log('Value price updated 2: ' + price)
+      }
+      NewCommodity = [
+        {
+          "UnitValue": {
+            "Currency": cells.InternationalInfo.ExportCurrencyCode,
+            "Amount": price
+          },
+          "UnitWeight": {
+            "Units": "LB",
+            "Amount": cells.UnitWeight
+          },
+          "QuantityUnitMeasure": "PC",
+          "ExportQuantityUnitMeasure1": "PC",
+          "ExportQuantityUnitMeasure2": "PC",
+          "LicenseUnitValue": {
+            "Currency": "USD"
+          },
+          "DdtcUnitMeasure": "PC",
+          "packageIndex": index,
+          "Origin": {
+            "AddressBookIdToProcess": null
+          },
+          "OriginCountry": cells.InternationalInfo.CountryOfOrigin,
+          "ProductCode": cells.KitComponentPart,
+          "HarmonizedCode": cells.InternationalInfo.ExportTariffCode,
+          "Quantity": cells.UnitsPerAssembly,
+          "Description": cells.KitComponentPartDesc,
+          "LicenseExpirationDate": null,
+          "NaftaRvcAvgStartDate": null,
+          "nAFTARVCAvgEndDate": null,
+          "$$hashKey": "object:" + index + "1" + anotherRandom
+        }];
+    }
+    else
+    {
+      let price = 0;
+      if (cells[17].textContent == null || cells[17].textContent == "")
+      {
+        price = cells[4].textContent
+        console.log('Value price updated to: ' + price)
+      }
+      else
+      {
+        price = cells[17].textContent
+        console.log('Value price updated 2: ' + price)
+      }
+      NewCommodity = [
+        {
+          "UnitValue": {
+            "Currency": cells[15].textContent,
+            "Amount": price
+          },
+          "UnitWeight": {
+            "Units": "LB",
+            "Amount": cells[7].textContent
+          },
+          "QuantityUnitMeasure": "PC",
+          "ExportQuantityUnitMeasure1": "PC",
+          "ExportQuantityUnitMeasure2": "PC",
+          "LicenseUnitValue": {
+            "Currency": cells[16].textContent
+          },
+          "DdtcUnitMeasure": "PC",
+          "packageIndex": index,
+          "Origin": {
+            "AddressBookIdToProcess": null
+          },
+          "OriginCountry": cells[14].textContent,
+          "ProductCode": cells[1].textContent,
+          "HarmonizedCode": cells[16].textContent,
+          "Quantity": cells[10].textContent,
+          "Description": cells[5].textContent,
+          "LicenseExpirationDate": null,
+          "NaftaRvcAvgStartDate": null,
+          "nAFTARVCAvgEndDate": null,
+          "$$hashKey": "object:" + index + "1" + randomNumber
+        }];
+      //This is wrong an not tested
+      //if(line.InternationalDetails!=null && line.InternationalDetails.ExportUnitPrice==null)
+      //{
+      //    "UnitValue": cells[17].SaleUnitPrice;
+      //}
+      //else if(line.InternationalDetails!=null && line.InternationalDetails.ExportUnitPrice!=null)
+      //{
+      //   "UnitValue":cells[15].InternationalInfo.ExportUnitPrice ; 
+      //}
+    }
+    if (!OldCommodity || OldCommodity.length === 0)
+    {
+      vm.currentShipment.Packages[index].CommodityContents = NewCommodity;
+    }
+    else
+    {
+      vm.currentShipment.Packages[index].CommodityContents = OldCommodity.concat(NewCommodity);
+    }
+  }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// this.PageLoaded(location) // returns void
+    this.PageLoaded = function(location) { 
+     
+     $( document ).ready(function() {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+      });
+     
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').val("string:SHIPPER");
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').trigger('change');
+     
+        $('body').delegate('[ng-model="vm.currentShipment.PackageDefaults.Terms"]', 'change', function () {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+        
+            });
+   
+        $('body').delegate('[ng-model="vm.selectedServices"]', 'change', function () {
+            var currentServiceSelected = $('[ng-model="vm.selectedServices"]').val();
+           
+            
+            
+            var selectedService = this[this.selectedIndex].value;
+
+           var symbol = selectedService.split('.');
+
+           var isGeninsu = symbol[0] == 'GENINSU' && symbol[1] == 'Custom'
+
+           //$('[ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', isGeninsu).change();
+           
+            
+            
+            
+            
+        });
+   
+   
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference19"]', 'change', function () {
+            
+            let currentPackageIndex = this.name.replace('NMFCNumbers', '');
+            console.log(currentPackageIndex);
+            
+                $('select[name="SubClassNumbers'+currentPackageIndex+'"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+               
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                 
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').attr('class', '');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("form-control");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-pristine");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-valid");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-empty");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-touched");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').text(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').val(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 console.log(obj["description"]);
+
+                     
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').trigger('change');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').val(arrayName[1]);
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').trigger('change');
+                 
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').trigger("change");
+
+              });
+              
+        });
+      
+        
+
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]', 'change', function () {
+            
+            let currentPackageIndex2 = this.name.replace('SubClassNumbers', '');
+            console.log(currentPackageIndex2);
+
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField'+currentPackageIndex2+'"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers'+currentPackageIndex2+'"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt'+currentPackageIndex2+'"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt'+currentPackageIndex2+'"]').trigger('change');
+
+
+        });
+
+       
+
+      
+
+      /*     $('body').delegate('select[name="NMFCNumbers"]', 'change', function () {
+               
+               $('select[name="SubClassNumbers"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+                
+                $('select[name="SubClassNumbers"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                $('textarea[name="LtlDescription"]').text(obj["description"]).change();
+                console.log(obj["description"]);
+                $('textarea[name="LtlDescription"]').trigger('change');
+                $('textarea[name="LtlDescription"]').html(obj["description"]).change();
+                $('input[name="item_number_txt"]').val(arrayName[1]);
+                $('input[name="item_number_txt"]').trigger('change');
+                $('select[name="SubClassNumbers"]').trigger("change");
+
+               
+            })
+           // }   
+            });
+           
+            
+           $('body').delegate('select[name="SubClassNumbers"]', 'change', function () {
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt"]').trigger('change');
+           });*/
+
+
+     
+    }
+
+// this.AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+       $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val(''); 
+       shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = '';
+        
+    }
+
+// this.PreviousPackage(shipmentRequest, packageIndex) // returns void
+    this.PreviousPackage = function(shipmentRequest, packageIndex) {		  
+    $('select[name="SubClassNumbers'+eval(packageIndex+1)+'"]').empty();   
+    $('select[name="NMFCNumbers'+eval(packageIndex+1)+'"]').val(''); 
+    shipmentRequest.Packages[eval(packageIndex+1)].MiscReference19 = '';
+    }
+
+// this.NextPackage(shipmentRequest, packageIndex) // returns void
+    this.NextPackage = function(shipmentRequest, packageIndex) {  
+    $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+    $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val('');  
+
+    shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = ''; 
+
+    }
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+
+        var shipDate = new Date(shipmentRequest.PackageDefaults.Shipdate.Year, shipmentRequest.PackageDefaults.Shipdate.Month - 1, shipmentRequest.PackageDefaults.Shipdate.Day);
+        var today = new Date();
+
+        if (shipDate.getDay() == 6) {
+            throw ({ message: 'Saturday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+        if (shipDate.getDay() == 7) {
+            throw ({ message: 'Sunday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+
+        if (shipmentRequest.Packages[0].ShipperReference === undefined || shipmentRequest.Packages[0].ShipperReference === null || shipmentRequest.Packages[0].ShipperReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ShipperReference]', errorCode: '115' });
+        }
+        if (shipmentRequest.Packages[0].ConsigneeReference === undefined || shipmentRequest.Packages[0].ConsigneeReference === null || shipmentRequest.Packages[0].ConsigneeReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ConsigneeReference]', errorCode: '115' });
+        }
+
+        var diw = shipmentRequest.Packages[0].DryIceWeight;
+        var pkgw = shipmentRequest.Packages[0].Weight;
+
+        if (diw.Amount > 0) {
+            if (diw.Amount < 10) {
+                throw ({ message: 'Shipping Error: Dry Ice Amount must be 10 LBS or more.', errorCode: '115' });
+            }
+        }
+
+        if (pkgw.Amount < diw.Amount) {
+            throw ({ message: 'Shipping Error: Dry Ice Weight MUST be less than the package Weight.', errorCode: '115' });
+        }
+
+        var consignee = shipmentRequest.PackageDefaults.Consignee;
+        if (consignee.Country == 'CA') {
+            var svc = {
+                Symbol: "UPSAPI.UPS.EXPRESS"
+                , Name: "UPS Express (UPS ADAPTER)"
+            };
+            shipmentRequest.PackageDefaults.Service = svc;
+
+            var uv = { Amount: "150.00", Units: "USD" };
+            var uw = { Amount: "1.0", Units: "LB" };
+            var cc = {
+                ProductCode: "Biological Specimens"
+                , Description: "Biological Specimens"
+                , Quantity: 1
+                , QuantityUnitMeasure: "PC"
+                , UnitValue: uv
+                , UnitWeight: uw
+                , OriginCountry: "CA"
+            };
+            shipmentRequest.Packages[0].CommodityContents = [cc];
+        }
+    };
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// this.AddPackage(shipmentRequest, packageIndex) // returns undefined
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        shipmentRequest.PackageDefaults.UserData1 = null;
+		var shipService = "";
+		if(shipmentRequest.PackageDefaults.Service!==undefined){
+			shipService = shipmentRequest.PackageDefaults.Service.Symbol;
+		}
+		var LTLFlag = false;
+		if (shipService.includes("_LTL.") || shipService.includes("_UPSFREIGHT")){
+			LTLFlag = true;
+		}
+		if(LTLFlag)
+		{
+		    if((shipmentRequest.Packages[packageIndex].MiscReference20 != undefined && shipmentRequest.Packages[packageIndex].MiscReference20 != null && shipmentRequest.Packages[packageIndex].MiscReference20 != "")
+		        &&(shipmentRequest.Packages[packageIndex].ParentContainerCode == null || shipmentRequest.Packages[packageIndex].ParentContainerCode == "") ){
+                    shipmentRequest.Packages[packageIndex].ParentContainerCode ="P" + shipmentRequest.Packages[packageIndex].MiscReference20 + "-" + packageIndex;
+		    }
+		var dims = "0x0x0";
+		
+		var lastPackage = shipmentRequest.Packages[packageIndex - 1];
+
+		var length =0;
+        var width = 0;
+        var height =0;
+	    if(lastPackage.Dimensions!=undefined){
+			if(lastPackage.Dimensions.Length!= undefined && lastPackage.Dimensions.Width!=undefined && lastPackage.Dimensions.Height!=undefined){
+				length =lastPackage.Dimensions.Length;
+				width = lastPackage.Dimensions.Width;
+				height = lastPackage.Dimensions.Height;
+			} 	
+		}
+
+        const dimArr=[length,width,height];
+        
+        //To sort dimensions in descending order.
+        dimArr.sort(function(a, b){return b-a});
+		dims = dimArr[0]+"x"+dimArr[1]+"x"+dimArr[2];
+		if(dims!="0x0x0"){
+			const   dimtblx ="34,48,52,12,14,18,18,28,37".split(",");  
+            const   dimtbly ="32,40,36,52,44,32,52,44,37".split(","); 
+			for (let i = 0; i < dimtblx.length; i++){
+				var   x = dimtblx[i];
+                var   y = dimtbly[i];
+				if (i < 3)
+                {
+                    
+                    if (dimArr[0] == x && dimArr[1] == y )
+                        break;
+                    if (dimArr[0] == x && dimArr[1] == y )
+                    {                           
+                        dims= x + "x" + y + "x" + dimArr[1];                    
+                        break;
+                    }
+                    if (dimArr[1] == x && dimArr[2] == y )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];           
+                    break;
+                    }
+                }
+				else{                  
+                     
+                    if (dimArr[0] == y && dimArr[1] == x )
+                    {
+                        dims = x + "x" + y + "x" + dimArr[2];                    
+                        break;
+                    }
+                    if (dimArr[0] == y && dimArr[2] == x )
+                    {
+                       dims = x + "x" + y + "x" + dimArr[1];
+                    
+                       break;
+                    }
+                    if (dimArr[1] == y && dimArr[2] == x )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];                
+                    break;
+                    }
+                }
+			}
+			if(lastPackage.BolComment == null)
+			   lastPackage.BolComment = ""; 
+			
+			shipmentRequest.Packages[packageIndex-1].BolComment = lastPackage.BolComment+" "+dims;
+			
+		}
+		//debugger;
+		shipmentRequest.Packages[packageIndex - 1].Description = "DIESEL ENGINE PARTS NMFC # 133300, SUB 4, Class 60 L"+packageIndex; // + " L" + packageIndex-1;
+		
+		if(shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == null || shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == "" ){
+			shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber = shipmentRequest.Packages[packageIndex-1].MiscReference20;
+		}
+		}
+	
+	//setRef1Focus script start
+	$("#referenceTab").children()[0].click();
+	$('div[property = "MiscReference1"]').children().ready(function () {
+	     	$('div[property = "MiscReference1"]').children().focus();
+	});
+	//setRef1Focus script end
+	 
+}
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// PageLoaded(location) // returns void
+this.PageLoaded = function(location) { 
+     
+     $( document ).ready(function() {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+      });
+     
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').val("string:SHIPPER");
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').trigger('change');
+     
+        $('body').delegate('[ng-model="vm.currentShipment.PackageDefaults.Terms"]', 'change', function () {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+        
+            });
+   
+        $('body').delegate('[ng-model="vm.selectedServices"]', 'change', function () {
+            var currentServiceSelected = $('[ng-model="vm.selectedServices"]').val();
+           
+            
+            
+            var selectedService = this[this.selectedIndex].value;
+
+           var symbol = selectedService.split('.');
+
+           var isGeninsu = symbol[0] == 'GENINSU' && symbol[1] == 'Custom'
+
+           //$('[ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', isGeninsu).change();
+           
+            
+            
+            
+            
+        });
+   
+   
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference19"]', 'change', function () {
+            
+            let currentPackageIndex = this.name.replace('NMFCNumbers', '');
+            console.log(currentPackageIndex);
+            
+                $('select[name="SubClassNumbers'+currentPackageIndex+'"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+               
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                 
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').attr('class', '');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("form-control");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-pristine");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-valid");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-empty");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-touched");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').text(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').val(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 console.log(obj["description"]);
+
+                     
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').trigger('change');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').val(arrayName[1]);
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').trigger('change');
+                 
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').trigger("change");
+
+              });
+              
+        });
+      
+        
+
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]', 'change', function () {
+            
+            let currentPackageIndex2 = this.name.replace('SubClassNumbers', '');
+            console.log(currentPackageIndex2);
+
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField'+currentPackageIndex2+'"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers'+currentPackageIndex2+'"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt'+currentPackageIndex2+'"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt'+currentPackageIndex2+'"]').trigger('change');
+
+
+        });
+
+       
+
+      
+
+      /*     $('body').delegate('select[name="NMFCNumbers"]', 'change', function () {
+               
+               $('select[name="SubClassNumbers"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+                
+                $('select[name="SubClassNumbers"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                $('textarea[name="LtlDescription"]').text(obj["description"]).change();
+                console.log(obj["description"]);
+                $('textarea[name="LtlDescription"]').trigger('change');
+                $('textarea[name="LtlDescription"]').html(obj["description"]).change();
+                $('input[name="item_number_txt"]').val(arrayName[1]);
+                $('input[name="item_number_txt"]').trigger('change');
+                $('select[name="SubClassNumbers"]').trigger("change");
+
+               
+            })
+           // }   
+            });
+           
+            
+           $('body').delegate('select[name="SubClassNumbers"]', 'change', function () {
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt"]').trigger('change');
+           });*/
+
+
+     
+    }
+
+// AddPackage(shipmentRequest, packageIndex) // returns void
+this.AddPackage = function(shipmentRequest, packageIndex) {
+        $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+       $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val(''); 
+       shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = '';
+        
+    }
+
+// PreviousPackage(shipmentRequest, packageIndex) // returns void
+this.PreviousPackage = function(shipmentRequest, packageIndex) {		  
+    $('select[name="SubClassNumbers'+eval(packageIndex+1)+'"]').empty();   
+    $('select[name="NMFCNumbers'+eval(packageIndex+1)+'"]').val(''); 
+    shipmentRequest.Packages[eval(packageIndex+1)].MiscReference19 = '';
+    }
+
+// NextPackage(shipmentRequest, packageIndex) // returns void
+this.NextPackage = function(shipmentRequest, packageIndex) {  
+    $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+    $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val('');  
+
+    shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = ''; 
+
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// function AddPackage(shipmentRequest, packageIndex) // returns undefined
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging;
+        shipmentRequest.Packages[packageIndex].Dimensions = shipmentRequest.Packages[0].Dimensions;
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        //shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        //shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        //shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        //shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    }
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+
+        var shipDate = new Date(shipmentRequest.PackageDefaults.Shipdate.Year, shipmentRequest.PackageDefaults.Shipdate.Month - 1, shipmentRequest.PackageDefaults.Shipdate.Day);
+        var today = new Date();
+
+        if (shipDate.getDay() == 6) {
+            throw ({ message: 'Saturday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+        if (shipDate.getDay() == 7) {
+            throw ({ message: 'Sunday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+
+        if (shipmentRequest.Packages[0].ShipperReference === undefined || shipmentRequest.Packages[0].ShipperReference === null || shipmentRequest.Packages[0].ShipperReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ShipperReference]', errorCode: '115' });
+        }
+        if (shipmentRequest.Packages[0].ConsigneeReference === undefined || shipmentRequest.Packages[0].ConsigneeReference === null || shipmentRequest.Packages[0].ConsigneeReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ConsigneeReference]', errorCode: '115' });
+        }
+
+        var diw = shipmentRequest.Packages[0].DryIceWeight;
+        var pkgw = shipmentRequest.Packages[0].Weight;
+
+        if (diw.Amount > 0) {
+            if (diw.Amount < 10) {
+                throw ({ message: 'Shipping Error: Dry Ice Amount must be 10 LBS or more.', errorCode: '115' });
+            }
+        }
+
+        if (pkgw.Amount < diw.Amount) {
+            throw ({ message: 'Shipping Error: Dry Ice Weight MUST be less than the package Weight.', errorCode: '115' });
+        }
+
+        var consignee = shipmentRequest.PackageDefaults.Consignee;
+        if (consignee.Country == 'CA') {
+            var svc = {
+                Symbol: "UPSAPI.UPS.EXPRESS"
+                , Name: "UPS Express (UPS ADAPTER)"
+            };
+            shipmentRequest.PackageDefaults.Service = svc;
+
+            var uv = { Amount: "150.00", Units: "USD" };
+            var uw = { Amount: "1.0", Units: "LB" };
+            var cc = {
+                ProductCode: "Biological Specimens"
+                , Description: "Biological Specimens"
+                , Quantity: 1
+                , QuantityUnitMeasure: "PC"
+                , UnitValue: uv
+                , UnitWeight: uw
+                , OriginCountry: "CA"
+            };
+            shipmentRequest.Packages[0].CommodityContents = [cc];
+        }
+    };
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// this.AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        shipmentRequest.PackageDefaults.UserData1 = null;
+		var shipService = "";
+		if(shipmentRequest.PackageDefaults.Service!==undefined){
+			shipService = shipmentRequest.PackageDefaults.Service.Symbol;
+		}
+		var LTLFlag = false;
+		if (shipService.includes("_LTL.") || shipService.includes("_UPSFREIGHT")){
+			LTLFlag = true;
+		}
+		if(LTLFlag)
+		{
+		    if((shipmentRequest.Packages[packageIndex].MiscReference20 != undefined && shipmentRequest.Packages[packageIndex].MiscReference20 != null && shipmentRequest.Packages[packageIndex].MiscReference20 != "")
+		        &&(shipmentRequest.Packages[packageIndex].ParentContainerCode == null || shipmentRequest.Packages[packageIndex].ParentContainerCode == "") ){
+                    shipmentRequest.Packages[packageIndex].ParentContainerCode ="P" + shipmentRequest.Packages[packageIndex].MiscReference20 + "-" + packageIndex;
+		    }
+		var dims = "0x0x0";
+		
+		var lastPackage = shipmentRequest.Packages[packageIndex - 1];
+
+		var length =0;
+        var width = 0;
+        var height =0;
+	    if(lastPackage.Dimensions!=undefined){
+			if(lastPackage.Dimensions.Length!= undefined && lastPackage.Dimensions.Width!=undefined && lastPackage.Dimensions.Height!=undefined){
+				length =lastPackage.Dimensions.Length;
+				width = lastPackage.Dimensions.Width;
+				height =lastPackage.Dimensions.Height;
+			} 	
+		}
+
+        const dimArr=[length,width,height];
+        
+        //To sort dimensions in descending order.
+        dimArr.sort(function(a, b){return b-a});
+		dims = dimArr[0]+"x"+dimArr[1]+"x"+dimArr[2];
+		if(dims!="0x0x0"){
+			const   dimtblx ="34,48,52,12,14,18,18,28,37".split(",");  
+            const   dimtbly ="32,40,36,52,44,32,52,44,37".split(","); 
+			for (let i = 0; i < dimtblx.length; i++){
+				var   x = dimtblx[i];
+                var   y = dimtbly[i];
+				if (i < 3)
+                {
+                    
+                    if (dimArr[0] == x && dimArr[1] == y )
+                        break;
+                    if (dimArr[0] == x && dimArr[1] == y )
+                    {                           
+                        dims= x + "x" + y + "x" + dimArr[1];                    
+                        break;
+                    }
+                    if (dimArr[1] == x && dimArr[2] == y )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];           
+                    break;
+                    }
+                }
+				else{                  
+                     
+                    if (dimArr[0] == y && dimArr[1] == x )
+                    {
+                        dims = x + "x" + y + "x" + dimArr[2];                    
+                        break;
+                    }
+                    if (dimArr[0] == y && dimArr[2] == x )
+                    {
+                       dims = x + "x" + y + "x" + dimArr[1];
+                    
+                       break;
+                    }
+                    if (dimArr[1] == y && dimArr[2] == x )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];                
+                    break;
+                    }
+                }
+			}
+			if(lastPackage.BolComment == null)
+			   lastPackage.BolComment = ""; 
+			
+			shipmentRequest.Packages[packageIndex-1].BolComment = lastPackage.BolComment+" "+dims;
+			
+		}
+		//debugger;
+		shipmentRequest.Packages[packageIndex - 1].Description = "DIESEL ENGINE PARTS NMFC # 133300, SUB 4, Class 60 L"+packageIndex; // + " L" + packageIndex-1;
+		
+		if(shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == null || shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == "" ){
+			shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber = shipmentRequest.Packages[packageIndex-1].MiscReference20;
+		}
+		}
+	
+	//setRef1Focus script start
+	$("#referenceTab").children()[0].click();
+	$('div[property = "MiscReference1"]').children().ready(function () {
+	    	$('div[property = "MiscReference1"]').children().focus();
+	});
+	//setRef1Focus script end
+	 
+}
+
+// Source: L9 Sports (L9SPORTS)_L9 Client Rules_1694.cs
+// ShowAssignGoodsPane() // returns void
+  ShowAssignGoodsPane()
+  {
+    let that = this;
+    //get rid of any previous entries
+    $('#listItemContainer li:gt(0)').remove();
+
+    //change the column width to make the descriptions longer
+    //change this back when the user clicks the 'Apply' button
+    $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+    //set a reference to the packages object as well as the commodities objects
+    this.packages = this.viewModel.currentShipment.Packages;
+
+    //get all the commodities in the shipment from all packages
+    this.goods = $(this.packages).map(function(x, y)
+    {
+      return y.CommodityContents;
+    });
+
+    //loop the goods array and update the markup within the slideout panel
+    $(this.goods).each(function(a, b)
+    {
+      //debugger;
+      let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+      b.GoodsKey = k;
+
+      if (b.packageIndex === undefined) {
+        // initial index is undefined after loading order, default to fix NaN bug later
+        b.packageIndex = 0;
+      }
+      //copy the source element
+      let item = $('#liClone').clone(true).attr({ 'hash-key': b.$$hashKey, 'goods-key': b.GoodsKey, 'pkg-index': b.packageIndex }).removeAttr('id');
+
+      //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+      //to parseFloat so this is the simplest way to get around that.
+      let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+      $(item).find('.goods-description').text(b.Description);
+      $(item).find('.goods-quantity').html('(<strong>' + b.Quantity + '</strong>');
+      $(item).find('.goods-unit-of-measure').text(b.QuantityUnitMeasure + ', ');
+      $(item).find('.goods-declared-value').html('<strong>$' + cost + '</strong> ' + b.UnitValue.Currency + ')');
+      $(item).find('.pkg-index-text').text(+(b.packageIndex) + 1);
+      $(item).find('.header-logo').show();
+
+      //append it to our list
+      $('#divAssignCommodities ul.list-group').append(item);
+
+      //show it gracefully
+      $(item).show();
+
+    });
+
+    //create a working array object so we can manipulate the data non-destructively
+    this.working = $.makeArray(JSON.parse(JSON.stringify(this.goods)));
+
+    $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+    $('.assign-to-pkg:visible').first().focus();
+  }
+
+// UpdateGoodsObject(pkgCount, listItem) // returns void
+  UpdateGoodsObject(pkgCount, listItem)
+  {
+    const itemkey = $(listItem).attr('hash-key');
+    const goodkey = $(listItem).attr('goods-key');
+    const findex = +$(listItem).attr('pkg-index');
+
+    let val = $(listItem).find('.goods-declared-value');
+    let cost = $(val).find('strong').text().replace('$', '');
+
+    cost = (cost / pkgCount).toFixed(2);
+
+    //get the object that matches the hash-key from the working array
+    //this will be the template to use when creating new packages after a split operation
+    //working on a copy of the vm commodity object so we can abandon changes if needed
+    let src = $.grep(this.working, function(value, i) { return value.$$hashKey == itemkey; })[0];
+
+    //update the declared value for the first package
+    src.UnitValue.Amount = cost;
+
+    for (let y = 1; y < pkgCount; y++)
+    {
+      let ccobj = this.GetNewCommodityObject(src);
+      ccobj.packageIndex = findex + y;
+
+      this.working.push(ccobj);
+
+      this.UpdateScreenMarkup(ccobj, listItem);
+    }
+  }
+
+// UpdateScreenMarkup(ccobj, li) // returns void
+  UpdateScreenMarkup(ccobj, li)
+  {
+    //this is all setting up the first list item to be cloned in the next function
+    //hide the split button
+    $(li).find('.btn-show-split-form').fadeOut();
+
+    //show the input for number of items in this pkg
+    $(li).find('.num-of-items-in-pkg').fadeIn();
+
+    //display the header
+    $(li).find('.header-logo').css('display', 'block');
+
+    $(li).find('.goods-declared-value').html('<strong>$' + ccobj.UnitValue.Amount + '</strong> ' + 'USD' + ')');
+
+    this.CreateListViewItem(ccobj.packageIndex, li)
+
+    let input = $('#listItemContainer').find('.num-of-items-in-pkg');
+    $(input).tooltip({ container: 'body' });
+
+    //when done creating elements, focus on the first visible non-disabled input box
+    $('#listItemContainer').find($('.num-of-items-in-pkg:visible:not(:disabled)').first().focus());
+
+    //if there was a single item (i.e a KIT), split evenly and close
+    let qty = +$(li).find('.goods-quantity strong').text();
+    if (qty === 1)
+    {
+      let these = $('#listItemContainer').find('li[goods-key=' + $(li).attr('goods-key') + ']');
+      $(these).attr('pkg-status', 'packed');
+      $(these).find('.num-of-items-in-pkg').val(1).attr('disabled', 'disabled');
+      $(these).find('.goods-quantity > strong').text(1);
+      $(these).find('.split-pkgs-modal').hide().find('input').val([]);
+      //$('#btnApplyCommodityAssignments').trigger('click');
+    }
+  }
+
+// CreateListViewItem(idx, li) // returns void
+  CreateListViewItem(idx, li)
+  {
+    //the hash-key attr is the object id for the commodity in relation to the package
+    //if we keep it, all packages will have the same hash-key (pkg 0)
+    let item = $(li).clone(true).removeAttr('hash-key').removeAttr('id');
+    $(item).attr('pkg-index', idx);
+
+    $(item).find('.pkg-index-text').text(idx + 1);
+    $(item).find('.goods-quantity').html('(<strong>0</strong>');
+
+    let lastInList = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+    //i have no idea why the opacity changes when i use .show().  first time i've ever seen that.
+    //anyway, set it implicitly here so the element shows
+    $(item).appendTo('#listItemContainer').insertAfter(lastInList).find('.num-of-items-in-pkg').css('opacity', '1').show();
+  }
+
+// UpdatePkgCountsInWorkingObject(li) // returns void
+  UpdatePkgCountsInWorkingObject(li)
+  {
+    let goodkey = $(li).attr('goods-key');
+    let pkgindex = $(li).attr('pkg-index');
+    let itemcount = $(li).find('.num-of-items-in-pkg').val();
+
+    //find the object in this.working that has the matching pkg-index and goods-key, then update it
+    let w = $.grep(this.working, function(pkg, i) { return pkg.GoodsKey == goodkey && pkg.packageIndex == pkgindex  })[0];
+
+    w.Quantity = itemcount;
+  }
+
+// UpdateListItemPackageQuantities(li) // returns void
+  UpdateListItemPackageQuantities(li)
+  {
+    this.UpdatePkgCountsInWorkingObject(li);
+
+    let numOfItems = $(li).find('.num-of-items-in-pkg');
+    let remItems = $(li).find('.goods-quantity > strong');
+
+    if (!$(numOfItems).val()) { return; }
+
+    let x = (+$(remItems).text() - $(numOfItems).val());
+
+    //sanity check to make sure we didn't pack more items that we had
+    if (x < 0)
+    {
+      $(remItems).addClass('bad-math');
+      return;
+    }
+
+    $(remItems).removeClass('bad-math');
+    $(numOfItems).attr('disabled', 'disabled');
+    $(li).attr('pkg-status', 'packed');
+
+    //move to the next list item and update then focus
+    $(li).next().find('.goods-quantity > strong').text(x)
+
+    //on the second-to-last list item, use the input value to auto-set the last item
+    //to get the number of rows that have already been assigned, count the list items with the goods-key
+    //that have disabled input boxes
+    let rowsForThisGood = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]');
+    let rowsDone = $(rowsForThisGood).find('input:disabled:visible').length;
+
+    if (rowsForThisGood.length == (rowsDone + 1))
+    {
+      let lastLi = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+      $(lastLi).attr('pkg-status', 'packed');
+
+      let lastVal = $(li).next().find('.goods-quantity > strong').text();
+      $(lastLi).find('.num-of-items-in-pkg').val(lastVal).attr('disabled', 'disabled');
+
+      $('#listItemContainer').find('.assign-to-pkg:visible').first().focus();
+
+      this.UpdatePkgCountsInWorkingObject(lastLi);
+    }
+  }
+
+// ApplyCommodityAssignments() // returns void
+  ApplyCommodityAssignments()
+  {
+    let that = this;
+
+    //every list item will have a pkg-index attr, get that highest value to determine how many pkgs we need
+    //don't use pkg-status.length because that will include multiple commodities and the end result will be wrong
+    let packed = $('#listItemContainer').find('li[pkg-status=packed]');
+
+    //first get all the pkg-index attributes, then get the highest number and add one
+    let pkgs = $(packed).map(function(x, value) { return +$(this).attr('pkg-index') }).toArray();
+    let pkgCount = Math.max(...pkgs) + 1;
+
+    while (this.packages.length < pkgCount)
+    {
+      //the vm.addPackage isn't firing, just click the button
+      $('button[ng-click="vm.addPackage();"]').trigger('click').promise().done(function(e) { });
+    }
+
+    //loop the pkg count, get the commodities for that pkg, write the objects to the vm CommodityContents object
+    for (let p = 0; p < pkgCount; p++)
+    {
+      let w = $.grep(this.working, function(item, i) { return item.packageIndex == p });
+      this.packages[p].CommodityContents = w;
+    }
+
+    //click the General tab
+    $('li[heading=General]:visible a').first().click();
+    this.HideAssignGoodsPane();
+
+    //after we are done, move back to the first package in the shipment
+    while ($('#spanCurrentPackageIndex').text() !== '1')
+    {
+      $('button[ng-click="vm.previousPackage();"]').first().click();
+    }
+
+  }
+
+// GetNewCommodityObject(obj) // returns object
+  GetNewCommodityObject(obj)
+  {
+    let c = {};
+
+    Object.keys(obj).forEach(key =>
+    {
+      if (key != '$$hashKey' && key != 'packageIndex')
+      {
+        let value = obj[key];
+        if (value) c[key] = value;
+      }
+    });
+
+    return c;
+  }
+
+// CancelSplitOfPackages(li) // returns void
+  CancelSplitOfPackages(li)
+  {
+    //hide the split modal and clear the input value
+    $('.escape-target').hide();
+    $(li).find('.split-pkgs-modal').hide().find('input[type=number]').val([]).focus();
+    $(li).find('.btn-show-split-form, .assign-to-pkg').fadeIn();
+  }
+
+// InitiateDelegates() // returns void
+  InitiateDelegates()
+  {
+    let that = this
+
+    $('body').delegate('#btnApplyCommodityAssignments', 'click', function(e)
+    {
+      that.ApplyCommodityAssignments();
+    });
+
+    $('body').delegate('.btn-show-split-form', 'click', function(e)
+    {
+      let div = $(this).closest('div').find('.split-pkgs-modal').first();
+      $(div).tooltip({ container: 'body' });
+
+      $(div).css('display', 'flex').fadeIn();
+      $('.split-pkgs-modal:visible').find('input').first().focus();
+
+      //hide the split button now...and the input
+      $(this).hide();
+      $(this).closest('div').find('.assign-to-pkg').hide();
+    });
+
+    $('body').delegate('input.btn-go-split-pkgs', 'click', function(e)
+    {
+      console.log('btn-go-split-pkgs click event handler');
+
+      let li = $(this).closest('li').first();
+      let div = $(this).closest('div').first();
+
+      $(li).find('.pkg-index-text').first().text('1');
+
+      //val - 1 as the first entry will be the first package
+      let v = $(div).find('input[type=number]').first().val();
+
+      that.UpdateGoodsObject(v, li);
+
+      $('.split-pkgs-modal').hide();
+    });
+
+    $('body').delegate('#btnCancelAssignGoods', 'click', function(e)
+    {
+      that.HideAssignGoodsPane();
+    });
+
+    //if the user escapes out of the split modal, hide the modal and show the previous forms
+    $('body').delegate('.split-pkgs-modal', 'keydown', function(e)
+    {
+      var keycode = (e.keyCode ? e.keyCode : e.which);
+      if (keycode === 27)
+      {
+        //need to show the previous input and button now
+        let li = $(this).closest('li');
+
+        that.CancelSplitOfPackages(li);
+      }
+    });
+
+    //if the user presses enter or tab in the num-of-items number input, move to the next one
+    //these are the number inputs after the items have been split across packages
+    $('body').delegate('.num-of-items-in-pkg', 'keydown focusout', function(e)
+    {
+      console.log('.num-of-items-in-pkg keydown focusout event handler');
+
+      $('[data-toggle="tooltip"]').tooltip('hide');
+
+      var keycode = (e.keyCode ? e.keyCode : e.which);
+      if (keycode === 13 || keycode === 9)
+      {
+        //disable the input, update the commodity object, focus on the next box input
+        //$(this).closest('div').find('.assign-to-pkg').focus();
+        that.UpdateListItemPackageQuantities($(this).closest('li'));
+      }
+    });
+
+    //user hits enter in the input box, click the button for them
+    $('body').delegate('.num-of-pkgs-to-use', 'keyup keydown', function(e)
+    {
+      console.log('.num-of-pkgs-to-use keyup keydown event handler');
+      var keycode = (e.keyCode ? e.keyCode : e.which);
+      let btn = $(this).closest('div:visible').find('input.btn-go-split-pkgs');
+
+      $(btn).attr('disabled', $(this).val() < 2);
+
+      if (keycode == 13) //enter
+      {
+        //let btn = $(this).closest('div:visible').find('input.btn-go-split-pkgs');
+        $(btn).trigger('click');
+      }
+    });
+
+    //this was formerly .scan-input.  as of 9/24/2022, removing the split functionality completely
+    //with this change, only need to get the numerical value out of the input
+    $('body').delegate('.assign-to-pkg', 'keydown focusout', function(e)
+    {
+      console.log('.assign-to-pkg keydown focusout event handler');
+      var keycode = (e.keyCode ? e.keyCode : e.which);
+      debugger;
+      if (keycode == 13 || keycode == 9 || e.type == "focusout") //enter
+      {
+        e.preventDefault();
+        //pull only the number from whatever was passed.  make sure it is greater than 0 since we can't assign a good a pkg zero.
+        const val = $(this).val().replace(/[^1-9]/g, '');
+
+        let li = $(this).closest('li');
+        
+        if (val)
+        {
+          //console.log('assigning this to ', val);
+          //assign the integer to the line item header (not shown, but may be shown in the future)
+          //this one is easy, just assign the pkg-index attr to whatever they scanned.  when the apply button is clicked it will assign the commodities
+          //let li = $(this).closest('li');
+          $(li).find('.pkg-index-text').first().text(val);
+          $(li).find('button').attr('disabled', 'disabled');
+          $(li).attr('pkg-index', val - 1);
+          $(li).attr('pkg-status', 'packed');
+
+          //find the matching item in the this.working array and update the package index
+          let item = $.grep(that.working, function(good, i) { return good.$$hashKey == $(li).attr('hash-key') })[0];
+          item.packageIndex = val - 1;
+          //return;
+        }
+        // set focus to next li input box
+        if (e.type !== "focusout") {
+          $(li).next().find('.assign-to-pkg').focus().change();
+        }
+      }
+    });
+
+    $('#btnAssignCommodities').on('click', function(e)
+    {
+      if ($('#divAssignCommodities').is(':visible')) return;
+      that.ShowAssignGoodsPane();
+    });
+  }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// function GetCommodityContents() // returns commodity contents JSON response
+function GetCommodityContents() {
+        var jsonData;
+        var data = { "CompanyId": "0212c890-3ae4-4690-82a4-0c4ef8cd49c6", "SearchCriteria": {} };
+        var ajaxRequest = clientService1.thinclientService1APIRequest('GetCommodityContents', data, false);
+        jsonData = ajaxRequest.responseJSON;
+        return jsonData;
+    }
+
+// Source: Nexus (NEXUS)_Nexus CBR Aug 2022_1798.cs
+// function AddPackage(shipmentRequest, packageIndex) // returns undefined
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    };
+
+// Source: Rite Kem (RITEKEM)_RiteKem_1637.cs
+// function NewShipment(shipmentRequest) // returns void
+    this.NewShipment = function(shipmentRequest) {
+        $('#myLoadValue').focus();
+        var ConAddress = {Country: "US"};
+       shipmentRequest.PackageDefaults.Consignee = ConAddress;
+       shipmentRequest.Packages[0].CommodityClass = "CLASS_85";
+       shipmentRequest.PackageDefaults.Terms = 'SHIPPER';       
+    }
+
+// function PreRate(shipmentRequest, userParams) // returns void
+    this.PreRate = function(shipmentRequest, userParams) {
+     //shipmentRequest.Packages[0].MiscReference5='PICS'
+    }
+
+// function PostRate(shipmentRequest, shipmentResponse) // returns void
+    this.PostRate = function(shipmentRequest, shipmentResponse) {
+        shipmentRequest.Packages[0].MiscReference10 = "";
+    }
+
+// Source: SE Demo (SE_DEMO)_CBR_SE_Demo_1818.cs
+// GetDataManagementContents(apiMethod) // returns void
+    this.GetDataManagementContents = function (apiMethod) {
+        var userContext = this.GetUserContext();
+        var thinClientAPIRequest = this.thinClientAPIRequest;
+
+        var data = { CompanyId: userContext.CompanyId };
+        thinClientAPIRequest(apiMethod, data, true).done(function (result) {
+            if (result.ErrorCode == 0) {
+                var userObject = { Action: apiMethod, Data: JSON.stringify(result) };
+                data = { Data: btoa(JSON.stringify(userObject)), UserContext: userContext };
+                thinClientAPIRequest('UserMethod', data, true);//.done(function (result) { debugger; });
+            };
+        });
+    }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// this.PageLoaded(location) // returns void
+    this.PageLoaded = function(location) { 
+     
+     $( document ).ready(function() {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+      });
+     
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').val("string:SHIPPER");
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').trigger('change');
+     
+        $('body').delegate('[ng-model="vm.currentShipment.PackageDefaults.Terms"]', 'change', function () {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+        
+            });
+   
+        $('body').delegate('[ng-model="vm.selectedServices"]', 'change', function () {
+            var currentServiceSelected = $('[ng-model="vm.selectedServices"]').val();
+           
+            
+            
+            var selectedService = this[this.selectedIndex].value;
+
+           var symbol = selectedService.split('.');
+
+           var isGeninsu = symbol[0] == 'GENINSU' && symbol[1] == 'Custom'
+
+           //$('[ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', isGeninsu).change();
+           
+            
+            
+            
+            
+        });
+   
+   
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference19"]', 'change', function () {
+            
+            let currentPackageIndex = this.name.replace('NMFCNumbers', '');
+            console.log(currentPackageIndex);
+            
+                $('select[name="SubClassNumbers'+currentPackageIndex+'"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+               
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                 
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').attr('class', '');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("form-control");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-pristine");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-valid");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-empty");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-touched");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').text(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').val(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 console.log(obj["description"]);
+
+                     
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').trigger('change');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').val(arrayName[1]);
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').trigger('change');
+                 
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').trigger("change");
+
+              });
+              
+        });
+      
+        
+
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]', 'change', function () {
+            
+            let currentPackageIndex2 = this.name.replace('SubClassNumbers', '');
+            console.log(currentPackageIndex2);
+
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField'+currentPackageIndex2+'"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers'+currentPackageIndex2+'"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt'+currentPackageIndex2+'"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt'+currentPackageIndex2+'"]').trigger('change');
+
+
+        });
+
+       
+
+      
+
+      /*     $('body').delegate('select[name="NMFCNumbers"]', 'change', function () {
+               
+               $('select[name="SubClassNumbers"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+                
+                $('select[name="SubClassNumbers"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                $('textarea[name="LtlDescription"]').text(obj["description"]).change();
+                console.log(obj["description"]);
+                $('textarea[name="LtlDescription"]').trigger('change');
+                $('textarea[name="LtlDescription"]').html(obj["description"]).change();
+                $('input[name="item_number_txt"]').val(arrayName[1]);
+                $('input[name="item_number_txt"]').trigger('change');
+                $('select[name="SubClassNumbers"]').trigger("change");
+
+               
+            })
+           // }   
+            });
+           
+            
+           $('body').delegate('select[name="SubClassNumbers"]', 'change', function () {
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt"]').trigger('change');
+           });*/
+
+
+     
+    }
+
+// this.AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+       $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val(''); 
+       shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = '';
+        
+    }
+
+// this.PreviousPackage(shipmentRequest, packageIndex) // returns void
+    this.PreviousPackage = function(shipmentRequest, packageIndex) {		  
+    $('select[name="SubClassNumbers'+eval(packageIndex+1)+'"]').empty();   
+    $('select[name="NMFCNumbers'+eval(packageIndex+1)+'"]').val(''); 
+    shipmentRequest.Packages[eval(packageIndex+1)].MiscReference19 = '';
+    }
+
+// this.NextPackage(shipmentRequest, packageIndex) // returns void
+    this.NextPackage = function(shipmentRequest, packageIndex) {  
+    $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+    $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val('');  
+
+    shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = ''; 
+
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// AddPackage(shipmentRequest, packageIndex) // returns void
+function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging;
+        shipmentRequest.Packages[packageIndex].Dimensions = shipmentRequest.Packages[0].Dimensions;
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        //shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        //shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        //shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        //shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    }
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+
+        var shipDate = new Date(shipmentRequest.PackageDefaults.Shipdate.Year, shipmentRequest.PackageDefaults.Shipdate.Month - 1, shipmentRequest.PackageDefaults.Shipdate.Day);
+        var today = new Date();
+
+        if (shipDate.getDay() == 6) {
+            throw ({ message: 'Saturday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+        if (shipDate.getDay() == 7) {
+            throw ({ message: 'Sunday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+
+        if (shipmentRequest.Packages[0].ShipperReference === undefined || shipmentRequest.Packages[0].ShipperReference === null || shipmentRequest.Packages[0].ShipperReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ShipperReference]', errorCode: '115' });
+        }
+        if (shipmentRequest.Packages[0].ConsigneeReference === undefined || shipmentRequest.Packages[0].ConsigneeReference === null || shipmentRequest.Packages[0].ConsigneeReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ConsigneeReference]', errorCode: '115' });
+        }
+
+        var diw = shipmentRequest.Packages[0].DryIceWeight;
+        var pkgw = shipmentRequest.Packages[0].Weight;
+
+        if (diw.Amount > 0) {
+            if (diw.Amount < 10) {
+                throw ({ message: 'Shipping Error: Dry Ice Amount must be 10 LBS or more.', errorCode: '115' });
+            }
+        }
+
+        if (pkgw.Amount < diw.Amount) {
+            throw ({ message: 'Shipping Error: Dry Ice Weight MUST be less than the package Weight.', errorCode: '115' });
+        }
+
+        var consignee = shipmentRequest.PackageDefaults.Consignee;
+        if (consignee.Country == 'CA') {
+            var svc = {
+                Symbol: "UPSAPI.UPS.EXPRESS"
+                , Name: "UPS Express (UPS ADAPTER)"
+            };
+            shipmentRequest.PackageDefaults.Service = svc;
+
+            var uv = { Amount: "150.00", Units: "USD" };
+            var uw = { Amount: "1.0", Units: "LB" };
+            var cc = {
+                ProductCode: "Biological Specimens"
+                , Description: "Biological Specimens"
+                , Quantity: 1
+                , QuantityUnitMeasure: "PC"
+                , UnitValue: uv
+                , UnitWeight: uw
+                , OriginCountry: "CA"
+            };
+            shipmentRequest.Packages[0].CommodityContents = [cc];
+        }
+    };
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// function AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        shipmentRequest.PackageDefaults.UserData1 = null;
+		var shipService = "";
+		if(shipmentRequest.PackageDefaults.Service!==undefined){
+			shipService = shipmentRequest.PackageDefaults.Service.Symbol;
+		}
+		var LTLFlag = false;
+		if (shipService.includes("_LTL.") || shipService.includes("_UPSFREIGHT")){
+			LTLFlag = true;
+		}
+		if(LTLFlag)
+		{
+		    if((shipmentRequest.Packages[packageIndex].MiscReference20 != undefined && shipmentRequest.Packages[packageIndex].MiscReference20 != null && shipmentRequest.Packages[packageIndex].MiscReference20 != "")
+		        &&(shipmentRequest.Packages[packageIndex].ParentContainerCode == null || shipmentRequest.Packages[packageIndex].ParentContainerCode == "") ){
+                    shipmentRequest.Packages[packageIndex].ParentContainerCode ="P" + shipmentRequest.Packages[packageIndex].MiscReference20 + "-" + packageIndex;
+		    }
+		var dims = "0x0x0";
+		
+		var lastPackage = shipmentRequest.Packages[packageIndex - 1];
+
+		var length =0;
+        var width = 0;
+        var height =0;
+	    if(lastPackage.Dimensions!=undefined){
+			if(lastPackage.Dimensions.Length!= undefined && lastPackage.Dimensions.Width!=undefined && lastPackage.Dimensions.Height!=undefined){
+				length =lastPackage.Dimensions.Length;
+				width = lastPackage.Dimensions.Width;
+				height =lastPackage.Dimensions.Height;
+			} 	
+		}
+
+        const dimArr=[length,width,height];
+        
+        //To sort dimensions in descending order.
+        dimArr.sort(function(a, b){return b-a});
+		dims = dimArr[0]+"x"+dimArr[1]+"x"+dimArr[2];
+		if(dims!="0x0x0"){
+			const   dimtblx ="34,48,52,12,14,18,18,28,37".split(",");  
+            const   dimtbly ="32,40,36,52,44,32,52,44,37".split(","); 
+			for (let i = 0; i < dimtblx.length; i++){
+				var   x = dimtblx[i];
+                var   y = dimtbly[i];
+				if (i < 3)
+                {
+                    
+                    if (dimArr[0] == x && dimArr[1] == y )
+                        break;
+                    if (dimArr[0] == x && dimArr[1] == y )
+                    {                           
+                        dims= x + "x" + y + "x" + dimArr[1];                    
+                        break;
+                    }
+                    if (dimArr[1] == x && dimArr[2] == y )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];           
+                    break;
+                    }
+                }
+				else{                  
+                     
+                    if (dimArr[0] == y && dimArr[1] == x )
+                    {
+                        dims = x + "x" + y + "x" + dimArr[2];                    
+                        break;
+                    }
+                    if (dimArr[0] == y && dimArr[2] == x )
+                    {
+                       dims = x + "x" + y + "x" + dimArr[1];
+                    
+                       break;
+                    }
+                    if (dimArr[1] == y && dimArr[2] == x )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];                
+                    break;
+                    }
+                }
+			}
+			if(lastPackage.BolComment == null)
+			   lastPackage.BolComment = ""; 
+			
+			shipmentRequest.Packages[packageIndex-1].BolComment = lastPackage.BolComment+" "+dims;
+			
+		}
+		//debugger;
+		shipmentRequest.Packages[packageIndex - 1].Description = "DIESEL ENGINE PARTS NMFC # 133300, SUB 4, Class 60 L"+packageIndex; // + " L" + packageIndex-1;
+		
+		if(shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == null || shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == "" ){
+			shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber = shipmentRequest.Packages[packageIndex-1].MiscReference20;
+		}
+		}
+	
+	//setRef1Focus script start
+	$("#referenceTab").children()[0].click();
+	$('div[property = "MiscReference1"]').children().ready(function () {
+	    	$('div[property = "MiscReference1"]').children().focus();
+	});
+	//setRef1Focus script end
+	 
+}
+
+// Source: L9 Sports (L9SPORTS)_L9 Client Rules_1694.cs
+// ShowAssignGoodsPane() // returns undefined
+  ShowAssignGoodsPane()
+  {
+    let that = this;
+    //get rid of any previous entries
+    $('#listItemContainer li:gt(0)').remove();
+
+    //change the column width to make the descriptions longer
+    //change this back when the user clicks the 'Apply' button
+    $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+    //set a reference to the packages object as well as the commodities objects
+    this.packages = this.viewModel.currentShipment.Packages;
+
+    //get all the commodities in the shipment from all packages
+    this.goods = $(this.packages).map(function(x, y)
+    {
+      return y.CommodityContents;
+    });
+
+    //loop the goods array and update the markup within the slideout panel
+    $(this.goods).each(function(a, b)
+    {
+      //debugger;
+      let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+      b.GoodsKey = k;
+
+      if (b.packageIndex === undefined) {
+        // initial index is undefined after loading order, default to fix NaN bug later
+        b.packageIndex = 0;
+      }
+      //copy the source element
+      let item = $('#liClone').clone(true).attr({ 'hash-key': b.$$hashKey, 'goods-key': b.GoodsKey, 'pkg-index': b.packageIndex }).removeAttr('id');
+
+      //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+      //to parseFloat so this is the simplest way to get around that.
+      let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+      $(item).find('.goods-description').text(b.Description);
+      $(item).find('.goods-quantity').html('(<strong>' + b.Quantity + '</strong>');
+      $(item).find('.goods-unit-of-measure').text(b.QuantityUnitMeasure + ', ');
+      $(item).find('.goods-declared-value').html('<strong>$' + cost + '</strong> ' + b.UnitValue.Currency + ')');
+      $(item).find('.pkg-index-text').text(+(b.packageIndex) + 1);
+      $(item).find('.header-logo').show();
+
+      //append it to our list
+      $('#divAssignCommodities ul.list-group').append(item);
+
+      //show it gracefully
+      $(item).show();
+
+    });
+
+    //create a working array object so we can manipulate the data non-destructively
+    this.working = $.makeArray(JSON.parse(JSON.stringify(this.goods)));
+
+    $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+    $('.assign-to-pkg:visible').first().focus();
+  }
+
+// UpdateGoodsObject(pkgCount, listItem) // returns undefined
+  UpdateGoodsObject(pkgCount, listItem)
+  {
+    const itemkey = $(listItem).attr('hash-key');
+    const goodkey = $(listItem).attr('goods-key');
+    const findex = +$(listItem).attr('pkg-index');
+
+    let val = $(listItem).find('.goods-declared-value');
+    let cost = $(val).find('strong').text().replace('$', '');
+
+    cost = (cost / pkgCount).toFixed(2);
+
+    //get the object that matches the hash-key from the working array
+    //this will be the template to use when creating new packages after a split operation
+    //working on a copy of the vm commodity object so we can abandon changes if needed
+    let src = $.grep(this.working, function(value, i) { return value.$$hashKey == itemkey; })[0];
+
+    //update the declared value for the first package
+    src.UnitValue.Amount = cost;
+
+    for (let y = 1; y < pkgCount; y++)
+    {
+      let ccobj = this.GetNewCommodityObject(src);
+      ccobj.packageIndex = findex + y;
+
+      this.working.push(ccobj);
+
+      this.UpdateScreenMarkup(ccobj, listItem);
+    }
+  }
+
+// UpdateScreenMarkup(ccobj, li) // returns undefined
+  UpdateScreenMarkup(ccobj, li)
+  {
+    //this is all setting up the first list item to be cloned in the next function
+    //hide the split button
+    $(li).find('.btn-show-split-form').fadeOut();
+
+    //show the input for number of items in this pkg
+    $(li).find('.num-of-items-in-pkg').fadeIn();
+
+    //display the header
+    $(li).find('.header-logo').css('display', 'block');
+
+    $(li).find('.goods-declared-value').html('<strong>$' + ccobj.UnitValue.Amount + '</strong> ' + 'USD' + ')');
+
+    this.CreateListViewItem(ccobj.packageIndex, li)
+
+    let input = $('#listItemContainer').find('.num-of-items-in-pkg');
+    $(input).tooltip({ container: 'body' });
+
+    //when done creating elements, focus on the first visible non-disabled input box
+    $('#listItemContainer').find($('.num-of-items-in-pkg:visible:not(:disabled)').first().focus());
+
+    //if there was a single item (i.e a KIT), split evenly and close
+    let qty = +$(li).find('.goods-quantity strong').text();
+    if (qty === 1)
+    {
+      let these = $('#listItemContainer').find('li[goods-key=' + $(li).attr('goods-key') + ']');
+      $(these).attr('pkg-status', 'packed');
+      $(these).find('.num-of-items-in-pkg').val(1).attr('disabled', 'disabled');
+      $(these).find('.goods-quantity > strong').text(1);
+      $(these).find('.split-pkgs-modal').hide().find('input').val([]);
+      //$('#btnApplyCommodityAssignments').trigger('click');
+    }
+  }
+
+// CreateListViewItem(idx, li) // returns undefined
+  CreateListViewItem(idx, li)
+  {
+    //the hash-key attr is the object id for the commodity in relation to the package
+    //if we keep it, all packages will have the same hash-key (pkg 0)
+    let item = $(li).clone(true).removeAttr('hash-key').removeAttr('id');
+    $(item).attr('pkg-index', idx);
+
+    $(item).find('.pkg-index-text').text(idx + 1);
+    $(item).find('.goods-quantity').html('(<strong>0</strong>');
+
+    let lastInList = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+    //i have no idea why the opacity changes when i use .show().  first time i've ever seen that.
+    //anyway, set it implicitly here so the element shows
+    $(item).appendTo('#listItemContainer').insertAfter(lastInList).find('.num-of-items-in-pkg').css('opacity', '1').show();
+  }
+
+// UpdatePkgCountsInWorkingObject(li) // returns undefined
+  UpdatePkgCountsInWorkingObject(li)
+  {
+    let goodkey = $(li).attr('goods-key');
+    let pkgindex = $(li).attr('pkg-index');
+    let itemcount = $(li).find('.num-of-items-in-pkg').val();
+
+    //find the object in this.working that has the matching pkg-index and goods-key, then update it
+    let w = $.grep(this.working, function(pkg, i) { return pkg.GoodsKey == goodkey && pkg.packageIndex == pkgindex  })[0];
+
+    w.Quantity = itemcount;
+  }
+
+// UpdateListItemPackageQuantities(li) // returns undefined
+  UpdateListItemPackageQuantities(li)
+  {
+    this.UpdatePkgCountsInWorkingObject(li);
+
+    let numOfItems = $(li).find('.num-of-items-in-pkg');
+    let remItems = $(li).find('.goods-quantity > strong');
+
+    if (!$(numOfItems).val()) { return; }
+
+    let x = (+$(remItems).text() - $(numOfItems).val());
+
+    //sanity check to make sure we didn't pack more items that we had
+    if (x < 0)
+    {
+      $(remItems).addClass('bad-math');
+      return;
+    }
+
+    $(remItems).removeClass('bad-math');
+    $(numOfItems).attr('disabled', 'disabled');
+    $(li).attr('pkg-status', 'packed');
+
+    //move to the next list item and update then focus
+    $(li).next().find('.goods-quantity > strong').text(x)
+
+    //on the second-to-last list item, use the input value to auto-set the last item
+    //to get the number of rows that have already been assigned, count the list items with the goods-key
+    //that have disabled input boxes
+    let rowsForThisGood = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]');
+    let rowsDone = $(rowsForThisGood).find('input:disabled:visible').length;
+
+    if (rowsForThisGood.length == (rowsDone + 1))
+    {
+      let lastLi = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+      $(lastLi).attr('pkg-status', 'packed');
+
+      let lastVal = $(li).next().find('.goods-quantity > strong').text();
+      $(lastLi).find('.num-of-items-in-pkg').val(lastVal).attr('disabled', 'disabled');
+
+      $('#listItemContainer').find('.assign-to-pkg:visible').first().focus();
+
+      this.UpdatePkgCountsInWorkingObject(lastLi);
+    }
+  }
+
+// ApplyCommodityAssignments() // returns undefined
+  ApplyCommodityAssignments()
+  {
+    let that = this;
+
+    //every list item will have a pkg-index attr, get that highest value to determine how many pkgs we need
+    //don't use pkg-status.length because that will include multiple commodities and the end result will be wrong
+    let packed = $('#listItemContainer').find('li[pkg-status=packed]');
+
+    //first get all the pkg-index attributes, then get the highest number and add one
+    let pkgs = $(packed).map(function(x, value) { return +$(this).attr('pkg-index') }).toArray();
+    let pkgCount = Math.max(...pkgs) + 1;
+
+    while (this.packages.length < pkgCount)
+    {
+      //the vm.addPackage isn't firing, just click the button
+      $('button[ng-click="vm.addPackage();"]').trigger('click').promise().done(function(e) { });
+    }
+
+    //loop the pkg count, get the commodities for that pkg, write the objects to the vm CommodityContents object
+    for (let p = 0; p < pkgCount; p++)
+    {
+      let w = $.grep(this.working, function(item, i) { return item.packageIndex == p });
+      this.packages[p].CommodityContents = w;
+    }
+
+    //click the General tab
+    $('li[heading=General]:visible a').first().click();
+    this.HideAssignGoodsPane();
+
+    //after we are done, move back to the first package in the shipment
+    while ($('#spanCurrentPackageIndex').text() !== '1')
+    {
+      $('button[ng-click="vm.previousPackage();"]').first().click();
+    }
+
+  }
+
+// GetNewCommodityObject(obj) // returns new commodity object copy
+  GetNewCommodityObject(obj)
+  {
+    let c = {};
+
+    Object.keys(obj).forEach(key =>
+    {
+      if (key != '$$hashKey' && key != 'packageIndex')
+      {
+        let value = obj[key];
+        if (value) c[key] = value;
+      }
+    });
+
+    return c;
+  }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// function GetCommodityContents() // returns JSON commodity contents
+function GetCommodityContents() {
+        var jsonData;
+        var data = { "CompanyId": "0212c890-3ae4-4690-82a4-0c4ef8cd49c6", "SearchCriteria": {} };
+        var ajaxRequest = clientService1.thinclientService1APIRequest('GetCommodityContents', data, false);
+        jsonData = ajaxRequest.responseJSON;
+        return jsonData;
+    }
+
+// Source: SE Demo (SE_DEMO)_CBR_SE_Demo_1818.cs
+// this.GetDataManagementContents(apiMethod) // returns void
+    this.GetDataManagementContents = function (apiMethod) {
+        var userContext = this.GetUserContext();
+        var thinClientAPIRequest = this.thinClientAPIRequest;
+
+        var data = { CompanyId: userContext.CompanyId };
+        thinClientAPIRequest(apiMethod, data, true).done(function (result) {
+            if (result.ErrorCode == 0) {
+                var userObject = { Action: apiMethod, Data: JSON.stringify(result) };
+                data = { Data: btoa(JSON.stringify(userObject)), UserContext: userContext };
+                thinClientAPIRequest('UserMethod', data, true);//.done(function (result) { debugger; });
+            };
+        });
+    }
+
+// this.Shipping() // returns void
+    this.Shipping = function () {
+        //this.GetDataManagementContents('GetHazmatContents');
+        this.GetDataManagementContents('GetCommodityContents');
+
+    }
+
+// Source: ShipExec Essentials Demo (CF_DEMO)_CBR_SE_Demo_1854.cs
+// function Shipping() // returns void
+    this.Shipping = function () {
+        //this.GetDataManagementContents('GetHazmatContents');
+        this.GetDataManagementContents('GetCommodityContents');
+
+    }
+
+// function GetDataManagementContents(apiMethod) // returns void
+    this.GetDataManagementContents = function (apiMethod) {
+        var userContext = this.GetUserContext();
+        var thinClientAPIRequest = this.thinClientAPIRequest;
+
+        var data = { CompanyId: userContext.CompanyId };
+        thinClientAPIRequest(apiMethod, data, true).done(function (result) {
+            if (result.ErrorCode == 0) {
+                var userObject = { Action: apiMethod, Data: JSON.stringify(result) };
+                data = { Data: btoa(JSON.stringify(userObject)), UserContext: userContext };
+                thinClientAPIRequest('UserMethod', data, true);//.done(function (result) { debugger; });
+            };
+        });
+    }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// PageLoaded(location) // returns undefined
+    this.PageLoaded = function(location) { 
+     
+     $( document ).ready(function() {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+      });
+     
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').val("string:SHIPPER");
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').trigger('change');
+     
+        $('body').delegate('[ng-model="vm.currentShipment.PackageDefaults.Terms"]', 'change', function () {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+        
+            });
+   
+        $('body').delegate('[ng-model="vm.selectedServices"]', 'change', function () {
+            var currentServiceSelected = $('[ng-model="vm.selectedServices"]').val();
+           
+            
+            
+            var selectedService = this[this.selectedIndex].value;
+
+           var symbol = selectedService.split('.');
+
+           var isGeninsu = symbol[0] == 'GENINSU' && symbol[1] == 'Custom'
+
+           //$('[ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', isGeninsu).change();
+           
+            
+            
+            
+            
+        });
+   
+   
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference19"]', 'change', function () {
+            
+            let currentPackageIndex = this.name.replace('NMFCNumbers', '');
+            console.log(currentPackageIndex);
+            
+                $('select[name="SubClassNumbers'+currentPackageIndex+'"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+               
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                 
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').attr('class', '');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("form-control");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-pristine");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-valid");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-empty");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-touched");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').text(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').val(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 console.log(obj["description"]);
+
+                     
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').trigger('change');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').val(arrayName[1]);
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').trigger('change');
+                 
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').trigger("change");
+
+              });
+              
+        });
+      
+        
+
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]', 'change', function () {
+            
+            let currentPackageIndex2 = this.name.replace('SubClassNumbers', '');
+            console.log(currentPackageIndex2);
+
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField'+currentPackageIndex2+'"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers'+currentPackageIndex2+'"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt'+currentPackageIndex2+'"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt'+currentPackageIndex2+'"]').trigger('change');
+
+
+        });
+
+       
+
+      
+
+      /*     $('body').delegate('select[name="NMFCNumbers"]', 'change', function () {
+               
+               $('select[name="SubClassNumbers"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+                
+                $('select[name="SubClassNumbers"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                $('textarea[name="LtlDescription"]').text(obj["description"]).change();
+                console.log(obj["description"]);
+                $('textarea[name="LtlDescription"]').trigger('change');
+                $('textarea[name="LtlDescription"]').html(obj["description"]).change();
+                $('input[name="item_number_txt"]').val(arrayName[1]);
+                $('input[name="item_number_txt"]').trigger('change');
+                $('select[name="SubClassNumbers"]').trigger("change");
+
+               
+            })
+           // }   
+            });
+           
+            
+           $('body').delegate('select[name="SubClassNumbers"]', 'change', function () {
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt"]').trigger('change');
+           });*/
+
+
+     
+    }
+
+// NewShipment(shipmentRequest) // returns undefined
+    this.NewShipment = function(shipmentRequest) { 
+        shipmentRequest.Packages[0].CommodityContents = [
+            {
+                UnitWeight: { Amount: '1' },
+                Quantity: '1',
+                UnitValue: { Amount: '2', Currency: 'USD' },
+                QuantityUnitMeasure: 'EA',
+                Description: 'Goods'
+            }
+        ]
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// function AddPackage(shipmentRequest, packageIndex) // returns void
+function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging;
+        shipmentRequest.Packages[packageIndex].Dimensions = shipmentRequest.Packages[0].Dimensions;
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        //shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        //shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        //shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        //shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    }
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+
+        var shipDate = new Date(shipmentRequest.PackageDefaults.Shipdate.Year, shipmentRequest.PackageDefaults.Shipdate.Month - 1, shipmentRequest.PackageDefaults.Shipdate.Day);
+        var today = new Date();
+
+        if (shipDate.getDay() == 6) {
+            throw ({ message: 'Saturday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+        if (shipDate.getDay() == 7) {
+            throw ({ message: 'Sunday shipping is not allowed. Code[CBR]"', errorCode: '115' });
+        }
+        
+
+        if (shipmentRequest.Packages[0].ShipperReference === undefined || shipmentRequest.Packages[0].ShipperReference === null || shipmentRequest.Packages[0].ShipperReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ShipperReference]', errorCode: '115' });
+        }
+        if (shipmentRequest.Packages[0].ConsigneeReference === undefined || shipmentRequest.Packages[0].ConsigneeReference === null || shipmentRequest.Packages[0].ConsigneeReference === '') {
+            throw ({ message: 'Study Reference is required.  Please select a valid Study Group in order to continue. [CBR ConsigneeReference]', errorCode: '115' });
+        }
+
+        var diw = shipmentRequest.Packages[0].DryIceWeight;
+        var pkgw = shipmentRequest.Packages[0].Weight;
+
+        if (diw.Amount > 0) {
+            if (diw.Amount < 10) {
+                throw ({ message: 'Shipping Error: Dry Ice Amount must be 10 LBS or more.', errorCode: '115' });
+            }
+        }
+
+        if (pkgw.Amount < diw.Amount) {
+            throw ({ message: 'Shipping Error: Dry Ice Weight MUST be less than the package Weight.', errorCode: '115' });
+        }
+
+        var consignee = shipmentRequest.PackageDefaults.Consignee;
+        if (consignee.Country == 'CA') {
+            var svc = {
+                Symbol: "UPSAPI.UPS.EXPRESS"
+                , Name: "UPS Express (UPS ADAPTER)"
+            };
+            shipmentRequest.PackageDefaults.Service = svc;
+
+            var uv = { Amount: "150.00", Units: "USD" };
+            var uw = { Amount: "1.0", Units: "LB" };
+            var cc = {
+                ProductCode: "Biological Specimens"
+                , Description: "Biological Specimens"
+                , Quantity: 1
+                , QuantityUnitMeasure: "PC"
+                , UnitValue: uv
+                , UnitWeight: uw
+                , OriginCountry: "CA"
+            };
+            shipmentRequest.Packages[0].CommodityContents = [cc];
+        }
+    };
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// AddPackage(shipmentRequest, packageIndex) // returns void
+     this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        shipmentRequest.PackageDefaults.UserData1 = null;
+		var shipService = "";
+		if(shipmentRequest.PackageDefaults.Service!==undefined){
+			shipService = shipmentRequest.PackageDefaults.Service.Symbol;
+		}
+		var LTLFlag = false;
+		if (shipService.includes("_LTL.") || shipService.includes("_UPSFREIGHT")){
+			LTLFlag = true;
+		}
+		if(LTLFlag)
+		{
+		    if((shipmentRequest.Packages[packageIndex].MiscReference20 != undefined && shipmentRequest.Packages[packageIndex].MiscReference20 != null && shipmentRequest.Packages[packageIndex].MiscReference20 != "")
+		        &&(shipmentRequest.Packages[packageIndex].ParentContainerCode == null || shipmentRequest.Packages[packageIndex].ParentContainerCode == "") ){
+                    shipmentRequest.Packages[packageIndex].ParentContainerCode ="P" + shipmentRequest.Packages[packageIndex].MiscReference20 + "-" + packageIndex;
+		    }
+		var dims = "0x0x0";
+		
+		var lastPackage = shipmentRequest.Packages[packageIndex - 1];
+
+		var length =0;
+        var width = 0;
+        var height =0;
+	    if(lastPackage.Dimensions!=undefined){
+			if(lastPackage.Dimensions.Length!= undefined && lastPackage.Dimensions.Width!=undefined && lastPackage.Dimensions.Height!=undefined){
+				length =lastPackage.Dimensions.Length;
+				width = lastPackage.Dimensions.Width;
+				height =lastPackage.Dimensions.Height;
+			} 	
+		}
+
+        const dimArr=[length,width,height];
+        
+        //To sort dimensions in descending order.
+        dimArr.sort(function(a, b){return b-a});
+		dims = dimArr[0]+"x"+dimArr[1]+"x"+dimArr[2];
+		if(dims!="0x0x0"){
+			const   dimtblx ="34,48,52,12,14,18,18,28,37".split(",");  
+            const   dimtbly ="32,40,36,52,44,32,52,44,37".split(","); 
+			for (let i = 0; i < dimtblx.length; i++){
+				var   x = dimtblx[i];
+                var   y = dimtbly[i];
+				if (i < 3)
+                {
+                    
+                    if (dimArr[0] == x && dimArr[1] == y )
+                        break;
+                    if (dimArr[0] == x && dimArr[1] == y )
+                    {                           
+                        dims= x + "x" + y + "x" + dimArr[1];                    
+                        break;
+                    }
+                    if (dimArr[1] == x && dimArr[2] == y )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];           
+                    break;
+                    }
+                }
+				else{                  
+                     
+                    if (dimArr[0] == y && dimArr[1] == x )
+                    {
+                        dims = x + "x" + y + "x" + dimArr[2];                    
+                        break;
+                    }
+                    if (dimArr[0] == y && dimArr[2] == x )
+                    {
+                       dims = x + "x" + y + "x" + dimArr[1];
+                    
+                       break;
+                    }
+                    if (dimArr[1] == y && dimArr[2] == x )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];                
+                    break;
+                    }
+                }
+			}
+			if(lastPackage.BolComment == null)
+			   lastPackage.BolComment = ""; 
+			
+			shipmentRequest.Packages[packageIndex-1].BolComment = lastPackage.BolComment+" "+dims;
+			
+		}
+		//debugger;
+		shipmentRequest.Packages[packageIndex - 1].Description = "DIESEL ENGINE PARTS NMFC # 133300, SUB 4, Class 60 L"+packageIndex; // + " L" + packageIndex-1;
+		
+		if(shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == null || shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == "" ){
+			shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber = shipmentRequest.Packages[packageIndex-1].MiscReference20;
+		}
+		}
+	
+	//setRef1Focus script start
+	$("#referenceTab").children()[0].click();
+	$('div[property = "MiscReference1"]').children().ready(function () {
+	    	$('div[property = "MiscReference1"]').children().focus();
+	});
+	//setRef1Focus script end
+	 
+}
+
+// Source: L9 Sports (L9SPORTS)_L9 Client Rules_1694.cs
+// ShowAssignGoodsPane() // returns void
+  ShowAssignGoodsPane()
+  {
+    let that = this;
+    //get rid of any previous entries
+    $('#listItemContainer li:gt(0)').remove();
+
+    //change the column width to make the descriptions longer
+    //change this back when the user clicks the 'Apply' button
+    $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+    //set a reference to the packages object as well as the commodities objects
+    this.packages = this.viewModel.currentShipment.Packages;
+
+    //get all the commodities in the shipment from all packages
+    this.goods = $(this.packages).map(function(x, y)
+    {
+      return y.CommodityContents;
+    });
+
+    //loop the goods array and update the markup within the slideout panel
+    $(this.goods).each(function(a, b)
+    {
+      //debugger;
+      let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+      b.GoodsKey = k;
+
+      if (b.packageIndex === undefined) {
+        // initial index is undefined after loading order, default to fix NaN bug later
+        b.packageIndex = 0;
+      }
+      //copy the source element
+      let item = $('#liClone').clone(true).attr({ 'hash-key': b.$$hashKey, 'goods-key': b.GoodsKey, 'pkg-index': b.packageIndex }).removeAttr('id');
+
+      //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+      //to parseFloat so this is the simplest way to get around that.
+      let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+      $(item).find('.goods-description').text(b.Description);
+      $(item).find('.goods-quantity').html('(<strong>' + b.Quantity + '</strong>');
+      $(item).find('.goods-unit-of-measure').text(b.QuantityUnitMeasure + ', ');
+      $(item).find('.goods-declared-value').html('<strong>$' + cost + '</strong> ' + b.UnitValue.Currency + ')');
+      $(item).find('.pkg-index-text').text(+(b.packageIndex) + 1);
+      $(item).find('.header-logo').show();
+
+      //append it to our list
+      $('#divAssignCommodities ul.list-group').append(item);
+
+      //show it gracefully
+      $(item).show();
+
+    });
+
+    //create a working array object so we can manipulate the data non-destructively
+    this.working = $.makeArray(JSON.parse(JSON.stringify(this.goods)));
+
+    $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+    $('.assign-to-pkg:visible').first().focus();
+  }
+
+// UpdateGoodsObject(pkgCount, listItem) // returns void
+  UpdateGoodsObject(pkgCount, listItem)
+  {
+    const itemkey = $(listItem).attr('hash-key');
+    const goodkey = $(listItem).attr('goods-key');
+    const findex = +$(listItem).attr('pkg-index');
+
+    let val = $(listItem).find('.goods-declared-value');
+    let cost = $(val).find('strong').text().replace('$', '');
+
+    cost = (cost / pkgCount).toFixed(2);
+
+    //get the object that matches the hash-key from the working array
+    //this will be the template to use when creating new packages after a split operation
+    //working on a copy of the vm commodity object so we can abandon changes if needed
+    let src = $.grep(this.working, function(value, i) { return value.$$hashKey == itemkey; })[0];
+
+    //update the declared value for the first package
+    src.UnitValue.Amount = cost;
+
+    for (let y = 1; y < pkgCount; y++)
+    {
+      let ccobj = this.GetNewCommodityObject(src);
+      ccobj.packageIndex = findex + y;
+
+      this.working.push(ccobj);
+
+      this.UpdateScreenMarkup(ccobj, listItem);
+    }
+  }
+
+// UpdateScreenMarkup(ccobj, li) // returns void
+  UpdateScreenMarkup(ccobj, li)
+  {
+    //this is all setting up the first list item to be cloned in the next function
+    //hide the split button
+    $(li).find('.btn-show-split-form').fadeOut();
+
+    //show the input for number of items in this pkg
+    $(li).find('.num-of-items-in-pkg').fadeIn();
+
+    //display the header
+    $(li).find('.header-logo').css('display', 'block');
+
+    $(li).find('.goods-declared-value').html('<strong>$' + ccobj.UnitValue.Amount + '</strong> ' + 'USD' + ')');
+
+    this.CreateListViewItem(ccobj.packageIndex, li)
+
+    let input = $('#listItemContainer').find('.num-of-items-in-pkg');
+    $(input).tooltip({ container: 'body' });
+
+    //when done creating elements, focus on the first visible non-disabled input box
+    $('#listItemContainer').find($('.num-of-items-in-pkg:visible:not(:disabled)').first().focus());
+
+    //if there was a single item (i.e a KIT), split evenly and close
+    let qty = +$(li).find('.goods-quantity strong').text();
+    if (qty === 1)
+    {
+      let these = $('#listItemContainer').find('li[goods-key=' + $(li).attr('goods-key') + ']');
+      $(these).attr('pkg-status', 'packed');
+      $(these).find('.num-of-items-in-pkg').val(1).attr('disabled', 'disabled');
+      $(these).find('.goods-quantity > strong').text(1);
+      $(these).find('.split-pkgs-modal').hide().find('input').val([]);
+      //$('#btnApplyCommodityAssignments').trigger('click');
+    }
+  }
+
+// CreateListViewItem(idx, li) // returns void
+  CreateListViewItem(idx, li)
+  {
+    //the hash-key attr is the object id for the commodity in relation to the package
+    //if we keep it, all packages will have the same hash-key (pkg 0)
+    let item = $(li).clone(true).removeAttr('hash-key').removeAttr('id');
+    $(item).attr('pkg-index', idx);
+
+    $(item).find('.pkg-index-text').text(idx + 1);
+    $(item).find('.goods-quantity').html('(<strong>0</strong>');
+
+    let lastInList = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+    //i have no idea why the opacity changes when i use .show().  first time i've ever seen that.
+    //anyway, set it implicitly here so the element shows
+    $(item).appendTo('#listItemContainer').insertAfter(lastInList).find('.num-of-items-in-pkg').css('opacity', '1').show();
+  }
+
+// UpdatePkgCountsInWorkingObject(li) // returns void
+  UpdatePkgCountsInWorkingObject(li)
+  {
+    let goodkey = $(li).attr('goods-key');
+    let pkgindex = $(li).attr('pkg-index');
+    let itemcount = $(li).find('.num-of-items-in-pkg').val();
+
+    //find the object in this.working that has the matching pkg-index and goods-key, then update it
+    let w = $.grep(this.working, function(pkg, i) { return pkg.GoodsKey == goodkey && pkg.packageIndex == pkgindex  })[0];
+
+    w.Quantity = itemcount;
+  }
+
+// UpdateListItemPackageQuantities(li) // returns void
+  UpdateListItemPackageQuantities(li)
+  {
+    this.UpdatePkgCountsInWorkingObject(li);
+
+    let numOfItems = $(li).find('.num-of-items-in-pkg');
+    let remItems = $(li).find('.goods-quantity > strong');
+
+    if (!$(numOfItems).val()) { return; }
+
+    let x = (+$(remItems).text() - $(numOfItems).val());
+
+    //sanity check to make sure we didn't pack more items that we had
+    if (x < 0)
+    {
+      $(remItems).addClass('bad-math');
+      return;
+    }
+
+    $(remItems).removeClass('bad-math');
+    $(numOfItems).attr('disabled', 'disabled');
+    $(li).attr('pkg-status', 'packed');
+
+    //move to the next list item and update then focus
+    $(li).next().find('.goods-quantity > strong').text(x)
+
+    //on the second-to-last list item, use the input value to auto-set the last item
+    //to get the number of rows that have already been assigned, count the list items with the goods-key
+    //that have disabled input boxes
+    let rowsForThisGood = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]');
+    let rowsDone = $(rowsForThisGood).find('input:disabled:visible').length;
+
+    if (rowsForThisGood.length == (rowsDone + 1))
+    {
+      let lastLi = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+      $(lastLi).attr('pkg-status', 'packed');
+
+      let lastVal = $(li).next().find('.goods-quantity > strong').text();
+      $(lastLi).find('.num-of-items-in-pkg').val(lastVal).attr('disabled', 'disabled');
+
+      $('#listItemContainer').find('.assign-to-pkg:visible').first().focus();
+
+      this.UpdatePkgCountsInWorkingObject(lastLi);
+    }
+  }
+
+// ApplyCommodityAssignments() // returns void
+  ApplyCommodityAssignments()
+  {
+    let that = this;
+
+    //every list item will have a pkg-index attr, get that highest value to determine how many pkgs we need
+    //don't use pkg-status.length because that will include multiple commodities and the end result will be wrong
+    let packed = $('#listItemContainer').find('li[pkg-status=packed]');
+
+    //first get all the pkg-index attributes, then get the highest number and add one
+    let pkgs = $(packed).map(function(x, value) { return +$(this).attr('pkg-index') }).toArray();
+    let pkgCount = Math.max(...pkgs) + 1;
+
+    while (this.packages.length < pkgCount)
+    {
+      //the vm.addPackage isn't firing, just click the button
+      $('button[ng-click="vm.addPackage();"]').trigger('click').promise().done(function(e) { });
+    }
+
+    //loop the pkg count, get the commodities for that pkg, write the objects to the vm CommodityContents object
+    for (let p = 0; p < pkgCount; p++)
+    {
+      let w = $.grep(this.working, function(item, i) { return item.packageIndex == p });
+      this.packages[p].CommodityContents = w;
+    }
+
+    //click the General tab
+    $('li[heading=General]:visible a').first().click();
+    this.HideAssignGoodsPane();
+
+    //after we are done, move back to the first package in the shipment
+    while ($('#spanCurrentPackageIndex').text() !== '1')
+    {
+      $('button[ng-click="vm.previousPackage();"]').first().click();
+    }
+
+  }
+
+// GetNewCommodityObject(obj) // returns object
+  GetNewCommodityObject(obj)
+  {
+    let c = {};
+
+    Object.keys(obj).forEach(key =>
+    {
+      if (key != '$$hashKey' && key != 'packageIndex')
+      {
+        let value = obj[key];
+        if (value) c[key] = value;
+      }
+    });
+
+    return c;
+  }
+
+// CancelSplitOfPackages(li) // returns void
+  CancelSplitOfPackages(li)
+  {
+    //hide the split modal and clear the input value
+    $('.escape-target').hide();
+    $(li).find('.split-pkgs-modal').hide().find('input[type=number]').val([]).focus();
+    $(li).find('.btn-show-split-form, .assign-to-pkg').fadeIn();
+  }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// GetCommodityContents() // returns JSON commodity contents from the server
+function GetCommodityContents() {
+        var jsonData;
+        var data = { "CompanyId": "0212c890-3ae4-4690-82a4-0c4ef8cd49c6", "SearchCriteria": {} };
+        var ajaxRequest = clientService1.thinclientService1APIRequest('GetCommodityContents', data, false);
+        jsonData = ajaxRequest.responseJSON;
+        return jsonData;
+    }
+
+// Source: Nexus (NEXUS)_Nexus CBR 2.3 Fix_1760.cs
+// this.AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    };
+
+// Source: Nexus (NEXUS)_Nexus CBR Aug 2022_1798.cs
+// AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    };
+
+// Source: Rite Kem (RITEKEM)_RiteKem_1637.cs
+// this.NewShipment(shipmentRequest) // returns void
+    this.NewShipment = function(shipmentRequest) {
+        $('#myLoadValue').focus();
+        var ConAddress = {Country: "US"};
+       shipmentRequest.PackageDefaults.Consignee = ConAddress;
+       shipmentRequest.Packages[0].CommodityClass = "CLASS_85";
+       shipmentRequest.PackageDefaults.Terms = 'SHIPPER';       
+    }
+
+// this.PreRate(shipmentRequest, userParams) // returns void
+    this.PreRate = function(shipmentRequest, userParams) {
+     //shipmentRequest.Packages[0].MiscReference5='PICS'
+    }
+
+// Source: SE Demo (SE_DEMO)_CBR_SE_Demo_1818.cs
+// GetDataManagementContents(apiMethod) // returns void
+    this.GetDataManagementContents = function (apiMethod) {
+        var userContext = this.GetUserContext();
+        var thinClientAPIRequest = this.thinClientAPIRequest;
+
+        var data = { CompanyId: userContext.CompanyId };
+        thinClientAPIRequest(apiMethod, data, true).done(function (result) {
+            if (result.ErrorCode == 0) {
+                var userObject = { Action: apiMethod, Data: JSON.stringify(result) };
+                data = { Data: btoa(JSON.stringify(userObject)), UserContext: userContext };
+                thinClientAPIRequest('UserMethod', data, true);//.done(function (result) { debugger; });
+            };
+        });
+    }
+
+// Source: ShipExec Essentials Demo (CF_DEMO)_CBR_SE_Demo_1854.cs
+// function Shipping() // returns void
+    this.Shipping = function () {
+        //this.GetDataManagementContents('GetHazmatContents');
+        this.GetDataManagementContents('GetCommodityContents');
+
+    }
+
+// function GetDataManagementContents(apiMethod) // returns void
+    this.GetDataManagementContents = function (apiMethod) {
+        var userContext = this.GetUserContext();
+        var thinClientAPIRequest = this.thinClientAPIRequest;
+
+        var data = { CompanyId: userContext.CompanyId };
+        thinClientAPIRequest(apiMethod, data, true).done(function (result) {
+            if (result.ErrorCode == 0) {
+                var userObject = { Action: apiMethod, Data: JSON.stringify(result) };
+                data = { Data: btoa(JSON.stringify(userObject)), UserContext: userContext };
+                thinClientAPIRequest('UserMethod', data, true);//.done(function (result) { debugger; });
+            };
+        });
+    }
+

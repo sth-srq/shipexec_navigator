@@ -1,0 +1,1304 @@
+// Source: Alight Solutions (ALISOL)_AlightSolutions Client Rules_1842.cs
+// this.PageLoaded(location) // returns void
+this.PageLoaded = function (location) {
+        debugger;
+		var showD2MCheckBoxInterval = setInterval(function(){
+		var dateIsLoaded = $("[ng-model='vm.startshipdate.value']").val();
+		if (dateIsLoaded)
+		{
+			clearInterval(showD2MCheckBoxInterval);
+
+			$("#+D2M_TEMPLATE_SHIPMENT_ID").hide();	
+		}
+	},50);
+    };
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// function CloseAllShippers() // returns void
+     function CloseAllShippers() {
+        debugger;
+        
+        var getManifestItemsList,getManifestItemsemethod,methodParams,authorizationToken;
+        var allOrdersSelectedCarrier = [];
+        var allShipperSelectedCarrier,getShipperCarriersmethod,getShipperCarriersmethodParams,CloseAllShippersResponse,CloseAllShippersResults
+        
+            getShipperCarriersmethod='api/ShippingService/GetShipperCarriers';
+            getManifestItemsemethod='api/ShippingService/GetManifestItems';
+            authorizationToken = clientService.authorizationToken();
+            
+        
+            let selectedValCarrier = AllCarriersList.find(Carriers => Carriers.Id == $("#CarriersList option:selected").val()).Symbol;
+           
+            $.each(Array(AllShipperList.length), function(i)
+            {
+                
+                 getShipperCarriersmethodParams = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                 allShipperSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getShipperCarriersmethod, data: getShipperCarriersmethodParams, async: false, headers: authorizationToken }).responseJSON;
+    
+               if(allShipperSelectedCarrier.Carriers && allShipperSelectedCarrier.Carriers.length !=0){ 
+               
+                    methodParams = {"Carrier":selectedValCarrier,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                    getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + getManifestItemsemethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                    
+                   
+                    if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                    {
+                        debugger;
+                      var CloseManifestmethod,methodParams,CloseAllShippersResults
+                        CloseManifestmethod='api/ShippingService/CloseManifest';
+                         $.each(Array(getManifestItemsList.ManifestItems.length), function(j)
+                          {
+                                  
+                                  
+                                   allOrdersSelectedCarrier.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                              });
+                              methodParams ={"Carrier":selectedValCarrier,"ManifestItems":allOrdersSelectedCarrier,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                              CloseAllShippersResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseManifestmethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                              allOrdersSelectedCarrier = [];
+                    }
+               }
+               
+          
+            });
+            
+            if(CloseAllShippersResponse != undefined)
+            {
+                    if(CloseAllShippersResponse.ErrorCode==-1){
+                            
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers');
+                            
+                        }else
+                        {
+                                CloseAllShippersResults = CloseAllShippersResponse.CloseManifestResults[0].ErrorCode;
+                                if(CloseAllShippersResults!=0){
+                                    
+                                      $('#divAllshippersErrorMsg').hide();
+                                      $('#divAllshippersunsuccessfulcloseoutMsg').show();
+                                      $('#divAllshippersAndCarriersErrorMsg').hide();
+                                      $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                      
+                                      ShowAlert('ErrorModalCloseShippers');
+                                     
+                                }else if(CloseAllShippersResults==0){
+                                    
+                                     $('#divsuccessfulAllShippers').show();
+                                     $('#divsuccessfulAllShippersAndAllCarriers').hide();
+                                     
+                                      ShowAlert('successfulModalCloseShippers');
+                                     
+                                }
+                        }
+           }else
+           {
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers'); 
+                            
+           }
+                         
+       $('#loaderspinnerImg').hide();
+       
+        
+    }
+
+// function ClosecOutAllShippersAndAllCarriers() // returns void
+    function ClosecOutAllShippersAndAllCarriers() {
+        
+                        var CloseAllShippersAllCarrierResponse,closeallgetManifestItemsemethod,CloseAllShippersAllCarriermethod,methodParams,authorizationToken,CloseAllShippersAllCarrierResults,getallShipperallCarriersmethod
+                             CloseAllShippersAllCarriermethod='api/ShippingService/CloseManifest';
+                             getallShipperallCarriersmethod='api/ShippingService/GetShipperCarriers';
+                             closeallgetManifestItemsemethod='api/ShippingService/GetManifestItems';
+                            
+                             var allOrdersSelectedCarrierfromallclose = [];
+                             debugger;
+       
+         $.each(Array(AllCarriersList.length), function(k)
+        {
+             $.each(Array(AllShipperList.length), function(i)
+            {
+                       var getShipperCarriersmethodParameters = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                         authorizationToken = clientService.authorizationToken();
+                         var allShipperallCarrierSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getallShipperallCarriersmethod, data: getShipperCarriersmethodParameters, async: false, headers: authorizationToken }).responseJSON;
+            
+                       if(allShipperallCarrierSelectedCarrier.Carriers && allShipperallCarrierSelectedCarrier.Carriers.length !=0){ 
+                       
+                           var closeallmethodParams = {"Carrier":AllCarriersList[k].Symbol,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                           var getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + closeallgetManifestItemsemethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                            
+                            if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                            {
+                                var CloseManifestmethod,methodParams,authorizationToken,CloseAllShippersResults
+                                    authorizationToken = clientService.authorizationToken();
+                                
+                                       $.each(Array( getManifestItemsList.ManifestItems.length), function(j)
+                                      {
+                                          
+                                           allOrdersSelectedCarrierfromallclose.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                                      });
+                                      var closeallmethodParams ={"Carrier":AllCarriersList[k].Symbol,"ManifestItems":allOrdersSelectedCarrierfromallclose,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                                      CloseAllShippersAllCarrierResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseAllShippersAllCarriermethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                                       allOrdersSelectedCarrierfromallclose = [];
+                            }
+                       }
+             });                  
+        });
+        
+            if(CloseAllShippersAllCarrierResponse != undefined){
+                                 if(CloseAllShippersAllCarrierResponse.ErrorCode==-1){
+                                    
+                                     $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+                                }else
+                                {
+                                        CloseAllShippersAllCarrierResults = CloseAllShippersAllCarrierResponse.CloseManifestResults[0].ErrorCode;
+                                        if(CloseAllShippersAllCarrierResults!=0){
+                                            
+                                        $('#divAllshippersErrorMsg').hide();
+                                        $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                        $('#divAllshippersAndCarriersErrorMsg').hide();
+                                        $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').show();
+                                      
+                                        ShowAlert('ErrorModalCloseShippers');
+                                        }else if(CloseAllShippersAllCarrierResults==0){
+                                            
+                                        $('#divsuccessfulAllShippers').hide();
+                                        $('#divsuccessfulAllShippersAndAllCarriers').show();
+                                      
+                                        ShowAlert('successfulModalCloseShippers');
+                                        }
+                                 }
+            }else{
+                
+                                    $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+            }
+            $('#loaderspinnerImg').hide();
+           
+        
+    }
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// function PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function (shipmentRequest, userParams) {
+        console.log("PreShip In");
+        
+        userParams.paperless = JSON.stringify(this.vm.paperless);
+        console.log('paperless:', userParams.paperless);
+        
+        var usCountry = "UNITED_STATES";
+        var usAcronym = "US";
+        var PackageRequests = shipmentRequest.Packages;
+
+        $(PackageRequests).each(function (x, item) {
+            var value = item.DeclaredValueCustoms.Amount;
+            var tN = item.AesTransactionNumber;
+            if (value >= 2500 && tN === null) {
+                alert("Please check with clarios-na-trade@clarios.com if EEI filing is needed");
+            }
+            item.Description = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val();
+
+        });
+
+        // For International Destination Rule Applies to all use cases and all carriers
+        if ((shipmentRequest.PackageDefaults.Consignee.Country != usCountry) && (shipmentRequest.PackageDefaults.Consignee.Country != usAcronym)) {
+            shipmentRequest.PackageDefaults.MiscReference8 = "Y";
+        }
+        else {
+            shipmentRequest.PackageDefaults.MiscReference8 = "N";
+        }
+
+        console.log("PreShip Out");
+    };
+
+// function Shipping() // returns void
+this.Shipping = function () {
+        $('body').on('change', client.shipping.fileInputPaperless, this.vm, paperlessChange);
+  
+         function paperlessChange(e) {
+             var file = e.target.files[0]
+             if (file === undefined) {
+                e.data.paperless = null;
+             }
+             else {
+                 var reader = new FileReader();
+                 reader.readAsDataURL(file);
+                 reader.onloadend = function () {
+                     e.data.paperless = { fileName: file.name, fileData: this.result.split(',')[1] }
+                     }
+             }                
+         }       
+     }
+
+// Source: F Schumacher (FSCHUMAC)_Product Area (8942X4) CBR_1801.cs
+// MakeUserMethodRequest(MethodName, MethodData, callback) // returns Promise resolving to parsed server response
+      MakeUserMethodRequest: async function(MethodName, MethodData, callback)
+      {
+        let defjam = $.Deferred();
+
+        let m = {};
+        m.ServerMethod = MethodName;
+        m.MethodData = MethodData || null;
+
+        let u = this.GetUserObject();
+
+        var ajaxObject = {
+          UserContext: u.UserContext || await u.GetUserContext(),
+          Data: JSON.stringify(m)
+        };
+
+        $.ajax(
+          {
+            url: u.UserMethodUrl,
+            method: 'POST',
+            dataType: 'json',
+            data: ajaxObject,
+            headers: u.GetRequestHeaders()
+          }).done(function(data)
+          {
+            let t = Tools.ParseEncodedData(data).then(function(result)
+            {
+              defjam.resolve(result);
+            });
+
+          }).fail(function(xhr)
+          {
+            defjam.reject('Error in ajax call');
+            console.log(xhr);
+            console.log('Method name: ', MethodName);
+            console.log('Method data: ', MethodData);
+          });
+
+        return defjam.promise();
+      }
+
+// Source: FMC (FMC)_FMC Reference Rule_2486.cs
+// function userDataOnlyHistoryView(searchCriteria) // returns void
+function userDataOnlyHistoryView(searchCriteria)
+{
+    var userContext;
+    userContext = GetUserContext(userContext);
+    searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+}
+
+// Source: GAP (GAP)_Rule with Mail Innov. Billing_1888.cs
+// PostShip(shipmentRequest, shipmentResponse) // returns void
+    this.PostShip = function(shipmentRequest, shipmentResponse) {
+        canadaSelected = false;
+        var misc3reference = "200.30.6035.5102.90059";
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference1 = shipmentRequest.Packages[i].ShipperReference;
+            shipmentRequest.Packages[i].ShipperReference = "";
+            //Address 1
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "1112 Turkey Mountain Rd.")
+            {
+                console.log('found 1/4 address');
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+            }
+             //Address 2
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "102R Demi Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+              //Address 3
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "17511 S. Susana Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+               //Address 4
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "200 Terminal St.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+            
+            var company = shipmentRequest.PackageDefaults.Consignee.Company.toLowerCase();
+            if(company.indexOf("mail innov") != -1 || company.startsWith("ups mi") || company.startsWith("ups mail"))
+            {
+                if (mi_tpb_stores.find(element => element == this.vm.profile.Shippers[0].Symbol) !== null)
+                {
+                    console.log("Billing MI as TPB");
+                    shipmentRequest.PackageDefaults.ThirdPartyBilling = true;
+                    var tpb = {};
+                    angular.copy(shipmentRequest.PackageDefaults.Consignee, tpb);
+                    tpb.Account = "7500YW";
+                    tpb.Company = "UPS MAIL INNOVATIONS";
+                    tpb.Contact = "REBECA CARBRERA";
+                    tpb.Address1 = "13050 MARLAY AVE";
+                    tpb.City = "FONTANA";
+                    tpb.StateProvince = "CA";
+                    tpb.PostalCode = "92337";
+                    tpb.Country = "US";
+                    tpb.Phone = "555-555-555";
+                    shipmentRequest.PackageDefaults.ThirdPartyBillingAddress = tpb;
+                }
+            }
+            
+        }
+        console.log('PRESHIP');
+        console.log(shipmentRequest);
+    }
+
+// PostShipOrder(shipmentRequest, shipmentResponse) // returns void
+    this.PostShipOrder = function(shipmentRequest, shipmentResponse) {
+        selectCanadaForAllCountrySelects();
+    }
+
+// Source: GAP INC (GAPMailrooms)_DirectToMobileCBR_1918.cs
+// OnCboReturnAddressChange() // returns void
+const OnCboReturnAddressChange = () => 
+	{		
+		//debugger;
+		
+		var selectedReturnAddress = $("#cboPredefinedReturnAddress select").val().replace('string:', '');
+		
+		returnAddressList = GetReturnAddresses();
+		
+		 if ($.isEmptyObject(returnAddressList) === false)
+		 {					
+			if (returnAddressList!=undefined)
+			{
+				var returnAddress = returnAddressList.find(x => x.ReturnLocationDescription === selectedReturnAddress);
+				
+				if (returnAddress !== undefined)
+				{
+					//debugger;
+					
+					vm.currentShipment.PackageDefaults.ReturnAddress = returnAddress.LocationAddress;
+
+					CopyReturnAddressToOriginAddress();
+					
+				}
+			} 
+		 }								
+	}
+
+// GetReturnAddresses() // returns returnAddressList or undefined
+	function GetReturnAddresses()
+	{
+		var userMethodParams = { "action": "GetD2MAddressBook"};
+		
+		var data = { Data: JSON.stringify(userMethodParams), UserContext: client.userContext };
+		
+		var returnAddressList = undefined;
+		
+		thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+			
+			if (response.ErrorCode != 0) 
+			{
+				alert(response.ErrorMessage);
+			} 
+			else 
+			{
+				
+				var json = DecodeReturnString(response.Data);
+				returnAddressList = json.ReturnAddressList;		
+				returnAddressList.forEach(function (returnAddress) {
+					var x = returnAddress;
+					console.log(x);
+				});
+			}
+		});
+		return returnAddressList;
+	}
+
+// GetUserCustomData(userData, key) // returns object
+    function GetUserCustomData(userData, key){
+		
+        LogStartMethod("GetUserCustomData()");
+		
+        var result = {};
+        
+        if ($.isEmptyObject(userData) === false)
+        {
+            var currentUserDataKeyValue = userData.find(x => x.Key === key);			   
+        	
+        	if (currentUserDataKeyValue !== undefined)
+        	{
+        		result =  currentUserDataKeyValue;	        	
+        	}    
+        }
+        
+        return result;
+    }
+
+// SetShipmentRequestUserData(shipmentRequest) // returns shipmentRequest
+    function SetShipmentRequestUserData(shipmentRequest)
+    {
+         shipmentRequest.PackageDefaults.UserData1 = $('#DirectToMobileShipmentID').is(":checked");
+         return shipmentRequest;
+    }
+
+// CopyOriginAddressToReturnAddress() // returns void
+    function CopyOriginAddressToReturnAddress()
+    {			        
+		LogStartMethod("CopyOriginAddressToReturnAddress()");
+		
+        var currentUserOriginAddress = vm?.profile?.UserInformation?.Address;
+        
+        if (currentUserOriginAddress !== undefined && $.isEmptyObject(currentUserOriginAddress) === false)
+        {
+            vm.currentShipment.PackageDefaults.ReturnAddress = currentUserOriginAddress;
+            LogMethodInfo("User Origin Address to Return Address : OK");
+        }
+        else
+        {
+             LogMethodInfo("Error: Origin Address not found");
+        }			
+    }
+
+// CurrentUserIsD2MEnabled() // returns boolean
+    function CurrentUserIsD2MEnabled()
+    {
+			
+		LogStartMethod("CurrentUserIsD2MEnabled()");
+		
+        var currentUserData = vm?.profile?.UserInformation?.Address.CustomData;
+		
+        var isD2MEnableForCurrentUser = GetUserCustomData(currentUserData, D2M_USER_CUSTOM_DATA_KEY);
+		
+		var infoMessage ="";
+		
+		var result =  false;
+		
+        if ($.isEmptyObject(isD2MEnableForCurrentUser) === false)
+        {
+             var d2mCustomEntry = JSON.stringify(isD2MEnableForCurrentUser);
+             
+             if (JSON.parse(d2mCustomEntry).Value === 'true')
+             {
+                 infoMessage = "D2M User ENABLED";
+                 result = true;
+             }
+             else
+             {
+                infoMessage = "D2M User DISABLED";
+                result = false;
+             }
+        }
+        else
+        {
+             infoMessage = "WARNING:" + D2M_USER_CUSTOM_DATA_KEY + " NOT DETECTED";
+        }
+		
+		LogMethodInfo(infoMessage);
+		
+		return result;
+    }
+
+// CurrentShipperIsD2MEnabled() // returns boolean
+    function CurrentShipperIsD2MEnabled(){
+                
+		LogStartMethod("CurrentShipperIsD2MEnabled()");
+		
+		var currentShipperSymbol = vm?.currentShipment?.PackageDefaults?.Shipper;
+		
+		var authorizedD2MShipperList = [{"ShipperName": "GAP INC. (1EA270)","ShipperSymbol":"NYPD"} , {"ShipperName": "GAP INC. (5X0693)","ShipperSymbol":"SAN_FRANCISCO"}, {"ShipperName": "GAP INC. (1EY347)","ShipperSymbol":"PLEASANTON"}];
+		
+		var infoMessage = "D2M shipping for current shipper symbol " + currentShipperSymbol + " is ";
+		
+		var result =  false;
+		
+		var isCurrentShipperEnabledForD2M = authorizedD2MShipperList.find(x => x.ShipperSymbol === currentShipperSymbol);
+		
+		result = (isCurrentShipperEnabledForD2M != undefined) ? true : false;
+		
+		infoMessage = result? infoMessage + "authorized" : "WARNING " + infoMessage + "NOT authorized";
+		
+		LogMethodInfo(infoMessage);
+		
+		return result;		 
+    }
+
+// ConfigureD2MShipment(calleeMethod) // returns void
+    function ConfigureD2MShipment(calleeMethod){
+        
+        debugger;
+        		
+		LogStartMethod("ConfigureD2MShipment()",calleeMethod);
+				
+		var infoMessage = "D2M shipment ";
+		
+		if (location.hash === '#!/shipping')		
+		{
+			if (CurrentShipperIsD2MEnabled() && CurrentUserIsD2MEnabled()) 
+			{
+				infoMessage += "is ENABLED for current shipper and current user";
+				
+				var originAddressCompany;
+				
+				var originAddressLoadedInterval = setInterval(function(){
+					originAddressCompany = $('[name="company"]:eq(1)').val();
+					if (originAddressCompany!=undefined && originAddressCompany.length)
+					{
+						EnableReturn();
+						clearInterval(originAddressLoadedInterval);	
+					}
+				},50);
+			}
+			else
+			{
+				infoMessage += "is NOT ENABLED for shipper and user";
+				var isLoaded;
+				var removeD2M = setInterval(function(){
+					isLoaded = $('#DirectToMobileShipmentID').is(":checked");
+					if (isLoaded!=undefined && (isLoaded === false || isLoaded === false))
+					{											
+						$('#d2m_checkbox_div_id').remove();						
+						DisableReturn();
+						clearInterval(removeD2M);	
+					}
+				},50);
+				
+				
+			}
+		}
+		else
+		{
+			infoMessage = "WARNING " + infoMessage + "called outside of shipping action";
+		}
+		LogMethodInfo(infoMessage);
+    }
+
+// CopyReturnAddressToOriginAddress() // returns void
+	function CopyReturnAddressToOriginAddress(){
+	
+        $('[name="company"]:eq(1)').val($('[name="company"]:eq(2)').val());
+        $('[name="company"]:eq(1)').trigger("change");
+        
+        $('[name="contact"]:eq(1)').val($('[name="contact"]:eq(2)').val());
+        $('[name="contact"]:eq(1)').trigger("change");
+        
+        $('[name="address1"]:eq(1)').val($('[name="address1"]:eq(2)').val());
+        $('[name="address1"]:eq(1)').trigger("change");
+        
+        $('[name="address2"]:eq(1)').val($('[name="address2"]:eq(2)').val());
+        $('[name="address2"]:eq(1)').trigger("change");
+        
+        $('[name="address3"]:eq(1)').val($('[name="address3"]:eq(2)').val());
+        $('[name="address3"]:eq(1)').trigger("change");
+        
+        $('[name="city"]:eq(1)').val($('[name="city"]:eq(2)').val());
+        $('[name="city"]:eq(1)').trigger("change");
+        
+        $('[name="stateProvince"]:eq(1)').val($('[name="stateProvince"]:eq(2)').val());
+        $('[name="stateProvince"]:eq(1)').trigger("change");
+        
+        $('[name="postalCode"]:eq(1)').val($('[name="postalCode"]:eq(2)').val());
+        $('[name="postalCode"]:eq(1)').trigger("change");
+        
+        $('[name="Country"]:eq(1)').val($('[name="Country"]:eq(2)').val());
+        $('[name="Country"]:eq(1)').trigger("change");
+	}
+
+// EnableReturn() // returns void
+	function EnableReturn()
+	{		
+		vm.profile.FieldOptions["ReturnAddress.Account"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Address1"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.Address2"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Address3"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.City"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.Code"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Company"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.Contact"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.Country"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.Email"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Fax"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Group"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Phone"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.PostalCode"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.StateProvince"].IsRequired = true;
+		vm.profile.FieldOptions["ReturnAddress.TaxId"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.AccountNumberTaxIdTab"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.EmailTab"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.PhoneFaxTab"].IsHidden = true;
+	}
+
+// DisableReturn() // returns void
+	function DisableReturn()
+	{
+		vm.profile.FieldOptions["ReturnAddress.Account"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Account"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Address1"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Address1"].IsRequired = false
+		vm.profile.FieldOptions["ReturnAddress.Address2"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Address2"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Address3"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Address3"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.City"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.City"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Code"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Code"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Company"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Company"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Contact"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Contact"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Country"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Country"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Email"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Email"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Fax"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Fax"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Group"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Group"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.Phone"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.Phone"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.PostalCode"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.PostalCode"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.StateProvince"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.StateProvince"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.TaxId"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.TaxId"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.AccountNumberTaxIdTab"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.AccountNumberTaxIdTab"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.EmailTab"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.EmailTab"].IsRequired = false;
+		vm.profile.FieldOptions["ReturnAddress.PhoneFaxTab"].IsHidden = true;
+		vm.profile.FieldOptions["ReturnAddress.PhoneFaxTab"].IsRequired = false;
+	}
+
+// DecodeReturnString(data) // returns parsed JSON object or undefined
+	function DecodeReturnString(data)
+	{ 
+	  try
+	  { 
+		return JSON.parse($("<div />").html(data).text());
+	  }
+	  catch (error)
+	  { 
+		console.log(error.name);
+		console.log(error.message);
+		console.log(data);
+	  }
+	}
+
+// setD2MCheckboxAsChecked() // returns void
+	function setD2MCheckboxAsChecked()
+	{
+		var checkIsLoadedInterval = setInterval(function(){
+								
+		var checkIsLoaded =  $('#DirectToMobileShipmentID');
+	
+		if (checkIsLoaded)
+		{
+			$('#DirectToMobileShipmentID').prop( "checked", true );
+			clearInterval(checkIsLoadedInterval);								
+		}
+	    },50);
+	}
+
+// thinClientAPIRequest(method, data, isAsync) // returns jqXHR
+	function thinClientAPIRequest (method, data, isAsync) {
+        var shipExecServiceUrl = client.config.ShipExecServiceUrl;
+        var authorizationToken = client.getAuthorizationToken();
+        return $.post({ url: shipExecServiceUrl + '/' + method, data: data, async: isAsync, headers: authorizationToken });
+    };
+
+// Source: Meta Platforms (API Shipping) (METAPLATFORMSAPISHIPPING)_Meta Thin Client Profile CBR_1868.cs
+// ApplyRulesWithoutServiceRequested(shipmentRequest, rateResults, dateToday) // returns void
+function ApplyRulesWithoutServiceRequested(shipmentRequest,rateResults,dateToday)
+    {            
+        if (stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-") <= dateToday) 
+            {
+                $('input[ng-model="vm.deliverDate.value"]').val(formatDate(getTomorrowDate())).change();
+
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(formatDate(getTomorrowDate())).change();
+            } 
+            else if (rateResults) 
+            {                
+                var fullArriveDate = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(fullArriveDate).change();
+            }   
+    }
+
+// UpdateFields(dateValue, applyBackupService) // returns void
+function UpdateFields(dateValue,applyBackupService)
+    {
+        $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(dateValue).change();
+        
+        if(applyBackupService)
+        {
+            $('input[ng-model="vm.deliverDate.value"]').val(formatDate(getTomorrowDate())).change();
+        }
+        
+    }
+
+// BackupServiceRequired(rateResults, shipmentRequest) // returns boolean
+function BackupServiceRequired(rateResults,shipmentRequest)
+    {
+        var ratedArriveDate = GetStringArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+        var formattedArriveDate = stringToDate(ratedArriveDate, dateFormat, "-");
+
+        var requestedDeliveryDate = stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-");
+
+        var applyBackupService = (requestedDeliveryDate < formattedArriveDate);
+
+        return applyBackupService;
+    }
+
+// ApplyRulesWithServiceRequested(shipmentRequest, rateResults, dateToday) // returns void
+function ApplyRulesWithServiceRequested(shipmentRequest,rateResults,dateToday)
+    {
+        var requestedServiceSymbol = shipmentRequest.PackageDefaults.Service.Symbol;
+        var backupNDADomesticService = shipmentRequest.Packages[0].MiscReference18; //UPSAPI.UPS.NDA        
+        var backupExpressIntlService = shipmentRequest.Packages[0].MiscReference20; //UPSAPI.UPS.EXPRESS  
+        var serviceToBeReturned = '';
+        var domestic = shipmentRequest.PackageDefaults.Consignee.Country === "US";
+
+        rateResults.slice()
+                   .forEach(function(item, index, object) 
+        {            
+            if (!requestedServiceSymbol) 
+            {
+                requestedServiceSymbol = shipmentRequest.PackageDefaults.Service.Symbol;
+            }
+
+            serviceToBeReturned = requestedServiceSymbol;
+
+            var requestedServiceIsFoundAsRateResult = (item.PackageDefaults.Service.Symbol === shipmentRequest.PackageDefaults.Service.Symbol);
+
+            if (requestedServiceIsFoundAsRateResult) 
+            {                                           
+                console.log("Found requested service in position: " + index + "of rate results");
+
+                var applyBackupService = BackupServiceRequired(rateResults,shipmentRequest);
+
+                if (applyBackupService)
+                {
+                    if (domestic) 
+                    {
+                        serviceToBeReturned = backupNDADomesticService;                
+
+                        UpdateFields(formatDate(getTomorrowDate(),true));  
+                    }                
+                    else
+                    {
+                        serviceToBeReturned = backupExpressIntlService;
+
+                        rateResults.forEach(function(item, index, object) 
+                        {
+                            if (item.PackageDefaults.Service.Symbol === backupExpressIntlService) 
+                            {
+                                UpdateFields(formatDate(GetArriveDate(item.PackageDefaults.ArriveDate)),applyBackupService);                  
+                            }
+                        });                       
+                    }
+                }
+                else
+                {
+                    if (rateResults) 
+                    {
+                        var fullArriveDate = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+                        UpdateFields(fullArriveDate,false);                         
+                    }
+                }
+            }
+        });
+    }
+
+// LogRateInformationToConsole(shipmentRequest, rateResults) // returns void
+function LogRateInformationToConsole(shipmentRequest, rateResults) 
+    {
+        var ratedServices ='';      
+        
+        console.log ("Requested Delivery Date" + stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-"));
+
+        for (let i = 0; i< rateResults.length;i++)
+        {
+            if (rateResults[i].PackageDefaults.Service && rateResults[i].PackageDefaults.ArriveDate)
+            {
+                ratedServices += "Rate Result Position: " + i + " Service:" + rateResults[i].PackageDefaults.Service.Symbol + " Arrive: " + GetStringArriveDate(rateResults[i].PackageDefaults.ArriveDate);
+                ratedServices += "\n";
+            }
+            else
+            {
+                ratedServices += "Rate Result Position: " + i + " Service: "+ rateResults[i].PackageDefaults.Service.Symbol + " Arrive: NA";
+                ratedServices += "\n";
+            }
+        }
+
+        console.log(ratedServices);
+    }
+
+// getTomorrowDate(date) // returns Date
+function getTomorrowDate(date = new Date()) 
+    {
+        date.setDate(date.getDate() + 1);
+        return date;
+    }
+
+// getOneMonthAheadDate(date) // returns Date
+function getOneMonthAheadDate(date = new Date()) 
+    {
+        date.setDate(date.getDate() + 31);
+        return date;
+    }
+
+// stringToDate(_date, _format, _delimiter) // returns Date
+function stringToDate(_date, _format, _delimiter)
+    {
+        var formatLowerCase = _format.toLowerCase();
+        var formatItems = formatLowerCase.split(_delimiter);
+        var dateItems = _date.split(_delimiter);
+        var monthIndex = formatItems.indexOf("mm");
+        var dayIndex = formatItems.indexOf("dd");
+        var yearIndex = formatItems.indexOf("yyyy");
+        var month = parseInt(dateItems[monthIndex]);
+        month -= 1;
+        var formatedDate = new Date(dateItems[yearIndex], month, dateItems[dayIndex]);
+        return formatedDate;
+    }
+
+// formatDate(date) // returns string
+function formatDate(date) 
+    {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+        if (month.length < 2) 
+        {
+            month = '0' + month;
+        }
+        if (day.length < 2)
+        {
+            day = '0' + day;
+        }
+
+        month = month.slice(-2);
+
+        day = day.slice(-2);
+
+        return [year, month, day].join('-');
+    }
+
+// GetArriveDate(ArrivalDate) // returns string
+function GetArriveDate(ArrivalDate)
+    {
+        var aDateYear  = ArrivalDate.Year.toString();
+        var aDateMonth = ArrivalDate.Month.toString();
+        var aDateDay   = ArrivalDate.Day.toString();
+        return aDateYear + "-" + ('0' + aDateMonth).slice(-2) + "-" + ('0' + aDateDay).slice(-2);            
+    }
+
+// GetStringArriveDate(ArrivalDate) // returns string
+function GetStringArriveDate(ArrivalDate)
+    {
+        var arriveDateYear  = ArrivalDate.Year.toString();
+        var arriveDateMonth = ArrivalDate.Month.toString();
+        var arriveDateDay   = ArrivalDate.Day.toString();
+        return arriveDateYear + "-" + arriveDateMonth + "-" + arriveDateDay;
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {     
+        /**
+        var date = new Date();
+        var dateStr = date.getFullYear() + "-" + ("00" + (date.getMonth() + 1)).slice(-2) + "-" + ("00" + date.getDate()).slice(-2);
+        shipmentRequest.PackageDefaults.Shipdate = dateStr;
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        */
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        
+        debugger;
+        var brokerCode = "";
+        for(var i=0; i<shipmentRequest.Packages.length; i++) {
+            if (shipmentRequest.Packages[i].DocumentsOnly === true)
+            {
+                shipmentRequest.Packages[i].CommercialInvoiceMethod = 0;
+                shipmentRequest.Packages[i].Description = 'Document Only';
+            }
+            else
+            {
+                //shipmentRequest.Packages[i].CommercialInvoiceMethod = 1;
+                //Commodities Description
+                if (i == 0)
+                {
+                    //debugger;
+                    for (var indx = 0; indx < shipmentRequest.Packages[i].CommodityContents.length; indx++)
+                    {
+                        shipmentRequest.Packages[i].CommodityContents[indx].Description = shipmentRequest.Packages[i].CommodityContents[indx].Description.replace(/[\r\n\t]/g, "");
+                    }
+                }
+            }
+
+            //WorldEase Flag to assign to all packages
+            shipmentRequest.Packages[i].WorldEaseFlag = shipmentRequest.Packages[0].WorldEaseFlag;
+            
+            //WorldEase Additional Documents
+            //debugger;
+            shipmentRequest.Packages[i].AdditionalHardcopyDocumentation = shipmentRequest.Packages[0].AdditionalHardcopyDocumentation;
+            shipmentRequest.Packages[i].Comments = shipmentRequest.Packages[0].Comments;
+            shipmentRequest.Packages[i].ExportDeclarationStatement = shipmentRequest.Packages[0].ExportDeclarationStatement;
+
+            /**
+            //WorldEase Importer of Records
+            if (shipmentRequest.Packages[i].WorldEaseFlag === true && shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[i].ImporterOfRecord === undefined)
+            {
+                debugger;
+                //var na = shipmentRequest.PackageDefaults.ReturnAddress;
+                if (shipmentRequest.PackageDefaults.Shipper.includes("AB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F41";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("BC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F4X";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("MB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F45";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("ON"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "A4206Y";
+                    const nIOR = new IOR("The Orthotic Group", "160 Markland Street", "Markham ON L6C0C6" ,"Buffalo","NY", "14206", "US","A4206Y"); 
+                    shipmentRequest.Packages[i].ImporterOfRecord = nIOR;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("QC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F52";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+            }
+            **/
+            
+            //Exporter
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined)
+            {
+                shipmentRequest.Packages[i].Exporter = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Custom Broker
+            if (shipmentRequest.Packages[0].CustomsBroker !== undefined)
+            {
+                if (i===0)
+                    {
+                        brokerCode = shipmentRequest.Packages[0].CustomsBroker.Code !== undefined ? (shipmentRequest.Packages[0].CustomsBroker.Code.length > 3 ? shipmentRequest.Packages[0].CustomsBroker.Code.substring(2) : shipmentRequest.Packages[0].CustomsBroker.Code) : '';
+                    }
+                shipmentRequest.Packages[i].CustomsBroker = shipmentRequest.Packages[0].CustomsBroker;   
+                shipmentRequest.Packages[i].CustomsBroker.Code = brokerCode;                    
+            }
+
+            //debugger;
+            //Hazmat Signatory Address
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[0].HazmatContents !== undefined)
+            {
+                shipmentRequest.Packages[i].HazmatSignatoryAddress = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Capture Email and assign them to MiscRef10
+            var form = $('form[id="logoutForm"]');
+            const ahref = form.find('a[href="/ShipExecThinClient/Manage"]');
+            var indx = ahref.text().indexOf(' ');
+            shipmentRequest.Packages[i].MiscReference10 = $.trim(ahref.text().replace('!','').substring(indx));
+
+            //General Description
+            //shipmentRequest.Packages[i].Description = shipmentRequest.Packages[i].Description.replace(/[\r\n\t]/g, "");
+        }
+
+    }
+
+// customUserMethod() // returns void
+function customUserMethod () {
+        debugger;
+        var dateSelected = $('#exportDate').val();
+        var shipper = $('#gateway :selected').text();
+        var carrier = $('#carrier :selected').text();
+        
+        if (carrier === 'UPS')
+        {
+            carrier = 'CONNECTSHIP_UPS.UPS';
+        }
+        else
+        {
+            carrier = 'CONNECTSHIP_DHLXMLPI.DHL';
+        }
+
+        var data = { DateSelected: dateSelected, Shipper: shipper, Carrier: carrier};
+        var payload = { UserContext: client.userContext, Data: JSON.stringify(data) };
+        var result = client.thinClientAPIRequest('UserMethod', payload, false).responseJSON;
+        
+        debugger;
+        if (result.ErrorCode > 0 || result == undefined) {
+            client.alert.Danger(result.ErrorCode + ': ' + result.ErrorMessage);
+        } else if (result.Message != undefined || result.Message != "") {
+            client.alert.Success(result.Message);
+        } else {
+            client.alert.Success(result.Message);
+        }
+    }
+
+// CopyShipperList() // returns void
+function CopyShipperList() {
+        var loaded = setInterval(function() {
+        debugger;
+        let shipper = $('shipper-carrier');
+            if (shipper.length > 0) {
+                clearInterval(loaded);
+                let div1 = shipper.find('div');
+                let div2 = div1.find('div');
+                let div3 = div2.find('div');
+                let dpShip = div3.find('Select[ng-model="vm.selectedShipper"]');
+                let dpOpt = dpShip.find('option');
+                var $options = dpOpt.clone();
+                $('#gateway').append($options);
+            }
+        }, 50);
+        
+        
+    }
+
+// Source: Rainier Arms (RNRARMS)_RainierArms shipping CBR_1640.cs
+// downloadFromCin7API() // returns void
+this.downloadFromCin7API = function() {
+		//debugger;
+		let data = { Action: 'Download_Orders', Params: ''};
+		
+		downloadOrders = true;
+		toggleDownloadLoading(downloadOrders);
+
+		// call SBR UserMethod to access Cin7 API to download orders
+		$.post({
+			url: clientService.config.ShipExecServiceUrl + '/UserMethod',
+			headers: clientService.authorizationToken(),
+			data: {
+			    UserContext: client.userContext,
+			    Data: JSON.stringify(data)
+			}
+		}).done(function (data) {
+		    //debugger;
+			downloadOrders = false;
+		    toggleDownloadLoading(downloadOrders);
+		    
+			if (data.Data === true) {
+				alert('Download successful!');
+			}
+			else {
+				alert('Download was not successful');
+			}
+		}).fail(function (err) {
+		    //debugger;
+			downloadOrders = false;
+		    toggleDownloadLoading(downloadOrders);
+			console.log(err.responseJSON);
+			alert('Download was not successful');
+		});
+	}
+
+// Source: Schoolhouse Electric Co (SCHOOLHOUSEELECTRICCO)_SchoolHouse_1630.cs
+// pickupDeliveryPaneReady(pickupDeliveryPane) // returns void
+function pickupDeliveryPaneReady(pickupDeliveryPane) {
+		var sekoOptions=
+`
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<label class="form-check-label" style="padding-left: 6px;">Seko Options</label>
+	</div>
+	<div class="col-md-6 no-left-padding">
+	</div>
+</div>
+
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" property="SaturdayPickupSeko" caption="Saturday Pickup (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkSaturdayPickup">
+			<label class="form-check-label" style="padding-left: 6px;">Saturday Pickup (Seko)</label>
+		</div>
+	</div>
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" property="ResidentialPickupSeko" caption="Residential Pickup (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkResidentialPickup">
+			<label class="form-check-label" style="padding-left: 6px;">Residential Pickup (Seko)</label>
+		</div>
+	</div>
+</div>
+
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" property="LiftgatePickupSeko" caption="Liftgate Pickup (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkLiftgatePickup">
+			<label class="form-check-label" style="padding-left: 6px;">Liftgate Pickup (Seko)</label>
+		</div>
+	</div>
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" property="LiftgateDeliverySeko" caption="Liftgate Delivery (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkLiftgateDelivery">
+			<label class="form-check-label" style="padding-left: 6px;">Liftgate Delivery (Seko)</label>
+		</div>
+	</div>
+</div>
+
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" property="PalletJackPickupSeko" caption="Pallet Jack Pickup (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkPalletJackPickup">
+			<label class="form-check-label" style="padding-left: 6px;">Pallet Jack Pickup (Seko)</label>
+		</div>
+	</div>
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" property="PalletJackDeliverySeko" caption="Pallet Jack Delivery (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkPalletJackDelivery">
+			<label class="form-check-label" style="padding-left: 6px;">Pallet Jack Delivery (Seko)</label>
+		</div>
+	</div>
+</div>
+
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" caption="2 man Pickup (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chk2ManPickup">
+			<label class="form-check-label" style="padding-left: 6px;">2 man Pickup (Seko)</label>
+		</div>
+	</div>
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" caption="2 man Delivery (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chk2ManDelivery">
+			<label class="form-check-label" style="padding-left: 6px;">2 man Delivery (Seko)</label>
+		</div>
+	</div>
+</div>
+
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" caption="Call Before Pickup (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkCallBeforePickup" >
+			<label class="form-check-label" style="padding-left: 6px;">Call Before Pickup (Seko)</label>
+		</div>
+	</div>
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" caption="Assembly Service (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkAssemblyService" >
+			<label class="form-check-label" style="padding-left: 6px;">Assembly Service (Seko)</label>
+		</div>
+	</div>
+</div>
+<div class="col-md-12 no-left-padding">
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" caption="Uncrate (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkUncrate" >
+			<label class="form-check-label" style="padding-left: 6px;">Uncrate (Seko)</label>
+		</div>
+	</div>
+	<div class="col-md-6 no-left-padding">
+		<div class="form-check" caption="Detrash (Seko)">
+			<input type="checkbox" class="form-check-input ng-pristine ng-untouched ng-valid ng-empty" id="chkDetrash" >
+			<label class="form-check-label" style="padding-left: 6px;">Detrash (Seko)</label>
+		</div>
+	</div>
+</div>`
+
+
+
+
+		pickupDeliveryPane.find(".col-md-12.no-left-right-padding.custom-top-padding").before( sekoOptions );
+		
+		$('body').delegate('input[id="chkDetrash"]', 'change', function () { SekoOptionChange(this , "MiscReference9");});
+		$('body').delegate('input[id="chkUncrate"]', 'change', function () { SekoOptionChange(this , "MiscReference10");});
+		$('body').delegate('input[id="chkAssemblyService"]', 'change', function () { SekoOptionChange(this , "MiscReference11");});
+
+		$('body').delegate('input[id="chkSaturdayPickup"]', 'change', function () { SekoOptionChange(this , "MiscReference12");});
+		$('body').delegate('input[id="chkResidentialPickup"]', 'change', function () { SekoOptionChange(this , "MiscReference13");});
+		$('body').delegate('input[id="chkLiftgatePickup"]', 'change', function () { SekoOptionChange(this , "MiscReference14");});
+		$('body').delegate('input[id="chkLiftgateDelivery"]', 'change', function () { SekoOptionChange(this , "MiscReference15");});
+		$('body').delegate('input[id="chkPalletJackPickup"]', 'change', function () { SekoOptionChange(this , "MiscReference16");});
+		$('body').delegate('input[id="chkPalletJackDelivery"]', 'change', function () { SekoOptionChange(this , "MiscReference17");});
+		$('body').delegate('input[id="chk2ManPickup"]', 'change', function () { SekoOptionChange(this , "MiscReference18");});
+		$('body').delegate('input[id="chk2ManDelivery"]', 'change', function () { SekoOptionChange(this , "MiscReference19");});
+		$('body').delegate('input[id="chkCallBeforePickup"]', 'change', function () { SekoOptionChange(this , "MiscReference20");});
+	}
+
+
+// SekoOptionChange(elementCheck, miscReference) // returns void
+function SekoOptionChange(elementCheck, miscReference){
+		$( "input[ng-model='vm.currentShipment.Packages[vm.packageIndex]."+miscReference+"']" ).val(elementCheck.checked).trigger('input');
+	}
+
+
+// Source: SPEEDTECH (SPEEDTECH)_SpeedTech Client Side Business Rules_1645.cs
+// function DrawDataInReturnForm() // returns undefined
+    function DrawDataInReturnForm(){
+        var carrierEmailReturnLabelMethod = 5;
+        $('form[name="returnForm"]').find('[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val(RETURN_DEFAULT_DESCRIPTION);
+        $('form[name="returnForm"]').find('[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDelivery"]').prop("checked", true);
+        $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDeliveryMethod"]>option:eq('+ carrierEmailReturnLabelMethod +')').prop('selected', true);
+        $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDeliveryAddressEmail"]').val(shipmentRequestObject.PackageDefaults.Consignee.Email);
+    }
+
+// function MarkShipmentAsReturn() // returns undefined
+    function MarkShipmentAsReturn(){
+        for (let i = 0; i < vm.currentShipment.Packages.length; i++) 
+        {
+             vm.currentShipment.Packages[i].ReturnDelivery = true;
+             vm.currentShipment.Packages[i].ReturnDeliveryMethod = 4;
+             vm.currentShipment.Packages[i].ReturnDeliveryAddressEmail = shipmentRequestObject.PackageDefaults.Consignee.Email;
+             vm.currentShipment.Packages[i].Description = RETURN_DEFAULT_DESCRIPTION;             
+        }
+    }
+
+// function UnMarkShipmentAsReturn() // returns undefined
+    function UnMarkShipmentAsReturn(){
+        for (let i = 0; i < vm.currentShipment.Packages.length; i++) 
+        {
+             vm.currentShipment.Packages[i].ReturnDelivery = false;
+             vm.currentShipment.Packages[i].ReturnDeliveryMethod = undefined;
+             vm.currentShipment.Packages[i].ReturnDeliveryAddressEmail = '';
+             vm.currentShipment.Packages[i].Description = '';
+        }
+    }
+
+// Source: USBank (USBANK)_US Bank Client Side Rules_1697.cs
+// function NewShipment(shipmentRequest) // returns void
+this.NewShipment = function (shipmentRequest) {                
+
+        var Service = { Symbol: "UPSAPI.UPS.2DA" };
+        shipmentRequest.PackageDefaults.Service = Service;
+        //shipmentRequest.PackageDefaults.ConsigneeCode = "1";
+
+     
+    }
+

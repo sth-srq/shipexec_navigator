@@ -1,0 +1,2164 @@
+// Source: #TEST (RONITEST)_Client Business Rules_2468.cs
+// function(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: 2.2 Update 4 (21UPDATE4)_cbr doc ready_1721.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: ABB OPTICAL GROUP (ABBOptical)_ABB Optical Group Reference Rule_22.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+        var userContext = this.GetUserContext();
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    }
+
+// Source: AlstonBird (ALBI)_TEST_2505.cs
+// function(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: AM Best (AMBEST)_AMBest Default CBR_2488.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: AMERICAN INTERNATIONAL GROUP (AIG)_Shipper Ref = Custom1_25.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    };
+
+// Source: American Spoon Foods (ASFW)_ASFCBR_1639.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Amplifon (AMPN)_Amplifon CBR_1917.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: AppliedImaging (APIM)_Appliedimageing_Rule_1853.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Barnes & Noble Education, Inc. (BNEDUCAT)_BarnesAndNoble Client BR_1588.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 5 });
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: bhargavitest (BHARGAVITEST)_ClientScriptTest_1591.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// history() // returns void
+        function history() {
+            vm.history = {
+                searchButton: 'button:contains("Search")',
+                reportSelector: '#reports'
+            };
+
+            $(document).on('click', vm.history.searchButton, selectReportChange);
+            $(document).on('change', vm.history.reportSelector, selectReportChange);
+
+            activate();
+
+            function activate() {
+                if (vm.profile.Name != vm.thinClient.adminProfileName) {
+                    vm.hideButtonExport = true;
+
+                    let reports = [ 'Default', 'Detailed Report', 'Void Report', 'Summary Report' ];
+                    vm.reports = vm.reports.filter(function(report) {
+                        report.TemplateHtml = report.TemplateHtml.replace(/<span.*glyphicon-search.*<\/span>/g, '');
+                        return reports.includes(report.Name);
+                    });
+                }
+            }
+
+            function selectReportChange(event) {
+                if (vm.report?.Name == 'Summary Report') {
+                    vm.hideButtonExport = true;
+                    vm.history.carrierAcceptTableContainer = {
+                        'height': $('.panel-body').height() + 'px',
+                        'overflow-y': 'auto'
+                    };
+
+                    let payload = {
+                        Action: 'summaryReport',
+                        Data: {
+                            startDate: vm.dtstart.toLocaleDateString('en-CA'),
+                            endDate: vm.dtend.toLocaleDateString('en-CA'),
+                            sites: getSites()
+                        }
+                    };
+                    let data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                    thinClient.httpClient('UserMethod', data).then(function (ret) {
+                        debugger;
+                        vm.history.carrierAcceptReport = JSON.parse(atob(ret.Data));
+                        vm.thinClient.loadData.show();
+                    });
+                } else {
+                    vm.hideButtonExport = false;
+                }
+
+                function getSites() {
+                    let sites = vm.UserInformation.SiteId ? vm.sites.filter(function(site) { return site.Id == vm.UserInformation.SiteId;}) : vm.sites;
+                    return sites.map(function(site) { return { name: site.Name }; });
+                }
+            }
+        }
+
+// Source: CBR Doc Ready (CBRDOCREADY)_cbr doc ready_1722.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// function CloseAllShippers() // returns void
+function CloseAllShippers() {
+        debugger;
+        
+        var getManifestItemsList,getManifestItemsemethod,methodParams,authorizationToken;
+        var allOrdersSelectedCarrier = [];
+        var allShipperSelectedCarrier,getShipperCarriersmethod,getShipperCarriersmethodParams,CloseAllShippersResponse,CloseAllShippersResults
+        
+            getShipperCarriersmethod='api/ShippingService/GetShipperCarriers';
+            getManifestItemsemethod='api/ShippingService/GetManifestItems';
+            authorizationToken = clientService.authorizationToken();
+            
+        
+            let selectedValCarrier = AllCarriersList.find(Carriers => Carriers.Id == $("#CarriersList option:selected").val()).Symbol;
+           
+            $.each(Array(AllShipperList.length), function(i)
+            {
+                
+                 getShipperCarriersmethodParams = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                 allShipperSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getShipperCarriersmethod, data: getShipperCarriersmethodParams, async: false, headers: authorizationToken }).responseJSON;
+    
+               if(allShipperSelectedCarrier.Carriers && allShipperSelectedCarrier.Carriers.length !=0){ 
+               
+                    methodParams = {"Carrier":selectedValCarrier,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                    getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + getManifestItemsemethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                    
+                   
+                    if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                    {
+                        debugger;
+                      var CloseManifestmethod,methodParams,CloseAllShippersResults
+                        CloseManifestmethod='api/ShippingService/CloseManifest';
+                         $.each(Array(getManifestItemsList.ManifestItems.length), function(j)
+                          {
+                                  
+                                  
+                                   allOrdersSelectedCarrier.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                              });
+                              methodParams ={"Carrier":selectedValCarrier,"ManifestItems":allOrdersSelectedCarrier,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                              CloseAllShippersResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseManifestmethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                              allOrdersSelectedCarrier = [];
+                    }
+               }
+               
+          
+            });
+            
+            if(CloseAllShippersResponse != undefined)
+            {
+                    if(CloseAllShippersResponse.ErrorCode==-1){
+                            
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers');
+                            
+                        }else
+                        {
+                                CloseAllShippersResults = CloseAllShippersResponse.CloseManifestResults[0].ErrorCode;
+                                if(CloseAllShippersResults!=0){
+                                    
+                                      $('#divAllshippersErrorMsg').hide();
+                                      $('#divAllshippersunsuccessfulcloseoutMsg').show();
+                                      $('#divAllshippersAndCarriersErrorMsg').hide();
+                                      $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                      
+                                      ShowAlert('ErrorModalCloseShippers');
+                                     
+                                }else if(CloseAllShippersResults==0){
+                                    
+                                     $('#divsuccessfulAllShippers').show();
+                                     $('#divsuccessfulAllShippersAndAllCarriers').hide();
+                                     
+                                      ShowAlert('successfulModalCloseShippers');
+                                     
+                                }
+                        }
+           }else
+           {
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers'); 
+                            
+           }
+                         
+       $('#loaderspinnerImg').hide();
+       
+        
+    }
+
+// function ClosecOutAllShippersAndAllCarriers() // returns void
+function ClosecOutAllShippersAndAllCarriers() {
+        
+                        var CloseAllShippersAllCarrierResponse,closeallgetManifestItemsemethod,CloseAllShippersAllCarriermethod,methodParams,authorizationToken,CloseAllShippersAllCarrierResults,getallShipperallCarriersmethod
+                             CloseAllShippersAllCarriermethod='api/ShippingService/CloseManifest';
+                             getallShipperallCarriersmethod='api/ShippingService/GetShipperCarriers';
+                             closeallgetManifestItemsemethod='api/ShippingService/GetManifestItems';
+                            
+                             var allOrdersSelectedCarrierfromallclose = [];
+                             debugger;
+       
+         $.each(Array(AllCarriersList.length), function(k)
+        {
+             $.each(Array(AllShipperList.length), function(i)
+            {
+                       var getShipperCarriersmethodParameters = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                         authorizationToken = clientService.authorizationToken();
+                         var allShipperallCarrierSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getallShipperallCarriersmethod, data: getShipperCarriersmethodParameters, async: false, headers: authorizationToken }).responseJSON;
+            
+                       if(allShipperallCarrierSelectedCarrier.Carriers && allShipperallCarrierSelectedCarrier.Carriers.length !=0){ 
+                       
+                           var closeallmethodParams = {"Carrier":AllCarriersList[k].Symbol,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                           var getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + closeallgetManifestItemsemethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                            
+                            if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                            {
+                                var CloseManifestmethod,methodParams,authorizationToken,CloseAllShippersResults
+                                    authorizationToken = clientService.authorizationToken();
+                                
+                                       $.each(Array( getManifestItemsList.ManifestItems.length), function(j)
+                                      {
+                                          
+                                           allOrdersSelectedCarrierfromallclose.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                                      });
+                                      var closeallmethodParams ={"Carrier":AllCarriersList[k].Symbol,"ManifestItems":allOrdersSelectedCarrierfromallclose,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                                      CloseAllShippersAllCarrierResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseAllShippersAllCarriermethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                                       allOrdersSelectedCarrierfromallclose = [];
+                            }
+                       }
+             });                  
+        });
+        
+            if(CloseAllShippersAllCarrierResponse != undefined){
+                                 if(CloseAllShippersAllCarrierResponse.ErrorCode==-1){
+                                    
+                                     $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+                                }else
+                                {
+                                        CloseAllShippersAllCarrierResults = CloseAllShippersAllCarrierResponse.CloseManifestResults[0].ErrorCode;
+                                        if(CloseAllShippersAllCarrierResults!=0){
+                                            
+                                        $('#divAllshippersErrorMsg').hide();
+                                        $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                        $('#divAllshippersAndCarriersErrorMsg').hide();
+                                        $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').show();
+                                      
+                                        ShowAlert('ErrorModalCloseShippers');
+                                        }else if(CloseAllShippersAllCarrierResults==0){
+                                            
+                                        $('#divsuccessfulAllShippers').hide();
+                                        $('#divsuccessfulAllShippersAndAllCarriers').show();
+                                      
+                                        ShowAlert('successfulModalCloseShippers');
+                                        }
+                                 }
+            }else{
+                
+                                    $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+            }
+            $('#loaderspinnerImg').hide();
+           
+        
+    }
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    };
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    };
+
+// Source: Conduent (CONDUENT)_Conduent_CBR_1659.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    }
+
+// this.NewShipment(shipmentRequest) // returns undefined
+    this.NewShipment = function (shipmentRequest) {
+        if (cbr.historyShipment != null) {
+            var historyRequest = JSON.parse(cbr.historyShipment);
+            this.vm.totalPackages = historyRequest.Packages.length;
+
+            shipmentRequest.PackageDefaults = historyRequest.PackageDefaults;
+            shipmentRequest.Packages = historyRequest.Packages;
+            shipmentRequest.PackageDefaults.Description = "PC Equipment";
+
+            shipmentRequest.Packages.forEach(function (pkg) {
+                pkg.ReturnDelivery = true;
+                pkg.ReturnDeliveryMethod = 4;
+                pkg.ReturnDeliveryAddressEmail = historyRequest.PackageDefaults.Consignee.Email;
+                pkg.Description = "PC Equipment";
+            });
+            cbr.historyShipment = null;
+        }
+        cbr.bulk.create.itemReferences = [];
+    }
+
+// function historyDuplicateOnClick() // returns undefined
+    function historyDuplicateOnClick() {
+        $('body').delegate('table a[action-duplicate]', 'click', function () {
+            cbr.historyShipment = $(this).attr('action-duplicate');
+            debugger;
+            document.location = '#!/shipping'
+        });
+    }
+
+// Source: Consumer Health (CONSUMERHEALTH)_Glasko Smith BR_1711.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+        var whereClauses = searchCriteria.WhereClauses;
+        whereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    }
+
+// Source: COREBRIDGE (CORE)_Shipper Ref = Custom1_1815.cs
+// userDataOnlyHistoryView(searchCriteria) // returns void
+function userDataOnlyHistoryView(searchCriteria) {
+        var data_;
+        data_ = GetUserContext_(data_);
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: data_.UserId, Operator: 0 });
+    }
+
+// this.PreSearchHistory = function (searchCriteria) // returns void
+this.PreSearchHistory = function (searchCriteria) {
+        userDataOnlyHistoryView(searchCriteria);
+    };
+
+// Source: Customer Solutions Internal Shipping (CSIS)_Client Business Rule_2490.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Demo Company Import (DMCO1)_ClientScriptTest_1605.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DemotestUAT (734934577)_CBR Void Test_1620.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DemotestUAT (734934577)_KeyStroke_1621.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DH_Pace_Trial (DHPACE)_Test_1809.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: DRF (DRF)_Test_2448.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Edward Jones  (EdwardJones)_Edward Jones Reference Rules 2.0_2476.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+//        debugger;
+        //var branchNo = getKeyValue('Custom3', userCustomData)
+		var branchNo = client.getValueByKey('Custom3', this.vm.profile.UserInformation.Address.CustomData);
+        if (branchNo) {
+            searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: branchNo, Operator: 5 });
+        }
+    }
+
+// Source: Edward Jones  (EdwardJones)_Edward Jones Reference Rules_4.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+//        debugger;
+//        var branchNo = getKeyValue('Custom3', userCustomData)
+		var branchNo = client.getValueByKey('Custom3', this.vm.profile.UserInformation.Address.CustomData);
+        if (branchNo) {
+            searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: branchNo, Operator: 5 });
+        }
+    }
+
+// Source: FalconNDX (FNDX)_Falcon_CBR_1794.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: FIS Global (FIS)_FIS Global Reference Rules_96.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference19', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// Source: FMC (FMC)_FMC Reference Rule_2486.cs
+// function userDataOnlyHistoryView(searchCriteria) // returns void
+function userDataOnlyHistoryView(searchCriteria)
+{
+    var userContext;
+    userContext = GetUserContext(userContext);
+    searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+}
+
+// this.PreSearchHistory = function (searchCriteria) // returns void
+this.PreSearchHistory = function (searchCriteria) {
+    userDataOnlyHistoryView(searchCriteria);
+};
+
+// Source: GAP (GAP)_Rule with Mail Innov. Billing_1888.cs
+// function ClientBusinessRules() // returns void
+function ClientBusinessRules() {
+
+    const mi_tpb_stores = [
+        
+        3160,2088,4796,8251,7656,3750,8207,8597,8057,5777,4635,3499,6465,5805,1427,4225,8025,8024,1049,1232,8290,8035,4903,4781,2920,8277,8028,8194,3182,5200,3978,8094,8906,5888,3071,7730,6327,7794,5187,6273,3145,6776,8193,6780,1559,6445,6481,6188,8243,7925,3977,4404,7600,6277,7961,7074,8427,5313,5806,7991,2547,3233,7115,1725,1919,6344,2532,8266,7036,5877,7070,5588,6312,5815,5161,8254,6153,4266,4000,7640,8146,8428,1913,7068,8488,7067,8569,7091,1247,1437,8213,8316,4786,7088,8042,7083,8233,6936,8143,7680,8536,8144,8044,7096,7061,8147,4640,7983,8237,8992,8469,8593,7042,4875,7071,6255,4877,7063,7986,7734,4904,4876,7121,7085,7046,8013,1669,8138,8070,8281,8110,3751,8104,8330,8177,8489,3357,7052,5861,5169,5669,3773
+            
+            ];
+
+            let StoreLocationsCanadaArray = [
+                '0495', '1235', '1236', '1553', '1564', '8420', '2489', '2490', '2533', '4850', '2674',
+                '2936', '9150', '3172', '3174', '3175', '3184', '9855', '9862', '9869', '9873', '3344',
+                '3362', '3336', '3342', '3344', '3381', '3786', '3788', '3805', '3786', '3788', '4134',
+                '4253', '4589', '5105', '9858', '9132', '6322', '6796', '7522', '8376', '8378', '8874',
+                '8987', '9178', '9850', '9851', '9852', '9853', '9854', '9855', '9885'
+              ];       
+            var canadaSelected = false; // Initialize the flag as false
+    this.PageLoaded = function(location) {   
+        //if (location == '/') document.location = '#!/shipping';
+        //$('a[href="/#!/createbatch"]').hide();
+        //$('a[href="/#!/batchmanager"]').hide();
+       
+        //$('a[href="/Manage"][title="Manage"]').remove();
+        canadaSelected = false;
+        var selectElement = document.getElementById('Locales');
+        var selectedValue = selectElement.value;
+        
+        if (selectedValue !== 'fr-CA') { 
+            setInterval(function() { selectCanadaForAllCountrySelects(); }, 1500);
+            return;}
+             $('body').delegate('*', 'focus', function () { $('div[role="alert"]:visible').hide(); })
+           $('body').on('click', 'input[ng-click="vm.opendeliverDate()"], button[ng-click="vm.opendeliverDate()"]', translateDates);
+           
+            setInterval(function() {
+                translateDates();
+                $('button').each(function() {
+                    const frenchMonths = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+                    let text = $(this).text().trim();
+                    let month = text.split(' ')[0];
+    
+                    $('button.btn.btn-sm.btn-info.uib-datepicker-current.ng-binding').each(function() {
+                        let text = $(this).text().trim();
+                        if (text === 'Today') {
+                            $(this).text('Aujourd\'hui');  // Translate "Today" to French
+                        }
+                    });
+                    $('button.btn.btn-sm.btn-danger.uib-clear.ng-binding').each(function() {
+                        let text = $(this).text().trim();
+                        if (text === 'Clear') {
+                            $(this).text('Effacer');  // Translate "Clear" to French
+                        }
+                    });
+    
+                    $('button.btn.btn-sm.btn-success.pull-right.uib-close.ng-binding').each(function() {
+                        let text = $(this).text().trim();
+                        if (text === 'Close') {
+                            $(this).text('Fermer');  // Translate "Close" to French
+                        }
+                    });
+                    selectCanadaForAllCountrySelects();
+            
+                    for (let i = 0; i < frenchMonths.length; i++) {
+                        if (month.includes(frenchMonths[i])) {
+                            $(this).prop('disabled', true);  // Disable the button if it contains a month name
+                            return false;  // Break out of the .each() loop
+                        }
+                    }
+                });
+            }, 1500);
+            
+        
+       
+         
+        function  translateDates() {
+            const monthMapping = {
+                "January": "Janvier",
+                "February": "Février",
+                "March": "Mars",
+                "April": "Avril",
+                "May": "Mai",
+                "June": "Juin",
+                "July": "Juillet",
+                "August": "Août",
+                "September": "Septembre",
+                "October": "Octobre",
+                "November": "Novembre",
+                "December": "Décembre"
+                };
+                
+                const dayMapping = {
+                  'Mon': 'Lun',
+                  'Tue': 'Mar',
+                  'Wed': 'Mer',
+                  'Thu': 'Jeu',
+                  'Fri': 'Ven',
+                  'Sat': 'Sam',
+                  'Sun': 'Dim'
+                };
+
+
+                const currentYear = new Date().getFullYear();
+                $("small[aria-label]").each(function() {
+                  var day = $(this).text().trim();
+                  var translatedDay = dayMapping[day];
+                  if (translatedDay) {
+                    $(this).text(translatedDay);
+                  }
+                });
+                
+                $("strong").each(function() {
+                  var dateText = $(this).text().trim();
+                  var month = dateText.split(' ')[0];
+                  var translatedMonth = monthMapping[month];
+                  if (translatedMonth) {
+                      var updatedText = dateText.replace(month, translatedMonth);
+                      $(this).text(updatedText);
+                  }
+                });
+
+                var buttonLeft = document.querySelector('.uib-left');
+                var buttonRight = document.querySelector('.uib-right');
+        
+                if (buttonLeft) {
+                    $(buttonLeft).off('click.custom').on('click.custom', function() {
+                       return getCurrentMonthYear('previous');
+                        // Your logic here
+                    });
+                }
+                
+                if (buttonRight) {
+                    $(buttonRight).off('click.custom').on('click.custom', function() {
+                       return getCurrentMonthYear('next');
+                        // Your logic here
+                    });
+                }
+
+
+            }
+
+            function getCurrentMonthYear(action) {
+                const frenchMonths = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+                let monthYear = null;
+               
+                $('strong.ng-binding').each(function() {
+                    let text = $(this).text();
+                    
+                    for (let i = 0; i < frenchMonths.length; i++) {
+                        if (text.includes(frenchMonths[i])) {
+                            if(action=='next') {
+                                $(this).text(getNextMonthYearInFrench(text));
+                            } else {
+                                $(this).text(getPreviousMonthYearInFrench(text));
+                            }
+                            return false;  // Break out of the .each() loop
+                        }
+                    }
+                });
+                
+                return monthYear;
+            }
+
+
+            function getNextMonthYearInFrench(dateStr) {
+                var monthNamesFr = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+                var splitDate = dateStr.split(' ');
+                var month = splitDate[0];
+                var year = splitDate[1];
+            
+                var currentMonthIndex = monthNamesFr.indexOf(month);
+                
+                // Check if the current month is December.
+                if (currentMonthIndex === 11) {
+                    // Increment the year and reset the month to January.
+                    year++;
+                    month = monthNamesFr[0];
+                } else {
+                    // Get the next month.
+                    month = monthNamesFr[currentMonthIndex + 1];
+                }
+                
+                return month + ' ' + year;
+            }
+
+
+            function getPreviousMonthYearInFrench(dateStr) {
+                var monthNamesFr = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+                var splitDate = dateStr.split(' ');
+                var month = splitDate[0];
+                var year = splitDate[1];
+            
+                var currentMonthIndex = monthNamesFr.indexOf(month);
+                
+                // Check if the current month is January.
+                if (currentMonthIndex === 0) {
+                    // Decrement the year and set the month to December.
+                    year--;
+                    month = monthNamesFr[11];
+                } else {
+                    // Get the previous month.
+                    month = monthNamesFr[currentMonthIndex - 1];
+                }
+                
+                return month + ' ' + year;
+            }
+
+        var client = {
+
+            init: function () {
+               
+                this.translateMenuToFrench();
+               
+                  // Bind the translation function to the click event of the arrow elements in the date picker
+            },
+           
+            translateMenuToFrench: function () {
+                
+         function deliverDatePicker() {
+
+            translateToFrench = {
+                "Months": {
+                  "January": "Janvier",
+                  "February": "Février",
+                  "March": "Mars",
+                  "April": "Avril",
+                  "May": "Mai",
+                  "June": "Juin",
+                  "July": "Juillet",
+                  "August": "Août",
+                  "September": "Septembre",
+                  "October": "Octobre",
+                  "November": "Novembre",
+                  "December": "Décembre"
+                },
+                "Days": {
+                  "Sunday": "Dimanche",
+                  "Monday": "Lundi",
+                  "Tuesday": "Mardi",
+                  "Wednesday": "Mercredi",
+                  "Thursday": "Jeudi",
+                  "Friday": "Vendredi",
+                  "Saturday": "Samedi"
+                }
+              };
+
+            var datePicker = $('div.uib-daypicker');
+            var currentMonth = datePicker.find('th button strong');
+            for (const [key, value] of Object.entries(translateToFrench['Months'])) {
+                if (currentMonth.text().indexOf(key) != -1) {
+                    currentMonth.text(currentMonth.text().replace(key, value));
+                }
+            }
+
+
+
+            datePicker.find('th small').each(function () {
+                $(this).text(translateToFrench.Days[this.innerHTML]);
+            })
+        }
+
+                var translationObj = this.createTranslationObjects();
+                this.translateElements('ul.nav.navbar-nav li a', translationObj.menuTranslation, this.replaceText);
+                this.translateElements('option', translationObj.historyWindowTranslations, this.replaceLabel);
+                this.translateElements('button', translationObj.buttontTranslation, this.replaceText);
+                this.translateElements('span', translationObj.spantTranslation, this.replaceText);
+                this.translateElements('input', translationObj.radiotTranslation, this.replaceText);
+                this.translateElements('strong', translationObj.strongtTranslation, this.replaceText);
+                this.translateElements('select option', translationObj.dropDownTranslation, this.replaceText);
+                this.translateElements('div', translationObj.divTranslation, this.replaceText);
+                this.translateElements2('input[type="button"]', translationObj.inputTranslation, this.replaceValue);
+                this.translateElements('h5', translationObj.h5Translation, this.replaceValue);
+                this.translateElements('h4', translationObj.h4Translation, this.replaceValue);
+                this.translateElements('h3', translationObj.h3Translation, this.replaceValue);
+                this.translateElements('select option', translationObj.optionLabelTranslation, this.replaceLabel);
+                this.translateElements('select option', translationObj.optionLabelTranslation, this.replaceText);
+                this.translateElements('label', translationObj.labeltTranslation, this.replaceText);
+                this.translateElements('label', translationObj.labeltTranslation, this.replaceText2);
+                this.translateElements('select option', translationObj.labeltTranslation, this.replaceLabel);
+                this.translateElements('td.ng-binding', translationObj.tdTranslation, this.replaceText);
+                this.translateElements('a', translationObj.aTranslation, this.replaceText);
+                this.translateElements('select option', translationObj.packagingTypes, this.replaceLabel);
+                this.handleSpecificCases();
+            },
+
+             
+
+            createTranslationObjects: function() {
+                return {
+                    aTranslation: {"Previous": "Précédent","Next": "Suivant","All": "Tout", "Ship-From Information":"Informations d'expéditeur","Ship-To Information":"Informations de livraison","Sold To":"Vendu à"},
+                    tdTranslation: {"Staged": "Mis en scène"},
+                    divTranslation: {"Company":"Entreprise"},
+                    menuTranslation: {'Shipping': 'Livraison', 'Shipping and Rating': 'Expédition et tarification', 'Scan Ship': 'Analyser le navire', 'Batch Manager': 'Gestionnaire de lots', 'Create a Batch': 'Créer un lot', 'Address Book': 'Carnet d\'adresses', 'Distribution Lists': 'Listes de distribution', 'Pickup Request': 'Demande de ramassage', 'History': 'Historique', 'End of Day': 'Fin de journée', 'Close Manifest': 'Fermer le manifeste', 'Manifest Documents': 'Documents du manifeste', 'Transmit': 'Transmettre', 'Group Manager': 'Gestionnaire du groupe', 'Manage Data': 'Gérer les données', 'Log Off': 'Se déconnecter'},
+                    historyWindowTranslations: {"Default" : "Défaut", "Detailed Report" : "Rapport détaillé", "Upgrade Report" : "Rapport de mise à niveau", "Void Report" : "Rapport d'annulation", "Daily Report by Shipper Reference" : "Rapport quotidien par référence de l'expéditeur", "Daily Report by Site" : "Rapport quotidien par site", "Select address book" : "Sélectionnez le carnet d'adresses"},
+                    
+                        labeltTranslation: {
+                          "Last Name": "Nom de Famille",
+                          "First Name": "Prénom",
+                          "Your Name": "Votre Nom",
+                          "Phone": "Téléphone",
+                          "Country or Territory": "Pays ou Territoire",
+                          "Zip Code": "Code Postal",
+                          "State": "État",
+                          "Attention Name": "Nom à l'attention de",
+                          "Company": "Entreprise",
+                          "Address Line 3": "Adresse 3",
+                          "Address Line 2": "Adresse 2",
+                          "City": "Ville *",
+                          "Packaging": "Emballage",
+                          "City *": "Ville",
+                          "Weight": "Poids",
+                          "Same as ShipTo": "Identique à Expédier à",
+                          "Référence du destinataire": "Numéro de RMA ou de transfert",
+                          "Référence de l'expéditeur": "Prénom et Nom de famille",
+                          "COD Funds Type": "Type de fonds contre remboursement",
+                          "Cod Amount": "Contre remboursement",
+                          "Close Manifest Date(s) :": "Date(s) de clôture du manifeste",
+                          "Deliver Time": "Heure de livraison",
+                          "Select address book": "Sélectionnez le carnet",
+                          "Company Address Book": "Carnet d'adresses",
+                          "Order Number": "Numéro de commande",
+                          "Not Required": "Non Requis",
+                          "Shippers ": "Expéditeurs",
+                          "Carriers ": "Transporteurs",
+                          "Shippers": "Expéditeurs",
+                          "Carriers": "Transporteurs",
+                          "Close Manifest Date(s) :  ": "Date(s) de clôture du manifeste",
+                          "Manifest Documents": "Documents de manifeste",
+                          "Transmit Items": "Transmettre les articles",
+                          "Carrier": "Transporteur",
+                          "Group Type": "Type de groupe",
+                          "Grouping Status": "Statut de regroupement",
+                          "Select Distribution List :": "Choisir la liste de diffusion",
+                          "No Distribution List Selected": "Aucune liste de diffusion sélectionnée",
+                          "Ship Date": "Date d'expédition",
+                          "Batch Reference": "Référence du lot",
+                          "Detailed Report": "Rapport détaillé",
+                          "Upgrade Report": "Rapport de mise à niveau",
+                          "Void Report": "Rapport d'annulation",
+                          "Daily Report by Shipper Reference": "Rapport quotidien par référence de l'expéditeur",
+                          "Daily Report by Site": "Rapport quotidien par site",
+                          "Ship Notification": "Notification d'envoi",
+                          "Delivery Exception Notification": "Notification d'exception de livraison",
+                          "Delivery Notification": "Notification de Livraison",
+                          "Country or Territory *": "Pays ou Territoire",
+                          "Zip Code *": "Code Postal",
+                          "State *": "État",
+                          "Attention *": "Nom à l'attention de",
+                          "Attention": "Nom à l'attention de",
+                          "Company *": "Entreprise",
+                          "Address Line 3 *": "Adresse 3",
+                          "Address Line 2 *": "Adresse 2",
+						  "Address Line 1 *": "Adresse 1",
+						  "Address Line 1": "Adresse 1",
+						  "Email": "Courriel",
+						  "Saturday Delivery": "Livraison le samedi",
+						  "Bil Duties and Taxes To": "Facturer les droits et taxes à",
+						  "RMA or Transfer #": "Numéro de RMA ou de transfert",
+                          "Company Name": "Entreprise",
+						  "Description Of Goods": "Description des marchandises",
+                          "Residential Address":"Adresse Résidentielle",
+                          "Return Label":"Étiquette de retour",
+                          "State/Province":"État/Province",
+                          "First and Last Name":"Nom et prénom",
+                          "Name":"Nom",
+                          "State/Province (2 Letters Only) *": "État/Province (2 lettres seulement) *"
+                          
+
+                        },
+                      
+                      
+                    buttontTranslation: {"Save":"Sauvegarder", "Reset": "Réinitialiser", "Continue": "Continuer", "Clear": "Effacer", "Close Manifest": "Clôturer le manifeste", "Select Printer": "Sélectionner l'imprimante", "Transmit":"Transmettre", "Filter":"Filtrer", "Purge":"Effacer", "Process":"Traiter", "Add" : "Ajouter", "Batch Reference" : "Référence de lot", "Clear Batch" : "Effacer le lot", "Edit" : "Modifier", "Delete" : "Effacer", "Pickup Request": "Demande de ramassage", "Search" : "Rechercher"},
+                    spantTranslation: {"Status": "Statut", "Ship Errors": "Erreurs d'expédition", "Shipped": "Expédié", "Batches": "Lots", "Batch Reference": "Référence de lot","Address Book":"Carnet d\'adresses"},
+                    radiotTranslation: {"History Items": "Éléments d'historique", " Transmit Items ": "Transmettre les articles"},
+                    strongtTranslation: {"Batches": "Lots", "Manage" : "Gérer", "Days to Maintain":"Jours à conserver", "Goods" : "Marchandises"},
+                    dropDownTranslation: {
+                        "Cash": "Espèces",
+                        "Money Order": "Mandat postal",
+                        "Morning ( Till 9 AM)": "Matin (Jusqu'à 9h)",
+                        "Noon (Till 12 Noon)": "Midi (Jusqu'à 12h)",
+                        "Afternoon (Till 5PM)": "Après-midi (Jusqu'à 17h)",
+                        "End of Day (Till Mid-Night)": "Fin de journée (Jusqu'à minuit)",
+                        "Add": "Ajouter",
+                        "Update": "Mettre à jour",
+                        "Select Action": "Sélectionnez l'action",
+                        "Select address book": "Sélectionnez le carnet",
+                        "Open": "Ouvert",
+                        "Closed": "Fermé",
+                        "Closed and Locked": "Fermé et verrouillé",
+                        "Select Carrier...": "Sélectionnez le transporteur",
+                        "Select Shipper...": "Sélectionnez l'expéditeur",
+                        "Select Type...": "Sélectionnez le type",
+                        "Select Status...": "Sélectionnez le statut",
+                        "Default": "Défaut"
+                      },
+                    inputTranslation: {"Edit Third Party Information": "Modifier les informations de tiers", "Edit Consignee Third Party Billing": "Modifier Facturation Tiers Destinataire"},
+                    h5Translation: {"No batches found": "Aucun lot trouvé", "No Groups Found" : "Aucun groupe trouvé", "No commodities added" : "Aucune marchandise ajoutée"},
+                    h4Translation: {"History" : "Historique"},
+                    h3Translation: {"No Records Found" : "Aucun lot trouvé"},
+                    optionLabelTranslation: {     
+                    "Receiver": "Destinataire",
+                    "Shipper": "Expéditeur",
+                    "Third Party": "Tiers",
+                    "Included with Shipment": "Inclus avec l'expédition",
+                    "Electronically Filed": "Déposé électroniquement",
+                    "Carrier Removed": "Retiré par le transporteur",
+                    "Included": "Inclus",
+                    "Not Required": "Non Requis",
+                    "Carrier Provided": "Fourni par le Transporteur",
+                    "Electronically Filed by CSI AESDirect": "Déposé Électroniquement par CSI AESDirect",
+                    "Summary Reporting": "Rapport Résumé",
+                    "Select address book": "Sélectionnez le carnet",
+                    "Print Return Label": "Imprimer Étiquette Retour",
+                    "1 Pickup Attempt": "1 Tentative Ramassage",
+                    "3 Pickup Attempts": "3 Tentatives Ramassage",
+                    "Carrier Print and Mail Return Label": "Expéditeur Imprime/Poste Étiquette",
+                    "Carrier Email Return Label": "Expéditeur Email Étiquette",
+                    "Carrier will not bill for package until label is scanned": "Pas de Facturation Avant Scan Étiquette",
+                    "FCA Free Carrier": "FCA Transporteur Libre",
+                    "EXW Ex Works": "EXW À l'Usine",
+                    "CPT Carriage Paid To": "CPT Transport Payé Jusqu'à",
+                    "CIP Carriage and Insurance Paid To": "CIP Transport et Assurance Payés Jusqu'à",
+                    "DAT Delivered at Terminal": "DAT Livré au Terminal",
+                    "DAP Delivered at Place": "DAP Livré à Destination",
+                    "DDP Delivered Duty Paid": "DDP Livré Droits Payés",
+                    "FAS Free Alongside Ship": "FAS Libre le Long du Navire",
+                    "FOB Free on Board": "FOB Libre à Bord",
+                    "CFR Cost and Freight": "CFR Coût et Fret",
+                    "CIF Cost, Insurance and Freight": "CIF Coût, Assurance et Fret",
+                    "DEQ Delivered Ex Quay (obsolete)": "DEQ Livré à Quai (obsolète)",
+                    "DAF Delivered at Frontier (obsolete)": "DAF Livré à la Frontière (obsolète)",
+                    "DES Delivered Ex Ship (obsolete)": "DES Livré à Bord du Navire (obsolète)",
+                    "DDU Delivered Duty Unpaid (obsolete)": "DDU Livré Droits Non Payés (obsolète)",
+                    "United States": "États-Unis"
+                    
+                    
+
+                      },
+                      packagingTypes: {
+                    "Carrier 10 kg Box": "Boîte de transport de 10 kg",
+                    "Carrier Box": "Boîte de transport",
+                    "Carrier 25 kg Box": "Boîte de transport de 25 kg",
+                    "Customer Packaging": "Emballage du client",
+                    "Customer Pallet": "Palette du client",
+                    "Customer Soft Packaging": "Emballage souple du client",
+                    "Carrier Letter": "Lettre de transport",
+                    "Carrier PAK": "PAK de transport",
+                    "Carrier Tube": "Tube de transport",
+                    "UPS SimpleRate Extra Small Box (1-100 cubic in) (UPS Adapter)": "Boîte extra petite UPS SimpleRate (1-100 pouces cubes) (Adaptateur UPS)",
+                    "UPS SimpleRate Small Box (101-250 cubic in) (UPS Adapter)": "Boîte petite UPS SimpleRate (101-250 pouces cubes) (Adaptateur UPS)",
+                    "UPS SimpleRate Medium Box (251-650 cubic in) (UPS Adapter)": "Boîte moyenne UPS SimpleRate (251-650 pouces cubes) (Adaptateur UPS)",
+                    "UPS SimpleRate Large Box (651-1050 cubic in) (UPS Adapter)": "Boîte grande UPS SimpleRate (651-1050 pouces cubes) (Adaptateur UPS)",
+                    "UPS SimpleRate Extra Large Box (1051-1728 cubic in) (UPS Adapter)": "Boîte extra grande UPS SimpleRate (1051-1728 pouces cubes) (Adaptateur UPS)"
+                      }
+                    }
+                    },
+            
+            translateElements2: function(selector, translation, replacer) {
+                $(selector).each(function() {
+                    var text = $(this).val();
+                    if (translation[text] !== undefined) {
+                        replacer.call(this, text, translation[text]);
+                    }
+                });
+            },
+            translateElements: function(selector, translation, replacer) {
+                $(selector).each(function() {
+                    var text = $(this).text().trim();
+                    if (translation[text] !== undefined) {
+                        replacer.call(this, text, translation[text]);
+                    }
+                });
+            },
+
+            replaceText: function(oldText, newText) {
+                this.innerHTML = this.innerHTML.replace(oldText, newText);
+            },
+            replaceText2: function(oldText, newText) {
+                this.innerText = this.innerText.replace(oldText, newText);
+            },
+
+            replaceValue: function(oldText, newText) {
+                $(this).val(newText);
+            },
+
+            replaceLabel: function(oldText, newText) {
+                $(this).attr('label', newText);
+            },
+             replaceLabel2(selector, oldText, newText) {
+                $(selector).each(function() {
+                    if ($(this).attr('label') === oldText) {
+                        $(this).attr('label', newText);
+                    }
+                });
+            },
+
+            handleSpecificCases: function() {
+                $('h5:contains("No commodities added")').text('Aucune marchandise ajoutée');
+                $('label.control-label.no-left-padding.ng-binding').each(function() {
+                    if ($(this).attr('style') === "text-align: center" && $(this).html() === "&nbsp;of&nbsp;&nbsp;1") {
+                        $(this).html('&nbsp;de&nbsp;&nbsp;1');
+                    }
+                });
+            },
+        };
+
+        var intervalId = setInterval(function() {
+            client.init(); 
+            clearInterval(intervalId);
+        }, 1000);
+
+        switch(location) {
+            case '/shipping':
+                //this.vm.translations.ThinClient.CreateAShipment = "Créer un envoi";
+                break;
+            case '/history':
+                $("h4:first").text("Historique");
+                
+                break;
+            // Add more cases as needed
+        }
+     }
+     
+
+    this.Keystroke = function (shipmentRequest, event) {
+    }
+
+    this.PreShip = function(shipmentRequest, userParams) {       
+    }
+
+    this.PostShip = function(shipmentRequest, shipmentResponse) {
+        canadaSelected = false;
+        var misc3reference = "200.30.6035.5102.90059";
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference1 = shipmentRequest.Packages[i].ShipperReference;
+            shipmentRequest.Packages[i].ShipperReference = "";
+            //Address 1
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "1112 Turkey Mountain Rd.")
+            {
+                console.log('found 1/4 address');
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+            }
+             //Address 2
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "102R Demi Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+              //Address 3
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "17511 S. Susana Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+               //Address 4
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "200 Terminal St.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+            
+            var company = shipmentRequest.PackageDefaults.Consignee.Company.toLowerCase();
+            if(company.indexOf("mail innov") != -1 || company.startsWith("ups mi") || company.startsWith("ups mail"))
+            {
+                if (mi_tpb_stores.find(element => element == this.vm.profile.Shippers[0].Symbol) !== null)
+                {
+                    console.log("Billing MI as TPB");
+                    shipmentRequest.PackageDefaults.ThirdPartyBilling = true;
+                    var tpb = {};
+                    angular.copy(shipmentRequest.PackageDefaults.Consignee, tpb);
+                    tpb.Account = "7500YW";
+                    tpb.Company = "UPS MAIL INNOVATIONS";
+                    tpb.Contact = "REBECA CARBRERA";
+                    tpb.Address1 = "13050 MARLAY AVE";
+                    tpb.City = "FONTANA";
+                    tpb.StateProvince = "CA";
+                    tpb.PostalCode = "92337";
+                    tpb.Country = "US";
+                    tpb.Phone = "555-555-555";
+                    shipmentRequest.PackageDefaults.ThirdPartyBillingAddress = tpb;
+                }
+            }
+            
+        }
+        console.log('PRESHIP');
+        console.log(shipmentRequest);
+    }
+
+    this.PreProcessBatch = function(batchReference, actions, params) {
+    }
+
+    this.PostProcessBatch = function(batchResponse) {
+    }
+
+    this.PreVoid = function(pkg, userParams) {
+    }
+
+    this.PostVoid = function(pkg) {
+    }
+
+    this.PrePrint = function(document, localPort) {
+    }
+
+    this.PostPrint = function(document) {
+    }
+
+    this.PreLoad = function(loadValue, shipmentRequest, userParams) {  
+    }
+
+    this.PostLoad = function(loadValue, shipmentRequest) {
+    }
+
+    this.PreRate = function(shipmentRequest, userParams) {
+    }
+
+    this.PostRate = function (shipmentRequest, rateResults) {
+    }
+
+    this.PreCloseManifest = function(manifestItem, userParams) {
+    }
+
+    this.PostCloseManifest = function(manifestItem) {
+    }
+
+    this.PreTransmit = function(transmitItem, userParams) {
+    }
+
+    this.PostTransmit = function(transmitItem) {
+    }
+
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+    this.PostSearchHistory = function(packages) {
+    }
+
+    this.NewShipment = function(shipmentRequest) { 
+    }
+
+    this.PreBuildShipment = function(shipmentRequest) {
+    }
+
+    this.PostBuildShipment = function(shipmentRequest) {
+    }
+
+    this.RepeatShipment = function(currentShipment) {
+    }
+
+    this.PreCreateGroup = function(group, userParams) {
+    }
+
+    this.PostCreateGroup = function(group) {
+    }
+
+    this.PreModifyGroup = function(group, userParams) {
+    }
+
+    this.PostModifyGroup = function(group) {
+    }
+
+    this.PreCloseGroup = function(group, userParams) {
+    }
+
+    this.PostCloseGroup = function(group) {
+    }
+
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        $('label.control-label.no-left-padding.ng-binding').each(function() {
+            // Check if the label has the correct style and text
+            if ($(this).attr('style') === "text-align: center" && $(this).html() === "&nbsp;de&nbsp;&nbsp;"+ (packageIndex)) {
+                // Change the label's text
+                $(this).html('&nbsp;de&nbsp;&nbsp;' + (packageIndex+1));
+            }
+        });
+    }
+
+    this.CopyPackage = function(shipmentRequest, packageIndex) {
+    }
+
+    this.RemovePackage = function(shipmentRequest, packageIndex) {
+       
+        $('label.control-label.no-left-padding.ng-binding').each(function() {
+            // Check if the label has the correct style and text
+            if ($(this).attr('style') === "text-align: center" && $(this).html() === "&nbsp;de&nbsp;&nbsp;"+ (packageIndex+2)) {
+                // Change the label's text
+                $(this).html('&nbsp;de&nbsp;&nbsp;' + (packageIndex+1));
+            }
+        });
+    }
+
+    this.PreviousPackage = function(shipmentRequest, packageIndex) {		        
+    }
+
+    this.NextPackage = function(shipmentRequest, packageIndex) {        
+    }
+
+    this.PostSelectAddressBook = function (shipmentRequest, nameaddress) {
+    }
+
+    this.PreShipOrder = function(value, shipmentRequest, userParams) {
+    }
+
+    this.PostShipOrder = function(shipmentRequest, shipmentResponse) {
+        selectCanadaForAllCountrySelects();
+    }
+
+    var thinClientApiRequest = function (method, data, isAsync) {
+        $.getJSON('config.json', function (config) {
+            var shipExecServiceUrl = config.ShipExecServiceUrl;
+            var authorizationToken = shipExecServiceUrl.startsWith('http') ? { 'Authorization': 'Bearer ' + JSON.parse(window.localStorage.getItem("TCToken")).access_token } : '';
+            return $.post({ url: shipExecServiceUrl + '/' + method, data: data, async: isAsync, headers: authorizationToken });
+        });
+    }
+
+
+    function selectCanadaForAllCountrySelects() {
+        // Check if the flag is already true, which means we no longer need to change the selects
+        if(canadaSelected || !isSelectedValueInShippersArray()) {
+          return; // Exit the function if Canada has been selected in all dropdowns or if the site is not from Canada
+        }
+        
+        // Get all select elements with the name 'Country'
+        var selects = document.querySelectorAll('select[name="Country"]');
+        var allSelected = true; // To keep track if all selects have been set to Canada
+      
+        // Iterate through the NodeList
+        selects.forEach(function(select) {
+          // Only set the value to 'string:CA' if it's not already set
+          if (select.value !== 'string:CA') {
+            select.value = 'string:CA';
+            allSelected = false; // Not all selects have been set to Canada
+      
+            // Trigger change event for AngularJS
+            if ('createEvent' in document) {
+              var evt = document.createEvent('HTMLEvents');
+              evt.initEvent('change', false, true);
+              select.dispatchEvent(evt);
+            } else {
+              select.fireEvent('onchange');
+            }
+          }
+        });
+      
+        // If all selects have been set to Canada, set the flag to true
+        if (allSelected) {
+          canadaSelected = true;
+        }
+      }
+      
+
+      function isSelectedValueInShippersArray() {
+        // Use a more specific selector that targets the ng-model
+        var selectElement = document.querySelector('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"]');
+        
+        // Ensure the element exists
+        if (!selectElement) {
+          console.warn('Select element not found');
+          return false;
+        }
+        
+        // Get the index of the selected option
+        var selectedIndex = selectElement.selectedIndex;
+        
+        // Ensure an option is selected
+        if (selectedIndex < 0) {
+          console.warn('No option is selected');
+          return false;
+        }
+        
+        // Get the selected option element
+        var selectedOption = selectElement.options[selectedIndex];
+        
+        // Get the value of the selected option (and remove the "string:" prefix if present)
+        var selectedValue = selectedOption.value.replace('string:', '');
+        
+        // Check if the selected value is in the array
+        return StoreLocationsCanadaArray.includes(selectedValue);
+      }
+      
+
+function GetUserName() {
+   var helloUser = $('a[title="Manage"]:contains("Hello")').text();
+   return helloUser.match(/[a-zA-Z]+[a-zA-Z0-9._]+@[a-zA-Z]+\.[a-zA-Z.]{2,5}/i);
+} 
+
+}
+
+// Source: GAP INC (GAPMailrooms)_French changes_1862.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: GAP INC (GAPMailrooms)_French RH_1871.cs
+// History() // returns void
+    this.History = function () {
+        'h4:contains("History")'.$textToFrench();
+        angular.element(document).ready(function () {
+            translateReportsToFrench();
+        });
+         
+        function translateReportsToFrench () {
+            $('#reports option').each(function () {
+                if (client.translateToFrench[this.text] !== undefined) {
+                    $(this).attr('label', client.translateToFrench[this.text]);
+                }
+            });
+        }
+    }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// function VoidReal() // returns void
+  function VoidReal()
+  {
+    var ShipID = $('#ShipID').val();
+    var GlobalMSn = $('#GlobalMSn').val();
+    var Carrier = $('#Carrier').val();
+
+    var searchParams =
+    {
+      "SearchCriteria": {
+        "Skip": 0,
+        "Take": 200,
+        "WhereClauses": [
+          {
+            "FieldName": "ShipId",
+            "FieldValue": ShipID,
+            "Operator": 0
+          }
+        ],
+        "OrderByClauses": [
+          {
+            "FieldName": "GlobalMsn",
+            "Direction": "desc"
+          }
+        ]
+      },
+      "CompanyId": "4cf9324f-c58c-4694-ad37-3adcd3056c9b"
+    };
+    var data = searchParams;
+    var response = client.thinClientAPIRequest('SearchPackageHistory', data, false).done(function (response)
+    {
+      console.log(response);
+      if (response.ErrorCode != 0)
+      {
+        client.alert.Danger(response.ErrorMessage);
+      } else
+      {
+        console.log(response.Packages.length)
+        console.log(response.Packages)
+        response.Packages.forEach((package2, idx, array) =>
+        {
+          console.log(package2.GlobalMsn);
+          var currentPackage = [];
+          currentPackage.push(package2.GlobalMsn);
+          var voidParams =
+          {
+            "GlobalMsns": currentPackage,
+            "CompanyId": "4cf9324f-c58c-4694-ad37-3adcd3056c9b"
+          };
+          console.log('Processing: ' + package2.GlobalMsn)
+          var data2 = voidParams;
+		  console.log(voidParams);
+          var response2 = client.thinClientAPIRequest('VoidPackages_History', data2, true).done(function (response2)
+          {
+            console.log(response2);
+            if (response2.Packages[0].ErrorCode != 0)
+            {
+              client.alert.Danger(response2.Packages[0].ErrorMessage)
+            }
+            if (idx === array.length - 1)
+            {
+              CloseModalClose();
+              var elemento = document.querySelector('button[ng-click="vm.changeReport()"]'); if (elemento) { elemento.click(); }
+            }
+
+          });
+        });
+       
+      }
+    });
+  }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// function PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    var checkExist = setInterval(function ()
+        {
+          if ($('table[ng-table="vm.tableParamsForDetailed"] tr').length > 1)
+          {
+            clearInterval(checkExist);
+            $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)').find('td:eq(2) > div:not(.ng-hide)').html(function() 
+            {
+                var trackingN = $(this).text().trim();
+                
+                
+              if(trackingN.startsWith('1Z')) {
+              return "<a href=https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }   else {
+              return "<a href=https://online.chrobinson.com/tracking/#/?trackingNumber=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }
+            });
+          }
+        }, 100);
+    }
+
+// Source: GlaxoSmithKline LLC (gsk)_Glasko Smith BR_69.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        debugger;
+        var whereClauses = searchCriteria.WhereClauses;
+        whereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 5 });
+    }
+
+// Source: HandsOn (HANDSON)_Scanship_1744.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: HARLEY DAVIDSON (HD)_HD CBR 2.3 Fix_1758.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    }
+
+// Source: HARLEY DAVIDSON (HD)_Phase 2_2436.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+        var startShipdate = new Date();
+        startShipdate.setDate(startShipdate.getDate() - 90);    
+        this.vm.dtstart = startShipdate;
+        searchCriteria.WhereClauses.filter(function (w) {
+            if (w.FieldName == 'Shipdate' && w.Operator == 3) {
+                w.FieldValue = startShipdate.toISOString().slice(0, 10);                
+            }
+        });
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+        //debugger;
+        for (let i = 0; i < packages.length; i++)
+        {
+            const currentDate = new Date();
+            currentDate.setDate(currentDate.getDate());
+            
+            const shipDate = new Date(packages[i].Shipdate.Year,packages[i].Shipdate.Month-1,packages[i].Shipdate.Day);
+            //alert(packages[i].Shipdate.Year + " | " + packages[i].Shipdate.Month + " | " + packages[i].Shipdate.Day)
+            //alert(shipDate)
+            
+            const diffTime = Math.abs(shipDate - currentDate);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+            //console.log(diffTime + " milliseconds");
+            //alert(diffDays + " days");
+            if(diffDays > 30)
+            {
+                packages[i].CantPrint = true;
+            }
+        }
+    }
+
+// Source: Henry Schein (HS)_E42 Client Business Rules_1911.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: ICON Clinical Research (PRAInternational)_PRA Intl Business Rules_1574.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+        //searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });   //CBR FIX 07202022 Set in profiles
+    };
+
+// Source: Indiana University (INDIANAU)_IU.Ship.Returns_1548.cs
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: client.userContext.UserId, Operator: 0 });
+    };
+
+// function PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function (packages) {
+    };
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+     
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+        
+           var vm = this.vm;
+           for(var i=0; i<vm.profile.Services.length; i++){
+                //console.log(i);
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DATK.DATK"){
+                    vm.profile.Services[i].Name = "Viking Delivery Service";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.NEMF.NEMF"){
+                    vm.profile.Services[i].Name = "Old Dominion";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+           }
+    }
+
+// Source: Joy Accessories Inc (JOY)_JOY CBR_1863.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: KeithCo (KC)_roni_1720.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Land Home Financial Services (LHFS)_AdminAcceess_1578.cs
+// function PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        if (!userContext)
+        {
+            GetUserContext();
+
+        }
+        //searchCriteria.WhereClauses.push({ FieldName: 'MiscReference19', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// Source: Land Home Financial Services (LHFS)_LHFS_Bus_Rules_1579.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+        if (!userContext)
+        {
+            GetUserContext();
+
+        }
+        searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// Source: Lear Corporation (LEAR)_Lear_client_Businessrules_1810.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: LyondellBasell (LYON)_LYB_Company_Client_Side_1712.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+        console.log("postsearch");
+        console.log(this.vm.shippers);
+        
+        var s = this.vm.shippers;
+        for (var x=0; x < s.length -1; x++){
+            
+            var w = {};
+            w.FieldName = 'Shipper';
+            w.FieldValue = s[x].Symbol;
+            w.Operator = 0;
+        
+            searchCriteria.WhereClauses.push(w);
+        }
+
+
+        
+           
+            //s = this.vm.shippers[0].Symbol;
+            
+            //w.FieldValue = s[0];
+
+
+            //$('input[type=text][ng-model="vm.miscRef9"]').val(dealerNum);
+        
+
+        
+
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) 
+    {
+      var checkExist = setInterval(function ()
+      {
+        if ($('table[ng-table="vm.tableParamsForDetailed"] tr').length > 1)
+        {
+          clearInterval(checkExist);
+          $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)').find('td:eq(2) > div:not(.ng-hide)').html(function() 
+          {
+            return "<a href=https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+          });
+        }
+      }, 100);
+    }
+
+// Source: M&T Bank (MTBank)_MTBank_1506.cs
+// function historyReady() // returns void
+function historyReady() {
+    $('body').delegate('#CostCenterReport', 'click', function () {
+        getCostCenterReport(this);
+    });
+}
+
+// function getCostCenterReport(element) // returns the jqXHR from $.post when a cost center exists, otherwise undefined
+function getCostCenterReport(element) {
+    debugger;
+    var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+    var authorizationToken = clientService.authorizationToken();
+    var context = client.userContext;
+    var costcenter = $(element).attr('data-costcenter');
+    if (costcenter) {
+        var searchCriteria = { DateStart: $('input[ng-model="vm.dtstart"]').val(), DateEnd: $('input[ng-model="vm.dtend"]').val(), CostCenter: costcenter };
+        var data = { Action: element.id, Content: JSON.stringify(searchCriteria) };
+       return $.post({ url:shipExecServiceUrl +'/UserMethod',
+              data: {UserContext: userContext, Data:JSON.stringify(data)}, headers: authorizationToken},
+            function (response, status, xhr) {
+                downloadFile(costcenter, response["Data"]);
+            }
+        ).done(function () {
+        });
+    }
+}
+
+// Source: Marchon (MARCHON)_Marchon Client Side Business Rules_1839.cs
+// PageLoaded(location) // returns undefined
+    this.PageLoaded = function(location) {
+        // Hide History and End of Day menus
+        angular.element('a:contains("End of Day")').hide();
+        angular.element('a:contains("History")').hide();
+        
+        // Go to Shipping screen
+        if (location === '/')
+        {
+            document.location = '#!/shipping';
+        }
+    }
+
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Marchon (MARCHON)_MarchonCBR_Manager_1845.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: Mazda (MAZDA)_CBR Mazda_1856.cs
+// function(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: McIlHenny Revised (MCILHENNYREVISED)_McIlHenny Client Side Rules_1687.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function (packages) {
+    }
+
+// Source: Meta Platforms (API Shipping) (METAPLATFORMSAPISHIPPING)_Meta Thin Client Profile CBR_1868.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {};
+
+// Source: MGMResorts (MGMRESOR)_Inbound Client Rules_1648.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        //searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });   // handled in mgt studio settings
+    };
+
+// Source: MGMResorts (MGMRESOR)_Outbound Client Rules_1649.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        //searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });   // handled in mgt studio settings
+    };
+
+// Source: Michigan State University (MSU)_MSU Client_1665.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+        this.PreSearchHistory = function (searchCriteria) {
+            GetUserContext();
+            searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+    };
+
+// Source: NikeRevship (NIKEREVSHIP)_NikeRevshipClientBusinessRule_1786.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+
+
+		if (searchCriteria.WhereClauses !== null && searchCriteria.WhereClauses !== undefined) {
+			if (searchCriteria.WhereClauses.length > 0) {
+				var StartShipDate = null;
+				var EndShipDate = null;
+				var Shipper = "";
+				for (var i = 0; i <= searchCriteria.WhereClauses.length - 1; i++) {
+					if (searchCriteria.WhereClauses[i].FieldName == "Shipper") {
+						Shipper = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "Shipdate" && StartShipDate == null) {
+						StartShipDate = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "Shipdate" && StartShipDate != null) {
+						EndShipDate = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "MiscReference1") {
+						var miscReferenceObject = searchCriteria.WhereClauses[i];
+						searchCriteria.WhereClauses.splice(i, 1);
+						searchCriteria.WhereClauses.push({
+							"FieldName": "ConsolidationTrackingNumber",
+							"FieldValue": miscReferenceObject.FieldValue,
+							"Operator": miscReferenceObject.Operator
+						});
+					}
+				}
+
+
+
+				var data = {
+					UserContext: client.userContext,
+					Data: "ShipDate=" + StartShipDate + ";" + "Shipper=" + Shipper
+				}
+				if (StartShipDate == EndShipDate) {
+					sendSearchPackages("UserMethod", data, false)
+				} else {
+					var divResults = document.getElementById("divResults");
+					divResults.innerHTML = "Select one day only to show package count!";
+				}
+			}
+		}
+
+	}
+
+// Source: NikeRevship (NIKEREVSHIP)_Test CBR for Developer test_1823.cs
+// function(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QA CS Adapter Company (CSA)_Ship CBR_1850.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QA Label Validation (12345)_Test_2496.cs
+// function(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAManualTest (QACOMPANY)_CBR Test_1606.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: QAManualTestImport (QACOMPANY1)_CBR Test_1685.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAManualTestImport 2 (QACOMPANY2)_CBR Test_1656.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: QAScheduler (SCHTEST)_TestRules_1604.cs
+// function PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// function PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Rite Kem (RITEKEM)_RiteKem_1637.cs
+// this.PageLoaded(location) // returns void
+    this.PageLoaded = function(location) { 
+        if(location === "/"){
+            document.location = "#!/shipping";
+             }
+    $(document).ready(function () {
+        if (location == '/history') {
+            $('#reports').on('change', function (e)
+            {
+                    let v = $(this).find('option:selected').text();
+                    if (v == 'Hazmat Report')
+                        {
+                            $('button[value="Export"]').off();
+                                        $('body').delegate('button[value=Export]', 'click', function(e) {
+                getHazmatReport();
+            });
+                        }
+                })
+            }   
+    });
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function (searchCriteria) {
+
+    }; 
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        if(selectedReport[0].innerText === "Hazmat Report"){
+            $('button[value=Export]').removeAttr('ng-click');
+            $('body').delegate('button[value=Export]', 'click', function(e) {
+               // getHazmatReport();
+            });
+        }
+    }
+
+// function getHazmatReport() // returns Promise from $.post or undefined
+    function getHazmatReport() {
+        debugger;
+        var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+        var authorizationToken = clientService.authorizationToken();
+        var context = client.userContext;
+        var shipper = $('select[ng-model="vm.selectedShipper"] option:selected').val();
+        if (shipper) {
+            var searchCriteria = { DateStart: $('input[ng-model="vm.dtstart"]').val(), DateEnd: $('input[ng-model="vm.dtend"]').val(), Shipper: shipper };
+            var data = { Action: "HazmatReport", Content: JSON.stringify(searchCriteria) };
+           return $.post({ url:shipExecServiceUrl +'/UserMethod',
+                  data: {UserContext: client.userContext, Data:JSON.stringify(data)}, headers: authorizationToken},
+                function (response, status, xhr) {
+                    downloadFile(shipper, response["Data"]);
+                }
+            ).done(function () {
+            });
+        }
+    }
+
+// function downloadFile(exportFileName, encodedString) // returns void
+    function downloadFile(exportFileName, encodedString) {
+        var decodedResult = atob(encodedString); // decode a base-64 encoded string
+        var csvFile = new Blob([decodedResult], { type: "text/csv" });
+    
+        var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+            ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+            ieEdge = navigator.userAgent.match(/Edge/g),
+            ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+    
+        exportFileName = exportFileName + '.csv';
+    
+        if (ieVer > -1) {
+            window.navigator.msSaveBlob(csvFile, exportFileName);
+    
+        } else {
+            var downloadLink = document.createElement("a");
+            downloadLink.download = exportFileName;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    }
+
+// Source: RoniCo (RONI)_test_1896.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: ShipExec Essentials Demo (CF_DEMO)_Huntington Bank_1907.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: SJCom (SJCom1542)_Standard_CBR_1563.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: SPEEDTECH (SPEEDTECH)_SpeedTech Client Side Business Rules_1645.cs
+// this.PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Standard Industries (STANDARDINDUSTRIES)_GAF_CBR_2457.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: Sysco CW Vendor Ship (SYSCOCWVS)_Client Side Business Rules 20240313_2437.cs
+// function PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+
+// function PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+
+// Source: Sysco Foods (SYSCO)_Client Side Business Rules 20240808_2450.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Target (TARGET)_Target CBR_2489.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: Tesla (TES)_test 1_1869.cs
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// this.PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function(packages) {
+    }
+
+// Source: The Ohio State University (OSU)_OSU Reference Configuration Rule_89.cs
+// PreSearchHistory(searchCriteria) // returns void
+    this.PreSearchHistory = function(searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: userContext.UserId, Operator: 5 });
+    }
+
+// Source: Truist (BBANDT)_Truist Admin Business Rules_2463.cs
+// this.PageLoaded(location) // returns undefined
+    this.PageLoaded = function(location) {
+        GetUserContext();
+        if(location==="/shipping"){
+            
+                    var checkExist = setInterval(function() {
+            var chkShipNotification = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipNotificationEmail"]');
+            if (chkShipNotification)
+            {
+                /* Stop the timer. */
+                clearInterval(checkExist);
+                //debugger;
+        $('body').delegate('[property="ShipNotificationEmail"]', 'click', function () {
+            $('[name="shipNotificationAddressEmail"]').val(getUserName()).change();
+            vm.currentShipment.Packages[vm.packageIndex].ShipNotificationAddressEmail = getUserName();
+        })
+
+        $('body').delegate('[property="DeliveryExceptionNotificationEmail"]', 'click', function () {
+            $('[name="DeliveryExceptionNotificationAddressEmail"]').val(getUserName()).change();
+            vm.currentShipment.Packages[vm.packageIndex].DeliveryExceptionNotificationAddressEmail = getUserName();
+        })
+
+        $('body').delegate('[property="DeliveryNotificationEmail"]', 'click', function () {
+            $('[name="DeliveryNotificationEmail"]').val(getUserName()).change();
+            vm.currentShipment.Packages[vm.packageIndex].DeliveryNotificationAddressEmail = getUserName();
+        })
+            }
+             
+         }, 50); 
+        }        
+        if(location==="/history"){
+                     var reports = $('select[id="reports"]:eq(0)');
+        var checkExist = setInterval(function() {
+            
+            if (reports)
+            {
+                /* Stop the timer. */
+                clearInterval(checkExist);
+                $('select[id="reports"]:eq(0) option:eq(0)').text("My History");
+            }
+             
+         }, 50); 
+            
+        }
+        
+
+        
+        
+    }
+
+// this.PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        //debugger;
+        if(selectedReport[0].innerText !=="All History"){
+            searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+        }
+    };
+
+// Source: Truist (BBANDT)_Truist Business Rules_2464.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+        var selectedValue = $('select[id="reports"]:eq(0)').val();
+        var selectedReport = $("select[id='reports'] option[value='" + selectedValue + "'");
+        //debugger;
+        if(selectedReport[0].innerText !=="All History"){
+            searchCriteria.WhereClauses.push({ FieldName: 'UserId', FieldValue: userContext.UserId, Operator: 0 });
+        }
+    };
+
+// Source: US Bank Revised (USBANKREVISED)_US Bank Revised Client Side Rules_1571.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function(searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+this.PostSearchHistory = function(packages) {
+    }
+
+// Source: VW Group (VW)_VW Client Rules_1513.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function (searchCriteria) {
+        searchCriteria.WhereClauses.push({ FieldName: 'MiscReference19', FieldValue: userContext.UserId, Operator: 5 });
+    };
+
+// Source: Xing Hung (XINGHUNG)_ClinetSideBussRules_1587.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function (searchCriteria) {
+    }
+
+// PostSearchHistory(packages) // returns undefined
+    this.PostSearchHistory = function (packages) {
+    }
+

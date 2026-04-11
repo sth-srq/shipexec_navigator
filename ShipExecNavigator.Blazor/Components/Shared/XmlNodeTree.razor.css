@@ -92,7 +92,7 @@
 }
 
 .node-label {
-    color: #2563eb;
+    color: #23527c;
     font-weight: 600;
     transition: color 0.12s;
 }
@@ -102,7 +102,7 @@
 }
 
 .xml-elem {
-    color: #2563eb;
+    color: #23527c;
     font-weight: 500;
 }
 
@@ -230,6 +230,40 @@
     color: rgba(25, 135, 84, 0.5);
 }
 
+/* -- Read-only (non-editable) node styling --------------------------------- */
+/* Only values are dimmed; labels, icons, and expand controls stay normal
+   so the tree remains clearly navigable. */
+.node--readonly > .xml-node-line .xml-val {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.node--readonly > .xml-node-line .xml-attr-val {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.node--readonly > .xml-node-line .node-empty {
+    color: #c4c9d2;
+}
+
+/* Small "read-only" badge after the node label */
+.readonly-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #9ca3af;
+    background-color: rgba(156, 163, 175, 0.12);
+    border: 1px solid rgba(156, 163, 175, 0.25);
+    border-radius: 3px;
+    padding: 0 0.3rem;
+    margin-left: 0.35rem;
+    line-height: 1.4;
+    user-select: none;
+    vertical-align: middle;
+}
+
 /* -- Inline edit input ----------------------------------------------------- */
 .inline-edit {
     background-color: #ffffff;
@@ -325,7 +359,7 @@
     }
 
 /* -- Depth colour palette (set via inline style --depth-color) ------------- */
-/* depth 0 */ .xml-children[style*="--depth-color: #3b82f6"] { border-left-color: rgba(59, 130, 246, 0.25); }
+/* depth 0 */ .xml-children[style*="--depth-color: #337ab7"] { border-left-color: rgba(59, 130, 246, 0.25); }
 /* depth 1 */ .xml-children[style*="--depth-color: #8b5cf6"] { border-left-color: rgba(139, 92, 246, 0.25); }
 /* depth 2 */ .xml-children[style*="--depth-color: #06b6d4"] { border-left-color: rgba(6, 182, 212, 0.25); }
 /* depth 3 */ .xml-children[style*="--depth-color: #10b981"] { border-left-color: rgba(16, 185, 129, 0.25); }
@@ -368,7 +402,7 @@
 /* ══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
     .xml-node {
-        color: #e2e8f0;
+        color: #ddd;
     }
 
     .node-label {
@@ -400,7 +434,7 @@
     }
 
     .xml-punct, .attr-eq, .node-sep {
-        color: #64748b;
+        color: #777;
     }
 
     .attr-dot {
@@ -408,11 +442,11 @@
     }
 
     .node-empty {
-        color: #64748b;
+        color: #777;
     }
 
     .node-hint, .xml-ellipsis {
-        color: #64748b;
+        color: #777;
     }
 
     .node-info, .node-summary {
@@ -476,10 +510,29 @@
         color: rgba(52, 211, 153, 0.5);
     }
 
+    /* Read-only nodes in dark theme */
+    .node--readonly > .xml-node-line .xml-val {
+        color: #6b7280;
+    }
+
+    .node--readonly > .xml-node-line .xml-attr-val {
+        color: #6b7280;
+    }
+
+    .node--readonly > .xml-node-line .node-empty {
+        color: #4b5563;
+    }
+
+    .readonly-badge {
+        color: #6b7280;
+        background-color: rgba(107, 114, 128, 0.15);
+        border-color: rgba(107, 114, 128, 0.3);
+    }
+
     .inline-edit {
-        background-color: #1e293b;
+        background-color: #333;
         color: #fbbf24;
-        border-color: #3b82f6;
+        border-color: #337ab7;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 
@@ -488,8 +541,8 @@
     }
 
     .inline-edit--select option {
-        background-color: #1e293b;
-        color: #e2e8f0;
+        background-color: #333;
+        color: #ddd;
     }
 
     .xml-node-line--changed {

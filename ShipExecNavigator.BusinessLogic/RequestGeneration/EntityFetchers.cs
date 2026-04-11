@@ -2,6 +2,7 @@ using PSI.Sox.Wcf;
 using PSI.Sox.Wcf.Administration;
 using PSI.Sox.Data;
 using System;
+using System.Collections.Generic;
 
 namespace ShipExecNavigator.BusinessLogic.RequestGeneration
 {
@@ -325,6 +326,13 @@ namespace ShipExecNavigator.BusinessLogic.RequestGeneration
         public override GetShippersRequest ConfigureRequest(GetShippersRequest request)
         {
             request.CompanyId = CompanyId;
+            request.SearchCriteria = new SearchCriteria
+            {
+                Skip = 0,
+                Take = int.MaxValue,
+                WhereClauses = new List<WhereClause>(),
+                OrderByClauses = new List<OrderByClause>()
+            };
             return request;
         }
     }

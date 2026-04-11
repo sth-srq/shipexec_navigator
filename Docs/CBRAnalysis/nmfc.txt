@@ -1,0 +1,215 @@
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        shipmentRequest.PackageDefaults.UserData1 = null;
+		var shipService = "";
+		if(shipmentRequest.PackageDefaults.Service!==undefined){
+			shipService = shipmentRequest.PackageDefaults.Service.Symbol;
+		}
+		var LTLFlag = false;
+		if (shipService.includes("_LTL.") || shipService.includes("_UPSFREIGHT")){
+			LTLFlag = true;
+		}
+		if(LTLFlag)
+		{
+		    if((shipmentRequest.Packages[packageIndex].MiscReference20 != undefined && shipmentRequest.Packages[packageIndex].MiscReference20 != null && shipmentRequest.Packages[packageIndex].MiscReference20 != "")
+		        &&(shipmentRequest.Packages[packageIndex].ParentContainerCode == null || shipmentRequest.Packages[packageIndex].ParentContainerCode == "") ){
+                    shipmentRequest.Packages[packageIndex].ParentContainerCode ="P" + shipmentRequest.Packages[packageIndex].MiscReference20 + "-" + packageIndex;
+		    }
+		var dims = "0x0x0";
+		
+		var lastPackage = shipmentRequest.Packages[packageIndex - 1];
+
+		var length =0;
+        var width = 0;
+        var height =0;
+	    if(lastPackage.Dimensions!=undefined){
+			if(lastPackage.Dimensions.Length!= undefined && lastPackage.Dimensions.Width!=undefined && lastPackage.Dimensions.Height!=undefined){
+				length =lastPackage.Dimensions.Length;
+				width = lastPackage.Dimensions.Width;
+				height =lastPackage.Dimensions.Height;
+			} 	
+		}
+
+        const dimArr=[length,width,height];
+        
+        //To sort dimensions in descending order.
+        dimArr.sort(function(a, b){return b-a});
+		dims = dimArr[0]+"x"+dimArr[1]+"x"+dimArr[2];
+		if(dims!="0x0x0"){
+			const   dimtblx ="34,48,52,12,14,18,18,28,37".split(",");  
+            const   dimtbly ="32,40,36,52,44,32,52,44,37".split(","); 
+			for (let i = 0; i < dimtblx.length; i++){
+				var   x = dimtblx[i];
+                var   y = dimtbly[i];
+				if (i < 3)
+                {
+                    
+                    if (dimArr[0] == x && dimArr[1] == y )
+                        break;
+                    if (dimArr[0] == x && dimArr[1] == y )
+                    {                           
+                        dims= x + "x" + y + "x" + dimArr[1];                    
+                        break;
+                    }
+                    if (dimArr[1] == x && dimArr[2] == y )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];           
+                    break;
+                    }
+                }
+				else{                  
+                     
+                    if (dimArr[0] == y && dimArr[1] == x )
+                    {
+                        dims = x + "x" + y + "x" + dimArr[2];                    
+                        break;
+                    }
+                    if (dimArr[0] == y && dimArr[2] == x )
+                    {
+                       dims = x + "x" + y + "x" + dimArr[1];
+                    
+                       break;
+                    }
+                    if (dimArr[1] == y && dimArr[2] == x )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];                
+                    break;
+                    }
+                }
+			}
+			if(lastPackage.BolComment == null)
+			   lastPackage.BolComment = ""; 
+			
+			shipmentRequest.Packages[packageIndex-1].BolComment = lastPackage.BolComment+" "+dims;
+			
+		}
+		//debugger;
+		shipmentRequest.Packages[packageIndex - 1].Description = "DIESEL ENGINE PARTS NMFC # 133300, SUB 4, Class 60 L"+packageIndex; // + " L" + packageIndex-1;
+		
+		if(shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == null || shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == "" ){
+			shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber = shipmentRequest.Packages[packageIndex-1].MiscReference20;
+		}
+		}
+	
+	//setRef1Focus script start
+	$("#referenceTab").children()[0].click();
+	$('div[property = "MiscReference1"]').children().ready(function () {
+	    	$('div[property = "MiscReference1"]').children().focus();
+	});
+	//setRef1Focus script end
+	 
+}
+
+// Source: The Ohio State University (OSU)_OSU Reference Configuration Rule_89.cs
+// this.PreShip(shipmentRequest, userParams) // returns undefined
+    this.PreShip = function(shipmentRequest, userParams){
+        /*var consigneeAddress = shipmentRequest.PackageDefaults.Consignee;
+        var userAddress = this.vm.profile.UserInformation.Address;
+        if(consigneeAddress.Country!=userAddress.Country)
+        {
+            shipmentRequest.PackageDefaults.Exporter = userAddress
+        }*/
+        
+        var ret = returnPropertyValue(shipmentRequest.Packages[0].MiscReference8);;
+        
+        shipmentRequest.Packages.forEach(function (pkg)
+        {
+            if(pkg.MiscReference7)
+            {
+                if (shipmentRequest.Packages.length > 1 ) {
+                    throw ({message: 'Multiple Packages Not Support with Dry Ice', errorCode: ''});
+                }
+
+                if (returnPropertyValue(pkg.MiscReference8) === '')
+                {
+                    throw ({message: 'Missing Dry Ice Weight', errorCode: ''});
+                }
+                var DryIceWeight = {
+                    "Amount": ret.replace('kgs',''),
+                    "Units": "KG"
+                };
+				pkg.DryIceWeight = DryIceWeight;
+				
+				var Country = shipmentRequest.PackageDefaults.Consignee.Country;
+				console.log(Country);
+				if(Country =="US"){
+				    pkg.DryIceRegulationSet = 1;
+				}else{
+				    pkg.DryIceRegulationSet = 2;
+				}
+				
+                pkg.DryIcePurpose = 2;
+            }
+        });
+    }
+
+// this.PreRate(shipmentRequest, userParams) // returns undefined
+    this.PreRate = function(shipmentRequest, userParams) {
+        debugger;
+
+        var shipToEmail = returnPropertyValue(shipmentRequest.PackageDefaults.Consignee.Email);
+        var shipFromEmail = returnPropertyValue(shipmentRequest.PackageDefaults.OriginAddress.Email);
+        var ref1 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference1);
+        var ref2 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference2);
+        var ref3 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference3);
+        var ref4 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference4);
+        var ref5 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference5);
+        var ref6 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference6);
+        var ref7 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference7);
+        var ref8 = returnPropertyValue(shipmentRequest.Packages[0].MiscReference8);
+
+        var shipperRef = ref1 + "~" + ref2 + "~" + ref3 + "~" + ref4;
+        var consigneeRef = ref5 + "~" + ref6;//ref7 + "~" + ref8 + "~" +
+
+        shipmentRequest.Packages.forEach(function (pkg)
+        {
+            if(pkg.MiscReference7)
+            {
+                if (shipmentRequest.Packages.length > 1 ) {
+                    throw ({message: 'Multiple Packages Not Support with Dry Ice', errorCode: ''});
+                }
+
+                if (returnPropertyValue(pkg.MiscReference8) === '')
+                {
+                    throw ({message: 'Missing Dry Ice Weight', errorCode: ''});
+                }
+                
+                var ret = ref8;
+                
+                var DryIceWeight = {
+                    "Amount": ret.replace('kgs',''),
+                    "Units": "KG"
+                };
+				pkg.DryIceWeight = DryIceWeight;
+				
+				var Country = shipmentRequest.PackageDefaults.Consignee.Country;
+				console.log(Country);
+				if(Country =="US"){
+				    pkg.DryIceRegulationSet = 1;
+				}else{
+				    pkg.DryIceRegulationSet = 2;
+				}
+                pkg.DryIcePurpose = 2;
+            }
+            pkg.ShipperReference = shipperRef;
+            pkg.ConsigneeReference = consigneeRef;
+            pkg.MiscReference20 = userContext.UserId;
+
+            pkg.ShipNotificationAddressEmail = '';
+            pkg.ShipNotificationEmail = shipToEmail != '' || shipFromEmail != '';
+            if (shipToEmail != '') {
+                pkg.ShipNotificationAddressEmail = shipToEmail;
+            }
+
+            if (shipFromEmail != '' ) {
+                if (pkg.ShipNotificationAddressEmail) {
+                    pkg.ShipNotificationAddressEmail += ',' + shipFromEmail;
+                } else {
+                    pkg.ShipNotificationAddressEmail = shipFromEmail;
+                }
+            }
+        });
+    }
+

@@ -15,6 +15,13 @@ public interface IShipExecService
     Task<XmlNodeViewModel> BuildCompanySkeletonAsync();
     Task LoadCategoryChildrenAsync(XmlNodeViewModel categoryNode);
 
+    /// <summary>
+    /// Builds a complete entity index by fetching all entity categories from the API.
+    /// The index is independent of the UI tree expansion state and includes every entity
+    /// across all categories.
+    /// </summary>
+    Task<CompanyEntityIndex> BuildEntityIndexAsync();
+
     // ── Diff / apply (deferred to "View Changes" time) ──────────────────────
     Task<string> GetCompanyXmlAsync(Guid companyId, string companyName, string path = "", HashSet<string>? loadedSections = null);
     Task<DiffResult> GetDiffAsync(string originalXml, string modifiedXml);
@@ -31,6 +38,8 @@ public interface IShipExecService
     Task UpdateUserAsync(User user);
     void EnqueueUserUpdate(User user);
     Task<Guid> CreateUserAsync(User user);
+    Task DeleteUserAsync(Guid userId);
+    Task<List<ApplyResultItem>> ApplyUserVariancesAsync(List<UserVariance> variances);
     Task<List<CsvUserRow>> ParseCsvAsync(string csvContent);
     Task<List<CsvUserCreateResult>> CreateUsersFromCsvAsync(List<CsvUserRow> rows);
     Task<string> ExportUsersCsvAsync();
@@ -42,6 +51,8 @@ public interface IShipExecService
 
     // ── Company state ────────────────────────────────────────────────────────
     CompanyInfo? GetCurrentCompany();
+    List<CompanyInfo> GetCachedCompanies();
+    string? GetManagementStudioUrl();
     void PrepareForApply(Guid companyId, string companyName);
 
     // ── Profiles ─────────────────────────────────────────────────────────────
@@ -66,4 +77,15 @@ public interface IShipExecService
     Task StoreCompanyTemplatesAsync(Guid companyId, List<TemplateInfo> templates, string endpointUrl, string companyName);
     Task<bool> CompanyHasStoredTemplatesAsync(Guid companyId);
     Task<List<TemplateSaveResult>> SaveTemplatesToFolderAsync(string folderPath);
+
+    // ── Client Business Rules ────────────────────────────────────────────────
+    Task<List<CbrInfo>> GetCompanyClientBusinessRulesAsync(Guid companyId, string jwtJson, string adminUrl);
+    Task<List<CbrSaveResult>> SaveCbrScriptsAsync(string folderPath, IEnumerable<(string CompanyName, List<CbrInfo> Rules)> entries);
+
+    // ── Server Business Rules ────────────────────────────────────────────────
+    Task<List<SbrInfo>> GetServerBusinessRulesAsync();
+    Task<string?> GetServerBusinessRuleFileBase64Async(string sbrName, string? sbrVersion);
+
+    // ── Client Business Rules (connected company) ────────────────────────────
+    Task<List<CbrInfo>> GetClientBusinessRulesAsync();
 }

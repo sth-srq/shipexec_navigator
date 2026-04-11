@@ -1,21 +1,26 @@
 .top-navbar {
-    background-color: #2b3f6b;
-    padding: 0 1.5rem;
-    height: 54px;
+    background-color: #222;
+    background-image: linear-gradient(to bottom, #3c3c3c 0%, #222 100%);
+    border-bottom: 1px solid #080808;
+    padding: 0.3rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
     position: sticky;
     top: 0;
     z-index: 100;
-    display:none;
+}
+
+.navbar-header {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .brand-link {
-    color: #ffffff;
-    font-size: 1.2rem;
+    color: #9d9d9d;
+    font-size: 3.0rem;
     font-weight: 600;
     text-decoration: none;
     letter-spacing: 0.01em;
@@ -23,12 +28,12 @@
 }
 
     .brand-link:hover {
-        color: #d0dff0;
+        color: #ffffff;
         text-decoration: none;
     }
 
 .top-nav-links {
-    display: flex;
+    display: none;
     align-items: stretch;
     height: 100%;
     gap: 0;
@@ -38,21 +43,77 @@
     display: flex;
     align-items: center;
     padding: 0 1rem;
-    color: rgba(255, 255, 255, 0.75);
+    color: #9d9d9d;
     font-size: 0.875rem;
     text-decoration: none;
     border-bottom: 3px solid transparent;
-    transition: color 0.12s, border-color 0.12s;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
     .top-nav-link:hover {
         color: #ffffff;
         text-decoration: none;
-        border-bottom-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.05);
     }
 
     .top-nav-link.active {
         color: #ffffff;
-        border-bottom-color: #7eb6f0;
+        border-bottom-color: #337ab7;
         font-weight: 500;
+        background: rgba(255, 255, 255, 0.03);
     }
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.navbar-company {
+    color: #9d9d9d;
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.navbar-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    background-color: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    border-radius: 2rem;
+    padding: 0.1rem 0.5rem;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.theme-toggle {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #9d9d9d;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+    border-color: rgba(255,255,255,0.3);
+}
+
+.theme-icon {
+    display: block;
+}

@@ -14,10 +14,10 @@
 /* ── Dialog shell ────────────────────────────────────────────────────────── */
 .au-dlg {
     background: #fff;
-    border: 1px solid rgba(43, 63, 107, 0.12);
-    border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
-    width: 600px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: 750px;
     max-width: 96vw;
     max-height: 88vh;
     display: flex;
@@ -31,22 +31,22 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.85rem 1.1rem 0.75rem;
-    border-bottom: 1px solid rgba(43, 63, 107, 0.08);
-    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    border-bottom: 1px solid #ddd;
+    background: #337ab7;
     flex-shrink: 0;
 }
 
 .au-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #212529;
+    color: #fff;
 }
 
 .au-close {
     background: none;
     border: none;
     font-size: 1rem;
-    color: #6c757d;
+    color: rgba(255,255,255,0.7);
     cursor: pointer;
     padding: 0.15rem 0.35rem;
     border-radius: 4px;
@@ -54,8 +54,8 @@
 }
 
     .au-close:hover {
-        background: #e9ecef;
-        color: #212529;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
     }
 
 /* ── Body ────────────────────────────────────────────────────────────────── */
@@ -107,7 +107,7 @@
 .au-file-name {
     font-size: 0.825rem;
     font-weight: 500;
-    color: #212529;
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -214,7 +214,7 @@
     .au-preview-table td {
         padding: 0.4rem 0.6rem;
         vertical-align: middle;
-        color: #212529;
+        color: #333;
         max-width: 200px;
         white-space: nowrap;
         overflow: hidden;
@@ -276,7 +276,7 @@
     gap: 0.6rem;
     padding: 0.75rem 1.25rem;
     border-top: 1px solid rgba(43, 63, 107, 0.08);
-    background: linear-gradient(135deg, #f0f5ff 0%, #e8eefb 100%);
+    background: #337ab7;
     flex-shrink: 0;
 }
 

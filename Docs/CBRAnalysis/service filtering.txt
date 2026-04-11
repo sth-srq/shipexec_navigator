@@ -1,0 +1,3581 @@
+// Source: 2.2 Update 4 (21UPDATE4)_CBR1.5_1735.cs
+// CheckForMatchingConsignee(CustomerOrderObject) // returns boolean indicating whether the customer order consignee matches the current shipment consignee
+      CheckForMatchingConsignee: function (CustomerOrderObject)
+      {
+        try
+        {
+          var con = $('name-address[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]');
+
+          let a = {
+            //conCompany: $(con).find('input[name="company"]').val().trim().toUpperCase().replaceAll(' ',''),
+            conAddress1: $(con).find('input[name="address1"]').val().trim().toUpperCase(),
+            conCity: $(con).find('input[name="city"]').val().trim().toUpperCase(),
+            conState: $(con).find('input[name="stateProvince"]').val().trim().toUpperCase(),
+            conPostalCode: $(con).find('input[name="postalCode"]').val().trim().substring(0, 5)
+          };
+
+          let b = {
+            //conCompany: CustomerOrderObject.shipAddress1.CONSIGNEE_COMPANY.trim().toUpperCase().replaceAll(' ', ''),
+            conAddress1: CustomerOrderObject.shipAddress1.trim().toUpperCase(),
+            conCity: CustomerOrderObject.shipCity.trim().toUpperCase(),
+            conState: CustomerOrderObject.shipState.trim().toUpperCase(),
+            conPostalCode: CustomerOrderObject.shipZipCode.trim().substring(0, 5)
+          };
+
+          /* Remove all the spaces in the strings so we get a good comparison, not one that's thrown off by an extra space. */
+          let aa = JSON.stringify(a).replaceAll(' ', '');
+          let bb = JSON.stringify(b).replaceAll(' ', '');
+
+          /* Quick comparison to see if the strings match. */
+          if (aa != bb)
+          {
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + CustomerOrderObject.orderNumber + ' (' + CustomerOrderObject.orderId + '). Primary order data to follow.', Data: a });
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + CustomerOrderObject.orderNumber + ' (' + CustomerOrderObject.orderId + '). Subsequent order data to follow.', Data: b });
+          }
+
+          return (aa == bb);
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'CheckForMatchingConsignee()', Error: error });
+        }
+      },
+
+// Source: Alight Solutions (ALISOL)_DirectToMobileCBR_2434.cs
+// CurrentShipperIsD2MEnabled() // returns boolean indicating whether the current shipper is authorized for D2M shipping
+function CurrentShipperIsD2MEnabled(){ 
+	
+		LogStartMethod("CurrentShipperIsD2MEnabled()");
+		
+		//var currentShipperSymbol = vm?.currentShipment?.PackageDefaults?.Shipper;
+		
+		var currentShipperSymbol =  $('select[ng-change="vm.shipperChange()"]').val().substring(7).toUpperCase();
+		
+		var authorizedD2MShipperList = [{"ShipperName": "Alight Solutions (Lincolnshire_D2M)","ShipperSymbol":"LINCOLNSHIRE_D2M"}];
+		
+		var infoMessage = "D2M shipping for current shipper symbol " + currentShipperSymbol + " is ";
+		
+		var result =  false;
+		
+		var isCurrentShipperEnabledForD2M = authorizedD2MShipperList.find(x => x.ShipperSymbol === currentShipperSymbol);
+		
+		result = (isCurrentShipperEnabledForD2M != undefined) ? true : false;
+		
+		infoMessage = result? infoMessage + "authorized" : "WARNING " + infoMessage + "NOT authorized";
+		
+		LogMethodInfo(infoMessage);
+		
+		return result;		 
+    }
+
+// CurrentUserIsD2MEnabled() // returns boolean indicating whether the current user has D2M enabled in custom data
+function CurrentUserIsD2MEnabled(){
+		
+		LogStartMethod("CurrentUserIsD2MEnabled()");
+		
+		var currentUserData = vm?.profile?.UserInformation?.Address.CustomData;
+		
+		var isD2MEnableForCurrentUser = GetUserCustomData(currentUserData, D2M_USER_CUSTOM_DATA_KEY);
+		
+		var infoMessage ="";
+		
+		var result =  false;
+		
+		if ($.isEmptyObject(isD2MEnableForCurrentUser) === false)
+		{
+			 var d2mCustomEntry = JSON.stringify(isD2MEnableForCurrentUser);
+			 
+			 var d2mEnabledValue = JSON.parse(d2mCustomEntry).Value;
+			 
+			 if (d2mEnabledValue.toUpperCase() === D2M_USER_ENABLED_VALUE)
+			 {
+				 infoMessage = "D2M User ENABLED";
+				 result = true;
+			 }
+			 else
+			 {
+				infoMessage = "D2M User DISABLED";
+				result = false;
+			 }
+		}
+		else
+		{
+			 infoMessage = "WARNING:" + D2M_USER_CUSTOM_DATA_KEY + " NOT DETECTED";
+		}
+		
+		LogMethodInfo(infoMessage);
+		
+		return result;
+    }
+
+// CurrentShipmentIsD2M() // returns boolean indicating whether the current shipment is a D2M shipment
+function CurrentShipmentIsD2M()
+	{ 	
+		
+		var cond1 = CurrentUserIsD2MEnabled();
+		var cond2 = $("#"+D2M_TEMPLATE_CHECKBOX_SHIPMENT_ID).is(":checked");
+		var cond3 = CurrentShipperIsD2MEnabled();
+		return cond1 && cond2  && cond3;
+	}
+
+// CurrentSessionIsCapableOfD2MShipments() // returns boolean indicating whether the current session can support D2M shipments
+function CurrentSessionIsCapableOfD2MShipments()
+	{		
+		return CurrentUserIsD2MEnabled() && CurrentShipperIsD2MEnabled();
+	}
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// AssignCustomEvents() // returns void
+    this.AssignCustomEvents = function(){
+        $("#btnCustomBatchProcessing").on( "click", function() {
+        debugger;
+            var userMethodParams = {"ActionMessage": "CustomBatchProcessing"};
+            var data = { Data: JSON.stringify(userMethodParams), UserContext: client.userContext };
+            var shipExecServiceUrl = client.config.ShipExecServiceUrl;
+            var authorizationToken = client.getAuthorizationToken();
+            $.post({ url: shipExecServiceUrl + '/' + 'UserMethod', data : data, async:false, headers: authorizationToken });
+        });     
+    }
+
+// Source: Asia Waterjet FZCO (ASIAWATERJETFZCO)_Asia_WaterJet_CBR_1870.cs
+// PreShip(shipmentRequest, userParams) // returns undefined
+this.PreShip = function(shipmentRequest, userParams) {
+
+        var freightfound = 0;
+        var frieghterr = 0;
+
+        for (var i = 0; i <= shipmentRequest.Packages.length - 1; i++) {
+            if (parseInt(shipmentRequest.Packages[i].Weight.Amount) >= 70) {
+                freightfound = "1";
+            }
+            if (freightfound == "1") {
+                if (parseInt(shipmentRequest.Packages[i].Weight.Amount) < 70) {
+                    frieghterr = "1";
+                }
+            }
+        }
+        if (freightfound == "0") {
+            shipmentRequest.PackageDefaults.Service = {
+                Symbol: "CONNECTSHIP_UPS.UPS.EXPSVR"
+            }
+        } else {
+            if (frieghterr == "0") {
+                shipmentRequest.PackageDefaults.Service = {
+                    Symbol: "CONNECTSHIP_UPS.UPS.EXPFRT"
+                }
+            } else {
+                alert("Cannot create one shipment with 2 different service levels.");
+            }
+        }
+        for (var i = 0; i <= shipmentRequest.Packages.length - 1; i++) {
+            if (shipmentRequest.PackageDefaults.Service.Symbol == "CONNECTSHIP_UPS.UPS.EXPFRT") {
+                shipmentRequest.Packages[i].Packaging = "CUSTOMER_PALLET";
+            }
+            shipmentRequest.Packages[i].ImportDelivery = true;
+
+        }
+        if (shipmentRequest.PackageDefaults.OriginAddress.Country == "US") {
+            if ($('select[name="CarrierInstructions"]').val() == '?') {
+                alert("Please confirm shipment value");
+                throw ("Excpetion");
+            } else {
+                if (shipmentRequest.Packages[0].ConsigneeReference == null || shipmentRequest.Packages[0].ConsigneeReference == "") {
+                    if ($('select[name="CarrierInstructions"]').val() == 'string:Yes') {
+                        alert("Please Enter ITN/ EES number in ConsigneeReference");
+                        throw ("Excpetion");
+                    }
+                }
+            }
+        } else {
+            if (shipmentRequest.PackageDefaults.OriginAddress.Country != "undefined") {
+                alert("For EU Exports : Shipments above 1000 EUR, a formal export declaration is required. A formal electronic export declaration must be sent to customs authorities by the exporter or their representative. Customs authorities grant the release for export and issue an Export Accompanying Document (EAD) with a unique Movement Reference Number (MRN). The EAD has to accompany the shipment. UPS is responsible for the exit clearance at the EU border.")
+            }
+        }
+    }
+
+// Source: Avery Dennison (Avery)_Avery Reference Rule_28.cs
+// CheckValidation(checkValue, checkField) // returns the validated value or throws an error
+    function CheckValidation(checkValue, checkField){
+        
+        for(var item in checkField){
+            if(checkField[item].Value == checkValue)return checkValue;
+        }
+        throw new Error(checkValue + " is not a valid value.");
+    }
+
+// GetShipment(shipmentRequest) // returns a Shipment wrapper object exposing custom reference getters
+    function GetShipment(shipmentRequest) {
+
+        class Shipment {
+           constructor(shipmentRequest) {
+              this.ShipmentRequest = shipmentRequest;
+           }
+
+           get UserRef1() { return this.GetCustom("Custom1", "User"); }
+           get UserRef2() { return this.GetCustom("Custom2", "User"); }
+           get UserRef3() { return this.GetCustom("Custom3", "User"); }
+           get UserRef4() { return this.GetCustom("Custom4", "User"); }
+           get UserRef5() { return this.GetCustom("Custom5", "User"); }
+           get UserRef6() { return this.GetCustom("Custom6", "User"); }
+           get UserRef7() { return this.GetCustom("Custom7", "User"); }
+           get UserRef8() { return this.GetCustom("Custom8", "User"); }
+           get UserRef9() { return this.GetCustom("Custom9", "User"); }
+           get UserRef10() { return this.GetCustom("Custom10", "User"); }
+
+           get ToRef1() { return this.GetCustom("Custom1", "To"); }
+           get ToRef2() { return this.GetCustom("Custom2", "To"); }
+           get ToRef3() { return this.GetCustom("Custom3", "To"); }
+           get ToRef4() { return this.GetCustom("Custom4", "To"); }
+           get ToRef5() { return this.GetCustom("Custom5", "To"); }
+           get ToRef6() { return this.GetCustom("Custom6", "To"); }
+           get ToRef7() { return this.GetCustom("Custom7", "To"); }
+           get ToRef8() { return this.GetCustom("Custom8", "To"); }
+           get ToRef9() { return this.GetCustom("Custom9", "To"); }
+           get ToRef10() { return this.GetCustom("Custom10", "To"); }
+
+           GetCustom(fieldName, customDataType) {
+              var returnValue = "";
+              var customData = null;
+              if (customDataType === "User") customData = this.ShipmentRequest.PackageDefaults.OriginAddress.CustomData;
+              if (customDataType === "To") customData = this.ShipmentRequest.PackageDefaults.Consignee.CustomData;
+
+              if (customData) {
+                 customData.forEach(function (customField) {
+                    if (fieldName === customField.Key) returnValue = customField.Value;
+                 })
+              }
+              return returnValue;
+           }
+        }
+
+        return new Shipment(shipmentRequest);
+     }
+
+// Source: Boston Scientific (BOSTON)_Boston Coyol Client Business Rules_2474.cs
+// serviceOptions(profile) // returns filtered service list
+    function serviceOptions(profile) {
+        //debugger;
+        var filterServices = [];
+        var customData3 = uPS_Service.split(',');
+        for (var item of customData3) {
+            var symbol = getServiceSymbol(item.toLowerCase());
+            for (var service of profile.Services) {
+                if (service.Symbol === symbol) {
+                    service.Name = service.Name.replace('(UPS Adapter)','').trim();
+                    if (service.Name.includes("Expedited")){
+                        service.Name = service.Name + " (MAIN SERVICE)";
+                    }
+                    if (service.Name.includes("Saver")){
+                        service.Name = service.Name + " (Only with Boston's Authorization)";
+                    }
+                    filterServices.push(service);
+                    break;
+                }
+            }
+        }
+        return filterServices;
+        function getServiceSymbol(code) {
+            if (code == '2dn') return 'UPSAPI.UPS.2DA'
+            else if (code == '3dd') return 'UPSAPI.UPS.3DS'
+            else if (code == 'exp') return 'UPSAPI.UPS.EXPEDITED'
+            else if (code == 'ess') return 'UPSAPI.UPS.EXPRESS'
+            else if (code == 'nda') return 'UPSAPI.UPS.NDA'
+            else if (code == 'dae') return 'UPSAPI.UPS.NDAEAM'
+            else if (code == 'grn') return 'UPSAPI.UPS.GND'
+            else if (code == 'uwe') return 'UPSAPI.UPS.EXPEDITED'
+            else if (code == 'wep') return 'UPSAPI.UPS.EXPRESSSP'
+            else if (code == 'swe') return 'UPSAPI.UPS.EXPRESS'
+            else if (code == 'uws') return 'UPSAPI.UPS.SAVER'
+            else if (code == 'std') return 'UPSAPI.UPS.STANDARD'
+        }
+        
+    }
+
+// Source: Boston Scientific (BOSTON)_Boston Heredia Client Business Rules_2475.cs
+// serviceOptions(profile) // returns an array of filtered service objects
+function serviceOptions(profile) {
+        //debugger;
+        var filterServices = [];
+        var customData3 = uPS_Service.split(',');
+        for (var item of customData3) {
+            var symbol = getServiceSymbol(item.toLowerCase());
+            for (var service of profile.Services) {
+                if (service.Symbol === symbol) {
+                    //service.Name = service.Name.replace('(UPS Adapter)','').trim();
+                    filterServices.push(service);
+                    break;
+                }
+            }
+        }
+        return filterServices;
+        function getServiceSymbol(code) {
+             if (code == '2dn') return 'UPSAPI.UPS.2DA'
+            else if (code == '3dd') return 'UPSAPI.UPS.3DS'
+            else if (code == 'exp') return 'UPSAPI.UPS.EXPEDITED'
+            else if (code == 'ess') return 'UPSAPI.UPS.EXPRESS'
+            else if (code == 'nda') return 'UPSAPI.UPS.NDA'
+            else if (code == 'dae') return 'UPSAPI.UPS.NDAEAM'
+            else if (code == 'grn') return 'UPSAPI.UPS.GND'
+            else if (code == 'uwe') return 'UPSAPI.UPS.EXPEDITED'
+            else if (code == 'wep') return 'UPSAPI.UPS.EXPRESSSP'
+            else if (code == 'swe') return 'UPSAPI.UPS.EXPRESS'
+            else if (code == 'uws') return 'UPSAPI.UPS.SAVER'
+            else if (code == 'std') return 'UPSAPI.UPS.STANDARD'
+        }
+        
+    }
+
+// Source: Boston Scientific (BOSTON)_Boston_MULTI_2485.cs
+// serviceOptions(profile) // returns an array of filtered service objects
+function serviceOptions(profile) {
+        //debugger;
+        var filterServices = [];
+        var customData3 = uPS_Service.split(',');
+        for (var item of customData3) {
+            var symbol = getServiceSymbol(item.toLowerCase());
+            for (var service of profile.Services) {
+                if (service.Symbol === symbol) {
+                    service.Name = service.Name.replace('(UPS Adapter)','').trim();
+                    if (service.Name.includes("Expedited")){
+                        service.Name = service.Name + " (MAIN SERVICE)";
+                    }
+                    if (service.Name.includes("Saver")){
+                        service.Name = service.Name + " (To Heredia or Only with Boston's Authorization)";
+                    }
+                    filterServices.push(service);
+                    break;
+                }
+            }
+        }
+        return filterServices;
+        function getServiceSymbol(code) {
+            if (code == '2dn') return 'UPSAPI.UPS.2DA'
+            else if (code == '3dd') return 'UPSAPI.UPS.3DS'
+            else if (code == 'exp') return 'UPSAPI.UPS.EXPEDITED'
+            else if (code == 'ess') return 'UPSAPI.UPS.EXPRESS'
+            else if (code == 'nda') return 'UPSAPI.UPS.NDA'
+            else if (code == 'dae') return 'UPSAPI.UPS.NDAEAM'
+            else if (code == 'grn') return 'UPSAPI.UPS.GND'
+            else if (code == 'uwe') return 'UPSAPI.UPS.EXPEDITED'
+            else if (code == 'wep') return 'UPSAPI.UPS.EXPRESSSP'
+            else if (code == 'swe') return 'UPSAPI.UPS.EXPRESS'
+            else if (code == 'uws') return 'UPSAPI.UPS.SAVER'
+            else if (code == 'std') return 'UPSAPI.UPS.STANDARD'
+        }
+        
+    }
+
+// Source: Bulgari MX (BULGARIMX)_BulgariMx Reference Rules_1778.cs
+// ChangeTransportationCharges() // returns void
+    this.ChangeTransportationCharges = function () {
+        debugger;
+        var shipmentRequest = this.currentShipment;
+        var transportationCharges = shipmentRequest.PackageDefaults.TransportationCharges;
+
+        this.xReceiverAccountsIsHidden = transportationCharges != 'consignee';
+        this.xTransportationChargesThirdPartyBillingAddressCodesIsHidden = transportationCharges != 'thirdParty';
+
+        this.xReceiverAccount = null;
+        shipmentRequest.PackageDefaults.Consignee.Account = null;
+        this.xTransportationChargesThirdPartyBillingAddress = null;
+        shipmentRequest.PackageDefaults.TransportationChargesThirdPartyBillingAddress = null;
+
+        // if (transportationCharges == 'consignee') {
+
+        //     if (shipmentRequest.PackageDefaults.Consignee.Company != undefined) {
+        //         var companyName = shipmentRequest.PackageDefaults.Consignee.Company.trim();
+        //         if (companyName!== ''){
+        //             var obj = receiverList.filter(function(receiver) {
+        //                 if (receiver.Company === companyName) { return receiver; }
+        //             });
+
+        //             if (obj.length) {
+        //                 var receiver = obj[0];
+        //                 shipmentRequest.PackageDefaults.Consignee.Account = receiver.Account;
+        //             }
+        //         }
+        //     }
+        // }
+
+
+        // if () {
+        //     shipmentRequest.xTransportationChargesThirdPartyBillingAddressCodeIsHidden = false;
+        //     // $('label:contains("Receiver Options")').hide();
+        //     // //$('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]').hide();
+
+        //     // $('name-address[address-property-name="TransportationChargesThirdPartyBillingAddress"] label:contains("Third Party Options")').show();
+        //     // $('name-address[address-property-name="TransportationChargesThirdPartyBillingAddress"] select[ng-model="nameaddress.Code"]').show();
+        // } else if ($billOption.val() == "consignee") {
+        //     $('label:contains("Receiver Options")').show();
+        //     $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]').show();
+
+        //     $('name-address[address-property-name="TransportationChargesThirdPartyBillingAddress"] label:contains("Third Party Options")').hide();
+        //     $('name-address[address-property-name="TransportationChargesThirdPartyBillingAddress"] select[ng-model="nameaddress.Code"]').hide();
+        // } else {
+        //     $('label:contains("Receiver Options")').hide();
+        //     $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]').hide();
+
+        //     $('name-address[address-property-name="TransportationChargesThirdPartyBillingAddress"] label:contains("Third Party Options")').hide();
+        //     $('name-address[address-property-name="TransportationChargesThirdPartyBillingAddress"] select[ng-model="nameaddress.Code"]').hide();
+        // }
+    }
+
+// Source: Chrysler (Chrysler)_Chrysler Reference Rule_26.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+this.PreSearchHistory = function (searchCriteria) {
+    //    userDataOnlyHistoryView(searchCriteria);    // set in profiles 
+    };
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function (shipmentRequest, userParams) {
+        console.log("PreShip In");
+        
+        userParams.paperless = JSON.stringify(this.vm.paperless);
+        console.log('paperless:', userParams.paperless);
+        
+        var usCountry = "UNITED_STATES";
+        var usAcronym = "US";
+        var PackageRequests = shipmentRequest.Packages;
+
+        $(PackageRequests).each(function (x, item) {
+            var value = item.DeclaredValueCustoms.Amount;
+            var tN = item.AesTransactionNumber;
+            if (value >= 2500 && tN === null) {
+                alert("Please check with clarios-na-trade@clarios.com if EEI filing is needed");
+            }
+            item.Description = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val();
+
+        });
+
+        // For International Destination Rule Applies to all use cases and all carriers
+        if ((shipmentRequest.PackageDefaults.Consignee.Country != usCountry) && (shipmentRequest.PackageDefaults.Consignee.Country != usAcronym)) {
+            shipmentRequest.PackageDefaults.MiscReference8 = "Y";
+        }
+        else {
+            shipmentRequest.PackageDefaults.MiscReference8 = "N";
+        }
+
+        console.log("PreShip Out");
+    };
+
+// Source: Conduent (CONDUENT)_Conduent_CBR_1659.cs
+// function bulkFilterBatchItemReference() // returns void
+function bulkFilterBatchItemReference() {
+        $('body').delegate('#btnFilterSearch', 'click', function (e) {
+            //prevent the subsequent listeners from firing
+            e.stopImmediatePropagation();
+
+            var bulkFilter = $(this).attr('action-bulkfilter');
+            if (bulkFilter != '') {
+                cbr.bulk.filter = JSON.parse(bulkFilter);
+                $('#tableBatchDetailItems').find('tr:gt(0)').each(function (x, y) {
+                    var $tr = $(this);
+                    for (var key in cbr.bulk.filter) {
+                        var bulkFilterBy = cbr.bulk.filter[key].trim().toUpperCase();
+                        if (bulkFilterBy != '') {
+                            var tdFilterText = $tr.find('td[title="' + key + '"]').text().trim().toUpperCase();
+                            if (bulkFilterBy != tdFilterText) {
+                                $tr.fadeOut('fast');
+                            }
+                            /* This will get a partial match.
+                            if (tdFilterText.indexOf(bulkFilterBy) === -1) {
+                                $tr.fadeOut('fast');
+                            }
+                            */
+                        }
+
+                    }
+                })
+            }
+        });
+    }
+
+// function clearBulkFilter() // returns void
+function clearBulkFilter() {
+        $('body').delegate('#btnFilterClear', 'click', function (e) {
+            //prevent the subsequent listeners from firing
+            e.stopImmediatePropagation();
+
+            $('#tableBatchDetailItems').find('tr:hidden').fadeIn('fast');
+            $('div[title="Filter"] input[type="text"]').each(function () {
+                $(this).val('').change();
+            })
+        });
+    }
+
+// Source: CountryMax Stores (CNTM)_CountryMax Shipping CBR_1660.cs
+// PreLoad(value, shipmentRequest, params) // returns void
+this.PreLoad = function(value, shipmentRequest, params) {
+		//debugger;
+		if (shipmentRequest.Packages[this.vm.packageIndex].BoxType === undefined || shipmentRequest.Packages[this.vm.packageIndex].BoxType === null) {
+			// if box is empty, add custom dimensions from dialog
+			let dims = $('#newDimensions').val().trim().split(/x| /);
+			if (dims !== null && dims.length >= 3) {
+				$('form[name="generalForm"]').find('input[name="length"]').val(dims[0]).change();
+				$('form[name="generalForm"]').find('input[name="width"]').val(dims[1]).change();
+				$('form[name="generalForm"]').find('input[name="height"]').val(dims[2]).change();
+				
+				let index = 1;
+				if (dims.length === 4) {
+					dims[3] = dims[3].toUpperCase();
+					index = (dims[3] === 'IN' ? 1 : 2);
+				}
+				$('form[name="generalForm"]').find('select[name="units"] option:eq(' + index + ')').prop('selected', true);
+			}
+		}
+
+		let oChk = this.vm.currentShipment.Packages[this.vm.packageIndex].MiscReference20;		// autoship
+		if (oChk === true) {
+			params.autoship = oChk;
+		}
+
+		$('#newShipmentDialog').modal('hide');
+		showLoading(true);
+	};
+
+// PostLoad(value, shipmentRequest) // returns void
+this.PostLoad = function(value, shipmentRequest) {
+		debugger;
+		let errorMessage = shipmentRequest.PackageDefaults.ErrorMessage;
+		
+		if (errorMessage === undefined) errorMessage = "";
+		if (errorMessage === null) errorMessage = "";
+
+		if (shipmentRequest.PackageDefaults.Service !== undefined && shipmentRequest.PackageDefaults.Service.Symbol === "x") {
+			showLoading(false);
+			alert("No service selected!");
+		}
+		
+		if (errorMessage !== undefined && errorMessage === 'validate') {
+			//$("#ctl00_cphContent_left_tabs_consignee_tab_consignee_na_ab_ctrl_na_ctrl_validate_addr_btn").click();
+			showLoading(false);
+			return;
+		}
+
+		if (errorMessage !== undefined && errorMessage.substring(0, 4) === "pop:") {
+			showLoading(false);
+			alert(errorMessage.substring(4));
+			return;
+		}
+
+		if (errorMessage !== undefined && errorMessage !== '') {
+			showLoading(false);
+			alert(errorMessage);
+			let errors = ["not found", "already shipped", "too many"];
+			if (errors.some(errorText => errorMessage.includes(errorText))) {
+				// open Load Shipment dialog
+				this.vm.newShipment();
+			}
+			return;
+		}
+
+		if (shipmentRequest.PackageDefaults.Consignee.Country === 'US') {
+			this.vm.shipMode = 1;
+		} else {
+			this.vm.shipMode = 0;
+		}
+
+		$("#custom_markup_id").val(shipmentRequest.Packages[0].MiscReference3);
+
+		//getWeight();
+
+		if (shipmentRequest.PackageDefaults.MiscReference5 !== null && shipmentRequest.PackageDefaults.MiscReference5 === 'autoship') {
+			this.vm.checkShip();
+			return;
+		}
+
+		// select all services before rate
+		setTimeout(function() {
+			// check Select All after delay to allow UI update
+			vmTemp.isAllServicesSelected = true;
+			vmTemp.selectAllServices();
+			vmTemp.rate();
+		}, 100);
+		
+	};
+
+// Source: EATON CORPORATION (EATON)_Eaton Business Rules_1772.cs
+// SetShipNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) // returns void
+function SetShipNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) {
+        if (checked) {
+            if (pkg.ShipNotificationAddressEmail == undefined || pkg.ShipNotificationAddressEmail.trim() == '') {
+                if (ngModelName == 'ShipFromNotificationEmail' && emailAddress.Origin) {
+                    pkg.ShipNotificationAddressEmail = emailAddress.Origin;
+                } else if (ngModelName == 'ShipToNotificationEmail' && emailAddress.Consignee) {
+                    pkg.ShipNotificationAddressEmail = emailAddress.Consignee;
+                }
+            } else {
+                if (ngModelName == 'ShipFromNotificationEmail' && emailAddress.Origin) {
+                    var regexp = new RegExp(',?' + emailAddress.Origin, 'g');
+                    if (!regexp.test(pkg.ShipNotificationAddressEmail)) {
+                        pkg.ShipNotificationAddressEmail += ',' + emailAddress.Origin;
+                    }
+                } else if (ngModelName == 'ShipToNotificationEmail' && emailAddress.Consignee) {
+                    pkg.ShipNotificationAddressEmail += ',' + emailAddress.Consignee;
+                }
+            }
+        } else {
+            var notificationAddressEmail = pkg.ShipNotificationAddressEmail;
+            if (ngModelName == 'ShipToNotificationEmail' && emailAddress.Consignee) {
+                var regexp = new RegExp(',?' + emailAddress.Consignee, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            } else if (ngModelName == 'ShipFromNotificationEmail' && emailAddress.Origin) {
+                var regexp = new RegExp(',?' + emailAddress.Origin, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            }
+
+            if (notificationAddressEmail.indexOf(',') == 0) {
+                notificationAddressEmail = notificationAddressEmail.substring(1);
+            }
+            pkg.ShipNotificationAddressEmail = notificationAddressEmail;
+        }
+    }
+
+// SetDeliveryNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) // returns void
+function SetDeliveryNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) {
+        if (checked) {
+            if (pkg.DeliveryNotificationAddressEmail == undefined || pkg.DeliveryNotificationAddressEmail.trim() == '') {
+                if (ngModelName == 'ShipFromDeliveryNotificationEmail' && emailAddress.Origin) {
+                    pkg.DeliveryNotificationAddressEmail = emailAddress.Origin;
+                } else if (ngModelName == 'ShipToDeliveryNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryNotificationAddressEmail = emailAddress.Consignee;
+                }
+            } else {
+                if (ngModelName == 'ShipFromDeliveryNotificationEmail' && emailAddress.Origin) {
+                    var regexp = new RegExp(',?' + emailAddress.Origin, 'g');
+                    if (!regexp.test(pkg.DeliveryNotificationAddressEmail)) {
+                        pkg.DeliveryNotificationAddressEmail += ',' + emailAddress.Origin;
+                    }
+                } else if (ngModelName == 'ShipToDeliveryNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryNotificationAddressEmail += ',' + emailAddress.Consignee;
+                }
+            }
+        } else {
+            var notificationAddressEmail = pkg.DeliveryNotificationAddressEmail;
+            if (ngModelName == 'ShipToDeliveryNotificationEmail' && emailAddress.Consignee) {
+                var regexp = new RegExp(',?' + emailAddress.Consignee, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            } else if (ngModelName == 'ShipFromDeliveryNotificationEmail' && emailAddress.Origin) {
+                var regexp = new RegExp(',?' + emailAddress.Origin, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            }
+
+            if (notificationAddressEmail.indexOf(',') == 0) {
+                notificationAddressEmail = notificationAddressEmail.substring(1);
+            }
+            pkg.DeliveryNotificationAddressEmail = notificationAddressEmail;
+        }
+    }
+
+// SetDeliveryExceptionNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) // returns void
+function SetDeliveryExceptionNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) {
+        if (checked) {
+            if (pkg.DeliveryExceptionNotificationAddressEmail == undefined || pkg.DeliveryExceptionNotificationAddressEmail.trim() == '') {
+                if (ngModelName == 'ShipFromDeliveryExceptionNotificationEmail' && emailAddress.Origin) {
+                    pkg.DeliveryExceptionNotificationAddressEmail = emailAddress.Origin;
+                } else if (ngModelName == 'ShipToDeliveryExceptionNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryExceptionNotificationAddressEmail = emailAddress.Consignee;
+                }
+            } else {
+                if (ngModelName == 'ShipFromDeliveryExceptionNotificationEmail' && emailAddress.Origin) {
+                    var regexp = new RegExp(',?' + emailAddress.Origin, 'g');
+                    if (!regexp.test(pkg.DeliveryExceptionNotificationAddressEmail)) {
+                        pkg.DeliveryExceptionNotificationAddressEmail += ',' + emailAddress.Origin;
+                    }
+                } else if (ngModelName == 'ShipToDeliveryExceptionNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryExceptionNotificationAddressEmail += ',' + emailAddress.Consignee;
+                }
+            }
+        } else {
+            var notificationAddressEmail = pkg.DeliveryExceptionNotificationAddressEmail;
+            if (ngModelName == 'ShipToDeliveryExceptionNotificationEmail' && emailAddress.Consignee) {
+                var regexp = new RegExp(',?' + emailAddress.Consignee, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            } else if (ngModelName == 'ShipFromDeliveryExceptionNotificationEmail' && emailAddress.Origin) {
+                var regexp = new RegExp(',?' + emailAddress.Origin, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            }
+
+            if (notificationAddressEmail.indexOf(',') == 0) {
+                notificationAddressEmail = notificationAddressEmail.substring(1);
+            }
+            pkg.DeliveryExceptionNotificationAddressEmail = notificationAddressEmail;
+        }
+    }
+
+// getShipmentEmailAddresses(def) // returns an object containing Origin and/or Consignee email addresses
+function getShipmentEmailAddresses(def) {
+        var emailAddress = {}
+        if (def.Consignee.Email != undefined && def.Consignee.Email != '') {
+            emailAddress.Consignee = def.Consignee.Email;
+        }
+        if (def.OriginAddress != undefined && def.OriginAddress.Email != undefined && def.OriginAddress.Email != '') {
+            emailAddress.Origin = def.OriginAddress.Email;
+        }
+        return emailAddress;
+    }
+
+// Source: Edward Jones  (EdwardJones)_Edward Jones Reference Rules 2.0_2476.cs
+// PreSearchHistory(searchCriteria) // returns undefined
+    this.PreSearchHistory = function(searchCriteria) {
+//        debugger;
+        //var branchNo = getKeyValue('Custom3', userCustomData)
+		var branchNo = client.getValueByKey('Custom3', this.vm.profile.UserInformation.Address.CustomData);
+        if (branchNo) {
+            searchCriteria.WhereClauses.push({ FieldName: 'MiscReference20', FieldValue: branchNo, Operator: 5 });
+        }
+    }
+
+// Source: F Schumacher (FSCHUMAC)_Product Area (8942X4) CBR with PV_1816.cs
+// CheckWeightAndService(weightVal) // returns void
+  function CheckWeightAndService (weightVal)
+  {
+    // /* Once the button is clicked, start a timer and wait for the weight to populate. */
+    // /* If the weight is over 1 pound, switch the service from USPS FC to UPS Ground. */
+    if ((weightVal > 1) && ($('select[ng-model="vm.selectedServices"]').find('option:selected').val() == "CONNECTSHIP_ENDICIA.USPS.FIRST"))
+    {
+
+      /* Deselect any currently selected options. */
+      $('select[ng-model="vm.selectedServices"]').val([]).scrollTop(10);
+
+      /* Select the ground option. */
+      $('select[ng-model="vm.selectedServices"] > option[value="CONNECTSHIP_UPS.UPS.GND"]')
+        .prop({ 'selected': 'true', 'selected': true })
+        .attr('selected', 'selected')
+        .trigger('change').promise().done(function ()
+        {
+
+        });
+    }
+  }
+
+// Source: Fluid Analysis Laboratory (POLARIS)_Polaris_1684.cs
+// removeDropDown() // returns void
+function removeDropDown(){
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:FOB"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:CFR"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:CIF"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:DDU"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:CIP"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:CPT"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:DAF"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:DEQ"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:DES"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:FAS"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:FCA"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:DVU"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:DAT"]').remove();
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:PREPURCHASED"]').remove();
+        
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:CONSIGNEE"]').text("Bill Receiver");
+        $('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:SHIPPER"]').text("Bill Shipper");
+        //$('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:CONSIGNEE"]').label("Bill Receiver");
+        //$('[ng-model="vm.currentShipment.PackageDefaults.Terms"] option[value="string:SHIPPER"]').label("Bill Shipper");
+       
+        /*$('[ng-model="vm.currentShipment.Packages[vm.packageIndex].TermsOfSale"] option[value="string:FCA"]').remove();
+        $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].TermsOfSale"] option[value="string:DAT"]').remove();
+        $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].TermsOfSale"] option[value="string:DAP"]').remove();*/
+        
+        
+    }
+
+// Source: GAP (GAP)_Rule with Mail Innov. Billing_1888.cs
+// PostShip(shipmentRequest, shipmentResponse) // returns void
+    this.PostShip = function(shipmentRequest, shipmentResponse) {
+        canadaSelected = false;
+        var misc3reference = "200.30.6035.5102.90059";
+        for (var i = 0; i < shipmentRequest.Packages.length; i++) {
+            shipmentRequest.Packages[i].MiscReference1 = shipmentRequest.Packages[i].ShipperReference;
+            shipmentRequest.Packages[i].ShipperReference = "";
+            //Address 1
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "1112 Turkey Mountain Rd.")
+            {
+                console.log('found 1/4 address');
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+            }
+             //Address 2
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "102R Demi Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+              //Address 3
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "17511 S. Susana Rd.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+               //Address 4
+            if(shipmentRequest.PackageDefaults.Consignee.Address1 == "200 Terminal St.")
+            {
+                                console.log('found 1/4 address');
+     
+                shipmentRequest.Packages[i].MiscReference3 = misc3reference;
+                                shipmentRequest.Packages[i].ShipperReference = misc3reference;
+     
+            }
+            
+            var company = shipmentRequest.PackageDefaults.Consignee.Company.toLowerCase();
+            if(company.indexOf("mail innov") != -1 || company.startsWith("ups mi") || company.startsWith("ups mail"))
+            {
+                if (mi_tpb_stores.find(element => element == this.vm.profile.Shippers[0].Symbol) !== null)
+                {
+                    console.log("Billing MI as TPB");
+                    shipmentRequest.PackageDefaults.ThirdPartyBilling = true;
+                    var tpb = {};
+                    angular.copy(shipmentRequest.PackageDefaults.Consignee, tpb);
+                    tpb.Account = "7500YW";
+                    tpb.Company = "UPS MAIL INNOVATIONS";
+                    tpb.Contact = "REBECA CARBRERA";
+                    tpb.Address1 = "13050 MARLAY AVE";
+                    tpb.City = "FONTANA";
+                    tpb.StateProvince = "CA";
+                    tpb.PostalCode = "92337";
+                    tpb.Country = "US";
+                    tpb.Phone = "555-555-555";
+                    shipmentRequest.PackageDefaults.ThirdPartyBillingAddress = tpb;
+                }
+            }
+            
+        }
+        console.log('PRESHIP');
+        console.log(shipmentRequest);
+    }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// RePrintAMP(Package) // returns void
+    function RePrintAMP(Package){
+        let GlobalMSN = $(Package).data('custom-attribute1');
+        let Carrier = $(Package).data('custom-attribute2');
+
+        if(!Carrier.includes("CONNECTSHIP") && !Carrier.includes("TANDATA_LTL")){
+          alert("Funcionality only support CONNECTSHIP carriers");
+          return;
+        }
+        
+        let Machine = '';
+        fetch('https://localhost:5001/api/SystemInformation/ComputerName',{
+            method:'GET',
+        }).then(response => response.json())
+        .then(data2 => {
+            Machine = data2;
+            CallUserMethod(GlobalMSN, Machine)
+            
+        }).catch(error => {
+            console.log(error);
+            CallUserMethod(GlobalMSN)
+        });
+    }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// this.PageLoaded(location) // returns void
+    this.PageLoaded = function(location) { 
+     
+     $( document ).ready(function() {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+      });
+     
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').val("string:SHIPPER");
+     $('input[ng-model="vm.currentShipment.PackageDefaults.Terms"]').trigger('change');
+     
+        $('body').delegate('[ng-model="vm.currentShipment.PackageDefaults.Terms"]', 'change', function () {
+        $('input[name="account"]').attr("list","AccountList");
+        $('input[name="account"]').prop('list', 'AccountList');
+        $('input[ng-model="nameaddress.Account"]').prop('list', 'AccountList');
+        
+            });
+   
+        $('body').delegate('[ng-model="vm.selectedServices"]', 'change', function () {
+            var currentServiceSelected = $('[ng-model="vm.selectedServices"]').val();
+           
+            
+            
+            var selectedService = this[this.selectedIndex].value;
+
+           var symbol = selectedService.split('.');
+
+           var isGeninsu = symbol[0] == 'GENINSU' && symbol[1] == 'Custom'
+
+           //$('[ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', isGeninsu).change();
+           
+            
+            
+            
+            
+        });
+   
+   
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference19"]', 'change', function () {
+            
+            let currentPackageIndex = this.name.replace('NMFCNumbers', '');
+            console.log(currentPackageIndex);
+            
+                $('select[name="SubClassNumbers'+currentPackageIndex+'"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+               
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                 
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').attr('class', '');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("form-control");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-pristine");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-valid");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-empty");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').addClass("ng-touched");
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').text(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').val(obj["description"]).change();
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 console.log(obj["description"]);
+
+                     
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').trigger('change');
+                 $('textarea[name="LtlDescription'+currentPackageIndex+'"]').html(obj["description"]).change();
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').val(arrayName[1]);
+                 $('input[name="item_number_txt'+currentPackageIndex+'"]').trigger('change');
+                 
+                 $('select[name="SubClassNumbers'+currentPackageIndex+'"]').trigger("change");
+
+              });
+              
+        });
+      
+        
+
+        $('body').delegate('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference20"]', 'change', function () {
+            
+            let currentPackageIndex2 = this.name.replace('SubClassNumbers', '');
+            console.log(currentPackageIndex2);
+
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField'+currentPackageIndex2+'"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers'+currentPackageIndex2+'"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt'+currentPackageIndex2+'"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt'+currentPackageIndex2+'"]').trigger('change');
+
+
+        });
+
+       
+
+      
+
+      /*     $('body').delegate('select[name="NMFCNumbers"]', 'change', function () {
+               
+               $('select[name="SubClassNumbers"]').empty();
+                 //if ($(this).val() == 'String:86700') {  
+                const arrayName = $(this).val().split(":");
+                $.each(eval("NMFC"+arrayName[1]), function(index,obj) {  
+                
+                $('select[name="SubClassNumbers"]').append($("<option></option>").attr("value", obj["value"]).text(obj["name"]));
+                $('textarea[name="LtlDescription"]').text(obj["description"]).change();
+                console.log(obj["description"]);
+                $('textarea[name="LtlDescription"]').trigger('change');
+                $('textarea[name="LtlDescription"]').html(obj["description"]).change();
+                $('input[name="item_number_txt"]').val(arrayName[1]);
+                $('input[name="item_number_txt"]').trigger('change');
+                $('select[name="SubClassNumbers"]').trigger("change");
+
+               
+            })
+           // }   
+            });
+           
+            
+           $('body').delegate('select[name="SubClassNumbers"]', 'change', function () {
+                    var numberClass = Math.floor($(this).val());
+                    $('select[name="commodityClassField"]').val('string:CLASS_'+numberClass).trigger('change');
+                    var numberSub = parseInt($('select[name="SubClassNumbers"]').prop('selectedIndex'));
+                    $('input[name="sub_number_txt"]').val("SUB " + (numberSub + 1));
+                   $('input[name="sub_number_txt"]').trigger('change');
+           });*/
+
+
+     
+    }
+
+// this.PostSearchHistory(packages) // returns void
+    this.PostSearchHistory = function(packages) {
+    var checkExist = setInterval(function ()
+        {
+          if ($('table[ng-table="vm.tableParamsForDetailed"] tr').length > 1)
+          {
+            clearInterval(checkExist);
+            $('table[ng-table="vm.tableParamsForDetailed"] tr:gt(1)').find('td:eq(2) > div:not(.ng-hide)').html(function() 
+            {
+                var trackingN = $(this).text().trim();
+                
+                
+              if(trackingN.startsWith('1Z')) {
+              return "<a href=https://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }   else {
+              return "<a href=https://online.chrobinson.com/tracking/#/?trackingNumber=" + $(this).text().trim() + "&requester=ST/trackdetails target='_new'>" + $(this).text().trim() + "</a>";
+              }
+            });
+          }
+        }, 100);
+    }
+
+// this.AddPackage(shipmentRequest, packageIndex) // returns void
+    this.AddPackage = function(shipmentRequest, packageIndex) {
+        $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+       $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val(''); 
+       shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = '';
+        
+    }
+
+// this.PreviousPackage(shipmentRequest, packageIndex) // returns void
+    this.PreviousPackage = function(shipmentRequest, packageIndex) {		  
+    $('select[name="SubClassNumbers'+eval(packageIndex+1)+'"]').empty();   
+    $('select[name="NMFCNumbers'+eval(packageIndex+1)+'"]').val(''); 
+    shipmentRequest.Packages[eval(packageIndex+1)].MiscReference19 = '';
+    }
+
+// this.NextPackage(shipmentRequest, packageIndex) // returns void
+    this.NextPackage = function(shipmentRequest, packageIndex) {  
+    $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+    $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val('');  
+
+    shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = ''; 
+
+    }
+
+// Source: Global Eagle (GE)_DEFAULT_1616.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+
+        // check to make sure the user doesnt need supervisor permission
+        var NoApprovalNeeded = [
+            // services
+            "CONNECTSHIP_UPS.UPS.GND",
+            "CONNECTSHIP_UPS.UPS.3DA",
+            "CONNECTSHIP_UPS.UPS.EPD",
+            "UPSAPI.UPS.GND",
+            "UPSAPI.UPS.3DA",
+            "UPSAPI.UPS.EXPEDITED",
+            // payment terms
+            "CONSIGNEE",
+            "PREPURCHASED"
+        ];
+
+        // popup in place of email
+        /*
+        var supervisorEmail = callUserMethod(2);
+        if (supervisorEmail != '') {
+            supervisorEmail = ',' + supervisorEmail;
+        }
+        var requestorNotes = $("[property=MiscReference1] input").val();
+        if (requestorNotes == "") {
+            requestorNotes = "*Please be sure to update the requestor note setcion and provide some information supporting the shipment choices in your supervisor email";
+        }
+        var confirmMessage = "WARNING: This shipment will require Supervisor approval.\rPlease include the following information:\r" + requestorNotes + "\r\rSend your email to: \ralberto.pla@globaleagle.com,Ryan.Saladeen@globaleagle.com" + supervisorEmail +"\r\rClick OK to save or Cancel to make changes";
+        */
+           
+        //message when email is in place
+        var confirmMessage = "WARNING: This shipment will require Supervisor approval. \r\rClick OK to save and sent a notifications \rClick Cancel to make changes";
+
+        if (shipmentRequest.Packages[this.vm.packageIndex].MiscReference3 != "Approved") {
+            if (callUserMethod(1) == "supervisor" || shipmentRequest.PackageDefaults.ConsigneeThirdPartyBilling == true) {
+                shipmentRequest.Packages[this.vm.packageIndex].MiscReference3 = "No Approval Required";
+            } else {
+                if (NoApprovalNeeded.includes(shipmentRequest.PackageDefaults.Service.Symbol) ||
+                    NoApprovalNeeded.includes(shipmentRequest.PackageDefaults.Terms)) {
+                    shipmentRequest.Packages[this.vm.packageIndex].MiscReference3 = "No Approval Required";
+                } else {
+                    if (shipmentRequest.PackageDefaults.MiscReference3 != "Approved") {
+                        if (confirm(confirmMessage)) {
+                            shipmentRequest.Packages[this.vm.packageIndex].MiscReference3 = "Approval Required";
+                            // set email variables
+                            requestorEmail = $("[property=MiscReference12] input").val();
+                            requestorNotes = $("[property=MiscReference1] input").val();
+                            approverNotes = $("[property=MiscReference4] input").val();
+                            // send the email
+                            callUserMethod(3, requestorEmail, requestorNotes, approverNotes);
+                            this.vm.saveShipment();
+                        } 
+                        throw ({ message: "Print process cancelled", errorCode: "NOTICE: " });
+                    }
+                }
+            }
+        }
+    }
+
+// Source: Gordon Foods (GORDONFOODS)_GFS Client Script_2439.cs
+// NewShipment(shipmentRequest) // returns void
+    this.NewShipment = function(shipmentRequest) { 
+        
+        angular.element('[ng-model="vm.isAllServicesSelected"]').disabled = 'disabled';
+    }
+
+// Source: Habasit (HBS)_Select All Services_1642.cs
+// NewShipment(shipmentRequest) // returns void
+this.NewShipment = function(shipmentRequest) { 
+        this.vm.isAllServicesSelected = true;
+        this.vm.selectedServices = this.vm.profile.Services;
+    }
+
+// Source: Integrated Marketing Tech (IMT)_shipment_CBR_IMT_PROD_1825.cs
+// scrollToService(value) // returns void
+    function scrollToService(value) {
+        var $select = $('[ng-model="vm.selectedServices"]');
+        var interval = setInterval(function () {
+            if ($select.val() == value) {
+                clearInterval(interval);
+                var distanceScrolledFromTop = $select.scrollTop();
+                var offsetSelect = $select.offset().top;
+                var offsetElement = $select.find('[value="' + value + '"]').offset().top + distanceScrolledFromTop;
+                $select.scrollTop(offsetElement - offsetSelect);
+            }
+        }, 50);
+    }
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// PostRate(shipmentRequest, rateResults) // returns void
+this.PostRate = function (shipmentRequest, rateResults) {
+        
+        var vm = this.vm;
+        
+        for(var i=0; i<vm.profile.Services.length; i++){
+            
+                           if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DATK.DATK"){
+                    vm.profile.Services[i].Name = "Viking Delivery Service";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.NEMF.NEMF"){
+                    vm.profile.Services[i].Name = "Old Dominion";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.EXP"){
+                    vm.profile.Services[i].Name = "UPS Worldwide Express";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.EXPSVR"){
+                    vm.profile.Services[i].Name = "UPS Worldwide Saver";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.ABFB.ABFB"){
+                    vm.profile.Services[i].Name = "ABF LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.CNWY.CNWY"){
+                    vm.profile.Services[i].Name = "Conway LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DAFG.DAFG"){
+                    vm.profile.Services[i].Name = "Dayton LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_DHL.DHL.WPX"){
+                    vm.profile.Services[i].Name = "DHL Express Worldwide";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DOM.DOM"){
+                    vm.profile.Services[i].Name = "Dominick  LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.EXLA.EXLA"){
+                    vm.profile.Services[i].Name = "Estes LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.HWDQ.HWDQ"){
+                    vm.profile.Services[i].Name = "Hollywood LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.PITD.PITD"){
+                    vm.profile.Services[i].Name = "Pitt Ohio LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.RLTO.RLTO"){
+                    vm.profile.Services[i].Name = "R&L Freight LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.SAIA.SAIA"){
+                    vm.profile.Services[i].Name = "Saia LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.SEFL.SEFL"){
+                    vm.profile.Services[i].Name = "Southeastern LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.NAM"){
+                    vm.profile.Services[i].Name = "UPS Next Day Air Early A.M.";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.EPD"){
+                    vm.profile.Services[i].Name = "UPS Worldwide Expedited";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.V.HMES"){
+                    vm.profile.Services[i].Name = "USF Holland LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.WILC.WILC"){
+                    vm.profile.Services[i].Name = "Will Call";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.YRC.YRC"){
+                    vm.profile.Services[i].Name = "YRC LTL";
+                }
+
+        }
+        
+    }
+
+// PostSearchHistory(packages) // returns void
+this.PostSearchHistory = function(packages) {
+        
+           var vm = this.vm;
+           for(var i=0; i<vm.profile.Services.length; i++){
+                //console.log(i);
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DATK.DATK"){
+                    vm.profile.Services[i].Name = "Viking Delivery Service";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.NEMF.NEMF"){
+                    vm.profile.Services[i].Name = "Old Dominion";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+           }
+    }
+
+// NewShipment(shipmentRequest) // returns void
+this.NewShipment = function(shipmentRequest) 
+    {
+        //console.log(this);
+        console.log("new shipment clicked vm:");
+        //console.log(shipmentRequest);
+        //debugger;
+        var vm = this.vm;
+        console.log(vm);
+        vm.profile.Services.forEach(s => s.Name = s.Name.replace("(CSAdapter)","").trim());
+        vm.profile.Services.forEach(s => s.Name = s.Name.replace("(FDXF)","").trim());
+        vm.profile.PaymentTerms.forEach(s => s.Name = s.Name.replace("(DDP)","").trim());
+        console.log(vm.profile.Services);
+        shipmentRequest.PackageDefaults.UserData1=null;
+       
+        //setRef1Focus script start
+        
+        /* $("#referenceTab").children().ready(function (){
+            $("#referenceTab").children()[0].click();
+        });
+        var interval = setTimeout(function(){
+		    $('div[property = "MiscReference1"]').children().ready(function (){
+		        //debugger;
+		        
+		        	$('div[property = "MiscReference1"]').children().focus();
+		       	clearTimeout(interval);
+		    });
+		    
+	    }, 400); */
+        //setRef1Focus script end
+        
+        if(vm.profile.UserInformation.Address.CustomData){
+            var customData = vm.profile.UserInformation.Address.CustomData;
+            // Selecting the default shipper specified in custom data on page load.
+            console.log("customData: ");
+            console.log(customData);
+            var shipperData = customData.filter(data=>data.Key==='defaultShipper');
+            debugger;
+            if(shipperData.length>0) {
+                var shipperName = shipperData[0].Value;
+                if(shipperName){
+                    console.log(`ShipperName: ${shipperName}`);
+                    shipmentRequest.PackageDefaults.Shipper = shipperName;
+                    var interval = setInterval(function(){
+                        if($('#shipper > div > select > option').length>1) {
+                            clearInterval(interval);
+                            $('#shipper > div > select').val(`string:${shipperName}`);
+                            
+                        }
+                    }, 50);
+                }
+            }
+        }
+        
+        document.getElementById('PrepaidAdd').checked = false;
+        
+           for(var i=0; i<vm.profile.Services.length; i++){
+                //console.log(i);
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DATK.DATK"){
+                    vm.profile.Services[i].Name = "Viking Delivery Service";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.NEMF.NEMF"){
+                    //console.log("old dominionnnn");
+                    vm.profile.Services[i].Name = "Old Dominion";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.EXP"){
+                    vm.profile.Services[i].Name = "UPS Worldwide Express";
+                    
+                   // console.log(i + " "+ vm.profile.Services[i].Name);
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.EXPSVR"){
+                    vm.profile.Services[i].Name = "UPS Worldwide Saver";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.ABFB.ABFB"){
+                    vm.profile.Services[i].Name = "ABF LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.CNWY.CNWY"){
+                    vm.profile.Services[i].Name = "Conway LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DAFG.DAFG"){
+                    vm.profile.Services[i].Name = "Dayton LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_DHL.DHL.WPX"){
+                    vm.profile.Services[i].Name = "DHL Express Worldwide";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.DOM.DOM"){
+                    vm.profile.Services[i].Name = "Dominick  LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.EXLA.EXLA"){
+                    vm.profile.Services[i].Name = "Estes LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.HWDQ.HWDQ"){
+                    vm.profile.Services[i].Name = "Hollywood LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.PITD.PITD"){
+                    vm.profile.Services[i].Name = "Pitt Ohio LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.RLTO.RLTO"){
+                    vm.profile.Services[i].Name = "R&L Freight LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.SAIA.SAIA"){
+                    vm.profile.Services[i].Name = "Saia LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.SEFL.SEFL"){
+                    vm.profile.Services[i].Name = "Southeastern LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.NAM"){
+                    vm.profile.Services[i].Name = "UPS Next Day Air Early A.M.";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "CONNECTSHIP_UPS.UPS.EPD"){
+                    vm.profile.Services[i].Name = "UPS Worldwide Expedited";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.V.HMES"){
+                    vm.profile.Services[i].Name = "USF Holland LTL";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.WILC.WILC"){
+                    vm.profile.Services[i].Name = "Will Call";
+                }
+                
+                if( vm.profile.Services[i].Symbol == "TANDATA_LTL.YRC.YRC"){
+                    vm.profile.Services[i].Name = "YRC LTL";
+                }
+            }
+            console.log(vm.profile.Services);
+            
+            vm.profile.Services.sort( compare );
+        
+        shipmentRequest.PackageDefaults.UserData1 = null;
+
+    }
+
+// Source: KARTNERS BATHROOM ACCESSORIES (KARTNERS)_Kartners_CBR_2462.cs
+// PageLoaded(location) // returns void
+    this.PageLoaded = function(location) {  
+		if (location == "/shipping")
+        {
+			var loaded = setInterval(function() {
+            const $shipping = $('form[name="shippingForm"]');
+
+            if ($shipping.length > 0) {
+                clearInterval(loaded);
+
+                $('input[ng-model="vm.loadValue"]').attr('placeholder','Enter the Delivery Num');
+				var divshipper = $('div[property="Shipper"]');
+            if (divshipper.length > 0) {
+				var div1 = $('div[class="col-sm-8 no-left-right-padding"]');
+				let selectship = $('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"]');
+                let select = selectship.eq(0);
+		        let options = select.find('option');//.eq(0);
+                for(var ind=0;ind < options.length; ind++){
+					let option = options.eq(ind);
+					let opt = option.eq(0).val(); 
+				//	debugger;	
+					if (opt.includes("string:KARTDRATE")){
+					option.hide();			
+		}
+				}
+			}
+				
+            }
+			}, 50);
+		}
+	}
+
+// Source: L9 Sports (L9SPORTS)_L9 Client Rules_1694.cs
+// PostLoad(loadValue, shipmentRequest) // returns void
+  this.PostLoad = function(loadValue, shipmentRequest)
+  {
+    //debugger;
+    loadValue = loadValue.replace('!!', '');
+
+    if (typeof shipmentRequest.PackageDefaults.MiscReference5 !== 'undefined' && shipmentRequest.PackageDefaults.MiscReference5 !== null && shipmentRequest.PackageDefaults.MiscReference5.length > 2)
+    {
+      alertMessage('danger', shipmentRequest.PackageDefaults.MiscReference5);
+    }
+
+    this.vm.getWeight();
+    //$("#overrideRateShopping_Y").prop("checked", true);
+
+    // Warn user if expedited service selected and PO box is checked
+    const expServices = "UPS.NDA,UPS.2AM,UPS.2DA,UPS.EXP,USPS.PRIORITY,USPS.EXPR".split(',');
+
+    let hasExpedited = expServices.some(service => shipmentRequest.PackageDefaults.Service.Symbol.includes(service));
+    if (hasExpedited && shipmentRequest.PackageDefaults.Consignee.PoBox)
+    {
+      alertMessage('warning', "Order " + loadValue + " has an Expedited service selected but a PO box was used. Contact Customer Service for a new address.")
+    }
+
+    // if Int'l shipment, show Assign Commodities button, hide Add Package button group, and init AssignGoods
+    //sna6dxb - 09-23-2022
+    //don't need this any longer, the button is hidden by default in the template
+    //$('#btnAssignCommodities').hide();
+    if (shipmentRequest.PackageDefaults.Consignee.Country !== "US")
+    {
+      $('#btnAssignCommodities').show();
+      $('button[title="Add Package"]').parent().hide();
+      const Goods = new AssignGoods(this.vm);
+    }
+    else {
+        // ensure Assign Commodities button is hidden in case they load an Int'l order by mistake, then load domestic
+        $('#btnAssignCommodities').hide();
+        $('button[title="Add Package"]').parent().show();
+    }
+  }
+
+// Source: Lear Corporation (LEAR)_Lear_client_Businessrules_1810.cs
+// PreRate(shipmentRequest, userParams) // returns void
+this.PreRate = function(shipmentRequest, userParams) {
+       var selectedelement=$('select[multiple]').find("option:selected").val();
+       if (!selectedelement)
+       {
+            var chkBox = $('input[type=checkbox][ng-model="vm.isAllServicesSelected"]');
+               $(chkBox).click();
+       }
+    }
+
+// Source: LyondellBasell (LYON)_LYB_Company_Client_Side_1712.cs
+// PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+        console.log("postsearch");
+        console.log(this.vm.shippers);
+        
+        var s = this.vm.shippers;
+        for (var x=0; x < s.length -1; x++){
+            
+            var w = {};
+            w.FieldName = 'Shipper';
+            w.FieldValue = s[x].Symbol;
+            w.Operator = 0;
+        
+            searchCriteria.WhereClauses.push(w);
+        }
+
+
+        
+           
+            //s = this.vm.shippers[0].Symbol;
+            
+            //w.FieldValue = s[0];
+
+
+            //$('input[type=text][ng-model="vm.miscRef9"]').val(dealerNum);
+        
+
+        
+
+    }
+
+// Source: M&T Bank (MTBank)_MTBank_1506.cs
+// PostSelectAddressBook(shipmentRequest, nameaddress) // returns undefined
+this.PostSelectAddressBook = function (shipmentRequest, nameaddress) {
+        if(nameaddress.Code == "A1 - Ship to Buffalo" || nameaddress.Code == "A2 - Ship to Baltimore" || nameaddress.Code == "A3 - Ship to Harrisburg" || nameaddress.Code == "A4 - Millsboro Doc Image")
+        {
+            mailServiceShipment=true;
+            var service = [{Symbol: "UPSAPI.UPS.NDAS", Name: "UPS Next Day Air Saver (UPS Adapter)"}];
+            this.vm.profile.ProfileSetting.ServiceSelectionMode = 1;
+            this.vm.selectedServices = service;
+            this.vm.currentShipment.Packages[0].Weight.Amount = 3;
+            this.vm.showServiceSelection=true;
+        }     
+};
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_CA_TO_US_2497.cs
+// setUploadDelegates() // returns void
+    function setUploadDelegates() {
+
+        debugger;
+        setCommodityDelegate();
+
+        $('body').undelegate('#btnUploadPdfGoods', 'click');
+        $('body').undelegate('#btnUploadPdfGoodsClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputGoods', 'change');
+        $('body').undelegate('#btnUploadPdfModal', 'click');
+        $('body').undelegate('#btnUploadPdfModalClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputModal', 'change');
+
+        $('body').delegate('#btnUploadPdfGoods', 'click', function (e) {
+
+            that.currentShipment.Packages[0].MiscReference11 = "true";
+
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfGoodsClear', 'click', function (e) {
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput
+                && uploadPDFGoodsInput.length == 1) {
+                uploadPDFGoodsInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference11 = "false";
+
+            var uploadSuccessLabel = $('#uploadSuccessLabel');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputGoods', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            //debugger;
+            sessionStorage.setItem('uploadDocumentDataGoods', '');
+            sessionStorage.setItem('uploadDocumentDataGoodsFileName', '');
+
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataGoodsFileName', e.target.files[0].name);
+
+                var uploadSuccessLabel = $('#uploadSuccessLabel');
+                if (uploadSuccessLabel) {
+                    uploadSuccessLabel.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    debugger;
+                    that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                    $('#btnUploadPdfGoodsClear').click();
+                }
+                else {
+
+                    //debugger;
+                    that.convertFileInputToBase64('paperlessUploadFileInputGoods', 1, e).then(function (ret, e) {
+                        //debugger;
+                        //that.currentShipment.MiscReference19 = JSON.stringify(ret);
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataGoods', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            //var test = this.setResponseLabel;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                            //debugger;
+                        }
+                    });
+                }
+            }
+        });
+
+        $('body').delegate('#btnUploadPdfModal', 'click', function (e) {
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfModalClear', 'click', function (e) {
+            var uploadPDFGoodsModalInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsModalInput
+                && uploadPDFGoodsModalInput.length == 1) {
+                uploadPDFGoodsModalInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference12 = "false";
+            var uploadSuccessLabel = $('#uploadSuccessLabelModal');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputModal', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            debugger;
+            sessionStorage.setItem('uploadDocumentDataModal', '');
+            sessionStorage.setItem('uploadDocumentDataModalFileName', '');
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataModalFileName', e.target.files[0].name);
+
+                var uploadSuccessLabelModal = $('#uploadSuccessLabelModal');
+                if (uploadSuccessLabelModal) {
+                    uploadSuccessLabelModal.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    var test2 = that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                }
+                else {
+                    that.convertFileInputToBase64('paperlessUploadFileInputModal', 2).then(function (ret) {
+                        //debugger;
+
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataModal', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataModalFileName'));
+                            //debugger;
+                        }
+
+
+                    });
+                }
+            }
+        });
+
+    };
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_US_TO_US_2499.cs
+// Shipping() // returns undefined
+this.Shipping = function () {
+        $(document).ready(function () {
+            client.setDivReference3();
+
+        })
+
+        $('body').delegate('select[name="ConsigneeReference_txt"]', 'change', this.vm, consigneeReferenceOnChange);
+
+        function consigneeReferenceOnChange(e) {
+
+            client.vm = e.data;
+            if (e.target.value == 'string:Ambient')
+                changeWeightAmountAndMiscReference3(3, true);
+            else if (e.target.value == 'string:Refrigerated')
+                changeWeightAmountAndMiscReference3(5, true);
+            else if (e.target.value == 'string:Ambient/Refrigerated Combo Box')
+                changeWeightAmountAndMiscReference3(6, true);
+            else if (e.target.value == 'string:Frozen')
+                changeWeightAmountAndMiscReference3(6, false, true);
+            else if (e.target.value == 'string:Frozen/Ambient Combo Box')
+                changeWeightAmountAndMiscReference3(6, false, true);
+
+        }
+
+        function changeWeightAmountAndMiscReference3(weightAmount, isHidden, isRequired) {
+            $('[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').val(weightAmount).change();
+            if (isHidden) client.$divReference3.hide();
+            else client.$divReference3.show();
+            client.$divReference3.find('input').css('border-color', isRequired ? '#a94442' : client.defaultMiscReference3BorderColor);
+            client.vm.fieldOptions.MiscReference3.IsRequired = isRequired;
+        }
+
+    }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// NewShipment(shipmentRequest) // returns undefined
+this.NewShipment = function (shipmentRequest) {
+        //debugger;
+        clearUploadMessages();
+        this.clearSessionState();
+        setUploadDelegates(shipmentRequest);
+        this.currentShipment = shipmentRequest;
+
+        //Declaring variables.
+        var custom1_values, custom1, custom2, custom3, custom4, custom5, custom6, customData;
+        var customValues = {};
+        var customKeysArray = [];
+        var CustomData_AfterCustom4 = [];
+        var item;
+
+        customData = this.vm.profile.UserInformation.Address.CustomData;
+        // Iterate over the CustomData array and map values to their respective keys
+        $.each(customData, function (index, item) {
+            customValues[item.Key] = item.Value;
+        });
+
+        if (this.vm.profile.Name == 'Outbound Labels Leg 2 Allowed User Profile') {
+            for (var i in customData.length) {
+                item = customData[i];
+                customKeysArray.push(item.Key);
+            }
+
+            var startIndex = -1;
+            // Find the index of the key "Custom5"
+            for (var i = 0; i < customData.length; i++) {
+                if (customData[i].Key === "Custom5") {
+                    startIndex = i;
+                    break;
+                }
+            }
+
+            // If "Custom5" is found, start storing values from it onwards
+            if (startIndex !== -1) {
+                for (var j = startIndex; j < customData.length; j++) {
+                    CustomData_AfterCustom4.push(customData[j].Value);
+                }
+            }
+
+            // Now, customValues object contains all custom values accessible by their keys
+            var custom1 = customValues['Custom1'];
+            var custom2 = customValues['Custom2'];
+            var custom3 = customValues['Custom3'];
+            var custom4 = customValues['Custom4'];
+            var custom5 = customValues['Custom5'];
+            var custom6 = customValues['Custom6'];
+        } else {
+            //debugger;
+            custom1 = customValues['Custom1'];
+            custom2 = customValues['Custom2'];
+        }
+
+        //Checking DryIceRequired sets true via User Custom1 data.
+        if (custom1.split(',').length > 1) {
+            custom1_values = Tools.GetUniqueArrayFromString(custom1, ',');
+        } else {
+            throw new Error("Custom1 is not Comma delimited string.");
+        }
+
+        //Setting the Leg1Shipper
+        shipmentRequest.PackageDefaults.Shipper = custom1_values[0];
+
+        //Creating Dry Ice Required Checkbox
+        if ($('#DryIceRequired').length == 0 && custom1_values[1] == "true") {
+            //Adding DryIceRequired checkbox and its label.
+            $('div.col-md-6:last').append($('<input />', {
+                type: 'checkbox',
+                id: 'DryIceRequired',
+                name: 'DryIceRequired'
+            }));
+            $('div.col-md-6:last').append($('<label />', {
+                for: 'DryIceRequired',
+                text: 'Dry Ice Required'
+            }));
+        }
+
+        //Comparing the User Custom2 with the Profile enabled Services and remove the unmatched services from the Service UI.
+        var arrayValues_custom2;
+        if (custom2 != null || custom2 != undefined) {
+            arrayValues_custom2 = Tools.GetUniqueArrayFromString(custom2, ',');
+            var matchedValues = [];
+            var profileServices = this.vm.profile.Services;
+            profileServices.forEach(function (value1) {
+                var serviceExists = arrayValues_custom2.some(function (value) {
+                    return value1.Name.indexOf(value) !== -1;
+                });
+                if (serviceExists) {
+                    matchedValues.push(value1);
+                }
+            });
+
+            //Populating the Matched services on the Service UI.
+            $(document).ready(function () {
+                var mySelect = $('select[multiple="multiple"][property="Service"]');
+                mySelect.empty(); //Clearing the existing Services listed out in the Service UI list.
+
+                for (var i in matchedValues) {
+                    mySelect.append($('<option></option>').attr('value', matchedValues[i].Symbol).text(matchedValues[i].Name));
+
+                }
+            });
+        }
+
+        //Retrieving Custom Data values after CustomData4(Leg2 Companies).
+        var CustomDataCount = this.vm.profile.UserInformation.Address.CustomData.length;
+
+        var CustomData_FirstValues = []; //Fetch the First strings from Customdata after Custom4.
+        var CustomData_OtherValues = []; //Fetch the rest of other strings from Customdata after Custom4.
+
+        // Loop through each inner array in CustomData_AfterCustom4
+        for (var i = 0; i < CustomData_AfterCustom4.length; i++) {
+
+            var customData = CustomData_AfterCustom4[i];
+
+            //var customData_values = customData.Value;
+
+            var valuesArray = Tools.GetUniqueArrayFromString(customData, ',');
+
+            var firstValue = valuesArray.shift().trim();
+
+            //Store the first string from the Custom data.
+            CustomData_FirstValues.push(firstValue);
+
+            //Store the remaining values
+            CustomData_OtherValues.push(valuesArray.map(val => val.trim()));
+        }
+
+
+        //debugger;
+        //Enabling the MiscReference1 field based on Profile.
+        if (this.vm.profile.Name == "Outbound Labels Leg 2 Allowed User Profile") {
+
+           // debugger;
+
+            $(document).ready(function () {
+                $('[property="MiscReference1"]').hide(); //When page loaded, MISCREFERENCE1 will be hidden.
+                $('body').delegate('#DryIceRequired', 'change', function (e) {
+                    if ($('#DryIceRequired').is(':checked')) {
+                        //debugger;
+                        $('[property="MiscReference1"]').show();
+                        shipmentRequest.Packages[0].MiscReference5 = "true";
+                    } else {
+                        $('[property="MiscReference1"]').hide();
+                        shipmentRequest.Packages[0].MiscReference5 = "false";
+                    }
+                });
+            });
+
+            $(document).ready(function () {
+                if (custom1_values[2] == "true") {
+                    $('#EmptyPackaging').hide();
+                    $('label[for="EmptyPackaging"]').hide();
+                }
+                else {
+                    $('#EmptyPackaging').show();
+                    $('label[for="EmptyPackaging"]').show();
+                }
+
+            });
+
+            //Creating Central Labs Frozen Sample Return Checkbox
+            if ($('#CentralLabsFrozenSamplesReturn').length == 0 && custom1_values[2] == "true") {
+                //debugger;
+                var checkboxAndLabelContainer = $('<div>').addClass('inline-checkbox').append(
+                    $('<input />').addClass('checkbox').attr({
+                        'type': 'checkbox',
+                        'id': 'CentralLabsFrozenSamplesReturn',
+                        'name': 'CentralLabsFrozenSamplesReturn'
+                    }),
+                    $('<label />').attr('for', 'CentralLabsFrozenSamplesReturn').text('Central Labs Frozen Samples Return')
+                );
+
+                $('div.companyPopupModal').append(checkboxAndLabelContainer);
+
+            }
+            else {
+                //Creating Empty Packaging Checkbox
+                if ($('#EmptyPackaging').length == 0) {
+                    //debugger;
+                    var checkboxAndLabelContainer_Empty = $('<div>').addClass('inline-checkbox').append(
+                        $('<input />').addClass('checkbox').attr({
+                            'type': 'checkbox',
+                            'id': 'EmptyPackaging',
+                            'name': 'EmptyPackaging'
+                        }),
+                        $('<label />').attr('for', 'EmptyPackaging').text('Empty Packaging')
+                    );
+
+                    $('div.companyPopupModal').append(checkboxAndLabelContainer_Empty);
+
+                }
+
+
+
+                //Setting MiscReference7 to true if Empty Packaging Checkbox is checked.
+                $('body').delegate('#EmptyPackaging', 'change', function (e) {
+                    if ($('#EmptyPackaging').is(':checked')) {
+                        shipmentRequest.Packages[0].MiscReference8 = "true";
+                    } else {
+                        shipmentRequest.Packages[0].MiscReference8 = "false";
+                    }
+                });
+            }
+
+
+            //Setting Leg2 Dry Ice weight hidden by default
+            $(document).ready(function () {
+                $('#Leg2DryIceWeight').hide();
+                $('label[for="Leg2DryIceWeight"]').hide();
+            });
+            //Setting MiscReference7 to true if Central Labs Frozen Sample Return Checkbox is checked.
+            $('body').delegate('#CentralLabsFrozenSamplesReturn', 'change', function (e) {
+                if ($('#CentralLabsFrozenSamplesReturn').is(':checked')) {
+                    shipmentRequest.Packages[0].MiscReference7 = "true";
+
+                    $('#Leg2DryIceWeight').show();
+                    $('label[for="Leg2DryIceWeight"]').show();
+
+                } else {
+                    shipmentRequest.Packages[0].MiscReference7 = "false";
+                    $('#Leg2DryIceWeight').hide();
+                    $('label[for="Leg2DryIceWeight"]').hide();
+                }
+            });
+
+            //Creating Leg2 Dry Ice Weight
+            if ($('#Leg2DryIceWeight').length == 0) {
+                //debugger;
+                var checkboxAndLabelContainer = $('<div>').append(
+                    $('<label />').attr({
+                        'for': 'Leg2DryIceWeight',
+                        'style': 'position:absolute;right:20px;top:120px;width:160px;'
+
+                    }).text('Dry Ice Weight'),
+                    $('<input />').attr({
+                        'type': 'text',
+                        'id': 'Leg2DryIceWeight',
+                        'name': 'Leg2DryIceWeight',
+                        'style': 'position:absolute;right:20px;border:1px solid black;top:140px;width:160px;'
+                    }),
+                );
+
+                $('div.companyPopupModal').append(checkboxAndLabelContainer);
+            }
+
+            //Setting MiscReference10 to true if Leg2 Dry Ice Weight is present.
+            $('body').delegate('#Leg2DryIceWeight', 'change', function (e) {
+                shipmentRequest.Packages[0].MiscReference10 = $(this).val();
+            });
+            //Creating Leg2 Package Weight
+            if ($('#Leg2PackageWeight').length == 0) {
+                //debugger;
+                var checkboxAndLabelContainer = $('<div>').append(
+                    $('<label />').attr({
+                        'for': 'Leg2PackageWeight',
+                        'style': 'position:absolute;right:20px;top:70px;width:160px;'
+
+                    }).text('Package Weight'),
+                    $('<input />').attr({
+                        'type': 'text',
+                        'id': 'Leg2PackageWeight',
+                        'name': 'Leg2PackageWeight',
+                        'style': 'position:absolute;right:20px;border:1px solid black;top:90px;width:160px;'
+                    }),
+                );
+
+                $('div.companyPopupModal').append(checkboxAndLabelContainer);
+            }
+            //debugger;
+            //Setting MiscReference9 to true if Leg2 Package Weight is present.
+            $('body').delegate('#Leg2PackageWeight', 'change', function (e) {
+                //debugger;
+                shipmentRequest.Packages[0].MiscReference9 = $(this).val();
+            });
+
+            $('#divModalCompanyPopup').delegate('#Leg2PackageWeight', 'change', function (e) {
+                //debugger;
+                shipmentRequest.Packages[0].MiscReference9 = $(this).val();
+            });
+
+            //Manual Upload
+            var commodityLists = GetCommodityContents();
+            $.each(commodityLists.CommodityContents, function (index, option) {
+                var textMessage = commodityLists.CommodityContents[index].Description + ' ' + commodityLists.CommodityContents[index].HarmonizedCode;
+
+                $('#commodityKey').append($('<option>', {
+                    value: JSON.stringify(option),
+                    text: textMessage
+                }));
+            });
+
+            $('#addButton').one('click', function () {
+
+                var showMessage = $('<div>').attr('id', 'displayMessage').text("Commodity added").css('font-weight', 'bold');
+                $('.manualUpload').after(showMessage);
+
+                var quantity = $('#quantity').val();
+                if (quantity % 1 !== 0) {
+                    alert("Qty is invalid");
+                }
+                else {
+                    //Store Quantity in MiscReference15
+                    shipmentRequest.Packages[0].MiscReference15 = quantity;
+                }
+
+                //Store commodity content in Misc Reference14
+                shipmentRequest.Packages[0].MiscReference14 = $('#commodityKey').val();
+            });
+
+            //Creating Service Dropdown if User Custom4 is present.
+            var hasCustom4 = false;
+            for (var i = 0; i < this.vm.profile.UserInformation.Address.CustomData.length; i++) {
+                if (this.vm.profile.UserInformation.Address.CustomData[i].Key === "Custom4") {
+                    hasCustom4 = true;
+                    break;
+                }
+            }
+            if (hasCustom4) {
+                if (custom4 != '' && custom4 != 'undefined' && custom4 != null && $('#Service').length === 0) {
+                    //Creating Service Dropdown menu.
+                    var labelAndSelect1 = $('<label />').attr('for', 'Service').text('Service: ')
+                        .add($('<select />').addClass('btn btn-xs btn-primary').attr({
+                            'id': 'Service',
+                            'name': 'Service'
+                        }).fadeIn());
+
+                    $('div.companyPopupModal').prepend(labelAndSelect1);
+
+                    var arrayOfValues_custom4 = Tools.GetUniqueArrayFromString(custom4, ',');
+
+                    if (arrayOfValues_custom4.length > 1) {
+                        $.each(arrayOfValues_custom4, function (i, e) {
+                            $('#Service').append($('<option>', {
+                                value: e,
+                                text: e
+                            }));
+                        });
+
+                        $('div.companyPopupModal').prepend($('<div />', {
+                            'class': 'spacer'
+                        }));
+
+                    } else {
+                        throw new Error("Custom4 is not comma-delimited.");
+                    }
+                }
+            } else {
+                alert("Custom4 is not present");
+            }
+
+
+            //Use case: 5 User Custom data fields -> Leg2 companies will be present only at the custom5 field.
+            var CustomData5_FirstValues = [];
+            var CustomData5_OtherValues = [];
+
+            //if (CustomDataCount == 5) {
+            //debugger;
+            if ($('#Company').length === 0) {
+
+                var custom5_Values = [];
+                custom5_Values = Tools.GetUniqueArrayFromString(custom5, ',');
+                var custom5_firstValue = custom5_Values.shift().trim();
+
+                //Store the first value
+                CustomData5_FirstValues.push(custom5_firstValue);
+
+                // Store the remaining values
+                CustomData5_OtherValues.push(custom5_Values.map(val => val.trim()));
+                //debugger;
+                $('#CompanyName').val(custom5_Values[0]);
+                $('#CompanyContact').val(custom5_Values[1]);
+                $('#CompanyAddress').val(custom5_Values[2]);
+                $('#CompanyCity').val(custom5_Values[3]);
+                if (custom5_Values.Length > 7) {
+                    //debugger;
+                    $('#CompanyStateProvince').val(custom5_Values[4]);
+                    $('#CompanyPostalCode').val(custom5_Values[5]);
+                    $('#CompanyCountry').val(custom5_Values[6]);
+                    $('#CompanyPhone').val(custom5_Values[7]);
+
+                } else {
+                    // debugger;
+                    $('#CompanyStateProvince').val("");
+                    $('#CompanyPostalCode').val(custom5_Values[4]);
+                    $('#CompanyCountry').val(custom5_Values[5]);
+                    $('#CompanyPhone').val(custom5_Values[6]);
+
+                }
+
+                $('body').delegate('#Leg2LabelRequired', 'change', this.vm, function (e) {
+                    //debugger;
+                    if ($('#Leg2LabelRequired').is(':checked')) {
+                        //debugger;
+                        shipmentRequest.Packages[0].MiscReference6 = "true";
+                        CompanyPopup.InitElements(function (selectedCompany, selectedService) {
+
+                            //debugger;
+                            shipmentRequest.Packages[0].MiscReference2 = CustomData5_OtherValues.toString();
+
+                            shipmentRequest.Packages[0].MiscReference3 = selectedService;
+
+                        });
+                    }
+                });
+            }
+
+
+            if ($('#Company').length === 0) {
+
+                if ((custom5 != '' && custom5 != 'undefined' && custom5 != null) && (custom6 != '' && custom6 != 'undefined' && custom6 != null)) {
+                    //Creating Company Dropdown menu.
+                    var labelAndSelect = $('<label />').attr('for', 'Company').text('Company: ')
+                        .add($('<select />').addClass('btn btn-xs btn-primary').attr({
+                            'id': 'Company',
+                            'name': 'Company'
+                        }).fadeIn());
+
+                    //$('div.modal-body').prepend(labelAndSelect);
+                    $('div.companyPopupModal').prepend(labelAndSelect);
+
+
+
+                    $.each(CustomData_FirstValues, function (i, e) {
+                        $('#Company').append($('<option>', {
+                            value: e,
+                            text: e
+                        }));
+                    });
+
+                    $('div.companyPopupModal').prepend($('<div />', {
+                        'class': 'spacer' // Ensure you define this class in your CSS with the desired spacing
+                    }));
+
+                    // Event listener for company selection change
+                    $('body').delegate('#Company', 'change', function (e) {
+                        //debugger;
+                        var selectedCompany = $(this).find(":selected").val();
+                        CompanyPopup.populateCorrespondingValues(selectedCompany, CustomData_FirstValues, CustomData_OtherValues);
+                    });
+
+                    // Trigger change event on company dropdown to populate corresponding values by default
+                    $('#Company').trigger('change');
+
+                }
+
+                //If Leg2LabelRequired check box is checked, setting MiscReference6 to true and populating the Company and Service values on the Modal.
+                $('body').delegate('#Leg2LabelRequired', 'change', this.vm, function (e) {
+                    if ($('#Leg2LabelRequired').is(':checked')) {
+                        shipmentRequest.Packages[0].MiscReference6 = "true";
+
+                        if ((custom4 != '' || custom4 != 'undefined' || custom4 != null) || (custom5 != '' || custom5 != 'undefined' || custom5 != null) && (custom6 != '' || custom6 != 'undefined' || custom6 != null)) {
+
+                            CompanyPopup.InitElements(function (selectedCompany, selectedService) {
+
+                                var com = CompanyPopup.populateCorrespondingValues(selectedCompany, CustomData_FirstValues, CustomData_OtherValues);
+
+                                shipmentRequest.Packages[0].MiscReference2 = com.toString();
+                                shipmentRequest.Packages[0].MiscReference3 = selectedService;
+
+                            });
+                            $("#buttonCompanyPopup").click();
+                        }
+                    }
+                });
+            }
+
+            //debugger;
+            //Setting Leg1 and Leg2 PDF Invoice default by False.         
+            shipmentRequest.Packages[0].MiscReference11 = "false";
+            shipmentRequest.Packages[0].MiscReference12 = "false";
+
+
+        } else {
+            $(document).ready(function () {
+                $('[property="MiscReference1"]').hide(); //When page loaded, MISCREFERENCE1 will be hidden.
+                $('body').delegate('#DryIceRequired', 'change', function (e) {
+                    if ($('#DryIceRequired').is(':checked')) {
+                        //debugger;
+                        $('[property="MiscReference1"]').show();
+                        shipmentRequest.Packages[0].MiscReference5 = "true";
+
+                    } else {
+                        $('[property="MiscReference1"]').hide();
+                        shipmentRequest.Packages[0].MiscReference5 = "false";
+                    }
+                });
+            });
+
+            //Setting Leg1 PDF Invoice default by False
+            //debugger;
+            shipmentRequest.Packages[0].MiscReference11 = "false";
+
+        }
+        //debugger;
+        //Assigning the User address to Return Address
+        shipmentRequest.PackageDefaults.ReturnAddress = this.vm.profile.UserInformation.Address;
+        //this.vm.profile.Shippers= this.vm.profile.UserInformation.Address;
+
+        //Assigning the Weight Units to "KG" if Ship From country is not US.
+        //debugger;
+        var selectedShipper = shipmentRequest.PackageDefaults.Shipper; //$('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"]').val();
+        var map = $.grep(this.vm.profile.Shippers, function (shipper) {
+            console.log(shipper.Symbol);
+            return shipper.Symbol == selectedShipper;
+        })[0];
+        if (map.Country != "US") {
+            //debugger;
+            shipmentRequest.Packages[0].Weight.Units = "KG";
+        }
+        
+        
+         //Setting Proactive recovery
+        $(document).ready(function () {
+            debugger;
+            $('body').delegate('[property="ProactiveRecovery"]', 'change', function (e) {
+                debugger;
+                if (e.target.checked == true) {
+                    shipmentRequest.Packages[0].ProactiveRecovery = true;
+                    $('select option[value="number:1"]').prop("selected", true);
+                    shipmentRequest.Packages[0].ProactiveRecoveryType = 1;
+                    
+                     var total=0;
+                for (var i = 0; i < shipmentRequest.Packages[0].SelectedProactiveRecoveryInstructions.length; i++) {
+                    total += shipmentRequest.Packages[0].SelectedProactiveRecoveryInstructions[i]
+                }
+                var inst=[];
+                inst.push(total);
+                debugger;
+				shipmentRequest.Packages[0].ProactiveRecoveryInstructions=inst[0].toString();
+               
+                }
+                else {
+                    $('select option[selected="selected"]').prop("selected", true);
+                }
+            });
+
+
+        });
+        
+    }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase3_CBR_2501.cs
+// function GetGroups() // returns JSON data for WORLD_EASE groups
+function GetGroups() {
+        var jsonData;
+        var data = {
+            "CompanyId": "f013228b-d982-446f-961a-b2cd02be3666",
+            "SearchCriteria": {
+                "Skip": 0,
+                "Take": 0
+            },
+            "Carrier": "CONNECTSHIP_UPS.UPS",
+            "GroupType": "WORLD_EASE",
+            "Status": 1
+        };
+        var ajaxRequest = clientService1.thinclientService1APIRequest('GetGroups', data, false);
+        jsonData = ajaxRequest.responseJSON;
+        return jsonData;
+    }
+
+// Source: MarkenLLP2 (MLLP2)_Inbound Returns CBR_EU_TO_UK_1916.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {
+          debugger;
+        //If the user profile is EU to UK, then Pickup LatestTimeReady can be calculated.
+        if (shipmentRequest.Packages[0].MiscReference8 == "2") {
+          
+            var MiscRef10 = formatNumberToTime(shipmentRequest.Packages[0].MiscReference10);
+
+            // Split the times into hours and minutes
+            var parts1 = shipmentRequest.Packages[0].MiscReference9.split(":");
+            var parts2 = MiscRef10.split(":");
+
+            // Parse the hours and minutes as integers
+            var hours1 = parseInt(parts1[0], 10);
+            var minutes1 = parseInt(parts1[1], 10);
+            var hours2 = parseInt(parts2[0], 10);
+            var minutes2 = parseInt(parts2[1], 10);
+
+            // Add the hours and minutes together
+            var totalHours = hours1 + hours2;
+            var totalMinutes = minutes1 + minutes2;
+
+            // Handle carryover from minutes to hours
+            if (totalMinutes >= 60) {
+                totalHours += Math.floor(totalMinutes / 60);
+                totalMinutes %= 60;
+            }
+
+            // Format the result as "hh:mm"
+            var result = totalHours.toString().padStart(2, '0') + ':' + totalMinutes.toString().padStart(2, '0');
+
+            shipmentRequest.Packages[0].MiscReference11 = result;
+            
+                if (shipmentRequest.Packages[0].MiscReference11 > shipmentRequest.Packages[0].MiscReference12) 
+                {
+                alert("Calculated Pickup Latest Time Ready is later than the Maximum Pickup Latest Time Ready for the user.");
+                throw new Error("Calculated Pickup Latest Time Ready is later than the Maximum Pickup Latest Time Ready for the user.");
+                }
+
+             //Format the number to HH:MM    
+             function formatNumberToTime(number) {
+            
+                            if (number < 0 || number > 23) {
+                                return "Invalid hour";
+                            }
+                            // Use String interpolation to format the number as "X:00"
+                            return `${number}:00`;
+                        }
+                        
+                        
+            $('[ng-click="vm.createPickupRequestClick()"]').trigger('click');
+            // Assigning the Pickup request properties.
+            this.vm.pickup.ContactName = $('input[ng-model="nameaddress.Contact"]').val();
+            this.vm.pickup.ContactPhone = $('input[ng-model="nameaddress.Phone"]').val();
+            this.vm.pickup.PaymentType = "PAY_BY_SHIPPER_ACCOUNT";
+            this.vm.pickup.EarliestTimeReady = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference9"]').val();
+            this.vm.pickup.LatestTimeReady = shipmentRequest.Packages[0].MiscReference11;
+
+            if (this.vm.pickup != null) {
+                setTimeout(() => {
+                    $('[ng-click="vm.ok()"]' ).trigger('click');
+                }, 100);
+            }
+        }
+
+    }
+
+// NewShipment(shipmentRequest) // returns void
+    this.NewShipment = function(shipmentRequest) {
+         if (location == '/shipping') {
+            StudyReferenceCodeModal.InitElements(false);
+            $('#LoadStudyReferenceCodeData').click();
+            Tools.HideLoader();
+         }
+        
+        $('[ng-click="vm.createPickupRequestClick()"]' ).trigger('click');
+        setTimeout(() => {
+            $('[ng-click="vm.ok()"]' ).trigger('click');
+        }, 100);
+
+        client?.$divReference3?.hide();
+
+        shipmentRequest.PackageDefaults.Consignee = this.vm.profile.UserInformation.Address;
+
+        shipmentRequest.Packages[0].ShipperReference = this.vm.profile.UserInformation.Address.CustomData[0].Value; //Study Reference code
+
+        shipmentRequest.Packages[0].MiscReference1 = this.vm.profile.UserInformation.Address.CustomData[1].Value;  //Protocol Number
+
+        shipmentRequest.Packages[0].MiscReference2 = this.vm.profile.UserInformation.Address.CustomData[2].Value;  //Site Number
+
+        shipmentRequest.Packages[0].MiscReference12 = this.vm.profile.UserInformation.Address.CustomData[3].Value; //Maximum Pickup Latest Time Ready
+
+        shipmentRequest.Packages[0].MiscReference4 = true;
+        
+        
+            $(document).ready(function() {
+               
+               $("#OK").on("click", function() {
+            
+                var selectedValue = $('#selectShipper').val();
+                var shipperReferenceVal = $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]').val();
+                var arrayOrders = Tools.GetUniqueArrayFromString(shipperReferenceVal);
+                if(arrayOrders.includes(selectedValue)){
+                     var selectedIndex = arrayOrders.indexOf(selectedValue); 
+                     var selectedStudy= arrayOrders[selectedIndex];
+                     //Populating the entered Study Reference code in the Shipper reference field.
+                     $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]').val(selectedStudy);
+                     shipmentRequest.Packages[0].ShipperReference= $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"]').val();
+                     
+                     var miscReference1Val = $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference1"]').val();
+                     var arrayOrders1 = Tools.GetUniqueArrayFromString(miscReference1Val);
+                     var selectedProtocol = arrayOrders1[selectedIndex]; 
+                     //Populating the corresponding Protocol number in the Misc reference 1 field.
+                     $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference1"]').val(selectedProtocol);
+                      shipmentRequest.Packages[0].MiscReference1= $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference1"]').val();
+                      
+                     var miscReference2Val = $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference2"]').val();
+                     var arrayOrders2 = Tools.GetUniqueArrayFromString(miscReference2Val);
+                     var selectedSite= arrayOrders2[selectedIndex]; 
+                     //Populating the corresponding Site number in the Misc reference 2 field.
+                     $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference2"]').val(selectedSite);
+                     shipmentRequest.Packages[0].MiscReference2= $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference2"]').val();
+                }
+                else
+                 {
+                     alert("Please contact Marken directly to schedule your pickup.");
+                     throw new Error("Please contact Marken directly to schedule your pickup.");
+                 }
+        
+                //Calling the SBR Usermethod to get the Shipper Friendly name.    
+                 GetUserShipper(selectedStudy,shipmentRequest);
+                
+                StudyReferenceCodeModal.CloseDialogWithoutSaving();
+                
+            });
+        
+        });
+     
+    }
+
+// GetUserShipper(selectedStudy, shipmentRequest) // returns void
+    function GetUserShipper(selectedStudy,shipmentRequest) {
+       var jsonData;
+       var dataObject = {
+                    StudyReferenceCode:selectedStudy, 
+                    UserContext: client.userContext
+                };
+ 
+                var payload = JSON.stringify(dataObject);
+                debugger;
+                var data = { Data: payload, UserContext: client.userContext };
+ 
+                var ajaxRequest = client.thinClientAPIRequest('UserMethod', data, true);
+            
+                ajaxRequest.done(function (data) {
+ 
+             jsonData = data.Data;
+                console.log(jsonData);
+               $('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"]').val(jsonData);
+               shipmentRequest.PackageDefaults.Shipper=$('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"] option:selected').val().split(":")[1];
+
+                });
+            
+    }
+
+// GetUniqueArrayFromString(inString, stringDelimiter) // returns array
+            GetUniqueArrayFromString: function (inString, stringDelimiter = ',') {
+               var trimArray = $.grep(inString.split(stringDelimiter), function (a) {
+                  return a.trim().length > 0;
+               });
+               /* Get rid of any duplicate array entries. */
+               trimArray = trimArray.filter((e, i, a) => a.indexOf(e) === i);
+               return trimArray;
+            }
+
+// Source: McIlHenny Revised (MCILHENNYREVISED)_McIlHenny Client Side Rules_1687.cs
+// PreProcessBatch(batchReference, actions, params, vm) // returns void
+this.PreProcessBatch = function (batchReference, actions, params, vm) {
+
+        //alert("batchReference:" + batchReference);
+
+        // Get the shipper from the shipper drop down and store in params for server side
+        var shipper = $('#shipperList').val();
+        //alert(shipper);
+        params.shipper = shipper;
+
+        // Get the order source from the radio button checked and store in params for server side
+        var source = $('#orderSource input[type=radio]:checked').val();
+        //alert(source);
+        params.source = source;
+
+        //console.log($.isArray(params));
+        //console.log(typeof params);
+
+        // Get the service from the service level drop down and store in params for server side
+        var service = $('#serviceList').val();
+        //alert(service);
+        params.service = service;
+
+        // Get the quantity/topx from the revised batch reference field
+        // Get the batch reference from the revised batch reference field
+
+        //var topx = $('#topX').val();
+        //alert(topx);
+
+        //var batchnumber = $('#batchNumber').val();
+        //alert(batchnumber);
+    }
+
+// Source: McLane Company, Inc (MCLANECO)_McLaneClientBussinessRules_1827.cs
+// SetShippingCharges(currentShipper) // returns void; applies a shipping charge based on the selected shipper
+function SetShippingCharges(currentShipper)
+    {
+        console.log("Current shipper : " + currentShipper);
+        
+        var shippingCharges = [{"Symbol": "1599Y8 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol": "C122K3 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol": "16A1W6 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol": "16A4Y8 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol": "1E276V MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "442RW0 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "WV9965 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "Y5717E MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A07W47 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A07W73 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A07W96 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A652T7 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "W0F383 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "W0F440 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A031W5 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A032W7 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A03W68 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A03W96 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A23896 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A047W5 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A016W2 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A017W3 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A0268W MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A026W1 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A23909 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A0313W MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "6R274W MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "6Y303E MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "85V086 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "866R5E MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "970223 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "A014W8 MCLANE","ShippingCharge":"McLane"},{"Symbol":"A03W50 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol": "C3E294 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol":"A0251W MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol":"207986 MCLANE","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8390D McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C83917 McLane","ShippingCharge":"CustomerOrVendor"}
+    ,{"Symbol":"C8392Y McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C83926 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8393E McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C83933 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8394V McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8395G McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C83953 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8396R McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C83968 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8397F McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8397X McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8398B McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C83981 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8399A McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C8399X McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C84A08 McLane","ShippingCharge":"CustomerOrVendor"},{"Symbol":"C84A34 McLane","ShippingCharge":"CustomerOrVendor"}];
+        
+        var r = shippingCharges.find(x => x.Symbol === currentShipper);
+        
+        var shippingChargeToApply = "";
+        
+        if (r != undefined)
+        {
+        	shippingChargeToApply = r.ShippingCharge;
+        }
+		
+        $('#ddlShippingCharge').val(shippingChargeToApply);
+				
+    }
+
+// SetShipperAddressAsReturnAddress(element) // returns void; updates return address and shipping charge based on the selected shipper
+function SetShipperAddressAsReturnAddress(element)
+    {
+        debugger;
+        
+        var selectedShipper = "";
+        
+        if (typeof(element)==="object")
+        {
+            selectedShipper = $(element).find(":selected").text();
+        }
+        else if (typeof(element)==="string")
+        {
+            selectedShipper = element;
+        }
+        
+        var cleanShipper = selectedShipper.replace("string:", "").replace("_", " ");
+        
+        if (cleanShipper != "" && cleanShipper != undefined )
+        {
+            
+            if(cleanShipper =='16A4Y8 McLane')
+            {
+                $("#ddlShippingCharge").val("CustomerOrVendor");
+            }
+            else
+            {
+             $("#ddlShippingCharge").val("");   
+            }
+            
+            SetShippingCharges(cleanShipper);
+            
+            var userMethodParams = { "action": "SetShipperAddressAsReturnAddress", "SelectedShipper": cleanShipper};
+            
+            var data = { Data: JSON.stringify(userMethodParams), UserContext: client.userContext };
+            
+            var response = thinClientAPIRequest('UserMethod', data, false);
+            
+            if (response.ErrorCode != 0) {
+                client.alert.Danger(response.ErrorMessage);
+            } 
+            else {
+                    var json = DecodeReturnString(response.Data);
+                    $('[name="company"]:eq(1)').val(json.Address.Company);
+                    $('[name="contact"]:eq(1)').val(json.Address.Contact);
+                    $('[name="address1"]:eq(1)').val(json.Address.Address1);
+                    $('[name="address2"]:eq(1)').val(json.Address.Address2);
+                    $('[name="address3"]:eq(1)').val(json.Address.Address3);
+                    $('[name="city"]:eq(1)').val(json.Address.City);
+                    $('[name="stateProvince"]:eq(1)').val(json.Address.StateProvince);
+                    $('[name="postalCode"]:eq(1)').val(json.Address.PostalCode);
+                    $('[name="country"]:eq(1)').val(json.Address.Country);
+                    vm.currentShipment.PackageDefaults.ReturnAddress = json.Address;
+                }
+        }
+        
+    }
+
+// Source: Memorial Sloan-Kettering Cancer Center  (MSKCC)_MSKCC_Reference_Rules_63.cs
+// serviceUpgrade() // returns undefined
+    function serviceUpgrade() {
+        var custom7 = getKeyValue('custom7', originCustomData);
+        if (custom7 != '') {
+            var selectedService = $(this).text();
+            var reasonInput = $('[ng-model="vm.ReasonForUpgrade"]');
+            var autoReasonService = [
+                'UPS Next Day Air (UPS Adapter)'
+            ]
+
+            if (autoReasonService.indexOf(selectedService) >= 0) {
+                reasonInput.val(custom7).change();
+            } else {
+                if (reasonInput.val() == custom7) {
+                    reasonInput.val('').change();
+                }
+            }
+        }
+    }
+
+// Source: Meta Platforms (API Shipping) (METAPLATFORMSAPISHIPPING)_Meta Thin Client Profile CBR_1868.cs
+// ApplyRulesWithoutServiceRequested(shipmentRequest, rateResults, dateToday) // returns void
+function ApplyRulesWithoutServiceRequested(shipmentRequest,rateResults,dateToday)
+    {            
+        if (stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-") <= dateToday) 
+            {
+                $('input[ng-model="vm.deliverDate.value"]').val(formatDate(getTomorrowDate())).change();
+
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(formatDate(getTomorrowDate())).change();
+            } 
+            else if (rateResults) 
+            {                
+                var fullArriveDate = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(fullArriveDate).change();
+            }   
+    }
+
+// UpdateFields(dateValue, applyBackupService) // returns void
+function UpdateFields(dateValue,applyBackupService)
+    {
+        $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference7"]').val(dateValue).change();
+        
+        if(applyBackupService)
+        {
+            $('input[ng-model="vm.deliverDate.value"]').val(formatDate(getTomorrowDate())).change();
+        }
+        
+    }
+
+// BackupServiceRequired(rateResults, shipmentRequest) // returns boolean
+function BackupServiceRequired(rateResults,shipmentRequest)
+    {
+        var ratedArriveDate = GetStringArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+        var formattedArriveDate = stringToDate(ratedArriveDate, dateFormat, "-");
+
+        var requestedDeliveryDate = stringToDate(shipmentRequest.Packages[0].MiscReference5, dateFormat, "-");
+
+        var applyBackupService = (requestedDeliveryDate < formattedArriveDate);
+
+        return applyBackupService;
+    }
+
+// ApplyRulesWithServiceRequested(shipmentRequest, rateResults, dateToday) // returns void
+function ApplyRulesWithServiceRequested(shipmentRequest,rateResults,dateToday)
+    {
+        var requestedServiceSymbol = shipmentRequest.PackageDefaults.Service.Symbol;
+        var backupNDADomesticService = shipmentRequest.Packages[0].MiscReference18; //UPSAPI.UPS.NDA        
+        var backupExpressIntlService = shipmentRequest.Packages[0].MiscReference20; //UPSAPI.UPS.EXPRESS  
+        var serviceToBeReturned = '';
+        var domestic = shipmentRequest.PackageDefaults.Consignee.Country === "US";
+
+        rateResults.slice()
+                   .forEach(function(item, index, object) 
+        {            
+            if (!requestedServiceSymbol) 
+            {
+                requestedServiceSymbol = shipmentRequest.PackageDefaults.Service.Symbol;
+            }
+
+            serviceToBeReturned = requestedServiceSymbol;
+
+            var requestedServiceIsFoundAsRateResult = (item.PackageDefaults.Service.Symbol === shipmentRequest.PackageDefaults.Service.Symbol);
+
+            if (requestedServiceIsFoundAsRateResult) 
+            {                                           
+                console.log("Found requested service in position: " + index + "of rate results");
+
+                var applyBackupService = BackupServiceRequired(rateResults,shipmentRequest);
+
+                if (applyBackupService)
+                {
+                    if (domestic) 
+                    {
+                        serviceToBeReturned = backupNDADomesticService;                
+
+                        UpdateFields(formatDate(getTomorrowDate(),true));  
+                    }                
+                    else
+                    {
+                        serviceToBeReturned = backupExpressIntlService;
+
+                        rateResults.forEach(function(item, index, object) 
+                        {
+                            if (item.PackageDefaults.Service.Symbol === backupExpressIntlService) 
+                            {
+                                UpdateFields(formatDate(GetArriveDate(item.PackageDefaults.ArriveDate)),applyBackupService);                  
+                            }
+                        });                       
+                    }
+                }
+                else
+                {
+                    if (rateResults) 
+                    {
+                        var fullArriveDate = GetArriveDate(rateResults[0].PackageDefaults.ArriveDate);
+
+                        UpdateFields(fullArriveDate,false);                         
+                    }
+                }
+            }
+        });
+    }
+
+// Source: MGMResorts (MGMRESOR)_Inbound Client Rules Import Control_2456.cs
+// function documentReady() // returns undefined
+function documentReady() {
+        generalCarrierInstructions.hide();
+        //generalDescription.hide();
+        generalAllServices.hide();
+        generalSpanSelectAll.hide();
+
+
+        internationalWorldEaseHeading.hide();
+        $internationalTab.find('div button').hide();
+    }
+
+// Source: MGMResorts (MGMRESOR)_Inbound Client Rules_1648.cs
+// documentReady() // returns void
+function documentReady() {
+        generalCarrierInstructions.hide();
+        //generalDescription.hide();
+        generalAllServices.hide();
+        generalSpanSelectAll.hide();
+
+
+        internationalWorldEaseHeading.hide();
+        $internationalTab.find('div button').hide();
+    }
+
+// updateDropDownMenu() // returns void
+function updateDropDownMenu() {
+        angular.element('a:contains("End of Day")').hide();
+        //angular.element('a:contains("History")').hide();
+
+        var separator = null;
+        var menus = ['Scan Ship', 'Batch Manager', 'Create a Batch', 'AddressBook', 'Distribution List'];
+        angular.element('.dropdown-menu li').each(function () {
+            var itemText = $(this).text();
+            if (itemText === '') {
+                separator = $(this);
+            }
+
+            if (menus.includes($(this).text())) {
+                $(this).hide();
+                separator.hide();
+            }
+        });
+    }
+
+// Source: Nike (Nike)_Nike_Reference_Rules_1540.cs
+// function SendFreightCollect(shipmentRequest) // returns void
+    function SendFreightCollect(shipmentRequest) {
+        debugger;
+        if (typeof shipmentRequest.Packages[0].MiscReference20 !== "undefined") 
+        //shipmentRequest.Packages[0].MiscReference20 = "";
+        var selection = shipmentRequest.Packages[0].MiscReference20;
+        if (selection.indexOf("-") > -1) {
+            var position = selection.indexOf("-");
+            shipmentRequest.PackageDefaults.Consignee.Account = selection.substring(position + 2);
+            shipmentRequest.PackageDefaults.Terms = "CONSIGNEE";
+        } else {
+            throw new error({ "number": "001", "description": "Receiver Billing Information not found." });
+        }
+    }
+
+// Source: NikeRevship (NIKEREVSHIP)_NikeRevshipClientBusinessRule_1786.cs
+// function PreSearchHistory(searchCriteria) // returns void
+this.PreSearchHistory = function(searchCriteria) {
+
+
+		if (searchCriteria.WhereClauses !== null && searchCriteria.WhereClauses !== undefined) {
+			if (searchCriteria.WhereClauses.length > 0) {
+				var StartShipDate = null;
+				var EndShipDate = null;
+				var Shipper = "";
+				for (var i = 0; i <= searchCriteria.WhereClauses.length - 1; i++) {
+					if (searchCriteria.WhereClauses[i].FieldName == "Shipper") {
+						Shipper = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "Shipdate" && StartShipDate == null) {
+						StartShipDate = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "Shipdate" && StartShipDate != null) {
+						EndShipDate = searchCriteria.WhereClauses[i].FieldValue;
+					} else if (searchCriteria.WhereClauses[i].FieldName == "MiscReference1") {
+						var miscReferenceObject = searchCriteria.WhereClauses[i];
+						searchCriteria.WhereClauses.splice(i, 1);
+						searchCriteria.WhereClauses.push({
+							"FieldName": "ConsolidationTrackingNumber",
+							"FieldValue": miscReferenceObject.FieldValue,
+							"Operator": miscReferenceObject.Operator
+						});
+					}
+				}
+
+
+
+				var data = {
+					UserContext: client.userContext,
+					Data: "ShipDate=" + StartShipDate + ";" + "Shipper=" + Shipper
+				}
+				if (StartShipDate == EndShipDate) {
+					sendSearchPackages("UserMethod", data, false)
+				} else {
+					var divResults = document.getElementById("divResults");
+					divResults.innerHTML = "Select one day only to show package count!";
+				}
+			}
+		}
+
+	}
+
+// Source: Office Depot (ODP)_Sample_CBR_2454.cs
+// function getShippersFromCostCenter() // returns filtered shipper list
+function getShippersFromCostCenter() {
+        var returnData = [];
+        var customData = vm.profile.UserInformation.Address.CustomData;
+        var shippers = vm.profile.Shippers;
+        returnData = shippers;
+        if (customData.length > 0) {
+            var customShippers = getValueByKey("CustomData3", customData);
+            var customShipperData = customShippers.split(",");
+            if (customShipperData.length > 0) {
+                returnData = shippers.filter(item => customShipperData.some(cs => cs.toLowerCase()  === item.Symbol.toLowerCase()));
+            }
+        }
+
+        return returnData;
+    }
+
+// Source: PRA Developer (PRADeveloper)_PRA Intl Business Rules_1523.cs
+// checkOriginConsigneeCountry() // returns boolean or undefined
+    function checkOriginConsigneeCountry() {
+        var shipFromCountry = getObjectValue(vm.currentShipment.PackageDefaults.OriginAddress.Country);
+        var shipToCountry = getObjectValue(vm.currentShipment.PackageDefaults.Consignee.Country);
+
+        /* If we have no shipToCountry OR the shipFromCountry is either US or CA, disable the elements, return out. */
+        if (!shipToCountry | shipFromCountry == "US" | shipFromCountry == "CA") {
+            DisableThirdPartyBillingElements();
+            return false;
+        }
+
+        if (shipFromCountry != shipToCountry) {
+            /* If the shipFromCountry does NOT equal the shipToCountry then ship Third Party. */
+            SetThirdPartyBilling(vm.currentShipment);
+        }
+        else {
+            /* Now check to see if both the origin and destination countries are members of the EU. */
+            if ((IsMemberOfEu(shipFromCountry)) && (IsMemberOfEu(shipToCountry))) {
+                SetThirdPartyBilling(vm.currentShipment);
+            }
+
+            //ShipThirdPartyBilling((IsMemberOfEu(shipFromCountry)) && (IsMemberOfEu(shipToCountry)));
+        }
+
+        if (shipFromCountry != "US") {
+            $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Units"]').val('string:KG').change();
+            $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Units"]').val('number:1').change();
+        }
+    }
+
+// PostSelectAddressBook(shipmentRequest, nameaddress, addressName) // returns undefined or false
+    this.PostSelectAddressBook = function (shipmentRequest, nameaddress, addressName) {
+        debugger;
+        if (addressName !== '' && addressName !== 'ThirdPartyBillingAddress') {
+            var checkExist = setInterval(function () {
+
+                if (($('select[ng-model="nameaddress.Country"]:eq(0)').val().length > 0) && ($('select[ng-model="nameaddress.Country"]:eq(1)').val().length > 0)) {
+
+                    /* Stop the timer. */
+                    clearInterval(checkExist);
+                    /* The values are stored in the format of 'string:CC'.  We only want the CC. */
+                    var shipToCountry = $('select[ng-model="nameaddress.Country"]:eq(0)').val().replace('string:', '');
+                    var shipFromCountry = $('select[ng-model="nameaddress.Country"]:eq(1)').val().replace('string:', '');
+
+                    /* If we have no shipToCountry OR the shipFromCountry is either US or CA, disable the elements, return out. */
+                    if (!shipToCountry | shipFromCountry == "US" | shipFromCountry == "CA") {
+                        DisableThirdPartyBillingElements();
+                        return false;
+                    }
+
+                    if (shipFromCountry != shipToCountry) {
+                        /* If the shipFromCountry does NOT equal the shipToCountry then ship Third Party. */
+                        SetThirdPartyBilling(shipmentRequest);
+                    }
+                    else {
+                        /* Now check to see if both the origin and destination countries are members of the EU. */
+                        if ((IsMemberOfEu(shipFromCountry)) && (IsMemberOfEu(shipToCountry))) {
+                            SetThirdPartyBilling(shipmentRequest);
+                        }
+
+                        //ShipThirdPartyBilling((IsMemberOfEu(shipFromCountry)) && (IsMemberOfEu(shipToCountry)));
+                    }
+
+                    if (shipFromCountry != "US") {
+                        $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Units"]').val('string:KG').change();
+                        $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Units"]').val('number:1').change();
+                    }
+                } /* if ($('div.modal-dialog.modal-md:visible') */
+
+            }, 50); /* var checkExist = setInterval... */
+        }
+    };
+
+// SetThirdPartyBilling(shipmentRequest) // returns undefined
+    function SetThirdPartyBilling(shipmentRequest) {
+        /* This enables the button to edit the Third Party Billing Information. */
+        $('input[type=button][ng-disabled="!vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('disabled', false).attr('disabled', false);
+
+        /* Check the box for Third Party Billing which will bring up the modal.  Fill the modal with values.  Click Save. */
+        $('input[type=checkbox][ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', true).attr('checked', true).change();
+
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress = {}
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.Company = 'PRA Global';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.Address1 = '995 Research Park Blvd';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.Address2 = 'Suite 300';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.City = 'Charlottesville';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.StateProvince = 'VA';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.PostalCode = '22911';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.Account = '883F79';
+        shipmentRequest.PackageDefaults.ThirdPartyBillingAddress.Country = 'US'
+    }
+
+// DisableThirdPartyBillingElements() // returns undefined
+    function DisableThirdPartyBillingElements() {
+        $('input[type=checkbox][ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('checked', false).attr('checked', false);
+        $('input[type=button][ng-disabled="!vm.currentShipment.PackageDefaults.ThirdPartyBilling"]').prop('disabled', true).attr('disabled', true);
+    }
+
+// IsMemberOfEu(v) // returns boolean
+    function IsMemberOfEu(v) {
+        return ($.inArray(v, EuCountries) !== -1) ? true : false;
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// customUserMethod() // returns void
+function customUserMethod () {
+        debugger;
+        var dateSelected = $('#exportDate').val();
+        var shipper = $('#gateway :selected').text();
+        var carrier = $('#carrier :selected').text();
+        
+        if (carrier === 'UPS')
+        {
+            carrier = 'CONNECTSHIP_UPS.UPS';
+        }
+        else
+        {
+            carrier = 'CONNECTSHIP_DHLXMLPI.DHL';
+        }
+
+        var data = { DateSelected: dateSelected, Shipper: shipper, Carrier: carrier};
+        var payload = { UserContext: client.userContext, Data: JSON.stringify(data) };
+        var result = client.thinClientAPIRequest('UserMethod', payload, false).responseJSON;
+        
+        debugger;
+        if (result.ErrorCode > 0 || result == undefined) {
+            client.alert.Danger(result.ErrorCode + ': ' + result.ErrorMessage);
+        } else if (result.Message != undefined || result.Message != "") {
+            client.alert.Success(result.Message);
+        } else {
+            client.alert.Success(result.Message);
+        }
+    }
+
+// CopyShipperList() // returns void
+function CopyShipperList() {
+        var loaded = setInterval(function() {
+        debugger;
+        let shipper = $('shipper-carrier');
+            if (shipper.length > 0) {
+                clearInterval(loaded);
+                let div1 = shipper.find('div');
+                let div2 = div1.find('div');
+                let div3 = div2.find('div');
+                let dpShip = div3.find('Select[ng-model="vm.selectedShipper"]');
+                let dpOpt = dpShip.find('option');
+                var $options = dpOpt.clone();
+                $('#gateway').append($options);
+            }
+        }, 50);
+        
+        
+    }
+
+// Source: RoniCo (RONI)_test_1896.cs
+// Shipping() // returns void
+this.Shipping = function () {
+        debugger;
+        this.vm.keyDown = keyDown;
+
+        $('body').keydown(this.vm, function (event) {
+            event.data.keyDownAction = undefined;
+            if (event.key === "/") {
+                event.preventDefault();
+                event.data.keyDownAction = 'Save';
+                $('#cbrKeydown').click();
+            }
+        });
+
+        function keyDown() {
+            this.currentShipment.PackageDefaults.Consignee.Contact = "hello";
+            this.selectedServices = [
+                { Symbol: "CONNECTSHIP_UPS.UPS.NDS" }
+            ];
+        }           
+    }
+
+// Source: Russell Investments (RUSSELL)_Russell Investments Client Rules_1872.cs
+// PostRate(shipmentRequest, rateResults) // returns void
+    this.PostRate = function (shipmentRequest, rateResults) {
+        //alert("PostRate called - Package Saturday flag is: " + shipmentRequest.Packages[0].SaturdayDelivery + " PackageDefaults Saturday Flag is: " + shipmentRequest.PackageDefaults.SaturdayDelivery );
+        
+        //var SatFlag = false;
+        //if(shipmentRequest.Packages[0].SaturdayDelivery === true)
+        //    SatFlag = true;
+        //alert("Saturday flag2: " + SatFlag);
+        
+        //debugger;
+        
+        for(var i = 0; i< rateResults.length; i++) {
+            var rateService = rateResults[i].PackageDefaults.Service;
+            if( rateService.Symbol.includes("Saturday") === true) {
+                rateResults[i].PackageDefaults.ErrorCode = 9999;
+                rateResults[i].PackageDefaults.ErrorMessage = "N/A";
+            }
+        }
+
+        //debugger;
+        
+        //UPSAPI.UPS.2DA.Saturday
+        /*
+        for(var i = 0; i< rateResults.length; i++) {
+                var rateService = rateResults[i].PackageDefaults.Service;
+                rateService.Name = rateService.Name.replace('(CSAdapter)', '').trim();
+                rateResults[i].SortIndex = rateService.Symbol == shipmentRequest.PackageDefaults.Service.Symbol ? 0 : i + 1;
+            }
+        */
+    }
+
+// Source: SanMar (SANMAR)_SanMar CBR_1909.cs
+// serviceChangeOptions(newService) // returns void
+function serviceChangeOptions(newService){
+        var originalService = $('div[model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"] :input').val();
+        var ServiceChangeCode = $('div[model="vm.currentShipment.PackageDefaults.MiscReference11"] :input').val();
+        if (newService != originalService){
+            showChangeOptions = true;
+            $('div[model="vm.currentShipment.PackageDefaults.MiscReference11"]').show();
+            if(ServiceChangeCode == "string:Other - Comment Field"){
+                commentRequired = true;
+                $('div[model="vm.currentShipment.PackageDefaults.MiscReference12"]').show();
+            }
+        } else {
+            showChangeOptions = false;
+            commentRequired = false;
+            $('div[model="vm.currentShipment.PackageDefaults.MiscReference11"]').hide();
+            $('div[model="vm.currentShipment.PackageDefaults.MiscReference12"]').hide();
+        }
+    }
+
+// serviceChangeOptionsPending() // returns void
+function serviceChangeOptionsPending(){
+        var currentService = $('[property="Service"] :selected').val();
+        var originalService = $('div[model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"] :input').val();
+        var ServiceChangeCode = $('div[model="vm.currentShipment.PackageDefaults.MiscReference11"] :input').val();
+        if (currentService != originalService){
+            showChangeOptions = true;
+            $('div[model="vm.currentShipment.PackageDefaults.MiscReference11"]').show();
+            if(ServiceChangeCode == "string:Other - Comment Field"){
+                commentRequired = true;
+                $('div[model="vm.currentShipment.PackageDefaults.MiscReference12"]').show();
+            }
+        } else {
+            showChangeOptions = false;
+            commentRequired = false;
+            $('div[model="vm.currentShipment.PackageDefaults.MiscReference11"]').hide();
+            $('div[model="vm.currentShipment.PackageDefaults.MiscReference12"]').hide();
+        }
+    }
+
+// Source: SAVERS (SAVERS)_Savers Client Side Rules_1715.cs
+// filterPickupPaymentType() // returns undefined
+        function filterPickupPaymentType() {
+            $('body').delegate('button[ng-click="vm.createPickupRequestClick()"]', 'click', function (event) {
+                var list = ['PAY_BY_SHIPPER_ACCOUNT'];
+                var element = '[ng-model="vm.pickup.PaymentType"] option';
+                replaceOptionValues(list, element);
+            });
+        }
+
+// replaceOptionValues(list, element) // returns undefined
+ function replaceOptionValues(list, element) {
+        var valuelist = list.map(function (e) { return 'string:' + e });
+        var interval = setInterval(function () {
+            var $element = $(element);
+            if ($element.length) {
+                clearInterval(interval);
+                $element.each(function () {
+                    if (!valuelist.includes(this.value) && this.value != '') this.remove();
+                });
+            }
+        }, 50);
+    }
+
+// filterPickupPaymentType() // returns undefined
+        function filterPickupPaymentType() {
+            var list = ['Pay by shipper account'];            
+            var interval = setInterval(function () {
+                var currencies = $('[ng-model="vm.pickup.PaymentType"] option');
+                if (currencies.length) {
+                    debugger;
+                    clearInterval(interval);
+                    currencies.each(function (){ if (!list.includes(this.text)) this.remove(); });
+                }
+            }, 50);
+        }
+
+// SetSelectedService(serviceSymbol) // returns undefined
+this.SetSelectedService = function(serviceSymbol)
+    {
+    if (this.vm.profile != null)
+    {
+        for (var i = 0; i < this.vm.profile.Services.length; i++)
+        {
+            if (this.vm.profile.Services[i].Symbol === serviceSymbol)
+            {
+                this.vm.selectedServices = [this.vm.profile.Services[i]];
+                this.vm.currentShipment.PackageDefaults.Service = this.vm.profile.Services[i];
+                break;
+            }
+        }
+    }
+}
+
+// Source: Scheels (SCHE)_Scheels_CBR_Vendors_1892.cs
+// consigneeAddress() // returns address book entries filtered by shipper code
+var consigneeAddress = function () {
+       
+        var userContext = client.userContext; 
+        var shipper =  $('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"]').val();
+        if(shipper != ''){
+         shipper = shipper.replace('string:', '');
+        }
+        else{
+         shipper = 'SCH_FARGO';
+        }
+            
+        var address =  GetAddressBookEntries('Return', userContext, shipper);
+        return address;
+    }
+
+// thirdPartyBillingAddress() // returns address book entries filtered by shipper code
+var thirdPartyBillingAddress = function () {
+        var userContext = client.userContext; 
+        var shipper = 'SCH_FARGO';
+        var address =  GetAddressBookEntries('Return', userContext, shipper);
+        return address;
+    }
+
+// GetAddressBookEntries(addressBookName, context, shipper) // returns matching address book entries or throws if none exist
+var GetAddressBookEntries = function (addressBookName, context, shipper) {
+        var searchCriteria = { WhereClauses: [{ FieldName: "Name", FieldValue: addressBookName, Operator: 0 }] };
+        var data = { CompanyId: context.CompanyId, UserId: context.UserId };
+        var response = thinClientAPIRequest('GetAddressBooks', data, false).responseJSON;
+        if (response.TotalRecords == 0) {
+            throw ({ message: 'Address Book:"' + addressBookName + '" does not exists'});
+        } else {
+            var addressBookId = response.AddressBooks[0].Id;
+            
+            searchCriteria = { Skip: 0, WhereClauses: [{FieldName: "Code", FieldValue: shipper, Operator: 0}], OrderByClauses: [] };
+            data = { AddressBookIds: [addressBookId], SearchCriteria: searchCriteria, UserContext :{Machine:""} , CompanyId: context.CompanyId, UserId: context.UserId };
+            response = thinClientAPIRequest('GetAddressBookEntries', data, false).responseJSON;
+            
+            if (response.TotalRecords == 0) {
+                throw ({ message: 'Address Book:"' + addressBookName + '" does not have any address entry'});
+            } else {
+                return response.AddressBookEntries;
+            }
+        }
+    }
+
+// Source: Schoolhouse Electric Co (SCHOOLHOUSEELECTRICCO)_SchoolHouse_1630.cs
+// SekoOptionChange(elementCheck, miscReference) // returns undefined
+function SekoOptionChange(elementCheck, miscReference){
+		$( "input[ng-model='vm.currentShipment.Packages[vm.packageIndex]."+miscReference+"']" ).val(elementCheck.checked).trigger('input');
+	}
+
+// Source: SE Demo (SE_DEMO)_CBR_SE_Demo_1818.cs
+// PreShip(shipmentRequest, userParams) // returns undefined
+this.PreShip = function(shipmentRequest, userParams) {   
+
+		shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00";
+		debugger;
+   
+        if (shipmentRequest.PackageDefaults.Service.Symbol == "CONNECTSHIP_ROADIE.ROADIE.SD")
+            {
+                var today = new Date();
+	        shipmentRequest.Packages[0].MiscReference13 = today.toLocaleDateString();    
+                var tomorrow = new Date(today);
+                tomorrow.setDate(today.getDate() + 1)
+                debugger;
+                //shipmentRequest.PackageDefaults.DropOffAppointmentTime = "15:00";
+                shipmentRequest.Packages[0].SpecialDelivery = true;
+                if (shipmentRequest.Packages[0].ReturnDelivery)
+                {shipmentRequest.Packages[0].CarrierInstructions = "Recovery mission - gold accomplished!"}
+                else
+                {shipmentRequest.Packages[0].CarrierInstructions = "Treasure hunt level - scuba required!"};
+                shipmentRequest.Packages[0].EarliestDeliveryDate = {Month: tomorrow.getMonth()+1, Day: tomorrow.getDate(), Year: tomorrow.getFullYear()};
+                shipmentRequest.Packages[0].EarliestDeliveryTime = '08:00';
+                shipmentRequest.Packages[0].LatestDeliveryDate = {Month: tomorrow.getMonth()+1, Day: tomorrow.getDate(), Year: tomorrow.getFullYear()};
+                shipmentRequest.Packages[0].LatestDeliveryTime = '17:00';
+                debugger;
+                
+            };
+        debugger;
+
+    }
+
+// Source: SPEEDTECH (SPEEDTECH)_SpeedTech Client Side Business Rules_1645.cs
+// this.PostLoad(loadValue, shipmentRequest) // returns undefined
+    this.PostLoad = function(loadValue, shipmentRequest) 
+    {               
+        loadselectedValue=loadValue;
+        // Converting JS object to an array
+        shipmentRequestObject =  JSON.parse(JSON.stringify(shipmentRequest));
+        
+        ChromeScrollIntoView($('[ng-model="vm.selectedServices"]'), shipmentRequest.PackageDefaults.Service.Symbol);
+
+        // Check for not found error
+        if(shipmentRequest.PackageDefaults.MiscReference20)
+        {
+            if( shipmentRequest.PackageDefaults.MiscReference20.substring(0,1) == '~')    
+                {
+                 alert(shipmentRequest.PackageDefaults.MiscReference20.substring(1));
+				  $("input:text").eq(0).focus();   
+			  this.vm.newShipment();
+	        	return;
+                }
+        }
+        
+        //Send OSCO related errors to end user
+        if(shipmentRequest.PackageDefaults.MiscReference20)
+        {
+            if (window.confirm(shipmentRequest.PackageDefaults.MiscReference20 + "\nContinue with shipment?")) 
+            {
+              //alert("You pressed OK");
+            } 
+            else 
+            {
+                $("input:text").eq(0).focus();
+            }   
+        }
+      
+        // Check for address validation required
+        if(shipmentRequest.Packages[0].UserData4)
+        {
+            if( shipmentRequest.Packages[0].UserData4 == 'Y')    
+                {
+                var interval = setInterval(function() {
+                const consigneeNameAddress = $('name-address[address-property-name="Consignee"]');
+                consigneeCompany = consigneeNameAddress.find('[ng-model="nameaddress.Company"]');
+                consigneePostalCode = consigneeNameAddress.find('[name="postalCode"]');
+                consigneeCity = consigneeNameAddress.find('[name="city"]');
+                consigneeState = consigneeNameAddress.find('[name="stateProvince"]');
+
+                var loaded = consigneeCompany.length && consigneePostalCode.length && consigneeCity.length && consigneeState.length;
+
+                if (loaded) {
+                    clearInterval(interval);
+                    $('name-address[address-property-name="Consignee"] button[title="Validate Address"]').click();                    
+                    }
+                }, 50);
+            }
+        }
+  
+        $('[name="address1"]:eq(0)').val(shipmentRequest.PackageDefaults.Consignee.Address1);
+        
+        $('[name="company"]:eq(0)').val(shipmentRequest.PackageDefaults.Consignee.Company);
+        
+    //debugger;
+    }
+
+// this.shipperChange(loadValue, shipmentRequest, userParams) // returns undefined
+    this.shipperChange = function(loadValue, shipmentRequest, userParams) {
+    }
+
+// Source: Texas EZ Corp (TexasEZ)_Texas EZ Reference Configuration Rule_1595.cs
+// PreRate(shipmentRequest, userParams) // returns void
+this.PreRate = function (shipmentRequest, userParams) {
+        //console.log(this.vm);
+
+        var yesText = "YES- Please ship Next Day Air";
+        var noText = "";
+
+        var shipNextDay = false;
+
+        //Check to see if yes or no is selected = yes = next day air - no = gnd
+
+        for (var t = 0; t < shipmentRequest.Packages.length; t++) {
+            if (shipmentRequest.Packages[t].ShipperReference == yesText) {
+                shipNextDay = true;
+                break;
+            }
+
+        }
+
+        var selectedService = {};
+        var allServices = false;
+        for (var i = 0; i < this.vm.selectedServices.length; i++) {
+            if (shipNextDay) {
+                //Next day air
+                if (this.vm.selectedServices[i].Symbol == "UPSAPI.UPS.NDA") {
+                    selectedService = this.vm.selectedServices[i];
+                    break;
+                }
+            } else {
+                //ground
+                if (this.vm.selectedServices[i].Symbol == "UPSAPI.UPS.GND") {
+                    allServices = true;
+                    break;
+                    //selectedService = this.vm.selectedServices;   
+                }
+            }
+
+        }
+        if (allServices) {
+            //create new variable to assign original list in post rate function
+            this.vm.selectedServicesOriginalList = this.vm.selectedServices;
+            this.vm.selectedServices = [];
+            this.vm.selectedServices = this.vm.selectedServicesOriginalList;
+        } else {
+            //create new variable to assign original list in post rate function
+            this.vm.selectedServicesOriginalList = this.vm.selectedServices;
+            this.vm.selectedServices = [];
+            this.vm.selectedServices.push(selectedService);
+        }
+
+
+
+
+        // console.log(shipNextDay);
+        // console.log(this.vm);
+    }
+
+// PostRate(shipmentRequest, rateResults) // returns void
+this.PostRate = function (shipmentRequest, rateResults) {
+        this.vm.selectedServices = [];
+        this.vm.selectedServices = this.vm.selectedServicesOriginalList;
+    }
+
+// Source: The Home Depot (HOMEDEPOT)_New CBR 2026_2508.cs
+// this.PostalCodeLookup(addressName) // returns undefined
+    this.PostalCodeLookup = function (addressName) {
+        var userContext = this.getUserContext(this);
+        var postalCode = $('[address-property-name="' + addressName + '"] [name="postalCode"]').val();
+        var content = { AddressName: addressName, PostalCode: postalCode };
+        var payload = { Action: 'CSZ', Content: JSON.stringify(content) };
+        var data = { Data: JSON.stringify(payload), UserContext: userContext };
+        var response = this.thinClientAPIRequest('UserMethod', data, false).responseJSON;
+        if (response.ErrorCode > 0) {
+            client.shipping.alertModalShow(this, 'Postal Code Search', response.ErrorMessage)
+        } else {
+            var responseData = JSON.parse(client.htmlText(response.Data));
+            if (responseData === null) {
+                client.shipping.alertModalShow(this, 'Postal Code Search', 'Invalid or Not US Postal Code');
+            } else {
+                if (responseData.length > 1) {
+                    this.addressResults = responseData;
+                    client.shipping.validateAddressModalShow();
+                } else {
+                    this.currentShipment.updateNameAddressCSZ(addressName, responseData[0].City, responseData[0].StateProvince)
+                }
+            }
+        }
+    }
+
+// this.UpdateNameAddressCSZ(addressName, city, stateProvince) // returns undefined
+    this.UpdateNameAddressCSZ = function (addressName, city, stateProvince) {
+        var nameAddress = this.PackageDefaults.Consignee;
+        if (addressName == 'ReturnAddress') {
+            if (this.PackageDefaults.ReturnAddress === undefined)
+                this.PackageDefaults.ReturnAddress = {};
+            nameAddress = this.PackageDefaults.ReturnAddress;
+        }
+        nameAddress.City = city;
+        nameAddress.StateProvince = stateProvince;
+
+        if (stateProvince == 'PR') {
+            nameAddress.Country = 'PR';
+        }
+        else {
+            nameAddress.Country = 'US';
+        }
+    }
+
+// this.SelectAddress(address) // returns undefined
+    this.SelectAddress = function (address) {
+        client.shipping.validateAddressModalHide();
+        this.updateNameAddressCSZ(address.AddressName, address.City, address.StateProvince);
+    }
+
+// Source: Truist (BBANDT)_Truist Admin Business Rules_2463.cs
+// function PostSelectAddressBook(shipmentRequest, nameaddress) // returns undefined
+    this.PostSelectAddressBook = function (shipmentRequest, nameaddress) {
+            var customData = nameaddress.CustomData;
+            var fieldName = "Custom2"
+        if (customData) {
+            customData.forEach(function(customField) {
+                if (fieldName === customField.Key) shipmentRequest.Packages[0].MiscReference3 = customField.Value;
+        });
+        }
+             
+            if(nameaddress.Code == "hSTI-GLENALLEN")
+            {
+                glenallenShipment=true;
+                var service = [{Symbol: "UPSAPI.UPS.NDA", Name: "UPS Next Day Air (UPS Adapter)"}];
+                vm.profile.ProfileSetting.ServiceSelectionMode = 1;
+                this.vm.selectedServices = service;
+                this.vm.showServiceSelection=false;
+            } 
+    };
+
+// Source: Truist (BBANDT)_Truist Business Rules_2464.cs
+// PostSelectAddressBook(shipmentRequest, nameaddress) // returns void
+    this.PostSelectAddressBook = function (shipmentRequest, nameaddress) {
+            var customData = nameaddress.CustomData;
+            var fieldName = "Custom2"
+        if (customData) {
+            customData.forEach(function(customField) {
+                if (fieldName === customField.Key) shipmentRequest.Packages[0].MiscReference3 = customField.Value;
+        });
+        }
+             
+            if(nameaddress.Code == "hSTI-GLENALLEN")
+            {
+                glenallenShipment=true;
+                var service = [{Symbol: "UPSAPI.UPS.NDA", Name: "UPS Next Day Air (UPS Adapter)"}];
+                vm.profile.ProfileSetting.ServiceSelectionMode = 1;
+                this.vm.selectedServices = service;
+                this.vm.showServiceSelection=false;
+            } 
+    };
+
+// Source: US Bank Revised (USBANKREVISED)_US Bank Revised Client Side Rules_1571.cs
+// NewShipment(shipmentRequest) // returns void
+this.NewShipment = function (shipmentRequest) {            
+
+        var Service = { Symbol: "UPSAPI.UPS.2DA" };
+        shipmentRequest.PackageDefaults.Service = Service;
+    }
+
+// Source: USBank (USBANK)_US Bank Client Side Rules_1697.cs
+// NewShipment(shipmentRequest) // returns void
+    this.NewShipment = function (shipmentRequest) {                
+
+        var Service = { Symbol: "UPSAPI.UPS.2DA" };
+        shipmentRequest.PackageDefaults.Service = Service;
+        //shipmentRequest.PackageDefaults.ConsigneeCode = "1";
+
+     
+    }
+
+// Source: VSP (VSP)_VSP Reference Rules 2.0_2445.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+  this.PreShip = function(shipmentRequest, userParams)
+  {
+    var consigneeCode = $('select[ng-model="xConsigneeCode"]');
+    var selectCode = consigneeCode.val().substring(7);
+
+    if (selectCode === '')
+    {
+      throw ({ message: 'Please select a lab', errorCode: 43770 });
+    }
+    var arr = this.vm.currentShipment.xConsigneeCodes;
+    var obj = arr.filter(function(nameaddress)
+    {
+      if (nameaddress.Code === selectCode) { return nameaddress; }
+    });
+
+    if (obj.length)
+    {
+      var nameaddress = obj[0];
+      var consignee = shipmentRequest.PackageDefaults.Consignee;
+      consignee.Company = nameaddress.Company;
+      consignee.Contact = nameaddress.Contact;
+      consignee.Address1 = nameaddress.Address1;
+      consignee.Address2 = nameaddress.Address2;
+      consignee.Address3 = nameaddress.Address3;
+      consignee.City = nameaddress.City;
+      consignee.StateProvince = nameaddress.StateProvince;
+      consignee.PostalCode = nameaddress.PostalCode;
+      consignee.Country = nameaddress.Country;
+      consignee.Phone = nameaddress.Phone;
+      consignee.Email = nameaddress.Email;
+      consignee.Account = nameaddress.Account;
+
+      shipmentRequest.PackageDefaults.Shipper = GetKeyValue('shipper', nameaddress.CustomData);
+      shipmentRequest.PackageDefaults.OriginAddress.StateProvince = shipmentRequest.PackageDefaults.OriginAddress.StateProvince.toUpperCase();
+    }
+  };
+
+// Source: VSP (VSP)_VSP Reference Rules_81.cs
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams)
+  {
+    var consigneeCode = $('select[ng-model="xConsigneeCode"]');
+    var selectCode = consigneeCode.val().substring(7);
+
+    if (selectCode === '')
+    {
+      throw ({ message: 'Please select a lab', errorCode: 43770 });
+    }
+    var arr = this.vm.currentShipment.xConsigneeCodes;
+    var obj = arr.filter(function(nameaddress)
+    {
+      if (nameaddress.Code === selectCode) { return nameaddress; }
+    });
+
+    if (obj.length)
+    {
+      var nameaddress = obj[0];
+      var consignee = shipmentRequest.PackageDefaults.Consignee;
+      consignee.Company = nameaddress.Company;
+      consignee.Contact = nameaddress.Contact;
+      consignee.Address1 = nameaddress.Address1;
+      consignee.Address2 = nameaddress.Address2;
+      consignee.Address3 = nameaddress.Address3;
+      consignee.City = nameaddress.City;
+      consignee.StateProvince = nameaddress.StateProvince;
+      consignee.PostalCode = nameaddress.PostalCode;
+      consignee.Country = nameaddress.Country;
+      consignee.Phone = nameaddress.Phone;
+      consignee.Email = nameaddress.Email;
+      consignee.Account = nameaddress.Account;
+
+      shipmentRequest.PackageDefaults.Shipper = GetKeyValue('shipper', nameaddress.CustomData);
+      shipmentRequest.PackageDefaults.OriginAddress.StateProvince = shipmentRequest.PackageDefaults.OriginAddress.StateProvince.toUpperCase();
+    }
+  };
+
+// Source: Worldwide Cargo Services Inc (WORLDWIDECSI)_API TEST_1781.cs
+// function Shipping() // returns void
+    this.Shipping = function () {
+        this.vm.profile.Services.sort(byService);
+
+        $(client.shipping.buildShipmentModal).on('shown.bs.modal', function () {
+            client.shipping.buildTotalPackagesFocus();
+        });
+
+        $('body').delegate('input[name="postalCode"]', 'keydown', this.vm, postalCodeLookUp)
+
+        function byService(a, b) {
+            var sortingArr = [
+                "UPS Next Day Air EAM (UPS Adapter)",
+                "UPS Next Day Air (UPS Adapter)",
+                "UPS Next Day Air Saver (UPS Adapter)",
+                "UPS Second Day Air AM (UPS Adapter)",
+                "UPS Second Day Air (UPS Adapter)",
+                "UPS Three-Day Select (UPS Adapter)",
+                "UPS Ground (UPS Adapter)"
+            ]
+            return sortingArr.indexOf(a.Name) - sortingArr.indexOf(b.Name);
+        }
+
+        function postalCodeLookUp(e) {
+            var nameAddress = $(this).parents('name-address');
+            e.data.addressName = nameAddress.attr('address-property-name');
+            if (e.data.addressName == "Consignee" || e.data.addressName == "ReturnAddress") {
+                var keyEvent = (event.keyCode ? event.keyCode : event.which);
+                if (keyEvent == 13 || keyEvent == 9) {
+                    var city = nameAddress.find('[name="city"]');
+                    var stateProvince = nameAddress.find('[name="stateProvince"]');
+                    var postalCode = $(this).val();
+                    if ((city.val() == '' || stateProvince.val() == '') && postalCode != '') {
+                        $(client.shipping.cbrPostalCodeLookup).click();
+                    }
+                }
+            }
+        }
+    }
+

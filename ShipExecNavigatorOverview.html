@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShipExec Navigator — Solution Overview</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: #1e293b;
+    background: #f8fafc;
+    line-height: 1.65;
+    padding: 0;
+  }
+
+  /* ── Cover Banner ── */
+  .cover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0ea5e9 100%);
+    color: #fff;
+    padding: 64px 48px 52px;
+    text-align: center;
+  }
+  .cover-logo {
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    opacity: .7;
+    margin-bottom: 12px;
+  }
+  .cover h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -.5px;
+  }
+  .cover .subtitle {
+    font-size: 1.15rem;
+    opacity: .85;
+    max-width: 640px;
+    margin: 0 auto 18px;
+  }
+  .cover .version-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    padding: 4px 18px;
+    font-size: .85rem;
+    letter-spacing: .5px;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 32px 64px;
+  }
+
+  /* ── Executive Summary ── */
+  .exec-summary {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 44px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .exec-summary h2 {
+    font-size: 1.35rem;
+    color: #0c4a6e;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .exec-summary p {
+    font-size: .97rem;
+    color: #334155;
+    margin-bottom: 10px;
+  }
+
+  /* ── Table of Contents ── */
+  .toc {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 24px 32px;
+    margin-bottom: 44px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .toc h2 {
+    font-size: 1.2rem;
+    color: #0f172a;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-counter;
+    padding-left: 0;
+  }
+  .toc ol li {
+    counter-increment: toc-counter;
+    margin-bottom: 6px;
+    font-size: .95rem;
+  }
+  .toc ol li::before {
+    content: counter(toc-counter) ".";
+    font-weight: 600;
+    color: #0ea5e9;
+    margin-right: 8px;
+    display: inline-block;
+    min-width: 24px;
+  }
+  .toc a {
+    color: #1e40af;
+    text-decoration: none;
+    border-bottom: 1px dotted #93c5fd;
+  }
+  .toc a:hover { color: #0ea5e9; }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 40px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .section-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .section-header h3 {
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .section p, .section li {
+    font-size: .95rem;
+    color: #334155;
+  }
+  .section ul {
+    padding-left: 22px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+  }
+  .section ul li {
+    margin-bottom: 5px;
+  }
+  .section ul li::marker {
+    color: #0ea5e9;
+  }
+
+  /* ── Highlight Callout ── */
+  .callout {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 12px 0 14px;
+    font-size: .93rem;
+    color: #0c4a6e;
+  }
+  .callout-accent {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #78350f;
+  }
+
+  /* ── Feature Grid ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .feature-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .feature-card-title {
+    font-weight: 600;
+    font-size: .93rem;
+    color: #0f172a;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feature-card p {
+    font-size: .88rem;
+    color: #475569;
+    margin: 0;
+  }
+
+  /* ── Tag Pills ── */
+  .tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .tag-green { background: #dcfce7; color: #166534; }
+  .tag-amber { background: #fef3c7; color: #92400e; }
+  .tag-purple { background: #f3e8ff; color: #6b21a8; }
+
+  /* ── Step List ── */
+  .step-list {
+    list-style: none;
+    counter-reset: step-counter;
+    padding-left: 0;
+    margin-top: 10px;
+  }
+  .step-list li {
+    counter-increment: step-counter;
+    position: relative;
+    padding-left: 38px;
+    margin-bottom: 12px;
+    font-size: .93rem;
+    color: #334155;
+  }
+  .step-list li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    background: #0ea5e9;
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Diagram / Architecture Row ── */
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 18px 0 14px;
+  }
+  .arch-box {
+    background: #fff;
+    border: 2px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #0c4a6e;
+    text-align: center;
+    min-width: 130px;
+  }
+  .arch-box-dark {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #e0f2fe;
+  }
+  .arch-arrow {
+    font-size: 1.3rem;
+    color: #94a3b8;
+  }
+
+  /* ── Footer ── */
+  .doc-footer {
+    text-align: center;
+    padding: 28px 0 8px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 40px;
+    font-size: .82rem;
+    color: #94a3b8;
+  }
+
+  /* ── Misc ── */
+  strong { color: #0f172a; }
+  code {
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: .87rem;
+    color: #0f172a;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+  }
+  .text-muted { color: #64748b; font-size: .88rem; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     COVER
+     ════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">Management Studio Pro</div>
+  <h1>ShipExec Navigator</h1>
+  <p class="subtitle">
+    A unified platform for managing, analyzing, and optimizing ShipExec shipping-software configurations — powered&nbsp;by&nbsp;AI.
+  </p>
+  <span class="version-badge">.NET 10 &nbsp;·&nbsp; Blazor Server &nbsp;·&nbsp; Azure OpenAI &nbsp;·&nbsp; Semantic Kernel</span>
+</div>
+
+<div class="container">
+
+<!-- ════════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+     ════════════════════════════════════════════════════════════════ -->
+<div class="exec-summary" id="executive-summary">
+  <h2>📋 Executive Summary</h2>
+  <p>
+    <strong>ShipExec Navigator</strong> (branded <em>Management Studio Pro</em>) is a web-based application built to dramatically simplify the day-to-day administration of ShipExec shipping software. It replaces a collection of manual XML-editing workflows and disconnected utilities with a single, modern interface that any team member can use — no programming knowledge required.
+  </p>
+  <p>
+    At its core, Navigator connects directly to a live ShipExec environment and presents the entire company configuration as an interactive, explorable tree — making it possible to <strong>see every setting on one screen</strong>, make changes in place, and review exactly what will be updated before committing. A built-in <strong>AI Chatbot</strong> (powered by Azure OpenAI) can answer questions about ShipExec, search product documentation, and even suggest code improvements for client customizations.
+  </p>
+  <p>
+    Beyond configuration editing, Navigator provides <strong>bulk import and export</strong> for both shippers and users with intelligent column mapping, <strong>full audit history</strong> with undo capability for every change, <strong>application and security log viewing</strong> with CSV export, <strong>downloadable business-rule files</strong>, and a suite of <strong>standalone offline tools</strong> — including log viewers and a reusable JavaScript helper library generated through AI-driven analysis of existing client customizations.
+  </p>
+  <p>
+    The result is a faster, safer, and more transparent workflow for ShipExec support teams, implementation engineers, and client administrators alike.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ════════════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#ai-chatbot">AI Chatbot — General Questions &amp; Rich Responses</a></li>
+    <li><a href="#rag-docs">AI Knowledge of ShipExec Documentation (RAG)</a></li>
+    <li><a href="#xml-viewer">XML Viewer — Full Configuration on One Screen</a></li>
+    <li><a href="#xml-editing">XML Viewer — In-Place Editing &amp; Changes</a></li>
+    <li><a href="#variances">Variances — Change Tracking, Storage &amp; Undo</a></li>
+    <li><a href="#ai-xml">AI-Assisted Configuration Updates</a></li>
+    <li><a href="#shipper-import">Shipper Import with Dynamic Column Mapping</a></li>
+    <li><a href="#shipper-export">Shipper Export</a></li>
+    <li><a href="#user-import">User Import with Dynamic Column Mapping</a></li>
+    <li><a href="#user-export">User Export</a></li>
+    <li><a href="#sbr-download">Downloadable Server Business Rules (SBRs)</a></li>
+    <li><a href="#cbr-modify">Client Business Rules — View &amp; Modify</a></li>
+    <li><a href="#cbr-ai">AI-Powered Code Improvement for CBRs</a></li>
+    <li><a href="#log-export">Log &amp; Security Log Export</a></li>
+    <li><a href="#log-viewer-standard">Standalone Log Viewer — Standard ShipExec Logs</a></li>
+    <li><a href="#log-viewer-custom">Standalone Log Viewer — Custom / Navigator Logs</a></li>
+    <li><a href="#cbr-helper">CBR Helper Library — Methodology &amp; Approach</a></li>
+    <li><a href="#architecture">Solution Architecture</a></li>
+  </ol>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     1. AI CHATBOT
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="ai-chatbot">
+  <div class="section-header">
+    <span class="section-icon">🤖</span>
+    <h3>1. AI Chatbot — General Questions &amp; Rich Responses</h3>
+  </div>
+  <p>
+    The <strong>ShipExec Copilot</strong> is a conversational AI assistant available from the application's home page. Users can type natural-language questions about ShipExec — configuration concepts, field meanings, troubleshooting steps — and receive detailed answers instantly.
+  </p>
+  <ul>
+    <li>Responses are rendered as <strong>rich HTML</strong>: formatted text, bullet lists, tables, highlighted code snippets, and more — not plain text.</li>
+    <li>Full conversation history is maintained within each session, so follow-up questions retain context.</li>
+    <li>The chat can be <strong>cleared</strong> at any time to start a fresh conversation.</li>
+  </ul>
+  <div class="callout">
+    💡 The Copilot is always one click away from every page in the application via the top navigation bar.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     2. RAG DOCUMENTATION
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="rag-docs">
+  <div class="section-header">
+    <span class="section-icon">📚</span>
+    <h3>2. AI Knowledge of ShipExec Documentation (RAG)</h3>
+  </div>
+  <p>
+    The chatbot is enhanced with <strong>Retrieval-Augmented Generation (RAG)</strong> — a technique that lets the AI search an indexed library of ShipExec product documentation before answering a question.
+  </p>
+  <ul>
+    <li>When the <span class="tag">📚 RAG</span> toggle is enabled, the AI automatically searches the document index for the most relevant passages related to the user's question.</li>
+    <li>The retrieved documentation is fed to the AI as additional context, resulting in answers that are <strong>grounded in real ShipExec reference material</strong> rather than solely relying on the AI model's general training data.</li>
+    <li>Users can toggle RAG on or off depending on whether they need documentation-backed answers or general assistance.</li>
+  </ul>
+  <div class="callout">
+    📖 The documentation index is built offline using a dedicated <strong>RAG Loader</strong> tool that processes ShipExec docs into searchable vector embeddings stored locally.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     3. XML VIEWER
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="xml-viewer">
+  <div class="section-header">
+    <span class="section-icon">🗺️</span>
+    <h3>3. XML Viewer — Full Configuration on One Screen</h3>
+  </div>
+  <p>
+    The <strong>Navigator</strong> page connects to a live ShipExec environment and retrieves the complete company configuration. The entire configuration is presented as an <strong>expandable, interactive tree</strong> — giving visibility into every section, entity, and setting at a glance.
+  </p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-card-title">🔎 One-Screen Visibility</div>
+      <p>The full configuration tree is loaded and displayed in a single scrollable view. No tab-switching or separate pages to find a setting.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title">📏 Depth Controls</div>
+      <p>Quickly expand the tree to depth 1, 2, 3, or 4, or fully expand / collapse everything to focus on what matters.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title">📊 Summary Stats</div>
+      <p>The toolbar shows total node count, section count, company name, and live-connection status at all times.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title">📑 Organized Tabs</div>
+      <p>The workspace is organized into <strong>Company</strong>, <strong>Business Rules</strong>, <strong>Users</strong>, and <strong>Logs</strong> tabs for clear separation of concerns.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     4. XML EDITING
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="xml-editing">
+  <div class="section-header">
+    <span class="section-icon">✏️</span>
+    <h3>4. XML Viewer — In-Place Editing &amp; Changes</h3>
+  </div>
+  <p>
+    Navigator doesn't just display configuration — it allows direct modifications within the tree. Users can <strong>edit values, add child entities, and delete items</strong> directly in the interface.
+  </p>
+  <ul>
+    <li><strong>Inline editing</strong> — click on any value to change it. The system validates input using ShipExec's schema (enums, reference lookups, and field types).</li>
+    <li><strong>Add &amp; delete</strong> — context menus allow adding new shipper records, child elements, or removing entities.</li>
+    <li><strong>Dirty-state indicator</strong> — an "unsaved" badge appears in the toolbar whenever changes exist, so nothing is accidentally overlooked.</li>
+    <li><strong>View Changes</strong> — a dedicated button computes a full diff between the modified tree and the live server, producing a clear summary of every change before anything is applied.</li>
+    <li><strong>Compare Profiles</strong> — side-by-side comparison of configuration profiles for auditing differences.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     5. VARIANCES
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="variances">
+  <div class="section-header">
+    <span class="section-icon">📋</span>
+    <h3>5. Variances — Change Tracking, Storage &amp; Undo</h3>
+  </div>
+  <p>
+    A <strong>variance</strong> is Navigator's term for a tracked change. Every modification — whether it's a field edit, a new entity, or a deletion — is captured as a variance entry and displayed in a real-time <strong>Changes Panel</strong> alongside the configuration tree.
+  </p>
+
+  <p style="margin-top:12px;"><strong>How variances work:</strong></p>
+  <ul>
+    <li><strong>Captured instantly</strong> — as soon as a value is modified, a variance is created showing the change type (edit, add, or delete), the path in the tree, and a description.</li>
+    <li><strong>Before &amp; after snapshots</strong> — each variance stores the original XML and the new XML so you can always see exactly what changed.</li>
+    <li><strong>Stored in a database</strong> — when changes are applied to the live server, every variance is permanently recorded in the <code>dbo.Variances</code> table with a batch ID, company ID, user ID, timestamps, and full before/after data.</li>
+    <li><strong>Batch grouping</strong> — all changes from a single "Apply" action share a common batch identifier, making it easy to see the complete set of changes from one operation.</li>
+    <li><strong>Undo capability</strong> — individual variances can be undone directly from the Changes Panel. Undone entries are visually marked but retained in the history for full traceability.</li>
+    <li><strong>Historical review</strong> — a history button loads all previously applied variances for the connected company, providing a complete audit trail of every change ever made through Navigator.</li>
+  </ul>
+
+  <div class="callout callout-accent">
+    🔒 Variances provide a complete audit trail. Every change is traceable to a specific user, time, and batch — and every change can be reviewed or reversed.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     6. AI-ASSISTED XML UPDATES
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="ai-xml">
+  <div class="section-header">
+    <span class="section-icon">🤖</span>
+    <h3>6. AI-Assisted Configuration Updates</h3>
+  </div>
+  <p>
+    An <strong>AI Assistant panel</strong> is embedded directly within the Navigator page. When opened, it provides a chat interface that is aware of the currently loaded company configuration.
+  </p>
+  <ul>
+    <li>Users can ask the AI to make specific changes to the configuration — for example, <em>"change the default carrier for site Chicago to FedEx"</em> — and the AI will update the tree directly.</li>
+    <li>The AI can also answer questions about the loaded data — <em>"which shippers have rate shopping enabled?"</em> — using built-in XML analysis plugins.</li>
+    <li>Every AI-driven change is tracked as a variance, just like manual edits — same undo capability, same audit trail.</li>
+    <li>An <strong>Undo button</strong> in the chat panel allows reverting the most recent AI-driven changes instantly.</li>
+    <li>RAG document search is also available within the Navigator chat for documentation-backed answers in context.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     7. SHIPPER IMPORT
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="shipper-import">
+  <div class="section-header">
+    <span class="section-icon">🚚</span>
+    <h3>7. Shipper Import with Dynamic Column Mapping</h3>
+  </div>
+  <p>
+    The <strong>Import Shippers</strong> dialog allows users to upload a CSV file containing shipper data and map its columns to ShipExec fields — with no fixed file format required.
+  </p>
+  <ul>
+    <li><strong>Upload &amp; preview</strong> — after selecting a CSV file, the system shows a preview table with all rows and column headers.</li>
+    <li><strong>Dynamic column picking</strong> — each CSV column gets a dropdown selector listing every available ShipExec shipper field. Users choose which column maps to which field, handling any CSV layout without reformatting.</li>
+    <li><strong>Custom data support</strong> — columns mapped as "Custom Data" get an additional key-name input for maximum flexibility.</li>
+    <li><strong>Validation &amp; feedback</strong> — row counts and mapping status are shown in real time. Import results report success and error counts.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     8. SHIPPER EXPORT
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="shipper-export">
+  <div class="section-header">
+    <span class="section-icon">⬇️</span>
+    <h3>8. Shipper Export</h3>
+  </div>
+  <p>
+    A single click on the <strong>Export Shippers</strong> toolbar button extracts all shipper records from the loaded company configuration and downloads them as a structured file. This is useful for backup, offline review, migration to another environment, or as a starting template for bulk re-import.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     9. USER IMPORT
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="user-import">
+  <div class="section-header">
+    <span class="section-icon">👤</span>
+    <h3>9. User Import with Dynamic Column Mapping</h3>
+  </div>
+  <p>
+    The <strong>Import Users</strong> dialog mirrors the shipper import experience. Users upload a CSV of user records and dynamically map each column to the appropriate ShipExec user field — login name, role, permissions, and more.
+  </p>
+  <ul>
+    <li>Same intuitive <strong>preview table</strong> and <strong>column-picking dropdowns</strong> as the shipper import.</li>
+    <li>Handles varying CSV formats without requiring a fixed template.</li>
+    <li>Results summary confirms how many users were created or updated.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     10. USER EXPORT
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="user-export">
+  <div class="section-header">
+    <span class="section-icon">⬇️</span>
+    <h3>10. User Export</h3>
+  </div>
+  <p>
+    From the <strong>Users</strong> tab, all user records for the connected company can be exported with a single action. The resulting file captures login names, roles, permissions, and associated metadata — ready for auditing, backup, or re-import.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     11. DOWNLOADABLE SBRs
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sbr-download">
+  <div class="section-header">
+    <span class="section-icon">🖥️</span>
+    <h3>11. Downloadable Server Business Rules (SBRs)</h3>
+  </div>
+  <p>
+    The <strong>Business Rules</strong> tab lists every Server Business Rule (SBR) associated with the connected company. Each entry displays its name, description, version, author, and the profiles it is assigned to.
+  </p>
+  <ul>
+    <li>SBR <code>.dll</code> files can be <strong>downloaded directly</strong> from the interface with a single click — no need to log into a server or use remote file access.</li>
+    <li>Useful for archival, local inspection, or transfer to another environment.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     12. CBR MODIFY
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="cbr-modify">
+  <div class="section-header">
+    <span class="section-icon">💻</span>
+    <h3>12. Client Business Rules — View &amp; Modify</h3>
+  </div>
+  <p>
+    Client Business Rules (CBRs) are custom JavaScript files that control client-side behavior within ShipExec. Navigator provides a full <strong>view-and-edit experience</strong> for CBRs directly in the browser.
+  </p>
+  <ul>
+    <li>A <strong>sidebar</strong> lists every CBR for the company, showing name, version, and assigned profiles.</li>
+    <li>Selecting a CBR opens its JavaScript source code in a <strong>built-in editor</strong>.</li>
+    <li>Edits can be made directly in the editor and saved back — with cancel to revert to the original.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     13. CBR AI ANALYSIS
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="cbr-ai">
+  <div class="section-header">
+    <span class="section-icon">🧠</span>
+    <h3>13. AI-Powered Code Improvement for CBRs</h3>
+  </div>
+  <p>
+    Beyond manual editing, Navigator can send a CBR's JavaScript to the AI along with the existing <strong>CBR Helper library</strong> and ask it to analyze and improve the code.
+  </p>
+  <ul>
+    <li>The <strong>Analyze</strong> button sends the current script and the CBRHelper.js utility library to the AI for review.</li>
+    <li>The AI identifies opportunities to <strong>use existing helper functions</strong> to simplify the code, reduce duplication, and follow best practices.</li>
+    <li>The suggested improved code is displayed in a read-only preview panel.</li>
+    <li>Users can <strong>Accept &amp; Replace</strong> to adopt the AI's version, or <strong>Dismiss</strong> to keep the original.</li>
+  </ul>
+  <div class="callout">
+    🧠 This feature ensures that CBR code stays consistent and takes full advantage of the shared helper library, reducing maintenance effort across clients.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     14. LOG EXPORT
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="log-export">
+  <div class="section-header">
+    <span class="section-icon">📋</span>
+    <h3>14. Log &amp; Security Log Export</h3>
+  </div>
+  <p>
+    The <strong>Logs</strong> tab within Navigator provides access to both <strong>Application logs</strong> and <strong>Security logs</strong> from the connected ShipExec environment.
+  </p>
+  <ul>
+    <li><strong>Three viewing modes</strong> — Application only, Security only, or a combined view that merges both log types chronologically.</li>
+    <li><strong>Date range filtering</strong> — specify start and end dates to narrow results.</li>
+    <li><strong>Detailed columns</strong> — application logs show date, level, logger, message, server, and transaction ID. Security logs add user, action type, entity, and before/after values.</li>
+    <li><strong>CSV export</strong> — a single button exports the current view as a CSV file for offline analysis, import into spreadsheets, or integration with the standalone log viewer tools.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     15. STANDALONE LOG VIEWER — STANDARD
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="log-viewer-standard">
+  <div class="section-header">
+    <span class="section-icon">🛳️</span>
+    <h3>15. Standalone Log Viewer — Standard ShipExec Logs</h3>
+  </div>
+  <p>
+    Available from the <strong>Downloads</strong> page, the <strong>ShipExec API Log Viewer</strong> is a self-contained HTML file that runs entirely in the browser — no server or internet connection required.
+  </p>
+  <ul>
+    <li>Paste raw ShipExec log data or open a <code>.txt</code> log file directly.</li>
+    <li>Features <strong>log-level color coding</strong>, live column filters, sortable columns, transaction grouping, full-entry detail view, and CSV export.</li>
+    <li>Designed for support engineers who need to analyze standard ShipExec API log files on any machine.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     16. STANDALONE LOG VIEWER — CUSTOM
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="log-viewer-custom">
+  <div class="section-header">
+    <span class="section-icon">📦</span>
+    <h3>16. Standalone Log Viewer — Custom / Navigator Logs</h3>
+  </div>
+  <p>
+    A second standalone viewer — the <strong>Log Viewer</strong> — is purpose-built for the CSV log exports produced by Navigator itself (Application, Security, or Combined).
+  </p>
+  <ul>
+    <li>Paste exported CSV log data to explore, sort, and filter records.</li>
+    <li>Supports <strong>per-column filtering</strong>, global search, and re-export of visible rows.</li>
+    <li>Also a self-contained HTML file — downloadable and usable offline on any computer with a web browser.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     17. CBR HELPER METHODOLOGY
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="cbr-helper">
+  <div class="section-header">
+    <span class="section-icon">🧩</span>
+    <h3>17. CBR Helper Library — Methodology &amp; Approach</h3>
+  </div>
+  <p>
+    The <strong>CBR Helper</strong> (<code>CBRHelper.js</code>) is a downloadable JavaScript utility library that packages approximately <strong>120 reusable helper functions</strong> for ShipExec CBR development. It was created through a systematic, AI-assisted analysis of real-world client implementations.
+  </p>
+
+  <p style="margin-top:14px; font-weight:600; color:#0c4a6e;">The five-step methodology:</p>
+  <ol class="step-list">
+    <li>
+      <strong>Collect all active CBRs</strong> — retrieve every Client Business Rule file from the UAT environment that is assigned to an active shipping profile, ensuring only current, in-use customizations are analyzed.
+    </li>
+    <li>
+      <strong>Identify reusability topics</strong> — review each CBR and compile a master list of recurring functional topics: rate shopping, field validation, API calls, address book logic, UI manipulation, shipment field defaults, printing, LTL handling, and more.
+    </li>
+    <li>
+      <strong>Analyze each file by topic</strong> — for every CBR, the AI examines the source code topic-by-topic, extracting concrete examples of reusable patterns, helper functions, and common logic.
+    </li>
+    <li>
+      <strong>Condense into JavaScript objects</strong> — the extracted patterns are distilled into well-organized JavaScript objects grouped by category (Utilities, Logger, UI, API, Validation, Printing, LTL, Shipment, etc.), with consistent naming and documentation.
+    </li>
+    <li>
+      <strong>Combine into a single CBRHelper</strong> — all category objects are merged into one global <code>CBRHelper</code> object, creating a single-file drop-in library that any CBR can reference for common operations instead of re-implementing them.
+    </li>
+  </ol>
+
+  <div class="callout">
+    📥 The finished <code>CBRHelper.js</code> file is available for download from the Downloads page and can be dropped into any CBR project immediately.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     18. ARCHITECTURE
+     ════════════════════════════════════════════════════════════════ -->
+<div class="section" id="architecture">
+  <div class="section-header">
+    <span class="section-icon">🏗️</span>
+    <h3>18. Solution Architecture</h3>
+  </div>
+  <p>
+    ShipExec Navigator is built as a modular, layered .NET 10 solution with clear separation of concerns across 12 projects.
+  </p>
+
+  <div class="arch-row">
+    <div class="arch-box arch-box-dark">Blazor Server UI</div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box">App Logic</div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box">Business Logic</div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box arch-box-dark">DAL / Database</div>
+  </div>
+  <div class="arch-row">
+    <div class="arch-box">Semantic Kernel (AI)</div>
+    <span class="arch-arrow">↔</span>
+    <div class="arch-box">RAG Loader</div>
+    <span class="arch-arrow">↔</span>
+    <div class="arch-box">CBR Analyzer</div>
+  </div>
+
+  <div class="feature-grid" style="margin-top:18px;">
+    <div class="feature-card">
+      <div class="feature-card-title"><span class="tag">Blazor</span> UI Layer</div>
+      <p>Interactive server-rendered pages, dialogs, and components. Handles all user interaction and real-time updates.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title"><span class="tag-green">SK</span> AI &amp; Semantic Kernel</div>
+      <p>Azure OpenAI integration with plugin architecture for RAG search, XML analysis, and user-query plugins.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title"><span class="tag-amber">BL</span> Business Logic</div>
+      <p>Request generation, entity comparison, variance computation, JSON handling, and JWT management.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title"><span class="tag-purple">DAL</span> Data Access</div>
+      <p>SQL Server persistence via Dapper — variances, API logs, and template storage.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title"><span class="tag">Shared</span> Contracts</div>
+      <p>Interfaces, models, AI schemas, and helpers shared across all layers — ensuring consistency.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card-title"><span class="tag-green">Tools</span> Standalone Utilities</div>
+      <p>CBR Analyzer, RAG Loader, Desktop Client (WPF), and downloadable HTML tools.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     FOOTER
+     ════════════════════════════════════════════════════════════════ -->
+<div class="doc-footer">
+  ShipExec Navigator — Solution Overview &nbsp;·&nbsp; Generated for internal use &nbsp;·&nbsp; Management Studio Pro
+</div>
+
+</div><!-- /.container -->
+</body>
+</html>

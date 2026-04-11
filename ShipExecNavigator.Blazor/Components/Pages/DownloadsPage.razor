@@ -1,0 +1,810 @@
+@page "/downloads"
+@page "/tools"
+@page "/tools-page"
+@rendermode InteractiveServer
+@inject ICbrAnalysisService CbrAnalysisService
+@inject IShipExecService ShipExecService
+@inject AlertService AlertService
+@inject SummaryPdfService PdfService
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+@inject PendingImportService PendingImportService
+
+<PageTitle>ShipExec Navigator</PageTitle>
+
+<div class="tools-page">
+
+    @{ var _toolsCompany = ShipExecService.GetCurrentCompany(); }
+    @if (_toolsCompany is not null)
+    {
+        <div class="company-heading">@_toolsCompany.DisplayName</div>
+    }
+
+    <div class="page-tab-bar">
+        <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
+        <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
+        <span class="page-tab page-tab--active">&#x1F527; Tools</span>
+        <a class="page-tab" href="/debug" style="display:none">&#x1F41B; Debug</a>
+    </div>
+
+    <div class="tools-panel">
+        <div class="tools-hero">
+            <h1 class="tools-hero-title">Tools</h1>
+            <p class="tools-hero-sub">Interactive utilities, downloads, and templates for ShipExec support, diagnostics, and client customization.</p>
+        </div>
+
+        @if (!_showCbrHelper)
+        {
+        <div class="tools-grid">
+            <div class="tool-card">
+                <div class="tool-card-icon">&#x1F9E9;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">CBR Helper</div>
+                    <div class="tool-card-desc">
+                        Paste a CBR script and run AI-powered analysis — no connection required.
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" @onclick="OpenCbrHelper">
+                            &#x1F9E0; Open CBR Helper
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Support Client Checker <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        A self-contained browser tool for testing the ShipExec local hardware service.
+                        Supports printer label submission, scale reads, and system information requests over HTTP or HTTPS.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_ShipExecSupportClientChecker.html" download>
+                            &#x2B07;&#xFE0F; Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Log Viewer <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        A self-contained offline log viewer for both ShipExec Navigator exports and ShipExec API log files.
+                        Paste exported CSV log data or raw API logs to explore,
+                        sort, and filter Application, Security, or Combined log exports.
+                        Supports per-column filtering, global search, log-level color coding,
+                        transaction grouping, full-entry detail view, and re-export of visible rows.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_ShipExecLogViewer.html" download>
+                            &#x2B07;&#xFE0F; Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">SBR / CBR Template <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        The ShipExec SE2 code standards template used as the base for client
+                        customization. Contains SBR and CBR project scaffolding, naming conventions,
+                        and reference implementations for building custom ShipExec integrations.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/shipexec-code_standards-se2.zip" download>
+                            &#x2B07;&#xFE0F; Download Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">CBR Helper Library <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        A single-file JavaScript utility library for ShipExec CBR development.
+                        Packages ~120 helper functions — Utilities, Logger, UI, API, Validation,
+                        Printing, LTL, Shipment, and more — into a single global
+                        <code>CBRHelper</code> object, ready to drop into any CBR page.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_CBRHelper.js" download>
+                            &#x2B07;&#xFE0F; Download CBRHelper.js
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Certificate Inspector <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        A Windows desktop utility for inspecting TLS/SSL certificates on ShipExec servers.
+                        Connects directly to a host and port to retrieve and display certificate details —
+                        subject, issuer, expiry, chain, and SANs — without requiring a browser or MMC.
+                        Useful for diagnosing HTTPS connectivity and certificate trust issues in ShipExec environments.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator.CertificateInspector.exe" download>
+                            &#x2B07;&#xFE0F; Download Certificate Inspector
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">System Analyzer <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        A Windows desktop utility that performs a full ShipExec environment analysis.
+                        Tests database connectivity, inventories installed DLL versions (PMC, ShipExec Core,
+                        Management Studio, Thin Client), verifies IIS and Windows services,
+                        collects logs, configs, event log errors, and PMC templates —
+                        then generates a comprehensive report. Requires administrator access.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator.DesktopClient.exe" download>
+                            &#x2B07;&#xFE0F; Download System Analyzer
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Profile Diff Viewer <span class="tool-title-download-icon">&#x2B07;&#xFE0F;</span></div>
+                    <div class="tool-card-desc">
+                        A self-contained offline viewer for profile comparison exports from ShipExec Navigator.
+                        Accepts both pairwise (<em>ProfileDiff_*.csv</em>) and all-profiles matrix (<em>AllProfilesDiff_*.csv</em>) exports.
+                        Features Added / Modified / Removed badges and filters for pairwise files,
+                        consensus colour-coding across all profiles for matrix files,
+                        live search, expandable row detail, and filtered CSV re-export.
+                    </div>
+                    <div class="tool-card-footer">
+                        <a class="tool-download-btn" href="/downloads/ShipExecNavigator_ProfilesDiffViewer.html" download>
+                            &#x2B07;&#xFE0F; Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Company-connected tools ─────────────────────────────────── *@
+            @{  var connected = _hasCompanyConnection; }
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x1F69A;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Import Shippers</div>
+                    <div class="tool-card-desc">
+                        Import shipper data from a CSV or Excel (.xlsx) file into the active company.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected)" @onclick="() => _showImportShippersDialog = true">
+                            &#x1F4CC; Import Shippers
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x2B07;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Export Shippers</div>
+                    <div class="tool-card-desc">
+                        Export all shippers from the active company to a CSV file.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected || _isExportingShippers)" @onclick="ExportShippersAsync">
+                            @if (_isExportingShippers)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            }
+                            &#x2B07; Export Shippers
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x1F464;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Import Users</div>
+                    <div class="tool-card-desc">
+                        Import user data from a CSV or Excel (.xlsx) file into the active company.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected)" @onclick="() => _showImportUsersDialog = true">
+                            &#x1F4CC; Import Users
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x2B07;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Export Users</div>
+                    <div class="tool-card-desc">
+                        Export all users from the active company to a CSV file.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected || _isExportingUsers)" @onclick="ExportUsersAsync">
+                            @if (_isExportingUsers)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            }
+                            &#x2B07; Export Users
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x1F4CA;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Compare Profiles</div>
+                    <div class="tool-card-desc">
+                        Compare configuration profiles side-by-side to identify differences.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected)" @onclick="() => _showCompareProfilesDialog = true">
+                            &#x1F4CA; Compare Profiles
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card @(!connected ? "tool-card--disabled" : "")">
+                <div class="tool-card-icon">&#x1F4DD;</div>
+                <div class="tool-card-body">
+                    <div class="tool-card-title">Summarize Company</div>
+                    <div class="tool-card-desc">
+                        Generate a comprehensive AI-powered report of the active company's configuration.
+                        Includes profiles, shippers, users, business rules, adapters, and more.
+                        @if (!connected) { <em class="tool-card-disabled-hint">Connect to a company in Navigator first.</em> }
+                    </div>
+                    <div class="tool-card-footer">
+                        <button class="tool-download-btn" disabled="@(!connected || _isSummarizing)" @onclick="() => _showSummarizeConfirm = true">
+                            &#x1F4DD; Summarize
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+        else
+        {
+        <div class="cbrh-pane @(!_cbrDark ? "cbrh-pane--light" : "") @(_cbrMaximized ? "cbrh-pane--maximized" : "")">
+            <div class="cbrh-header">
+                <button class="cbrh-back-btn" @onclick="CloseCbrHelper">&#x2190; Back</button>
+                <span class="cbrh-title">&#x1F9E0; CBR Helper</span>
+                <span class="cbrh-hint">Paste a CBR script and run AI analysis — no connection required</span>
+                <div class="cbrh-header-actions">
+                    <button class="cbrh-btn-theme"
+                            title='@(_cbrDark ? "Switch to light theme" : "Switch to dark theme")'
+                            @onclick="() => _cbrDark = !_cbrDark">
+                        @(_cbrDark ? "\u2600" : "\uD83C\uDF19")
+                    </button>
+                    <button class="cbrh-btn-maximize"
+                            title='@(_cbrMaximized ? "Restore" : "Maximize")'
+                            @onclick="() => _cbrMaximized = !_cbrMaximized">
+                        @(_cbrMaximized ? "\u22A1" : "\u26F6")
+                    </button>
+                </div>
+            </div>
+            <div class="cbrh-body">
+                <div class="cbrh-section-label">CBR Script</div>
+                <div class="cbrh-editor-wrap">
+                    <textarea class="cbrh-editor" spellcheck="false"
+                              @bind="_cbrScript"
+                              @bind:event="oninput"
+                              placeholder="Paste your CBR script here…"></textarea>
+                </div>
+                <div class="cbrh-toolbar">
+                    <button class="cbrh-btn-analyze"
+                            @onclick="RunCbrHelperAnalysisAsync"
+                            disabled="@(_cbrAnalyzing || string.IsNullOrWhiteSpace(_cbrScript))">
+                        @if (_cbrAnalyzing)
+                        {
+                            <span class="cbrh-spinner"></span>
+                            <span>Analyzing&hellip;</span>
+                        }
+                        else
+                        {
+                            <span>&#x1F9E0; Analyze</span>
+                        }
+                    </button>
+                    <button class="cbrh-btn-clear"
+                            @onclick="ClearCbrHelper"
+                            disabled="@_cbrAnalyzing">
+                        &#x2715; Clear
+                    </button>
+                </div>
+                @if (_cbrAnalyzing || _cbrResult is not null || _cbrError is not null)
+                {
+                    <div class="cbrh-result-wrap">
+                        <div class="cbrh-result-header">
+                            <span class="cbrh-result-label">&#x1F9E0; AI Analysis</span>
+                            @if (_cbrResult is not null)
+                            {
+                                <button class="cbrh-btn-copy" @onclick="CopyCbrResultAsync">
+                                    &#x1F4CB; Copy
+                                </button>
+                            }
+                        </div>
+                        @if (_cbrAnalyzing)
+                        {
+                            <div class="cbrh-loading">
+                                <span class="cbrh-spinner cbrh-spinner--lg"></span>
+                                <span>Sending script and CBRHelper to AI&hellip; this may take a moment.</span>
+                            </div>
+                        }
+                        else if (_cbrError is not null)
+                        {
+                            <div class="cbrh-error">&#9888; @_cbrError</div>
+                        }
+                        else if (_cbrResult is not null)
+                        {
+                            <textarea class="cbrh-result" spellcheck="false" readonly
+                                      value="@_cbrResult"></textarea>
+                        }
+                    </div>
+                }
+
+                @* ── Chat bar ── *@
+                <div class="cbrh-chat">
+                    <div class="cbrh-chat-label">&#x1F4AC; Chat about this script</div>
+                    <div class="cbrh-chat-messages" id="cbrh-chat-scroll">
+                        @if (_chatBubbles.Count == 0)
+                        {
+                            <div class="cbrh-chat-empty">
+                                Ask a question or request a change — the AI has access to your current script.
+                            </div>
+                        }
+                        @foreach (var bubble in _chatBubbles)
+                        {
+                            <div class="cbrh-bubble cbrh-bubble--@bubble.Role">
+                                <div class="cbrh-bubble-text">@bubble.Text</div>
+                                @if (bubble.Code is not null)
+                                {
+                                    <button class="cbrh-bubble-apply" @onclick="() => ApplyChatCode(bubble.Code)">
+                                        &#x2191; Apply to script
+                                    </button>
+                                }
+                            </div>
+                        }
+                        @if (_chatThinking)
+                        {
+                            <div class="cbrh-bubble cbrh-bubble--assistant">
+                                <div class="cbrh-thinking">
+                                    <span></span><span></span><span></span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="cbrh-chat-input-row">
+                        <textarea class="cbrh-chat-input"
+                                  @bind="_chatInput"
+                                  @bind:event="oninput"
+                                  @onkeydown="HandleChatKeyDownAsync"
+                                  placeholder="Ask about this script… (Ctrl+Enter to send)"
+                                  disabled="@_chatThinking"
+                                  rows="2"
+                                  spellcheck="false"></textarea>
+                        <button class="cbrh-chat-send"
+                                @onclick="SendChatMessageAsync"
+                                disabled="@(_chatThinking || string.IsNullOrWhiteSpace(_chatInput))"
+                                title="Send (Ctrl+Enter)">
+                            @if (_chatThinking)
+                            {
+                                <span class="cbrh-spinner"></span>
+                            }
+                            else
+                            {
+                                <span>&#x2191;</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+    </div>
+
+</div>
+
+<ImportShippersDialog IsVisible="_showImportShippersDialog"
+                      CanApply="true"
+                      OnClose="() => _showImportShippersDialog = false"
+                      OnShippersApplied="HandleShippersAppliedAsync"
+                      OnAddToVarianceList="HandleShipperVariancesForStudio" />
+
+<ImportUsersDialog IsVisible="_showImportUsersDialog"
+                   OnClose="() => _showImportUsersDialog = false" />
+
+<CompareProfilesDialog IsVisible="_showCompareProfilesDialog"
+                       OnClose="() => _showCompareProfilesDialog = false" />
+
+@* ── Summarize Company confirmation modal ── *@
+@if (_showSummarizeConfirm && !_isSummarizing)
+{
+    <div class="sum-backdrop" @onclick="() => _showSummarizeConfirm = false">
+        <div class="sum-modal" @onclick:stopPropagation>
+            <div class="sum-header">
+                <span class="sum-title">&#x1F4DD; Summarize Company</span>
+                <button class="sum-close" @onclick="() => _showSummarizeConfirm = false">&#x2715;</button>
+            </div>
+            <div class="sum-body">
+                <p>This will generate a comprehensive AI-powered summary of the entire company configuration including profiles, shippers, users, business rules, adapters, and more.</p>
+                <p class="sum-warning">&#x26A0;&#xFE0F; This is a <strong>long-running process</strong> that may take 1–3 minutes depending on company size. Please keep this page open until it completes.</p>
+            </div>
+            <div class="sum-footer">
+                <button class="sum-btn-confirm" @onclick="ConfirmSummarizeAsync">
+                    &#x1F4DD; Start Summarize
+                </button>
+                <button class="sum-btn-cancel" @onclick="() => _showSummarizeConfirm = false">Cancel</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ── Summarize Company progress modal ── *@
+@if (_isSummarizing || _summarizePdfBytes is not null || _summarizeError is not null)
+{
+    <div class="sum-backdrop">
+        <div class="sum-modal" @onclick:stopPropagation>
+            <div class="sum-header">
+                <span class="sum-title">&#x1F4DD; Summarize Company</span>
+                @if (!_isSummarizing)
+                {
+                    <button class="sum-close" @onclick="CloseSummarizeProgress">&#x2715;</button>
+                }
+            </div>
+            <div class="sum-body">
+                @if (_isSummarizing)
+                {
+                    <div class="sum-progress-section">
+                        <div class="sum-status-icon">
+                            <span class="spinner-border" role="status" aria-hidden="true" style="width:2rem;height:2rem;"></span>
+                        </div>
+                        <div class="sum-status-text">@_summarizeStatus</div>
+                        <div class="sum-progress-bar-track">
+                            <div class="sum-progress-bar-fill" style="width: @(_summarizePercent)%"></div>
+                        </div>
+                        <div class="sum-progress-pct">@_summarizePercent%</div>
+                    </div>
+                }
+                else if (_summarizeError is not null)
+                {
+                    <div class="sum-error">&#9888; @_summarizeError</div>
+                }
+                else if (_summarizePdfBytes is not null)
+                {
+                    <div class="sum-success-section">
+                        <div class="sum-success-icon">&#x2705;</div>
+                        <div class="sum-success-text">PDF report generated successfully!</div>
+                        <button class="sum-download-btn" @onclick="DownloadSummarizeResult">
+                            &#x1F4C4; Download PDF
+                        </button>
+                    </div>
+                }
+            </div>
+            @if (!_isSummarizing)
+            {
+                <div class="sum-footer">
+                    <button class="sum-btn-cancel" @onclick="CloseSummarizeProgress">Close</button>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _showCbrHelper;
+
+    private string  _cbrScript   = string.Empty;
+    private bool    _cbrAnalyzing;
+    private string? _cbrResult;
+    private string? _cbrError;
+    private bool    _cbrDark      = true;
+    private bool    _cbrMaximized = false;
+
+    // ── Company-connected tools state ─────────────────────────────────────
+    private bool _hasCompanyConnection;
+    private bool _showImportShippersDialog;
+    private bool _showImportUsersDialog;
+    private bool _showCompareProfilesDialog;
+    private bool _isExportingShippers;
+    private bool _isExportingUsers;
+    private bool _isSummarizing;
+
+    // ── Summarize modal state ─────────────────────────────────────────────
+    private bool    _showSummarizeConfirm;
+    private string  _summarizeStatus  = string.Empty;
+    private int     _summarizePercent;
+    private byte[]? _summarizePdfBytes;
+    private string? _summarizeError;
+    private string? _summarizeFilename;
+
+    protected override void OnParametersSet()
+    {
+        _hasCompanyConnection = ShipExecService.GetCurrentCompany() is not null;
+    }
+
+    // ── Chat state ────────────────────────────────────────────────────────
+    private record CbrChatBubble(string Role, string Text, string? Code = null);
+    private List<CbrChatBubble> _chatBubbles  = [];
+    private List<ChatMessage>   _chatHistory  = [];
+    private string              _chatInput    = string.Empty;
+    private bool                _chatThinking;
+
+    private void OpenCbrHelper()
+    {
+        _showCbrHelper = true;
+    }
+
+    private void CloseCbrHelper()
+    {
+        _showCbrHelper = false;
+        _cbrMaximized  = false;
+        _chatBubbles   = [];
+        _chatHistory   = [];
+        _chatInput     = string.Empty;
+    }
+
+    private void ClearCbrHelper()
+    {
+        _cbrScript    = string.Empty;
+        _cbrResult    = null;
+        _cbrError     = null;
+        _cbrAnalyzing = false;
+        _cbrMaximized = false;
+        _chatBubbles  = [];
+        _chatHistory  = [];
+        _chatInput    = string.Empty;
+    }
+
+    private async Task RunCbrHelperAnalysisAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_cbrScript)) return;
+        _cbrAnalyzing = true;
+        _cbrResult    = null;
+        _cbrError     = null;
+        try
+        {
+            _cbrResult = await CbrAnalysisService.AnalyzeCbrAsync(_cbrScript);
+        }
+        catch (Exception ex)
+        {
+            _cbrError = ex.Message;
+        }
+        finally
+        {
+            _cbrAnalyzing = false;
+        }
+    }
+
+    private async Task CopyCbrResultAsync()
+    {
+        if (_cbrResult is null) return;
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", _cbrResult);
+    }
+
+    // ── Chat methods ──────────────────────────────────────────────────────
+    private async Task SendChatMessageAsync()
+    {
+        var input = _chatInput.Trim();
+        if (string.IsNullOrWhiteSpace(input) || _chatThinking) return;
+
+        _chatInput = string.Empty;
+        _chatBubbles.Add(new CbrChatBubble("user", input));
+        _chatThinking = true;
+        StateHasChanged();
+        await ScrollChatAsync();
+
+        try
+        {
+            var resp = await CbrAnalysisService.ChatCbrAsync(_chatHistory, input, _cbrScript);
+            _chatHistory.Add(new ChatMessage("user", input));
+            _chatHistory.Add(new ChatMessage("assistant",
+                resp.Message + (resp.Code is not null ? $"\n\n[Suggested code omitted from history]" : "")));
+            _chatBubbles.Add(new CbrChatBubble("assistant", resp.Message, resp.Code));
+        }
+        catch (Exception ex)
+        {
+            _chatBubbles.Add(new CbrChatBubble("assistant", $"⚠️ {ex.Message}"));
+        }
+        finally
+        {
+            _chatThinking = false;
+            StateHasChanged();
+            await ScrollChatAsync();
+        }
+    }
+
+    private void ApplyChatCode(string code)
+    {
+        _cbrScript = code;
+        _cbrResult = null;
+        _cbrError  = null;
+    }
+
+    private async Task HandleChatKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && e.CtrlKey)
+            await SendChatMessageAsync();
+    }
+
+    private async Task ScrollChatAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval",
+                "var el=document.getElementById('cbrh-chat-scroll');if(el)el.scrollTop=el.scrollHeight;");
+        }
+        catch { }
+    }
+
+    private async Task ExportShippersAsync()
+    {
+        _isExportingShippers = true;
+        try
+        {
+            var csv = await ShipExecService.ExportShippersCsvAsync();
+            var companySlug = (ShipExecService.GetCurrentCompany()?.Name ?? "shippers").Replace(" ", "_");
+            var filename = $"{companySlug}_shippers_{DateTime.Now:yyyyMMdd}.csv";
+            await JS.InvokeVoidAsync("downloadFile", filename, csv, "text/csv");
+        }
+        catch (Exception ex)
+        {
+            await AlertService.ShowAlertAsync($"Export failed: {ex.Message}");
+        }
+        finally
+        {
+            _isExportingShippers = false;
+        }
+    }
+
+    private async Task ExportUsersAsync()
+    {
+        _isExportingUsers = true;
+        try
+        {
+            var csv = await ShipExecService.ExportUsersCsvAsync();
+            var companySlug = (ShipExecService.GetCurrentCompany()?.Name ?? "users").Replace(" ", "_");
+            var filename = $"{companySlug}_users_{DateTime.Now:yyyyMMdd}.csv";
+            await JS.InvokeVoidAsync("downloadFile", filename, csv, "text/csv");
+        }
+        catch (Exception ex)
+        {
+            await AlertService.ShowAlertAsync($"Export failed: {ex.Message}");
+        }
+        finally
+        {
+            _isExportingUsers = false;
+        }
+    }
+
+    private async Task ConfirmSummarizeAsync()
+    {
+        _showSummarizeConfirm = false;
+        _isSummarizing    = true;
+        _summarizePdfBytes = null;
+        _summarizeError   = null;
+        _summarizePercent = 0;
+        _summarizeStatus  = "Preparing…";
+        StateHasChanged();
+
+        try
+        {
+            var company = ShipExecService.GetCurrentCompany();
+            if (company is null)
+            {
+                _summarizeError = "No company connected.";
+                return;
+            }
+
+            // ── Phase 1: load company XML ──
+            await UpdateProgressAsync(10, "Loading company data…");
+            var companyXml = await ShipExecService.GetCompanyXmlAsync(company.Id, company.Name ?? "");
+            await UpdateProgressAsync(30, "Company data loaded. Sending to AI…");
+
+            // ── Phase 2: AI analysis (long) — run a timer to simulate progress ──
+            var cts = new CancellationTokenSource();
+            var progressTask = SimulateProgressAsync(35, 85, "Generating summary…", cts.Token);
+
+            var prompt = $"Generate a comprehensive summary report for this ShipExec company configuration. " +
+                $"Include sections for: Company Overview, Profiles, Shippers, Users, Business Rules (SBR and CBR), " +
+                $"Adapter Registrations, Clients, and any notable configuration items. " +
+                $"Format as a well-structured plain-text report with headers and bullet points. " +
+                $"Use markdown-style headers (## Section) and bold (**text**) for emphasis.\n\n" +
+                $"Company XML:\n{companyXml}";
+
+            var response = await CbrAnalysisService.AnalyzeCbrAsync(prompt);
+
+            await cts.CancelAsync();
+            try { await progressTask; } catch (OperationCanceledException) { }
+
+            // ── Phase 3: generate PDF ──
+            await UpdateProgressAsync(90, "Generating PDF report…");
+            var companySlug = (company.Name ?? "company").Replace(" ", "_");
+            _summarizeFilename = $"{companySlug}_Summary_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            _summarizePdfBytes = await Task.Run(() => PdfService.GenerateSummaryPdf(company.Name ?? "Company", response));
+
+            await UpdateProgressAsync(100, "Complete!");
+        }
+        catch (Exception ex)
+        {
+            _summarizeError = ex.Message;
+        }
+        finally
+        {
+            _isSummarizing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SimulateProgressAsync(int from, int to, string status, CancellationToken ct)
+    {
+        var current = from;
+        while (current < to && !ct.IsCancellationRequested)
+        {
+            await Task.Delay(2500, ct);
+            current = Math.Min(current + 5, to);
+            await InvokeAsync(() =>
+            {
+                _summarizePercent = current;
+                _summarizeStatus  = status;
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task UpdateProgressAsync(int pct, string status)
+    {
+        _summarizePercent = pct;
+        _summarizeStatus  = status;
+        StateHasChanged();
+        await Task.Delay(50); // yield so UI renders
+    }
+
+    private async Task DownloadSummarizeResult()
+    {
+        if (_summarizePdfBytes is null || _summarizeFilename is null) return;
+        var base64 = Convert.ToBase64String(_summarizePdfBytes);
+        await JS.InvokeVoidAsync("downloadBase64File", _summarizeFilename, base64, "application/pdf");
+    }
+
+    private void CloseSummarizeProgress()
+    {
+        _summarizePdfBytes = null;
+        _summarizeError    = null;
+        _summarizeFilename = null;
+        _summarizePercent  = 0;
+        _summarizeStatus   = string.Empty;
+    }
+
+    private void HandleShippersAppliedAsync(List<ApplyResultItem> results)
+    {
+        if (!results.Any(r => r.Success)) return;
+        _showImportShippersDialog = false;
+        PendingImportService.HighlightCategory = "Shippers";
+        NavigationManager.NavigateTo("/studio", forceLoad: false);
+    }
+
+    private void HandleShipperVariancesForStudio(List<ShipExecNavigator.BusinessLogic.EntityComparison.Variance> variances)
+    {
+        if (variances.Count == 0) return;
+        _showImportShippersDialog = false;
+        PendingImportService.SetPendingShipperVariances(variances);
+        NavigationManager.NavigateTo("/studio", forceLoad: false);
+    }
+}

@@ -1,7 +1,66 @@
-﻿<header class="top-navbar">
-    <a class="brand-link" href="/">Management Studio Pro</a>
+﻿@inject IJSRuntime JS
+@inject IShipExecService ShipExecService
+
+<header class="top-navbar">
+    <div class="navbar-header">
+        <a class="brand-link" href="/">ShipExec Navigator</a>
+    </div>
     <nav class="top-nav-links">
         <NavLink class="top-nav-link" href="/" Match="NavLinkMatch.All">&#x1F916; ShipExec Copilot</NavLink>
         <NavLink class="top-nav-link" href="/studio">&#x1F5FA; Navigator</NavLink>
+        <NavLink class="top-nav-link" href="/tools">&#x1F527; Tools</NavLink>
     </nav>
+    <div class="navbar-right">
+        @{
+            var _company = ShipExecService.GetCurrentCompany();
+            var _isLive = ShipExecService.GetManagementStudioUrl() is not null;
+        }
+        @if (_company is not null)
+        {
+            <span class="navbar-company">Connected to @_company.DisplayName</span>
+        }
+        @if (_company is not null && _isLive)
+        {
+            <span class="navbar-live-badge">&#x1F7E2; Live</span>
+        }
+        <button class="theme-toggle" @onclick="ToggleThemeAsync" title="Toggle light/dark mode">
+            @if (_isDark)
+            {
+                <svg class="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            }
+            else
+            {
+                <svg class="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            }
+        </button>
+    </div>
 </header>
+
+@code {
+    private bool _isDark;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var stored = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('theme')");
+            _isDark = stored == "dark";
+            if (_isDark)
+                await JS.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark-theme')");
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleThemeAsync()
+    {
+        _isDark = !_isDark;
+        if (_isDark)
+        {
+            await JS.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark-theme');localStorage.setItem('theme','dark')");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark-theme');localStorage.setItem('theme','light')");
+        }
+    }
+}

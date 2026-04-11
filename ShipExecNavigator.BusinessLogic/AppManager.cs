@@ -1,5 +1,6 @@
 using PSI.Sox;
 using PSI.Sox.Data;
+using PSI.Sox.Wcf;
 using PSI.Sox.Wcf.Administration;
 using PSI.Sox.Wcf.Authentication;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ShipExecNavigator.BusinessLogic
 {
@@ -447,6 +449,30 @@ namespace ShipExecNavigator.BusinessLogic
             }
         }
 
+        public void DeleteUser(Guid userId)
+        {
+            _logger.LogTrace(">> DeleteUser({UserId})", userId);
+            var accessToken = GetAccessToken();
+            var request = new PSI.Sox.Wcf.Authentication.RemoveUserRequest
+            {
+                Id = userId,
+                UserContext = new PSI.Sox.UserContext { CompanyId = _companyId }
+            };
+            var userManagerUrl = _adminUrl.Replace("AdministrationService", "UserManagerService");
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, userManagerUrl + "RemoveUser"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+                _logger.LogTrace("<< DeleteUser({UserId})", userId);
+            }
+        }
+
         /// <summary>
         /// Computes the set of entity-level differences between two XML documents and
         /// converts those differences into typed API request objects ready to be applied.
@@ -752,6 +778,34 @@ namespace ShipExecNavigator.BusinessLogic
             }
         }
 
+        /// <summary>
+        /// Returns fully-hydrated profiles (including nested collections like Shippers,
+        /// Carriers, etc.). Gets the profile list first, then fetches full detail for each.
+        /// </summary>
+        public List<Profile> GetFullProfiles()
+        {
+            _logger.LogTrace(">> GetFullProfiles | CompanyId={CompanyId}", _companyId);
+            var summaryProfiles = GetProfiles();
+            var result = new List<Profile>(summaryProfiles.Count);
+
+            foreach (var summary in summaryProfiles)
+            {
+                try
+                {
+                    var full = GetFullProfile(summary.Id);
+                    result.Add(full ?? summary);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "GetFullProfiles: failed to load detail for Profile {ProfileId}, using summary", summary.Id);
+                    result.Add(summary);
+                }
+            }
+
+            _logger.LogTrace("<< GetFullProfiles → {Count} profiles", result.Count);
+            return result;
+        }
+
         public Profile GetFullProfile(int profileId)
         {
             _logger.LogTrace(">> GetFullProfile({ProfileId})", profileId);
@@ -790,6 +844,216 @@ namespace ShipExecNavigator.BusinessLogic
                 string content = httpResponse.Content.ReadAsStringAsync().Result;
                 var response = JsonHelper.Deserialize<GetTemplatesResponse>(content);
                 return response?.Templates ?? new List<Template>();
+            }
+        }
+
+        public List<ClientBusinessRule> GetClientBusinessRulesForCompany(Guid companyId)
+        {
+            // Set company context so GetProfiles() targets the correct company.
+            SetCompany(companyId, string.Empty);
+
+            // Collect every CBR ID that is actually assigned to a profile.
+            var profileCbrIds = GetProfiles()
+                .Select(p => p.ClientBusinessRuleId)
+                .Where(id => id != 0)
+                .ToHashSet();
+
+            var accessToken = GetAccessToken();
+            var request = new GetClientBusinessRulesRequest
+            {
+                CompanyId = companyId,
+                SearchCriteria = new SearchCriteria
+                {
+                    WhereClauses = new List<WhereClause>(),
+                    OrderByClauses = new List<OrderByClause>()
+                }
+            };
+
+            //System.Diagnostics.Debugger.Break(); // breakpoint before HTTP call to GetClientBusinessRules
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "GetClientBusinessRules"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+
+                string content = httpResponse.Content.ReadAsStringAsync().Result;
+                var response = JsonHelper.Deserialize<GetClientBusinessRulesResponse>(content);
+                var allRules = response?.ClientBusinessRules ?? new List<ClientBusinessRule>();
+
+                return allRules.Where(r => profileCbrIds.Contains(r.Id)).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Retrieves all <see cref="ServerBusinessRule"/> records for the current company
+        /// and pairs each rule with the list of profile names that reference it.
+        /// </summary>
+        public List<(ServerBusinessRule Rule, List<string> ProfileNames)> GetServerBusinessRulesForCompany()
+        {
+            _logger.LogTrace(">> GetServerBusinessRulesForCompany | CompanyId={CompanyId}", _companyId);
+
+            var profiles = GetProfiles();
+
+            // Build SBR-ID → profile-names lookup
+            var sbrProfileMap = profiles
+                .Where(p => p.ServerBusinessRuleId != 0)
+                .GroupBy(p => p.ServerBusinessRuleId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(p => p.Name ?? string.Empty)
+                          .Where(n => !string.IsNullOrEmpty(n))
+                          .ToList());
+
+            var accessToken = GetAccessToken();
+            var request = new GetServerBusinessRulesRequest
+            {
+                CompanyId = _companyId,
+                SearchCriteria = new SearchCriteria
+                {
+                    WhereClauses  = new List<WhereClause>(),
+                    OrderByClauses = new List<OrderByClause>()
+                }
+            };
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "GetServerBusinessRules"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+
+                string content = httpResponse.Content.ReadAsStringAsync().Result;
+                var response = JsonHelper.Deserialize<GetServerBusinessRulesResponse>(content);
+                var allSbrs = response?.ServerBusinessRule ?? new List<ServerBusinessRule>();
+
+                _logger.LogTrace("<< GetServerBusinessRulesForCompany → {Count} rules", allSbrs.Count);
+                return allSbrs
+                    .Select(r => (r, sbrProfileMap.TryGetValue(r.Id, out var names) ? names : new List<string>()))
+                    .ToList();
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the <c>FileBytes</c> for a single <see cref="ServerBusinessRule"/> by
+        /// calling the <c>ExportCompanyConfiguration</c> endpoint, which returns the full
+        /// company configuration XML including SBR file data, and then extracting the
+        /// matching rule's byte array from the response.
+        /// </summary>
+        public byte[]? GetServerBusinessRuleFileBytes(string name, string? version)
+        {
+            //System.Diagnostics.Debugger.Break();
+            _logger.LogTrace(">> GetServerBusinessRuleFileBytes | Name={Name} Version={Version} CompanyId={CompanyId}", name, version, _companyId);
+
+            var accessToken = GetAccessToken();
+            var request = new ExportCompanyConfigurationRequest { CompanyId = _companyId };
+
+            using var httpClient = new HttpClient();
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "ExportCompanyConfiguration");
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            string json = JsonHelper.Serialize(request);
+            requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+            httpResponse.EnsureSuccessStatusCode();
+
+            string content = httpResponse.Content.ReadAsStringAsync().Result;
+            var response = JsonHelper.Deserialize<ExportCompanyConfigurationResponse>(content);
+
+            if (string.IsNullOrEmpty(response?.CompanyConfiguration))
+            {
+                _logger.LogWarning("GetServerBusinessRuleFileBytes | ExportCompanyConfiguration returned empty for CompanyId={CompanyId}", _companyId);
+                return null;
+            }
+
+            // The ExportCompanyConfiguration endpoint returns the XML as a
+            // Base64-encoded string.  Decode it before parsing.
+            var configString = response.CompanyConfiguration;
+            if (configString.Length > 0 && configString[0] != '<')
+            {
+                var xmlBytes = Convert.FromBase64String(configString);
+                configString = Encoding.UTF8.GetString(xmlBytes);
+            }
+
+            var doc = XDocument.Parse(configString);
+            var sbrElement = doc.Descendants("ServerBusinessRule")
+                                .FirstOrDefault(e => (string?)e.Element("Name") == name
+                                                  && (string?)e.Element("Version") == (version ?? string.Empty));
+
+            if (sbrElement is null)
+            {
+                _logger.LogWarning("GetServerBusinessRuleFileBytes | SBR Name={Name} Version={Version} not found in export", name, version);
+                return null;
+            }
+
+            var fileBytesValue = sbrElement.Element("ServerBusinessRule")?.Value;
+            if (string.IsNullOrEmpty(fileBytesValue))
+            {
+                _logger.LogInformation("GetServerBusinessRuleFileBytes | SBR Name={Name} Version={Version} has no FileBytes in export", name, version);
+                return null;
+            }
+
+            var fileBytes = Convert.FromBase64String(fileBytesValue);
+            _logger.LogTrace("<< GetServerBusinessRuleFileBytes | Name={Name} Version={Version} Length={Length}", name, version, fileBytes.Length);
+            return fileBytes;
+        }
+
+        /// <summary>
+        /// Retrieves all <see cref="ClientBusinessRule"/> records for the current company
+        /// and pairs each rule with the list of profile names that reference it via
+        /// <see cref="Profile.ClientBusinessRuleId"/>.
+        /// </summary>
+        public List<(ClientBusinessRule Rule, List<string> ProfileNames)> GetClientBusinessRulesWithProfilesForCompany()
+        {
+            _logger.LogTrace(">> GetClientBusinessRulesWithProfilesForCompany | CompanyId={CompanyId}", _companyId);
+
+            var profiles = GetProfiles();
+
+            var cbrProfileMap = profiles
+                .Where(p => p.ClientBusinessRuleId != 0)
+                .GroupBy(p => p.ClientBusinessRuleId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(p => p.Name ?? string.Empty)
+                          .Where(n => !string.IsNullOrEmpty(n))
+                          .ToList());
+
+            var accessToken = GetAccessToken();
+            var request = new GetClientBusinessRulesRequest
+            {
+                CompanyId = _companyId,
+                SearchCriteria = new SearchCriteria
+                {
+                    WhereClauses  = new List<WhereClause>(),
+                    OrderByClauses = new List<OrderByClause>()
+                }
+            };
+
+            using (var httpClient = new HttpClient())
+            using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, _adminUrl + "GetClientBusinessRules"))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                string json = JsonHelper.Serialize(request);
+                requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = httpClient.SendAsync(requestMessage).Result;
+                httpResponse.EnsureSuccessStatusCode();
+
+                string content = httpResponse.Content.ReadAsStringAsync().Result;
+                var response = JsonHelper.Deserialize<GetClientBusinessRulesResponse>(content);
+                var allRules = response?.ClientBusinessRules ?? new List<ClientBusinessRule>();
+
+                _logger.LogTrace("<< GetClientBusinessRulesWithProfilesForCompany → {Count} rules", allRules.Count);
+                return allRules
+                    .Select(r => (r, cbrProfileMap.TryGetValue(r.Id, out var names) ? names : new List<string>()))
+                    .ToList();
             }
         }
 

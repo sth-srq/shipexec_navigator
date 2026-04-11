@@ -21,7 +21,8 @@ public static class EntityTreeBuilder
     /// <summary>
     /// Builds an <see cref="XmlNodeViewModel"/> tree from a single entity object.
     /// Scalar properties become leaf child nodes; complex objects recurse.
-    /// Collections are skipped (they should be handled as lazy-loadable category nodes).
+    /// Collections become container nodes with child items (shown even when empty
+    /// so that users can see and populate them).
     /// </summary>
     public static XmlNodeViewModel FromObject(string nodeName, object obj, int depth, XmlNodeViewModel? parent)
     {
@@ -41,9 +42,7 @@ public static class EntityTreeBuilder
             if (IsScalar(underlying))
             {
                 var value = prop.GetValue(obj);
-                if (value is null) continue;
-
-                var strValue = FormatValue(value, underlying);
+                var strValue = value is null ? null : FormatValue(value, underlying);
                 var child = new XmlNodeViewModel
                 {
                     NodeName = GetElementName(prop),
@@ -56,16 +55,58 @@ public static class EntityTreeBuilder
             }
             else if (IsCollection(propType))
             {
-                // Skip collections — they're handled as lazy-loadable category nodes
-                continue;
+                // Determine the item type from the generic argument or array element type
+                Type? itemType = propType.IsGenericType
+                    ? propType.GetGenericArguments().FirstOrDefault()
+                    : propType.IsArray ? propType.GetElementType() : null;
+
+                // Only show collections of complex (class) types
+                if (itemType is null || !itemType.IsClass || itemType == typeof(string))
+                    continue;
+
+                var containerNode = new XmlNodeViewModel
+                {
+                    NodeName = GetElementName(prop),
+                    Depth = depth + 1,
+                    Parent = node,
+                    IsExpanded = false,
+                };
+
+                var collection = prop.GetValue(obj) as IEnumerable;
+                if (collection is not null)
+                {
+                    var itemName = GetCollectionItemName(prop, itemType);
+                    foreach (var item in collection)
+                    {
+                        if (item is null) continue;
+                        var childNode = FromObject(itemName, item, depth + 2, containerNode);
+                        containerNode.Children.Add(childNode);
+                    }
+                }
+
+                node.Children.Add(containerNode);
             }
             else if (underlying.IsClass && !underlying.IsAbstract)
             {
                 var value = prop.GetValue(obj);
-                if (value is null) continue;
-
-                var childNode = FromObject(GetElementName(prop), value, depth + 1, node);
-                node.Children.Add(childNode);
+                if (value is null)
+                {
+                    // Show null complex objects as empty containers so users
+                    // can see they exist and populate them.
+                    var emptyNode = new XmlNodeViewModel
+                    {
+                        NodeName = GetElementName(prop),
+                        Depth = depth + 1,
+                        Parent = node,
+                        IsExpanded = false,
+                    };
+                    node.Children.Add(emptyNode);
+                }
+                else
+                {
+                    var childNode = FromObject(GetElementName(prop), value, depth + 1, node);
+                    node.Children.Add(childNode);
+                }
             }
         }
 
@@ -130,6 +171,14 @@ public static class EntityTreeBuilder
         if (xmlElem is not null && !string.IsNullOrEmpty(xmlElem.ElementName))
             return xmlElem.ElementName;
         return prop.Name;
+    }
+
+    private static string GetCollectionItemName(PropertyInfo prop, Type itemType)
+    {
+        var xmlArrayItem = prop.GetCustomAttribute<XmlArrayItemAttribute>();
+        if (xmlArrayItem is not null && !string.IsNullOrEmpty(xmlArrayItem.ElementName))
+            return xmlArrayItem.ElementName;
+        return itemType.Name;
     }
 
     private static IEnumerable<PropertyInfo> GetSerializableProperties(Type type)

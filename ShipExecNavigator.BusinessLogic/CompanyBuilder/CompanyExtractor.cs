@@ -18,6 +18,11 @@ namespace ShipExecNavigator.BusinessLogic.Tools
         private static readonly Lazy<IReadOnlyList<(string ElementName, Type EnumType)>> _soxEnumElements =
             new Lazy<IReadOnlyList<(string ElementName, Type EnumType)>>(DiscoverSoxEnumElements);
 
+        // Lazily-built set of every Nullable<Guid> XML element name found in the
+        // Company object graph. Used to normalise empty elements before deserialisation.
+        private static readonly Lazy<IReadOnlyList<string>> _nullableGuidElements =
+            new Lazy<IReadOnlyList<string>>(DiscoverNullableGuidElements);
+
         public static Company GetCompany(string xml)
         {
             // XmlSerializer only recognises xsi:nil="true" as a null indicator for
@@ -35,6 +40,28 @@ namespace ShipExecNavigator.BusinessLogic.Tools
             // enum fields discovered via reflection before handing the XML to the serializer.
             foreach (var (elementName, enumType) in _soxEnumElements.Value)
                 xml = NormalizeEnumValues(xml, elementName, enumType);
+
+            // Nullable<Guid> properties (e.g. Shipper.SiteId) throw
+            // "Unrecognized Guid format" when the element is present but empty
+            // (<SiteId></SiteId> or <SiteId />). Normalise these to xsi:nil="true"
+            // so XmlSerializer treats them as null instead of trying to parse "".
+            foreach (var elementName in _nullableGuidElements.Value)
+                xml = NormalizeEmptyGuidElements(xml, elementName);
+
+            // Ensure the xsi namespace is declared on the root element whenever
+            // any of the normalisations above introduced xsi: prefixed attributes.
+            if (xml.Contains("xsi:nil") && !xml.Contains("xmlns:xsi"))
+            {
+                // Insert the declaration on the first element (root) only.
+                var nsMatch = Regex.Match(xml, @"(<\w+)([\s>])");
+                if (nsMatch.Success)
+                {
+                    xml = string.Concat(
+                        xml.AsSpan(0, nsMatch.Groups[1].Index + nsMatch.Groups[1].Length),
+                        " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"",
+                        xml.AsSpan(nsMatch.Groups[1].Index + nsMatch.Groups[1].Length));
+                }
+            }
 
             if (GetRootElementName(xml) == "CompanyConfiguration")
                 return CompanyFromConfiguration(xml);
@@ -113,6 +140,24 @@ namespace ShipExecNavigator.BusinessLogic.Tools
             return xml;
         }
 
+        /// <summary>
+        /// Replaces empty &lt;ElementName&gt;&lt;/ElementName&gt; and self-closing
+        /// &lt;ElementName /&gt; elements with xsi:nil="true" so XmlSerializer
+        /// returns null instead of attempting to parse an empty string as a Guid.
+        /// </summary>
+        private static string NormalizeEmptyGuidElements(string xml, string elementName)
+        {
+            // <SiteId></SiteId>  or  <SiteId>   </SiteId>
+            xml = Regex.Replace(xml, $@"<{elementName}>\s*</{elementName}>",
+                $"<{elementName} xsi:nil=\"true\" />");
+            // <SiteId/>  or  <SiteId />
+            xml = Regex.Replace(xml, $@"<{elementName}\s*/>",
+                $"<{elementName} xsi:nil=\"true\" />");
+            return xml;
+        }
+
+        // ── Reflection-based discovery ─────────────────────────────────────────
+
         // Reflects over the Company object graph and returns one entry per distinct
         // PSI.Sox-assembly enum property, keyed by its XML element name.
         private static IReadOnlyList<(string ElementName, Type EnumType)> DiscoverSoxEnumElements()
@@ -163,6 +208,59 @@ namespace ShipExecNavigator.BusinessLogic.Tools
                          underlying.Assembly == soxAssembly)
                 {
                     CollectEnumProperties(underlying, soxAssembly, visited, results);
+                }
+            }
+        }
+
+        // Reflects over the Company object graph and returns every distinct
+        // Nullable<Guid> XML element name.
+        private static IReadOnlyList<string> DiscoverNullableGuidElements()
+        {
+            var soxAssembly = typeof(AdapterType).Assembly;
+            var results     = new HashSet<string>();
+            var visited     = new HashSet<Type>();
+            CollectNullableGuidProperties(typeof(Company), soxAssembly, visited, results);
+            return results.ToList();
+        }
+
+        private static void CollectNullableGuidProperties(
+            Type type,
+            Assembly soxAssembly,
+            HashSet<Type> visited,
+            HashSet<string> results)
+        {
+            if (!visited.Add(type))
+                return;
+
+            foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                Type propType   = prop.PropertyType;
+                Type underlying = Nullable.GetUnderlyingType(propType) ?? propType;
+
+                // Unwrap List<T> → T, or T[] → T
+                Type elementType = underlying;
+                if (underlying.IsGenericType &&
+                    underlying.GetGenericTypeDefinition() == typeof(List<>))
+                    elementType = underlying.GetGenericArguments()[0];
+                else if (underlying.IsArray)
+                    elementType = underlying.GetElementType() ?? underlying;
+
+                if (Nullable.GetUnderlyingType(propType) == typeof(Guid))
+                {
+                    var    xmlElem = prop.GetCustomAttribute<XmlElementAttribute>();
+                    string eltName = !string.IsNullOrEmpty(xmlElem?.ElementName)
+                        ? xmlElem.ElementName
+                        : prop.Name;
+                    results.Add(eltName);
+                }
+
+                if (!elementType.IsPrimitive     &&
+                    elementType != typeof(string) &&
+                    elementType != typeof(Guid)   &&
+                    !elementType.IsEnum           &&
+                    elementType.Assembly == soxAssembly)
+                {
+                    CollectNullableGuidProperties(elementType, soxAssembly, visited, results);
                 }
             }
         }
