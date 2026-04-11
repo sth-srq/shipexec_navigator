@@ -55,6 +55,25 @@ public interface IShipExecService
     string? GetManagementStudioUrl();
     void PrepareForApply(Guid companyId, string companyName);
 
+    /// <summary>
+    /// Resets all connection state (tokens, company, cached data) for this circuit.
+    /// Raises <see cref="OnDisconnected"/> so UI components can react.
+    /// </summary>
+    void Disconnect();
+
+    /// <summary>
+    /// Raised when <see cref="Disconnect"/> is called so pages/components can
+    /// clear local state (chat history, trees, etc.).
+    /// </summary>
+    event System.Action? OnDisconnected;
+
+    /// <summary>
+    /// Raised after a company has been successfully set up via
+    /// <see cref="SetupCompanyAsync"/> so UI components (e.g. the nav bar)
+    /// can re-render to reflect the connected state.
+    /// </summary>
+    event System.Action? OnConnected;
+
     // ── Profiles ─────────────────────────────────────────────────────────────
     Task<List<PSI.Sox.Profile>> GetProfilesAsync();
     Task<PSI.Sox.Profile> GetFullProfileAsync(int profileId);

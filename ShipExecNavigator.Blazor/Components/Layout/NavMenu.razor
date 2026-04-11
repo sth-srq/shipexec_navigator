@@ -1,5 +1,6 @@
 ﻿@inject IJSRuntime JS
 @inject IShipExecService ShipExecService
+@implements IDisposable
 
 <header class="top-navbar">
     <div class="navbar-header">
@@ -14,6 +15,7 @@
         @{
             var _company = ShipExecService.GetCurrentCompany();
             var _isLive = ShipExecService.GetManagementStudioUrl() is not null;
+            var _isConnected = _company is not null || _hasStoredCredentials;
         }
         @if (_company is not null)
         {
@@ -23,6 +25,15 @@
         {
             <span class="navbar-live-badge">&#x1F7E2; Live</span>
         }
+        @if (_isConnected)
+        {
+            <button class="navbar-disconnect-btn" @onclick="DisconnectAsync" title="Disconnect from ShipExec">
+                &#x26D4; Disconnect
+            </button>
+        }
+        <button class="navbar-connect-btn" @onclick="ConnectAsync" title="Connect to ShipExec">
+            &#x1F517; Connect
+        </button>
         <button class="theme-toggle" @onclick="ToggleThemeAsync" title="Toggle light/dark mode">
             @if (_isDark)
             {
@@ -36,19 +47,56 @@
     </div>
 </header>
 
+<ConnectDialog IsVisible="_showConnectDialog"
+               SkipAutoReconnect="_skipAutoReconnect"
+               OnClose="HandleConnectDialogClose"
+               OnCompanyConnected="HandleCompanyConnected" />
+
 @code {
     private bool _isDark;
+    private bool _showConnectDialog;
+    private bool _skipAutoReconnect;
+    private bool _hasStoredCredentials;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            ShipExecService.OnConnected    += HandleConnectionStateChanged;
+            ShipExecService.OnDisconnected += HandleConnectionStateChanged;
+
             var stored = await JS.InvokeAsync<string?>("eval", "localStorage.getItem('theme')");
             _isDark = stored == "dark";
             if (_isDark)
                 await JS.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark-theme')");
+
+            // Check for stored credentials so the Disconnect button appears even
+            // before auto-reconnect finishes restoring the full company state.
+            try
+            {
+                var hasJwt = await JS.InvokeAsync<bool>("eval",
+                    "!!(window.loadJwt && window.loadJwt())");
+                _hasStoredCredentials = hasJwt;
+            }
+            catch { }
+
             StateHasChanged();
         }
+    }
+
+    private void HandleConnectionStateChanged()
+    {
+        InvokeAsync(() =>
+        {
+            _hasStoredCredentials = ShipExecService.GetCurrentCompany() is not null;
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        ShipExecService.OnConnected    -= HandleConnectionStateChanged;
+        ShipExecService.OnDisconnected -= HandleConnectionStateChanged;
     }
 
     private async Task ToggleThemeAsync()
@@ -62,5 +110,46 @@
         {
             await JS.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark-theme');localStorage.setItem('theme','light')");
         }
+    }
+
+    private async Task DisconnectAsync()
+    {
+        // Clear stored credentials and last-company from localStorage
+        try { await JS.InvokeVoidAsync("clearJwt"); } catch { }
+        try { await JS.InvokeVoidAsync("eval", "localStorage.removeItem('shipexec_lastCompany')"); } catch { }
+
+        _hasStoredCredentials = false;
+
+        // Reset all service state — fires OnDisconnected so pages (XmlViewer,
+        // AiChatPage, etc.) clear their local state reactively.
+        ShipExecService.Disconnect();
+    }
+
+    private async Task ConnectAsync()
+    {
+        // If already connected, reset connection info first
+        if (ShipExecService.GetCurrentCompany() is not null || _hasStoredCredentials)
+        {
+            await DisconnectAsync();
+        }
+
+        _skipAutoReconnect = true;
+        _showConnectDialog = true;
+    }
+
+    private void HandleConnectDialogClose()
+    {
+        _showConnectDialog = false;
+        _skipAutoReconnect = false;
+    }
+
+    private void HandleCompanyConnected((Guid Id, string Name) company)
+    {
+        // The ConnectDialog already called SetupCompanyAsync which fires
+        // OnConnected; pages that subscribe will react (e.g. XmlViewer
+        // loads the company tree).  We just close the dialog here.
+        _showConnectDialog = false;
+        _skipAutoReconnect = false;
+        _hasStoredCredentials = true;
     }
 }

@@ -1,7 +1,7 @@
 @page "/"
 @page "/ask"
 @layout ChatLayout
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@implements IDisposable
 
 @using ShipExecNavigator.Shared.Interfaces
 @inject IAiChatService AiChat
@@ -50,14 +50,15 @@
     </div>
 
     <div class="chat-input-row">
-        <input type="text"
-               class="chat-textarea"
-               id="chat-textarea"
-               placeholder="Type your message…"
-               @bind="_input"
-               @bind:event="oninput"
-               @onkeydown="HandleKeyDown"
-               disabled="@_thinking" />
+        <textarea class="chat-textarea"
+                  id="chat-textarea"
+                  placeholder="Type your message…"
+                  @bind="_input"
+                  @bind:event="oninput"
+                  @onkeydown="HandleKeyDown"
+                  @onkeydown:preventDefault="_suppressEnter"
+                  rows="1"
+                  disabled="@_thinking"></textarea>
         <button class="chat-send-btn" @onclick="SendAsync" disabled="@(string.IsNullOrWhiteSpace(_input) || _thinking)">
             &#x27A4; Send
         </button>
@@ -77,14 +78,50 @@
     private string? _error;
     private int _historyIndex = -1;
     private string _historyDraft = string.Empty;
+    private bool _suppressEnter;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            ShipExecService.OnDisconnected += HandleDisconnected;
+            ShipExecService.OnConnected    += HandleConnected;
             await JS.InvokeVoidAsync("initChatInputHistory", "chat-textarea", DotNetObjectReference.Create(this));
             await GreetAsync();
         }
+    }
+
+    public void Dispose()
+    {
+        ShipExecService.OnDisconnected -= HandleDisconnected;
+        ShipExecService.OnConnected    -= HandleConnected;
+    }
+
+    private void HandleDisconnected()
+    {
+        InvokeAsync(() =>
+        {
+            _messages.Clear();
+            _inputHistory.Clear();
+            _input = string.Empty;
+            _error = null;
+            _thinking = false;
+            _historyIndex = -1;
+            _historyDraft = string.Empty;
+            StateHasChanged();
+        });
+    }
+
+    private void HandleConnected()
+    {
+        InvokeAsync(async () =>
+        {
+            // Re-greet when a new company is connected
+            _messages.Clear();
+            _error = null;
+            StateHasChanged();
+            await GreetAsync();
+        });
     }
 
     private async Task GreetAsync()
@@ -155,8 +192,15 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter")
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            _suppressEnter = true;
             await SendAsync();
+        }
+        else
+        {
+            _suppressEnter = false;
+        }
     }
 
     [JSInvokable]

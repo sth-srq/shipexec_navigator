@@ -95,6 +95,13 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<(Guid Id, string Name)> OnCompanyConnected { get; set; }
 
+    /// <summary>
+    /// When true, the dialog skips all auto-reconnect logic and shows a fresh
+    /// credentials form.  Set by the navbar Connect button so the user can
+    /// enter a different endpoint / JWT.
+    /// </summary>
+    [Parameter] public bool SkipAutoReconnect { get; set; }
+
     private enum Phase { Credentials, SelectCompany }
     private Phase _phase = Phase.Credentials;
 
@@ -110,6 +117,18 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        // Explicit reconnect — bypass all auto-reconnect, show fresh credentials.
+        if (IsVisible && SkipAutoReconnect)
+        {
+            _phase         = Phase.Credentials;
+            _jwtJson       = string.Empty;
+            _companies     = [];
+            _selectedIndex = -1;
+            _errorMessage  = string.Empty;
+            _hasStoredJwt  = false;
+            return;
+        }
+
         if (DebugConfig.AutoConnect && IsVisible && !_autoConnectFired)
         {
             _autoConnectFired = true;

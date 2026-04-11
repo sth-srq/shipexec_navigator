@@ -1,6 +1,5 @@
 @page "/studio"
 @page "/xml-viewer"
-@rendermode InteractiveServer
 @implements IDisposable
 
 @using ShipExecNavigator.BusinessLogic.EntityComparison
@@ -2629,6 +2628,8 @@
     public void Dispose()
     {
         AlertService.OnAlert -= HandleAlertAsync;
+        ShipExecService.OnDisconnected -= HandleDisconnected;
+        ShipExecService.OnConnected    -= HandleConnectedFromNavbar;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -2641,6 +2642,9 @@
             _sbrViewerDark = siteIsDark;
             _cbrDark = siteIsDark;
 
+            ShipExecService.OnDisconnected += HandleDisconnected;
+            ShipExecService.OnConnected    += HandleConnectedFromNavbar;
+
             _showConnectDialog = true;
             StateHasChanged();
         }
@@ -2650,6 +2654,39 @@
     // ── Load ──────────────────────────────────────────────────────────────────
 
     private void OpenConnectDialog() => _showConnectDialog = true;
+
+    /// <summary>
+    /// Called when the user disconnects via the navbar button.
+    /// Clears the tree and re-shows the connect hero/dialog.
+    /// </summary>
+    private void HandleDisconnected()
+    {
+        InvokeAsync(() =>
+        {
+            CloseTree();
+            _showConnectDialog = false;   // close the auto-opened dialog (credentials are gone)
+            _varianceEntries.Clear();
+            _variancePanelVisible = false;
+            StateHasChanged();
+        });
+    }
+
+    /// <summary>
+    /// Called when a company is connected via the navbar ConnectDialog.
+    /// If the XmlViewer currently has no tree loaded, load the newly connected company.
+    /// </summary>
+    private void HandleConnectedFromNavbar()
+    {
+        InvokeAsync(async () =>
+        {
+            var company = ShipExecService.GetCurrentCompany();
+            if (company is not null && rootNode is null)
+            {
+                _showConnectDialog = false;
+                await HandleCompanyConnected((company.Id, company.Name));
+            }
+        });
+    }
 
     private async Task HandleCompanyConnected((Guid Id, string Name) company)
     {

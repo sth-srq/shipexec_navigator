@@ -78,6 +78,7 @@ h1:focus {
     padding-right: 1rem;
     position: relative;
     overflow: hidden;
+    margin-top: 8px;
 }
 
 .page-tab-bar::before {
