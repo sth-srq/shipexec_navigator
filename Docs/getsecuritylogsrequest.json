@@ -1,0 +1,94 @@
+{
+  "SearchCriteria": {
+    "Skip": 0,
+    "Take": 10,
+    "WhereClauses": [
+      {
+        "FieldName": "LogLevel",
+        "FieldValue": null,
+        "Operator": 0
+      },
+      {
+        "FieldName": "Logger",
+        "FieldValue": "",
+        "Operator": 0
+      },
+      {
+        "FieldName": "StartLogDate",
+        "FieldValue": "2026-3-11 00:00:00.000",
+        "Operator": 3
+      },
+      {
+        "FieldName": "EndLogDate",
+        "FieldValue": "2026-3-11 23:59:00.000",
+        "Operator": 4
+      },
+      {
+        "FieldName": "Message",
+        "FieldValue": "",
+        "Operator": 5
+      },
+      {
+        "FieldName": "TransactionId",
+        "FieldValue": "",
+        "Operator": 0
+      },
+      {
+        "FieldName": "CompanyId",
+        "FieldValue": "b1322c23-db1a-4a77-8123-f9ae6ce4ce56",
+        "Operator": 0
+      },
+      {
+        "FieldName": "ServerName",
+        "FieldValue": "",
+        "Operator": 0
+      }
+    ],
+    "OrderByClauses": [
+      {
+        "FieldName": "LogLevel",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "Logger",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "LogDate",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "Message",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "TransactionId",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "CompanyId",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "ServerAddress",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "Entity",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "EntityName",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "ActionType",
+        "FieldType": 3
+      },
+      {
+        "FieldName": "ActionType",
+        "FieldType": 3
+      }
+    ]
+  }
+}

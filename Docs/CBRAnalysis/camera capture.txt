@@ -1,0 +1,199 @@
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// captureImage() // returns undefined
+            function captureImage () {
+                // vm.shipping.videoModal.stream.id = vm.shipping.videoModal.stream.selector
+                var cameraStream = document.getElementById(vm.shipping.videoModal.stream.id);
+                var track = cameraStream.srcObject.getVideoTracks()[0];
+                var imageCapture = new ImageCapture(track);
+
+                imageCapture.grabFrame().then(function(imageBitmap) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Set canvas dimensions to match the imageBitmap
+                    canvas.width = imageBitmap.width;
+                    canvas.height = imageBitmap.height;
+
+                    // Draw the imageBitmap onto the canvas
+                    ctx.drawImage(imageBitmap, 0, 0);
+
+                    // Get the image data as a Base64 data URL
+                    // You can specify format and quality (e.g., 'image/jpeg', 0.8)
+                    const base64DataUrl = canvas.toDataURL('image/png', 1.0);
+                    // var newTab = window.open('about:blank','image from canvas');
+                    // newTab.document.write("<img src='" + base64DataUrl + "' alt='from canvas'/>");
+
+                    vm.loadValue = 'Label Capture';
+                    vm.labelImage = base64DataUrl.replace(/^data:.+;base64,/, '');
+                    // vm.videoModal.stopVideoStream();
+                    vm.shipping.videoModal.stream.stop();
+                    vm.load();
+                })
+
+
+                // imageCapture.takePhoto().then(function(blob) {
+                //     var reader = new FileReader();
+                //     reader.readAsDataURL(blob);
+                //     reader.onloadend = function () {
+                //         var dataURL = reader.result;
+                //         getMegapixelsFromFileReader(dataURL).then(function(megapixels) {
+                //             console.log(`The image is ${megapixels.toFixed(2)} megapixels.`);
+                //         });
+
+                //         vm.loadValue = 'Label Capture';
+                //         vm.labelImage = dataURL.replace(/^data:.+;base64,/, '');
+                //         vm.videoModal.stopVideoStream();
+
+                //         vm.load();
+                //     }
+                // })
+            }
+
+// videoStreamStop(isCanceled) // returns undefined
+            function videoStreamStop(isCanceled) {
+                vm.labelImage = isCanceled ? null : vm.labelImage;
+
+                var cameraStream = document.getElementById(vm.shipping.videoModal.stream.id);
+                if (cameraStream.srcObject) {
+                    var tracks = cameraStream.srcObject.getTracks();
+                    tracks.forEach(track => track.stop()); // Stop each track in the stream
+                    cameraStream.srcObject = null;
+                }
+            }
+
+// videoStreamStart() // returns undefined
+            function videoStreamStart () {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    // Request access to the video stream
+                    var constraints = {
+                        audio: false,
+                        video: {
+                            zoom: true,
+                            facingMode: 'environment',
+                            // aspectRatio: { ideal: 9/16 }
+                        }
+                    };
+                    //HD
+                    // constraints.video.width = { ideal: 1920 };
+                    // constraints.video.height = { ideal: 1080 };
+
+                    //QHD
+                    constraints.video.width = { ideal: 2560 };
+                    constraints.video.height = { ideal: 1440 };
+
+                    //4K UHD
+                    // constraints.video.width = { ideal: 3840 };
+                    // constraints.video.height = { ideal: 2160 }
+
+                    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+                        // Assign the stream to the video element's source object
+                        var cameraStream = document.getElementById(vm.shipping.videoModal.stream.id);
+                        cameraStream.srcObject = stream;
+
+                        var [track] = stream.getVideoTracks();
+                        var capabilities = track.getCapabilities();
+
+                        vm.videoModal.zoom ??= {
+                            min: capabilities.zoom.min,
+                            max: capabilities.zoom.max,
+                            current: track.getSettings().zoom
+                        }
+                        var zoomLevel = localStorage.getItem('zoomLevel') ?? getZoomLevel(track.getSettings().zoom);
+
+                        track.applyConstraints({ advanced: [{ zoom: zoomLevel }] });
+                        vm.videoModal.track = track;
+                        // if (capabilities.zoom) {
+                        //     track.applyConstraints({ advanced: [{ zoom: capabilities.zoom.max }] });
+                        // }
+                    }).catch(function(error) {
+                        console.error("Error accessing the camera: ", error);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    console.error("Your browser does not support the getUserMedia API.");
+                }
+
+                function getZoomLevel(currentZoom) {
+                    localStorage.setItem('zoomLevel', currentZoom);
+                    return currentZoom;
+                }
+            }
+
+// Source: Volt Lighting (VOLT)_Volt_Business_Rules_1666.cs
+// function UserMethod(logoNumber) // returns void
+    function UserMethod(logoNumber) {
+
+		if (logoNumber == 4) {
+
+			var orderNumber = $('[ng-model="vm.loadValue"]').val();
+
+			if (orderNumber === undefined || orderNumber === null || orderNumber === "") {
+
+				client.alert.Danger("Missing or invalid Order Number, no update made.  Please enter a valid order number and try again.");
+			}
+			else {
+			
+				var usermethodParams = { "action": 4, "orderNumber": orderNumber, "percentageComplete":"0", "trailerNumber":"", "shipper":""};
+				var results;
+				var data = { UserContext: userContext, "Data": JSON.stringify(usermethodParams) };
+				var response = client.thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+					if (response.ErrorCode != 0) {
+						client.alert.Danger(response.ErrorMessage);
+					} else {
+						results = response["Data"];
+					}
+				});
+				
+				
+				/*$.ajax({
+                    type: "POST",
+                    url: "api/ShippingService/UserMethod",
+                    async: false,
+                    cache: false,
+                    dataType: "json",
+                    data: { UserContext: userContext, "Data": JSON.stringify(usermethodParams) },
+                    success: function(response) {
+                        results = response["Data"];
+                        ;
+                    },
+                    error: function (error) {
+                        alert("Finalize Shipment has failed, no update made to the system.  Contact Support.");
+                    }
+                });*/
+			}
+		}
+		else {
+
+			$("#fileLoader").click();
+
+			var encodedBase64Logo;
+
+			var filesSelected = document.getElementById("fileLoader").files;
+
+			if (filesSelected.length > 0) {
+				var fileToLoad = filesSelected[0];
+
+				var fileReader = new FileReader();
+
+				fileReader.readAsDataURL(fileToLoad);
+
+				fileReader.onload = function (event) {
+					var encodedBase64Logo = logoNumber + event.target.result;
+
+					SoxOnWcfDblHop.userMethod(encodedBase64Logo,
+						function (result) {
+							// Do something with the data
+
+							DisplayLogoSaveMessage(result);
+
+						},
+						function (e) {
+							// Do something with the error
+
+							alert(e.message);
+						});
+				};
+			}
+		}
+	}
+

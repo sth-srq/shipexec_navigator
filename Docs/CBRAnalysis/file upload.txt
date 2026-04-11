@@ -1,0 +1,1818 @@
+// Source: BHARTIYA HANDICRAFTS (BHARTIYAHCFT)_ISMEA_FTP_1584.cs
+// getFTPUploaded() // returns undefined
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// uploadCarrierLabelFile() // returns void
+            function uploadCarrierLabelFile () {
+                var $carrierLabelImage = $(vm.shipping.imageFile.selector);
+                var imageFile = $carrierLabelImage.prop('files')[0];
+                if (imageFile == undefined) {
+                    $carrierLabelImage.click();
+                    return;
+                }
+                var reader = new FileReader();
+                reader.readAsDataURL(imageFile);
+                reader.onload = function () {
+                    var dataURL = this.result;
+                    getMegapixelsFromFileReader(dataURL).then(function(megapixels) {
+                        console.log(`The image is ${megapixels.toFixed(2)} megapixels.`);
+                    });
+
+                    vm.loadValue = 'Label Upload';
+                    vm.labelImage = dataURL.replace(/^data:.+;base64,/, '');
+                    vm.load();
+                    $carrierLabelImage.val(null);
+                }
+            }
+
+// inputFileDownloadChange(event) // returns void
+            function inputFileDownloadChange(event) {
+                if (event.target.files == undefined) return;
+                vm.shipping.menu.guide.inputFile.selected = event.target.files[0];
+                vm.thinClient.loadData.show();
+            }
+
+// selectDownloadFile(event) // returns void
+            function selectDownloadFile(event) {
+                this.menu.guide.selectedDownloadFile = event.target.innerText;
+                if (this.menu.guide.inputFile.selected) {
+                    if (this.menu.guide.selectedDownloadFile.slice(-3) == this.menu.guide.inputFile.selected.name.slice(-3))
+                        updateFile();
+                } else {
+                    var payload = { Action: 'downloadFile', Data: this.menu.guide.selectedDownloadFile };
+                    var data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                    thinClient.httpClient('UserMethod', data).then(function (ret) {
+                        if (ret.ErrorCode === 0) {
+                            var data = JSON.parse(atob(ret.Data));
+
+                            let linkData = `data:${data.fileType};base64,${data.encodedFile}`;
+                            let downloadLink = document.createElement("a");
+                            downloadLink.style.display = "none";
+                            downloadLink.download = data.fileName;
+                            downloadLink.href = linkData;
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                        }
+                    });
+                }
+
+                function updateFile() {
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var request = {
+                            Key: vm.shipping.menu.guide.selectedDownloadFile,
+                            Value: JSON.stringify({
+                                fileType: vm.shipping.menu.guide.inputFile.selected.type,
+                                fileName: vm.shipping.menu.guide.inputFile.selected.name,
+                                encodedFile: this.result.split(',')[1]
+                            })
+                        }
+                        var payload = { Action: 'updateFile', Data: request };
+                        var data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                        thinClient.httpClient('UserMethod', data).then(function (ret) {
+                            if (ret.ErrorCode !== 0)
+                                vm.notificationService.notifyDanger(ret.ErrorCode + " - " + ret.ErrorMessage);
+                        }).catch(function (response) {
+                            vm.notificationService.notifyDanger(vm.translations.Common.ErrorConnectingWCFService + ": " + response.status + " " + response.statusText);
+                        })
+                        vm.shipping.menu.guide.inputFile.selected = null;
+                        $(vm.shipping.menu.guide.inputFile.selector).val(null);
+                        vm.thinClient.loadData.show();
+
+                    }
+                    if (vm.shipping.menu.guide.inputFile.selected) reader.readAsDataURL(vm.shipping.menu.guide.inputFile.selected);
+                }
+            }
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// this.Shipping() // returns undefined
+    this.Shipping = function () {
+        $('body').on('change', client.shipping.fileInputPaperless, this.vm, paperlessChange);
+  
+         function paperlessChange(e) {
+             var file = e.target.files[0]
+             if (file === undefined) {
+                e.data.paperless = null;
+             }
+             else {
+                 var reader = new FileReader();
+                 reader.readAsDataURL(file);
+                 reader.onloadend = function () {
+                     e.data.paperless = { fileName: file.name, fileData: this.result.split(',')[1] }
+                     }
+             }                
+         }       
+     }
+
+// this.PreShip(shipmentRequest, userParams) // returns undefined
+    this.PreShip = function (shipmentRequest, userParams) {
+        console.log("PreShip In");
+        
+        userParams.paperless = JSON.stringify(this.vm.paperless);
+        console.log('paperless:', userParams.paperless);
+        
+        var usCountry = "UNITED_STATES";
+        var usAcronym = "US";
+        var PackageRequests = shipmentRequest.Packages;
+
+        $(PackageRequests).each(function (x, item) {
+            var value = item.DeclaredValueCustoms.Amount;
+            var tN = item.AesTransactionNumber;
+            if (value >= 2500 && tN === null) {
+                alert("Please check with clarios-na-trade@clarios.com if EEI filing is needed");
+            }
+            item.Description = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val();
+
+        });
+
+        // For International Destination Rule Applies to all use cases and all carriers
+        if ((shipmentRequest.PackageDefaults.Consignee.Country != usCountry) && (shipmentRequest.PackageDefaults.Consignee.Country != usAcronym)) {
+            shipmentRequest.PackageDefaults.MiscReference8 = "Y";
+        }
+        else {
+            shipmentRequest.PackageDefaults.MiscReference8 = "N";
+        }
+
+        console.log("PreShip Out");
+    };
+
+// this.NewShipment(shipmentRequest) // returns undefined
+    this.NewShipment = function (shipmentRequest) {
+        debugger;
+        $(client.shipping.fileInputPaperless)?.val(null)?.change();
+
+        $(function () {
+            $('body').delegate('select[ng-model="vm.currentShipment.PackageDefaults.Terms"]', 'change', function () {
+
+                var chkBox = $('input[type=checkbox][ng-model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"]');
+                var chkVal = $(chkBox).prop('checked');
+
+
+                if (($(this).val() === 'string:SHIPPER') && (chkVal === false))//Freight Collect -> uncheck 3rd party billing box
+                {
+                    $(chkBox).click();
+                    //$('[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]').find($('input[ng-model="nameaddress.Account"]').attr('ng-required', true).css('border-color', '#a94442'));
+                    $('[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]').find($('input[ng-model="nameaddress.Account"]').attr('ng-required', 'account.isRequired()').css('border', '1px solid #ccc'));
+                }
+
+                else if (($(this).val() === 'string:CONSIGNEE') && (chkVal === true))//Prepaid -> check 3rd party billing box
+                {
+                    $(chkBox).click();
+                    //$('[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]').find($('input[ng-model="nameaddress.Account"]').attr('ng-required', 'account.isRequired()').css('border', '1px solid #ccc'));
+                    $('[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]').find($('input[ng-model="nameaddress.Account"]').attr('ng-required', true).css('border-color', '#a94442'));
+                }
+
+            });
+        });
+    };
+
+// Source: Conduent (CONDUENT)_Conduent_CBR_1659.cs
+// this.BatchManager() // returns undefined
+    this.BatchManager = function () {
+        clickUploadFile();
+
+        function clickUploadFile() {
+            $('body').delegate('button:contains("Upload File")', 'click', function () {
+                if ($('#fileInputField').val() != '') {
+                    showSpinner();
+                    var interval = setInterval(function () {
+                        var msg = $('div[role="alert"]:visible');
+                        if (msg.length > 0) {
+                            clearInterval(interval);
+                            hideSpinner();
+                        }
+                    }, 50);
+                }
+            })
+        }
+    }
+
+// Source: EATON CORPORATION (EATON)_Eaton Business Rules_1772.cs
+// AddEmailToNotification(event) // returns void
+    this.AddEmailToNotification = function (event) {
+        var currentTarget = event.currentTarget;
+        var ngModelName = currentTarget.attributes['ng-model'].nodeValue.split('.').pop();
+        var emailAddress = getShipmentEmailAddresses(this.currentShipment.PackageDefaults);
+        var pkg = this.currentShipment.Packages[0];
+
+        if (ngModelName.indexOf('DeliveryException') >= 0) {
+            SetDeliveryExceptionNotificationAddressEmail(pkg, ngModelName, emailAddress, currentTarget.checked);
+        } else if (ngModelName.indexOf('Delivery') >= 0) {
+            SetDeliveryNotificationAddressEmail(pkg, ngModelName, emailAddress, currentTarget.checked);
+        } else {
+            SetShipNotificationAddressEmail(pkg, ngModelName, emailAddress, currentTarget.checked);
+        }
+    }
+
+// SetShipNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) // returns void
+        function SetShipNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) {
+        if (checked) {
+            if (pkg.ShipNotificationAddressEmail == undefined || pkg.ShipNotificationAddressEmail.trim() == '') {
+                if (ngModelName == 'ShipFromNotificationEmail' && emailAddress.Origin) {
+                    pkg.ShipNotificationAddressEmail = emailAddress.Origin;
+                } else if (ngModelName == 'ShipToNotificationEmail' && emailAddress.Consignee) {
+                    pkg.ShipNotificationAddressEmail = emailAddress.Consignee;
+                }
+            } else {
+                if (ngModelName == 'ShipFromNotificationEmail' && emailAddress.Origin) {
+                    var regexp = new RegExp(',?' + emailAddress.Origin, 'g');
+                    if (!regexp.test(pkg.ShipNotificationAddressEmail)) {
+                        pkg.ShipNotificationAddressEmail += ',' + emailAddress.Origin;
+                    }
+                } else if (ngModelName == 'ShipToNotificationEmail' && emailAddress.Consignee) {
+                    pkg.ShipNotificationAddressEmail += ',' + emailAddress.Consignee;
+                }
+            }
+        } else {
+            var notificationAddressEmail = pkg.ShipNotificationAddressEmail;
+            if (ngModelName == 'ShipToNotificationEmail' && emailAddress.Consignee) {
+                var regexp = new RegExp(',?' + emailAddress.Consignee, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            } else if (ngModelName == 'ShipFromNotificationEmail' && emailAddress.Origin) {
+                var regexp = new RegExp(',?' + emailAddress.Origin, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            }
+
+            if (notificationAddressEmail.indexOf(',') == 0) {
+                notificationAddressEmail = notificationAddressEmail.substring(1);
+            }
+            pkg.ShipNotificationAddressEmail = notificationAddressEmail;
+        }
+    }
+
+// SetDeliveryNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) // returns void
+    function SetDeliveryNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) {
+        if (checked) {
+            if (pkg.DeliveryNotificationAddressEmail == undefined || pkg.DeliveryNotificationAddressEmail.trim() == '') {
+                if (ngModelName == 'ShipFromDeliveryNotificationEmail' && emailAddress.Origin) {
+                    pkg.DeliveryNotificationAddressEmail = emailAddress.Origin;
+                } else if (ngModelName == 'ShipToDeliveryNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryNotificationAddressEmail = emailAddress.Consignee;
+                }
+            } else {
+                if (ngModelName == 'ShipFromDeliveryNotificationEmail' && emailAddress.Origin) {
+                    var regexp = new RegExp(',?' + emailAddress.Origin, 'g');
+                    if (!regexp.test(pkg.DeliveryNotificationAddressEmail)) {
+                        pkg.DeliveryNotificationAddressEmail += ',' + emailAddress.Origin;
+                    }
+                } else if (ngModelName == 'ShipToDeliveryNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryNotificationAddressEmail += ',' + emailAddress.Consignee;
+                }
+            }
+        } else {
+            var notificationAddressEmail = pkg.DeliveryNotificationAddressEmail;
+            if (ngModelName == 'ShipToDeliveryNotificationEmail' && emailAddress.Consignee) {
+                var regexp = new RegExp(',?' + emailAddress.Consignee, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            } else if (ngModelName == 'ShipFromDeliveryNotificationEmail' && emailAddress.Origin) {
+                var regexp = new RegExp(',?' + emailAddress.Origin, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            }
+
+            if (notificationAddressEmail.indexOf(',') == 0) {
+                notificationAddressEmail = notificationAddressEmail.substring(1);
+            }
+            pkg.DeliveryNotificationAddressEmail = notificationAddressEmail;
+        }
+    }
+
+// SetDeliveryExceptionNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) // returns void
+    function SetDeliveryExceptionNotificationAddressEmail(pkg, ngModelName, emailAddress, checked) {
+        if (checked) {
+            if (pkg.DeliveryExceptionNotificationAddressEmail == undefined || pkg.DeliveryExceptionNotificationAddressEmail.trim() == '') {
+                if (ngModelName == 'ShipFromDeliveryExceptionNotificationEmail' && emailAddress.Origin) {
+                    pkg.DeliveryExceptionNotificationAddressEmail = emailAddress.Origin;
+                } else if (ngModelName == 'ShipToDeliveryExceptionNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryExceptionNotificationAddressEmail = emailAddress.Consignee;
+                }
+            } else {
+                if (ngModelName == 'ShipFromDeliveryExceptionNotificationEmail' && emailAddress.Origin) {
+                    var regexp = new RegExp(',?' + emailAddress.Origin, 'g');
+                    if (!regexp.test(pkg.DeliveryExceptionNotificationAddressEmail)) {
+                        pkg.DeliveryExceptionNotificationAddressEmail += ',' + emailAddress.Origin;
+                    }
+                } else if (ngModelName == 'ShipToDeliveryExceptionNotificationEmail' && emailAddress.Consignee) {
+                    pkg.DeliveryExceptionNotificationAddressEmail += ',' + emailAddress.Consignee;
+                }
+            }
+        } else {
+            var notificationAddressEmail = pkg.DeliveryExceptionNotificationAddressEmail;
+            if (ngModelName == 'ShipToDeliveryExceptionNotificationEmail' && emailAddress.Consignee) {
+                var regexp = new RegExp(',?' + emailAddress.Consignee, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            } else if (ngModelName == 'ShipFromDeliveryExceptionNotificationEmail' && emailAddress.Origin) {
+                var regexp = new RegExp(',?' + emailAddress.Origin, 'g')
+                notificationAddressEmail = notificationAddressEmail.replace(regexp, '');
+            }
+
+            if (notificationAddressEmail.indexOf(',') == 0) {
+                notificationAddressEmail = notificationAddressEmail.substring(1);
+            }
+            pkg.DeliveryExceptionNotificationAddressEmail = notificationAddressEmail;
+        }
+    }
+
+// Source: GAP INC (GAPMailrooms)_DirectToMobileCBR_1918.cs
+// GetReturnAddresses() // returns the return address list or undefined
+function GetReturnAddresses()
+	{
+		var userMethodParams = { "action": "GetD2MAddressBook"};
+		
+		var data = { Data: JSON.stringify(userMethodParams), UserContext: client.userContext };
+		
+		var returnAddressList = undefined;
+		
+		thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+			
+			if (response.ErrorCode != 0) 
+			{
+				alert(response.ErrorMessage);
+			} 
+			else 
+			{
+				
+				var json = DecodeReturnString(response.Data);
+				returnAddressList = json.ReturnAddressList;		
+				returnAddressList.forEach(function (returnAddress) {
+					var x = returnAddress;
+					console.log(x);
+				});
+			}
+		});
+		return returnAddressList;
+	}
+
+// Source: Imagine Print Solutions (IPS)_Imagine Print CBR_1725.cs
+// IPSUploadFile() // returns undefined
+        function IPSUploadFile() {
+            $('body').delegate('#ipsUploadFile', 'click', function () {
+                alertMessage('info', "Rate Process Started, an email will be sent upon completion");
+                showSpinner();
+                var vm = $(this).attr('vm')
+                if (ensureLoadIPS(vm)) {
+                    var fileName = cbr.loadIPS.file.name.split('.')[0];
+                    debugger;
+                    var reader = new FileReader();
+                    reader.readAsDataURL(cbr.loadIPS.file);
+                    reader.onload = function () {
+                        var data = {
+                            'UserContext': cbr.userContext,
+                            'Data' : JSON.stringify({
+                                'Action': 'Rate',
+                                'Shipper': cbr.loadIPS.shipper,
+                                'ShipDate': cbr.loadIPS.shipDate,
+                                'Email': cbr.loadIPS.email,
+                                'FileName': fileName,
+                                'EncodedFile': this.result.split(',')[1],
+                            })
+                        }
+
+                        $.post({ 
+                            url: clientService.config.ShipExecServiceUrl + '/UserMethod',
+                            data,
+                            headers: clientService.authorizationToken()
+                        }).done(function (result) {
+                            hideSpinner();
+                            if (result.ErrorCode > 0) {
+                                alertMessage('danger', response.ErrorMessage);
+                            } else {
+                                alertMessage('success', "Rate Completed");
+                                loadIPSReset();
+                            }
+                        }).fail(function (err) {
+                            hideSpinner();
+                            alertMessage('danger',"The process is taking longer than usual to complete but will continue to run on the server until the rate file is complete");
+                        });	
+                    }
+                }
+                // hide the spinner after 15 seconds
+                setTimeout(function(){
+                    hideSpinner();
+                }, 15000);
+            });
+        }
+
+// ensureLoadIPS(vm) // returns boolean
+        function ensureLoadIPS(vm) {
+            var msg = [];
+            var result = true;
+
+            if (vm == '') {
+                msg.push('Please update all options and try again.');
+            } else {
+                cbr.loadIPS = JSON.parse(vm);
+                //if (cbr.loadIPS.type == undefined) msg.push('\u2022Select Rate or Address Validation radio button.');
+                if (cbr.loadIPS.shipper == undefined) msg.push('\u2022Missing Shipper.');
+                if (cbr.loadIPS.shipDate == undefined) msg.push("\u2022Missing Ship Date.");
+                if (cbr.loadIPS.email == undefined) {
+                    msg.push('\u2022Missing Email Address.');
+                } else {
+                    if (invalidEmailAddress(cbr.loadIPS.email)) msg.push('\u2022Email Address is invalid.')
+                }
+
+                var files = $('#ipsFileInputField').prop('files');
+                if (files.length == 0) {
+                    msg.push('\u2022Missing File.')
+                } else {
+                    cbr.loadIPS.file = files[0];
+                }
+            }
+
+            if (msg.length > 0) {
+                result = false;
+                alertMessage('danger', msg.join("<br />"));
+                hideSpinner();
+            }
+            
+            return result;
+        }
+
+// Source: Inditex (INDITEX)_Client Business Rules_2483.cs
+// function (shipmentRequest) // returns undefined
+    this.NewShipment = function (shipmentRequest) {
+
+    }
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_CA_TO_US_2497.cs
+// convertFileInputToBase64(inputId, leg) // returns Promise resolving upload payload
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_EU_TO_UK_2498.cs
+// convertFileInputToBase64(inputId, leg) // returns Promise resolved with upload payload data
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// setUploadDelegates() // returns void
+    function setUploadDelegates() {
+
+        $('body').undelegate('#btnUploadPdfGoods', 'click');
+        $('body').undelegate('#btnUploadPdfGoodsClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputGoods', 'change');
+        $('body').undelegate('#btnUploadPdfModal', 'click');
+        $('body').undelegate('#btnUploadPdfModalClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputModal', 'change');
+
+        $('body').delegate('#btnUploadPdfGoods', 'click', function (e) {
+
+            that.currentShipment.Packages[0].MiscReference11 = "true";
+
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfGoodsClear', 'click', function (e) {
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput
+                && uploadPDFGoodsInput.length == 1) {
+                uploadPDFGoodsInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference11 = "false";
+
+            var uploadSuccessLabel = $('#uploadSuccessLabel');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputGoods', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            //debugger;
+            sessionStorage.setItem('uploadDocumentDataGoods', '');
+            sessionStorage.setItem('uploadDocumentDataGoodsFileName', '');
+
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataGoodsFileName', e.target.files[0].name);
+
+                var uploadSuccessLabel = $('#uploadSuccessLabel');
+                if (uploadSuccessLabel) {
+                    uploadSuccessLabel.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    debugger;
+                    that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                    $('#btnUploadPdfGoodsClear').click();
+                }
+                else {
+
+                    //debugger;
+                    that.convertFileInputToBase64('paperlessUploadFileInputGoods', 1, e).then(function (ret, e) {
+                        //debugger;
+                        //that.currentShipment.MiscReference19 = JSON.stringify(ret);
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataGoods', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            //var test = this.setResponseLabel;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                            //debugger;
+                        }
+                    });
+                }
+            }
+        });
+
+        $('body').delegate('#btnUploadPdfModal', 'click', function (e) {
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfModalClear', 'click', function (e) {
+            var uploadPDFGoodsModalInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsModalInput
+                && uploadPDFGoodsModalInput.length == 1) {
+                uploadPDFGoodsModalInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference12 = "false";
+            var uploadSuccessLabel = $('#uploadSuccessLabelModal');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputModal', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            debugger;
+            sessionStorage.setItem('uploadDocumentDataModal', '');
+            sessionStorage.setItem('uploadDocumentDataModalFileName', '');
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataModalFileName', e.target.files[0].name);
+
+                var uploadSuccessLabelModal = $('#uploadSuccessLabelModal');
+                if (uploadSuccessLabelModal) {
+                    uploadSuccessLabelModal.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    var test2 = that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                }
+                else {
+                    that.convertFileInputToBase64('paperlessUploadFileInputModal', 2).then(function (ret) {
+                        //debugger;
+
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataModal', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataModalFileName'));
+                            //debugger;
+                        }
+
+
+                    });
+                }
+            }
+        });
+
+    };
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_PR_TO_US_2506.cs
+// convertFileInputToBase64(inputId, leg) // returns Promise resolving to upload payload data
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// setUploadDelegates() // returns undefined
+    function setUploadDelegates() {
+
+        debugger;
+        setCommodityDelegate();
+
+        $('body').undelegate('#btnUploadPdfGoods', 'click');
+        $('body').undelegate('#btnUploadPdfGoodsClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputGoods', 'change');
+        $('body').undelegate('#btnUploadPdfModal', 'click');
+        $('body').undelegate('#btnUploadPdfModalClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputModal', 'change');
+
+        $('body').delegate('#btnUploadPdfGoods', 'click', function (e) {
+
+            that.currentShipment.Packages[0].MiscReference11 = "true";
+
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfGoodsClear', 'click', function (e) {
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput
+                && uploadPDFGoodsInput.length == 1) {
+                uploadPDFGoodsInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference11 = "false";
+
+            var uploadSuccessLabel = $('#uploadSuccessLabel');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputGoods', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            //debugger;
+            sessionStorage.setItem('uploadDocumentDataGoods', '');
+            sessionStorage.setItem('uploadDocumentDataGoodsFileName', '');
+
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataGoodsFileName', e.target.files[0].name);
+
+                var uploadSuccessLabel = $('#uploadSuccessLabel');
+                if (uploadSuccessLabel) {
+                    uploadSuccessLabel.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    debugger;
+                    that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                    $('#btnUploadPdfGoodsClear').click();
+                }
+                else {
+
+                    //debugger;
+                    that.convertFileInputToBase64('paperlessUploadFileInputGoods', 1, e).then(function (ret, e) {
+                        //debugger;
+                        //that.currentShipment.MiscReference19 = JSON.stringify(ret);
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataGoods', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            //var test = this.setResponseLabel;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                            //debugger;
+                        }
+                    });
+                }
+            }
+        });
+
+        $('body').delegate('#btnUploadPdfModal', 'click', function (e) {
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfModalClear', 'click', function (e) {
+            var uploadPDFGoodsModalInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsModalInput
+                && uploadPDFGoodsModalInput.length == 1) {
+                uploadPDFGoodsModalInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference12 = "false";
+            var uploadSuccessLabel = $('#uploadSuccessLabelModal');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputModal', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            debugger;
+            sessionStorage.setItem('uploadDocumentDataModal', '');
+            sessionStorage.setItem('uploadDocumentDataModalFileName', '');
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataModalFileName', e.target.files[0].name);
+
+                var uploadSuccessLabelModal = $('#uploadSuccessLabelModal');
+                if (uploadSuccessLabelModal) {
+                    uploadSuccessLabelModal.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    var test2 = that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                }
+                else {
+                    that.convertFileInputToBase64('paperlessUploadFileInputModal', 2).then(function (ret) {
+                        //debugger;
+
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataModal', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataModalFileName'));
+                            //debugger;
+                        }
+
+
+                    });
+                }
+            }
+        });
+
+    };
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// convertFileInputToBase64(inputId, leg) // returns Promise resolving to upload payload data
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// setUploadDelegates() // returns void
+    function setUploadDelegates() {
+
+        $('body').undelegate('#btnUploadPdfGoods', 'click');
+        $('body').undelegate('#btnUploadPdfGoodsClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputGoods', 'change');
+        $('body').undelegate('#btnUploadPdfModal', 'click');
+        $('body').undelegate('#btnUploadPdfModalClear', 'click');
+        $('body').undelegate('#paperlessUploadFileInputModal', 'change');
+
+        $('body').delegate('#btnUploadPdfGoods', 'click', function (e) {
+            //debugger;
+            //that.currentShipment.Packages[0].MiscReference11 = "true";
+
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfGoodsClear', 'click', function (e) {
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputGoods');
+            if (uploadPDFGoodsInput
+                && uploadPDFGoodsInput.length == 1) {
+                uploadPDFGoodsInput[0].value = null;
+            }
+            //debugger;
+            that.currentShipment.Packages[0].MiscReference11 = "false";
+
+            var uploadSuccessLabel = $('#uploadSuccessLabel');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputGoods', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            //debugger;
+            sessionStorage.setItem('uploadDocumentDataGoods', '');
+            sessionStorage.setItem('uploadDocumentDataGoodsFileName', '');
+
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataGoodsFileName', e.target.files[0].name);
+
+                var uploadSuccessLabel = $('#uploadSuccessLabel');
+                if (uploadSuccessLabel) {
+                    uploadSuccessLabel.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                    $('#btnUploadPdfGoodsClear').click();
+                }
+                else {
+                    that.currentShipment.Packages[0].MiscReference11 = "true";
+                    //debugger;
+                    that.convertFileInputToBase64('paperlessUploadFileInputGoods', 1, e).then(function (ret, e) {
+                        //debugger;
+                        //that.currentShipment.MiscReference19 = JSON.stringify(ret);
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataGoods', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                        }
+                    });
+                }
+            }
+        });
+
+        $('body').delegate('#btnUploadPdfModal', 'click', function (e) {
+            // Simply clicks on the file input (hidden from user) to open the file chooser dialog
+            var uploadPDFGoodsInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsInput) {
+                uploadPDFGoodsInput.trigger('click');
+            }
+
+        });
+
+        $('body').delegate('#btnUploadPdfModalClear', 'click', function (e) {
+            var uploadPDFGoodsModalInput = $('#paperlessUploadFileInputModal');
+            if (uploadPDFGoodsModalInput
+                && uploadPDFGoodsModalInput.length == 1) {
+                uploadPDFGoodsModalInput[0].value = null;
+            }
+            that.currentShipment.Packages[0].MiscReference12 = "false";
+            var uploadSuccessLabel = $('#uploadSuccessLabelModal');
+            if (uploadSuccessLabel) {
+                uploadSuccessLabel.text("No file selected");
+            }
+        });
+
+        $('body').delegate('#paperlessUploadFileInputModal', 'change', function (e) {
+            // Ensures that a file is present before continuing
+            //debugger;
+            sessionStorage.setItem('uploadDocumentDataModal', '');
+            sessionStorage.setItem('uploadDocumentDataModalFileName', '');
+            if (e &&
+                e.target &&
+                e.target.files &&
+                e.target.files.length > 0) {
+
+                sessionStorage.setItem('uploadDocumentDataModalFileName', e.target.files[0].name);
+
+                var uploadSuccessLabelModal = $('#uploadSuccessLabelModal');
+                if (uploadSuccessLabelModal) {
+                    uploadSuccessLabelModal.text("Invoice to upload selected: " + e.target.files[0].name);
+                }
+
+                if (e.target.files[0].size > 1000000) {
+                    var test2 = that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataGoodsFileName'));
+                    $('#btnUploadPdfModalClear').click();
+                }
+                else {
+                    that.convertFileInputToBase64('paperlessUploadFileInputModal', 2).then(function (ret) {
+                        //debugger;
+
+                        that.currentShipment.Packages[0].MiscReference12 = "true";
+
+                        try {
+                            sessionStorage.setItem('uploadDocumentDataModal', JSON.stringify(ret));
+                        } catch (err) {
+                            //debugger;
+                            that.setResponseLabel('uploadSuccessLabel', {}, sessionStorage.getItem('uploadDocumentDataModalFileName'));
+                            //debugger;
+                        }
+
+
+
+                    });
+                }
+            }
+        });
+
+    };
+
+// Source: MarkenLLP (MLLP)_Marken_Phase3_CBR_2501.cs
+// convertFileInputToBase64(inputId, leg) // returns Promise resolving upload payload data
+    this.convertFileInputToBase64 = function (inputId, leg) {
+        return new Promise(function (resolve, reject) {
+
+            var data = {};
+            const fileInput = $('#' + inputId);
+
+            // Do not continue if there are no files
+            if (!fileInput ||
+                fileInput.length === 0 ||
+                !fileInput[0].files ||
+                fileInput[0].files.length === 0) {
+                return;
+            }
+
+            // Get basic file info
+            var file = fileInput[0].files[0];
+            var fileName = file.name;
+
+            // Create reader for reading files
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.addEventListener("load", function () {
+
+                // Create and return payload for upload call
+                data = {
+                    Action: "PaperlessDocUpload",
+                    FileName: fileName,
+                    encodedString: reader.result.split(',')[1],
+                    shipperName: that.currentShipment.PackageDefaults.Shipper,
+                    leg: leg
+                }
+
+                resolve(data);
+
+            }, false);
+
+            reader.addEventListener("error", function (error) {
+                reject(error);
+            }, false);
+
+        });
+
+    }
+
+// Source: MGMResorts (MGMRESOR)_Outbound Client Rules_1649.cs
+// appendDownloadMenu() // returns undefined
+function appendDownloadMenu () {
+        $('body').on('click', '#sws-menu-item', function(e) {
+            $('#StrattonWarrenFileDownload').click();
+        })
+        
+        downloadMenu = true;
+        var html = [
+            '<li class="dropdown">',
+                '<a class="dropdown-toggle" data-toggle="dropdown" href="">Downloads<span class="caret"></span></a>',
+                '<ul class="dropdown-menu">',
+                    '<li id="sws-menu-item"><a>Stratton Warren File</a></li>',
+                    '<li role="separator" class="divider"></li>',
+                    '<li id="gl-menu-item"><a href="javascript:glCodeFileDownload()">GL Code File</a></li>',
+                '</ul>',
+            '</li>',
+            '<li id="download-loading">',
+                '<img src="/Content/img/spinner-transparent.gif" class="loading-spinner" />',
+                '<span class="loading-text"> Loading...</span>',
+            '</li>'
+        ].join("\n");
+
+        //$('div > div.navbar.navbar-default.navbar-fixed-top > div > div.navbar-collapse.collapse > ul').append(html);
+        $('div > div.navbar.navbar-default.navbar-fixed-top > div > div.navbar-collapse.collapse > div > ul').append(html);
+    }
+
+// toggleDownloadLoading(downloading, menuOption) // returns undefined
+function toggleDownloadLoading(downloading, menuOption) {
+        let menuItem = "";
+
+        $('#download-loading').toggle();
+        
+        switch (menuOption) {
+            case "SWS" : menuItem = "#sws-menu-item"; break;
+            case "GLCODE" : menuItem = "#gl-menu-item"; break;
+        }
+        $(menuItem).toggleClass('disabled', downloading);
+    }
+
+// GLCodeUserMethod(e) // returns undefined
+this.GLCodeUserMethod = function (e) {
+        //debugger;
+        let option = "GLCODE";
+        let data = { Action: option, Content: ''};
+        let title = "GL Code File Download";
+        let thisRef = this;
+
+        // show loading spinner
+        toggleDownloadLoading(true, option);
+        
+       $.post({
+            url: clientService.config.ShipExecServiceUrl + '/UserMethod',
+            cache: false,
+            dataType: 'json',
+			headers: clientService.authorizationToken(),
+            data: Object.assign({ UserContext: client.userContext }, { Data: JSON.stringify(data) })
+        }).done(function(response) {
+            showModalDialog(thisRef, title, response, option);
+        }).fail(function(error) {
+            showModalDialog(thisRef, title, error.responseText, option);
+        });
+    }
+
+// StrattonWarrenUserMethod(e) // returns undefined
+this.StrattonWarrenUserMethod = function (e) {
+        // debugger;
+        let option = "SWS";
+        let data = { Action: option, Content: ''};
+        let title = "Stratton Warren File Download";
+        let thisRef = this;
+
+        // show loading spinner
+        toggleDownloadLoading(true, option);
+        
+        $.post({
+            url: clientService.config.ShipExecServiceUrl + '/UserMethod',
+            cache: false,
+            dataType: 'json',
+			headers: clientService.authorizationToken(),
+            data: Object.assign({ UserContext: client.userContext }, { Data: JSON.stringify(data) })
+        }).done(function(response) {
+            showModalDialog(thisRef, title, response, option);
+        }).fail(function(error) {
+            showModalDialog(thisRef, title, error.responseText, option);
+        });
+    }
+
+// Source: NAGINA INTERNATIONAL (NAGINA)_ISMEA_FTP_1585.cs
+// getFTPUploaded() // returns void
+    function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Purolator (PURT)_PurolatorUserMethod_1914.cs
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {     
+        /**
+        var date = new Date();
+        var dateStr = date.getFullYear() + "-" + ("00" + (date.getMonth() + 1)).slice(-2) + "-" + ("00" + date.getDate()).slice(-2);
+        shipmentRequest.PackageDefaults.Shipdate = dateStr;
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        */
+        
+        var date = new Date();
+        shipmentRequest.PackageDefaults.Shipdate.Month = Number(date.getMonth() + 1);
+        shipmentRequest.PackageDefaults.Shipdate.Day = Number(date.getDate());
+        shipmentRequest.PackageDefaults.Shipdate.Year = Number(date.getFullYear());
+        
+        debugger;
+        var brokerCode = "";
+        for(var i=0; i<shipmentRequest.Packages.length; i++) {
+            if (shipmentRequest.Packages[i].DocumentsOnly === true)
+            {
+                shipmentRequest.Packages[i].CommercialInvoiceMethod = 0;
+                shipmentRequest.Packages[i].Description = 'Document Only';
+            }
+            else
+            {
+                //shipmentRequest.Packages[i].CommercialInvoiceMethod = 1;
+                //Commodities Description
+                if (i == 0)
+                {
+                    //debugger;
+                    for (var indx = 0; indx < shipmentRequest.Packages[i].CommodityContents.length; indx++)
+                    {
+                        shipmentRequest.Packages[i].CommodityContents[indx].Description = shipmentRequest.Packages[i].CommodityContents[indx].Description.replace(/[\r\n\t]/g, "");
+                    }
+                }
+            }
+
+            //WorldEase Flag to assign to all packages
+            shipmentRequest.Packages[i].WorldEaseFlag = shipmentRequest.Packages[0].WorldEaseFlag;
+            
+            //WorldEase Additional Documents
+            //debugger;
+            shipmentRequest.Packages[i].AdditionalHardcopyDocumentation = shipmentRequest.Packages[0].AdditionalHardcopyDocumentation;
+            shipmentRequest.Packages[i].Comments = shipmentRequest.Packages[0].Comments;
+            shipmentRequest.Packages[i].ExportDeclarationStatement = shipmentRequest.Packages[0].ExportDeclarationStatement;
+
+            /**
+            //WorldEase Importer of Records
+            if (shipmentRequest.Packages[i].WorldEaseFlag === true && shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[i].ImporterOfRecord === undefined)
+            {
+                debugger;
+                //var na = shipmentRequest.PackageDefaults.ReturnAddress;
+                if (shipmentRequest.PackageDefaults.Shipper.includes("AB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F41";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("BC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F4X";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("MB"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F45";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("ON"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "A4206Y";
+                    const nIOR = new IOR("The Orthotic Group", "160 Markland Street", "Markham ON L6C0C6" ,"Buffalo","NY", "14206", "US","A4206Y"); 
+                    shipmentRequest.Packages[i].ImporterOfRecord = nIOR;
+                } 
+                else if (shipmentRequest.PackageDefaults.Shipper.includes("QC"))
+                {
+                    shipmentRequest.PackageDefaults.ReturnAddress.Account = "662F52";
+                    shipmentRequest.Packages[i].ImporterOfRecord = shipmentRequest.PackageDefaults.ReturnAddress;
+                }
+            }
+            **/
+            
+            //Exporter
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined)
+            {
+                shipmentRequest.Packages[i].Exporter = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Custom Broker
+            if (shipmentRequest.Packages[0].CustomsBroker !== undefined)
+            {
+                if (i===0)
+                    {
+                        brokerCode = shipmentRequest.Packages[0].CustomsBroker.Code !== undefined ? (shipmentRequest.Packages[0].CustomsBroker.Code.length > 3 ? shipmentRequest.Packages[0].CustomsBroker.Code.substring(2) : shipmentRequest.Packages[0].CustomsBroker.Code) : '';
+                    }
+                shipmentRequest.Packages[i].CustomsBroker = shipmentRequest.Packages[0].CustomsBroker;   
+                shipmentRequest.Packages[i].CustomsBroker.Code = brokerCode;                    
+            }
+
+            //debugger;
+            //Hazmat Signatory Address
+            if (shipmentRequest.PackageDefaults.ReturnAddress.Address1 !== undefined && shipmentRequest.Packages[0].HazmatContents !== undefined)
+            {
+                shipmentRequest.Packages[i].HazmatSignatoryAddress = shipmentRequest.PackageDefaults.ReturnAddress;
+            }
+
+            //Capture Email and assign them to MiscRef10
+            var form = $('form[id="logoutForm"]');
+            const ahref = form.find('a[href="/ShipExecThinClient/Manage"]');
+            var indx = ahref.text().indexOf(' ');
+            shipmentRequest.Packages[i].MiscReference10 = $.trim(ahref.text().replace('!','').substring(indx));
+
+            //General Description
+            //shipmentRequest.Packages[i].Description = shipmentRequest.Packages[i].Description.replace(/[\r\n\t]/g, "");
+        }
+
+    }
+
+// customUserMethod() // returns void
+function customUserMethod () {
+        debugger;
+        var dateSelected = $('#exportDate').val();
+        var shipper = $('#gateway :selected').text();
+        var carrier = $('#carrier :selected').text();
+        
+        if (carrier === 'UPS')
+        {
+            carrier = 'CONNECTSHIP_UPS.UPS';
+        }
+        else
+        {
+            carrier = 'CONNECTSHIP_DHLXMLPI.DHL';
+        }
+
+        var data = { DateSelected: dateSelected, Shipper: shipper, Carrier: carrier};
+        var payload = { UserContext: client.userContext, Data: JSON.stringify(data) };
+        var result = client.thinClientAPIRequest('UserMethod', payload, false).responseJSON;
+        
+        debugger;
+        if (result.ErrorCode > 0 || result == undefined) {
+            client.alert.Danger(result.ErrorCode + ': ' + result.ErrorMessage);
+        } else if (result.Message != undefined || result.Message != "") {
+            client.alert.Success(result.Message);
+        } else {
+            client.alert.Success(result.Message);
+        }
+    }
+
+// CopyShipperList() // returns void
+function CopyShipperList() {
+        var loaded = setInterval(function() {
+        debugger;
+        let shipper = $('shipper-carrier');
+            if (shipper.length > 0) {
+                clearInterval(loaded);
+                let div1 = shipper.find('div');
+                let div2 = div1.find('div');
+                let div3 = div2.find('div');
+                let dpShip = div3.find('Select[ng-model="vm.selectedShipper"]');
+                let dpOpt = dpShip.find('option');
+                var $options = dpOpt.clone();
+                $('#gateway').append($options);
+            }
+        }, 50);
+        
+        
+    }
+
+// Source: R.BCC EXPORTERS PRIVATE LIMITED (R.BCC)_ISMEA_FTP_1716.cs
+// getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Rite Kem (RITEKEM)_RiteKem_1637.cs
+// getHazmatReport() // returns undefined
+function getHazmatReport() {
+        debugger;
+        var shipExecServiceUrl = clientService.config.ShipExecServiceUrl;
+        var authorizationToken = clientService.authorizationToken();
+        var context = client.userContext;
+        var shipper = $('select[ng-model="vm.selectedShipper"] option:selected').val();
+        if (shipper) {
+            var searchCriteria = { DateStart: $('input[ng-model="vm.dtstart"]').val(), DateEnd: $('input[ng-model="vm.dtend"]').val(), Shipper: shipper };
+            var data = { Action: "HazmatReport", Content: JSON.stringify(searchCriteria) };
+           return $.post({ url:shipExecServiceUrl +'/UserMethod',
+                  data: {UserContext: client.userContext, Data:JSON.stringify(data)}, headers: authorizationToken},
+                function (response, status, xhr) {
+                    downloadFile(shipper, response["Data"]);
+                }
+            ).done(function () {
+            });
+        }
+    }
+
+// downloadFile(exportFileName, encodedString) // returns undefined
+function downloadFile(exportFileName, encodedString) {
+        var decodedResult = atob(encodedString); // decode a base-64 encoded string
+        var csvFile = new Blob([decodedResult], { type: "text/csv" });
+    
+        var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+            ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+            ieEdge = navigator.userAgent.match(/Edge/g),
+            ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+    
+        exportFileName = exportFileName + '.csv';
+    
+        if (ieVer > -1) {
+            window.navigator.msSaveBlob(csvFile, exportFileName);
+    
+        } else {
+            var downloadLink = document.createElement("a");
+            downloadLink.download = exportFileName;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    }
+
+// Source: Sazerac (Sazerac)_Sazerac CBR_1680.cs
+// openFileDialog() // returns void
+function openFileDialog() {
+        //debugger;
+        var filesSelected = document.getElementById("fileLoader");
+
+        if (filesSelected !== undefined) {
+            const fileReader = new FileReader();
+
+            if (filesSelected.files[0]) {
+                fileReader.readAsDataURL(filesSelected.files[0]);
+            }
+
+            fileReader.onload = function (event) {
+                var files = event.target.result;
+
+                // Get base64 file data
+                var contents = event.target.result.split(',')[1];
+
+                // adding prefix to beginning of file data to send to user method
+                var fileData = "file|" + contents;
+
+                // $.post('api/ShippingService/UserMethod',
+                // {
+                //     UserContext: userContext,
+                //     Data: JSON.stringify(fileData)
+
+                // updated for 2.3
+                $.post({
+                    url: clientService.config.ShipExecServiceUrl + '/UserMethod',
+                    data: {
+                        UserContext: client.userContext,
+                        Data: JSON.stringify(fileData)
+                    },
+                    headers: clientService.authorizationToken()
+                }).done(function(result) {
+                    //debugger;
+                    // result.Data should be unencoded [Success] or [Error] string
+                    if (result.ErrorCode === 0 && result.Data !== undefined && result.Data.indexOf('[Error]') == -1) {
+                        alert(result.Data);
+                    }
+                    else {
+                        // display error
+                        alert(result.Data);
+                    }
+                }).fail(function (e) {
+                    alert(e.message);
+                });
+            };
+        }
+    }
+
+// Source: STAR INDIA CRAFT (STARINCRFT)_ISMEA_FTP_1583.cs
+// function getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Succinnova Technologies Pvt Ltd (SUCCTECH)_ISMEA_FTP_1635.cs
+// function getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Team D Technologies (TEAMDT)_ISMEA_FTP_1586.cs
+// getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// Source: Tesla (TES)_test 1_1869.cs
+// downloadFile(exportFileName, encodedString) // returns undefined
+function downloadFile(exportFileName, encodedString) {
+        var decodedResult = atob(encodedString); // decode a base-64 encoded string
+        var csvFile = new Blob([decodedResult], { type: "text/csv" });
+
+        var ie = navigator.userAgent.match(/MSIE\s([\d.]+)/),
+            ie11 = navigator.userAgent.match(/Trident\/7.0/) && navigator.userAgent.match(/rv:11/),
+            ieEdge = navigator.userAgent.match(/Edge/g),
+            ieVer = (ie ? ie[1] : (ie11 ? 11 : (ieEdge ? 12 : -1)));
+
+        exportFileName = exportFileName + '.csv';
+
+        if (ieVer > -1) {
+            window.navigator.msSaveBlob(csvFile, exportFileName);
+
+        } else {
+            var downloadLink = document.createElement("a");
+            downloadLink.download = exportFileName;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    }
+
+// Source: Volt Lighting (VOLT)_Volt_Business_Rules_1666.cs
+// function UserMethod(logoNumber) // returns undefined
+    function UserMethod(logoNumber) {
+
+		if (logoNumber == 4) {
+
+			var orderNumber = $('[ng-model="vm.loadValue"]').val();
+
+			if (orderNumber === undefined || orderNumber === null || orderNumber === "") {
+
+				client.alert.Danger("Missing or invalid Order Number, no update made.  Please enter a valid order number and try again.");
+			}
+			else {
+			
+				var usermethodParams = { "action": 4, "orderNumber": orderNumber, "percentageComplete":"0", "trailerNumber":"", "shipper":""};
+				var results;
+				var data = { UserContext: userContext, "Data": JSON.stringify(usermethodParams) };
+				var response = client.thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+					if (response.ErrorCode != 0) {
+						client.alert.Danger(response.ErrorMessage);
+					} else {
+						results = response["Data"];
+					}
+				});
+				
+				
+				/*$.ajax({
+                    type: "POST",
+                    url: "api/ShippingService/UserMethod",
+                    async: false,
+                    cache: false,
+                    dataType: "json",
+                    data: { UserContext: userContext, "Data": JSON.stringify(usermethodParams) },
+                    success: function(response) {
+                        results = response["Data"];
+                        ;
+                    },
+                    error: function (error) {
+                        alert("Finalize Shipment has failed, no update made to the system.  Contact Support.");
+                    }
+                });*/
+			}
+		}
+		else {
+
+			$("#fileLoader").click();
+
+			var encodedBase64Logo;
+
+			var filesSelected = document.getElementById("fileLoader").files;
+
+			if (filesSelected.length > 0) {
+				var fileToLoad = filesSelected[0];
+
+				var fileReader = new FileReader();
+
+				fileReader.readAsDataURL(fileToLoad);
+
+				fileReader.onload = function (event) {
+					var encodedBase64Logo = logoNumber + event.target.result;
+
+					SoxOnWcfDblHop.userMethod(encodedBase64Logo,
+						function (result) {
+							// Do something with the data
+
+							DisplayLogoSaveMessage(result);
+
+						},
+						function (e) {
+							// Do something with the error
+
+							alert(e.message);
+						});
+				};
+			}
+		}
+	}
+
+
+// function DisplayLogoSaveMessage(result) // returns undefined
+    function DisplayLogoSaveMessage(result) {
+
+		var jsonLoad = jQuery.parseJSON(result);
+
+		if (jsonLoad.logosuccess != null && jsonLoad.logosuccess != undefined) {
+
+			if (jsonLoad.logosuccess != undefined) {
+				alert(jsonLoad.logosuccess);
+			}
+			else {
+				alert("There was an error attempting to save file to server.  File NOT updated, please try again.");
+			}
+		}
+		else {
+
+			if (jsonLoad != undefined && jsonLoad.error != null && jsonLoad.error != undefined) {
+				alert(jsonLoad.error);
+			}
+			else {
+				alert("There was an error attempting to save file to server.  File NOT updated, please try again.");
+			}
+		}
+	}
+
+

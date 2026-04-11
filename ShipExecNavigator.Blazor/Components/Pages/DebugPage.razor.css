@@ -1,0 +1,112 @@
+/* ── Page shell ── */
+.debug-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+/* ── Company heading ── */
+.company-heading {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    padding: 0.5rem 1rem 0;
+    letter-spacing: 0.01em;
+}
+
+/* Tab bar styles live in app.css */
+
+/* ── Content panel ── */
+.debug-panel {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem 2.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.debug-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #337ab7;
+    border-radius: 4px 4px 0 0;
+}
+
+/* ── Hero ── */
+.debug-hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.debug-hero-title {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 0.5rem;
+}
+
+.debug-hero-sub {
+    font-size: 0.88rem;
+    color: #777;
+    margin: 0;
+}
+
+/* ── Action buttons ── */
+.debug-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.debug-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: none;
+    border-radius: 7px;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+    .debug-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .debug-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+.debug-btn--green {
+    background: #166534;
+    color: #fff;
+}
+
+.debug-btn--green:hover {
+    background: #15803d;
+}
+
+.debug-btn--blue {
+    background: #333;
+    color: #fff;
+}
+
+.debug-btn--blue:hover {
+    background: #334155;
+}
+
+/* ── Dark-theme brand override ── */
+:global(.dark-theme) .page-brand-title { color: #c9d1d9; }

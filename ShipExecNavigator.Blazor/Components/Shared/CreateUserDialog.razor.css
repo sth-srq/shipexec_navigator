@@ -1,0 +1,309 @@
+/* ── Backdrop ────────────────────────────────────────────────────────────── */
+.au-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+/* ── Dialog shell ────────────────────────────────────────────────────────── */
+.au-dlg {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: 775px;
+    max-width: 96vw;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.au-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem 0.75rem;
+    border-bottom: 1px solid #ddd;
+    background: #337ab7;
+}
+
+.au-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.au-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+    .au-close:hover {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+
+/* ── Body / fields ───────────────────────────────────────────────────────── */
+.au-body {
+    padding: 1.1rem 1.25rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.au-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.au-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.au-required {
+    color: #c53030;
+}
+
+.au-input {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.875rem;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    outline: none;
+    transition: border-color 0.15s;
+    color: #333;
+    background: #fff;
+}
+
+    .au-input:focus {
+        border-color: #2e6da4;
+        box-shadow: 0 0 0 2px rgba(46,109,164,0.15);
+    }
+
+.au-input--readonly {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: default;
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.au-error {
+    font-size: 0.8rem;
+    color: #c53030;
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 5px;
+    padding: 0.4rem 0.65rem;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.au-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid rgba(43, 63, 107, 0.08);
+    background: #337ab7;
+}
+
+.au-btn-primary,
+.au-btn-secondary {
+    padding: 0.45rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background-color 0.15s, opacity 0.15s;
+}
+
+.au-btn-primary {
+    background: linear-gradient(135deg, #2b5ea7 0%, #2e6da4 50%, #3a7bd5 100%);
+    color: #fff;
+    border-color: transparent;
+}
+
+    .au-btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(46, 109, 164, 0.35);
+    }
+
+    .au-btn-primary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+.au-btn-secondary {
+    background: #fff;
+    color: #495057;
+    border-color: #ced4da;
+}
+
+    .au-btn-secondary:hover:not(:disabled) {
+        background: #e9ecef;
+    }
+
+    .au-btn-secondary:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+.au-spinner {
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    display: inline-block;
+    animation: au-spin 0.7s linear infinite;
+}
+
+@keyframes au-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+.au-tab-bar {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.au-tab {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    border-radius: 6px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+
+    .au-tab:hover:not(.au-tab--active) {
+        background: #f0f2f5;
+        color: #495057;
+    }
+
+    .au-tab--active {
+        background: rgba(46, 109, 164, 0.1);
+        border-color: #2e6da4;
+        color: #2e6da4;
+    }
+
+/* ── Tab content area ────────────────────────────────────────────────────── */
+.au-tab-content {
+    overflow-y: auto;
+    max-height: 260px;
+    min-height: 100px;
+}
+
+    .au-tab-content::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .au-tab-content::-webkit-scrollbar-track {
+        background: #f5f7fa;
+    }
+
+    .au-tab-content::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 4px;
+    }
+
+.au-tab-panel {
+    padding: 0.5rem 0;
+}
+
+.au-tab-hidden {
+    display: none;
+}
+
+/* ── 2-col form grid (address & config tabs) ─────────────────────────────── */
+.au-form-grid {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.4rem 0.75rem;
+    align-items: center;
+}
+
+/* ── Select ──────────────────────────────────────────────────────────────── */
+.au-select {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.875rem;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    background: #fff;
+    color: #333;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+
+    .au-select:focus {
+        border-color: #2e6da4;
+        box-shadow: 0 0 0 2px rgba(46,109,164,0.15);
+    }
+
+/* ── Checkbox grid (roles & permissions tabs) ────────────────────────────── */
+.au-check-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.au-check-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #495057;
+    cursor: pointer;
+    padding: 0.2rem 0.3rem;
+    border-radius: 4px;
+}
+
+    .au-check-item:hover {
+        background: #f8f9fa;
+    }
+
+/* ── Loading / empty states ──────────────────────────────────────────────── */
+.au-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.8rem;
+    padding: 1rem 0;
+}
+
+.au-empty {
+    display: block;
+    color: #6c757d;
+    font-size: 0.8rem;
+    padding: 1rem 0;
+}

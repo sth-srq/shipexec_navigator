@@ -1,0 +1,2846 @@
+// Source: 2.2 Update 4 (21UPDATE4)_cbr doc ready_1721.cs
+// PageLoaded(location) // returns void
+this.PageLoaded = function(location) {   
+         alert( "PageLoaded!" );
+    }
+
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {  
+        alert( "PreShip!" );
+    }
+
+// PreRate(shipmentRequest, userParams) // returns void
+this.PreRate = function(shipmentRequest, userParams) {
+        alert('PreRate');
+    }
+
+// RemovePackage(shipmentRequest, packageIndex) // returns void
+this.RemovePackage = function(shipmentRequest, packageIndex) {
+        alert( "RemovePackage!" );
+    }
+
+// Source: 2.2 Update 4 (21UPDATE4)_CBR1.5_1735.cs
+// ShowErrorAlert(ErrorMessage) // returns undefined
+      ShowErrorAlert: function (ErrorMessage)
+      {
+        var divAlert = $('<div />').attr('id', this.GetRandomAlphaNumericString());
+
+        $(divAlert).addClass('alert alert-dismissible alert-bottom alert-danger ng-scope')
+          .css({ 'z-index': 1550, 'cursor': 'pointer' })
+          .attr('role', 'alert')
+          .append($('<button />')
+            .attr('type', 'button')
+            .addClass('close')
+            .append($('<span />')
+              .attr('aria-hidden', 'false')
+              .text('x'))
+            .append($('<span />')
+              .addClass('sr-only')
+              .text('Close')))
+          .append($('<div />')
+            .append($('<div />')
+              // .append($('<span />').addClass('glyphicon glyphicon-alert'))
+              // .css({ 'position': 'relative', 'top': '2px' })
+              .addClass('ng-scope alert-message')
+              .text(ErrorMessage)
+              .prepend($('<span />')
+                .css('padding-right', '10px')
+                .addClass('glyphicon glyphicon-alert custom-error-icon'))));
+
+        $('body').append($(divAlert).show());
+        /*
+          <button type="button" class="close" onclick="$(this).closest('div').hide();">
+            <span aria-hidden="false">×</span>
+            <span class="sr-only">Close</span>
+          </button>
+          <div>
+            <div class="ng-scope alert-message"></div>
+          </div>
+        */
+      },
+
+// CheckForMatchingConsignee(CustomerOrderObject) // returns boolean
+      CheckForMatchingConsignee: function (CustomerOrderObject)
+      {
+        try
+        {
+          var con = $('name-address[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]');
+
+          let a = {
+            //conCompany: $(con).find('input[name="company"]').val().trim().toUpperCase().replaceAll(' ',''),
+            conAddress1: $(con).find('input[name="address1"]').val().trim().toUpperCase(),
+            conCity: $(con).find('input[name="city"]').val().trim().toUpperCase(),
+            conState: $(con).find('input[name="stateProvince"]').val().trim().toUpperCase(),
+            conPostalCode: $(con).find('input[name="postalCode"]').val().trim().substring(0, 5)
+          };
+
+          let b = {
+            //conCompany: CustomerOrderObject.shipAddress1.CONSIGNEE_COMPANY.trim().toUpperCase().replaceAll(' ', ''),
+            conAddress1: CustomerOrderObject.shipAddress1.trim().toUpperCase(),
+            conCity: CustomerOrderObject.shipCity.trim().toUpperCase(),
+            conState: CustomerOrderObject.shipState.trim().toUpperCase(),
+            conPostalCode: CustomerOrderObject.shipZipCode.trim().substring(0, 5)
+          };
+
+          /* Remove all the spaces in the strings so we get a good comparison, not one that's thrown off by an extra space. */
+          let aa = JSON.stringify(a).replaceAll(' ', '');
+          let bb = JSON.stringify(b).replaceAll(' ', '');
+
+          /* Quick comparison to see if the strings match. */
+          if (aa != bb)
+          {
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + CustomerOrderObject.orderNumber + ' (' + CustomerOrderObject.orderId + '). Primary order data to follow.', Data: a });
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + CustomerOrderObject.orderNumber + ' (' + CustomerOrderObject.orderId + '). Subsequent order data to follow.', Data: b });
+          }
+
+          return (aa == bb);
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'CheckForMatchingConsignee()', Error: error });
+        }
+      },
+
+// Source: AAFES (Frankfurt) (AAFESDE)_AAFES CBR_1690.cs
+// NewShipment(shipmentRequest) // returns undefined
+    this.NewShipment = function (shipmentRequest) {
+        $(document).ready(function() {
+            $('[id="Consignee Name Address"]').on('keydown', $('[id="Consignee Name Address"]').find("input[name='code']"), function(e) { 
+                var keyCode = e.keyCode || e.which; 
+
+                if (keyCode == 9) { 
+                    e.preventDefault(); 
+                    // look up the address on tab
+                    $('[caption="Consignee Name Address"]').find('button[ng-click="search(nameaddress)"]').click();
+                } 
+            });
+        });
+    }
+
+// Source: AGCS (ffund)_Fireman's Fund Reference Configuration Rule_21.cs
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {
+        
+        //create value for Shipper Reference (Ex: CustomData Reference1Value)
+        var ref1Value = this.CheckReference(shipmentRequest.Packages[0].MiscReference1);
+        //var customValue = this.CheckReference(shipmentRequest.Packages[0].MiscReference20);
+        var customValue = this.CheckReference(shipmentRequest.Packages[0].ShipperReference);
+        var referenceValue = customValue + " " + ref1Value;
+        
+        
+        //set the above value for each package in the shipment
+        for(var i = 0;i<shipmentRequest.Packages.length;i++){
+           shipmentRequest.Packages[i].ShipperReference = referenceValue;
+        }
+        
+        //check the user custom data against the validation list; if the value is not in the list, don't ship and produce an error
+        this.CheckValidation(customValue, this.vm.profile.FieldOptions.MiscReference20.FieldOptionValidations);
+    };
+
+// CheckValidation(referenceValue, referenceList) // returns void
+this.CheckValidation = function(referenceValue, referenceList) {
+        var readyToShip = false;
+        for (var item in referenceList) {
+            //alert(referenceList[item]);
+            if (referenceList[item].Value == referenceValue) {
+                readyToShip = true;
+                break;
+            }
+        }
+        if (readyToShip === false) throw { message: "Unable to validate shipment", errorCode: "001" };
+    };
+
+// Source: Alight Solutions (ALISOL)_DirectToMobileCBR_2434.cs
+// function CurrentShipmentIsD2M() // returns boolean
+function CurrentShipmentIsD2M()
+	{	
+		
+		var cond1 = CurrentUserIsD2MEnabled();
+		var cond2 = $("#"+D2M_TEMPLATE_CHECKBOX_SHIPMENT_ID).is(":checked");
+		var cond3 = CurrentShipperIsD2MEnabled();
+		return cond1 && cond2  && cond3;
+	}
+
+// function CurrentSessionIsCapableOfD2MShipments() // returns boolean
+function CurrentSessionIsCapableOfD2MShipments()
+	{		
+		return CurrentUserIsD2MEnabled() && CurrentShipperIsD2MEnabled();
+	}
+
+// function CurrentShipperIsD2MEnabled() // returns boolean
+function CurrentShipperIsD2MEnabled(){ 
+	
+		LogStartMethod("CurrentShipperIsD2MEnabled()");
+		
+		//var currentShipperSymbol = vm?.currentShipment?.PackageDefaults?.Shipper;
+		
+		var currentShipperSymbol =  $('select[ng-change="vm.shipperChange()"]').val().substring(7).toUpperCase();
+		
+		var authorizedD2MShipperList = [{"ShipperName": "Alight Solutions (Lincolnshire_D2M)","ShipperSymbol":"LINCOLNSHIRE_D2M"}];
+		
+		var infoMessage = "D2M shipping for current shipper symbol " + currentShipperSymbol + " is ";
+		
+		var result =  false;
+		
+		var isCurrentShipperEnabledForD2M = authorizedD2MShipperList.find(x => x.ShipperSymbol === currentShipperSymbol);
+		
+		result = (isCurrentShipperEnabledForD2M != undefined) ? true : false;
+		
+		infoMessage = result? infoMessage + "authorized" : "WARNING " + infoMessage + "NOT authorized";
+		
+		LogMethodInfo(infoMessage);
+		
+		return result;		 
+    }
+
+// function CurrentUserIsD2MEnabled() // returns boolean
+function CurrentUserIsD2MEnabled(){
+		
+		LogStartMethod("CurrentUserIsD2MEnabled()");
+		
+		var currentUserData = vm?.profile?.UserInformation?.Address.CustomData;
+		
+		var isD2MEnableForCurrentUser = GetUserCustomData(currentUserData, D2M_USER_CUSTOM_DATA_KEY);
+		
+		var infoMessage ="";
+		
+		var result =  false;
+		
+		if ($.isEmptyObject(isD2MEnableForCurrentUser) === false)
+		{
+			 var d2mCustomEntry = JSON.stringify(isD2MEnableForCurrentUser);
+			 
+			 var d2mEnabledValue = JSON.parse(d2mCustomEntry).Value;
+			 
+			 if (d2mEnabledValue.toUpperCase() === D2M_USER_ENABLED_VALUE)
+			 {
+				 infoMessage = "D2M User ENABLED";
+				 result = true;
+			 }
+			 else
+			 {
+				infoMessage = "D2M User DISABLED";
+				result = false;
+			 }
+		}
+		else
+		{
+			 infoMessage = "WARNING:" + D2M_USER_CUSTOM_DATA_KEY + " NOT DETECTED";
+		}
+		
+		LogMethodInfo(infoMessage);
+		
+		return result;
+    }
+
+// function SwitchOnOffD2MShipment(calleeMethod) // returns void
+function SwitchOnOffD2MShipment(calleeMethod){
+				
+		LogStartMethod("SwitchOnOffD2MShipment()",calleeMethod);
+				
+		var infoMessage = "D2M shipment ";
+		
+		if (location.hash === '#!/shipping')		
+		{
+			if (CurrentUserIsD2MEnabled()) 			
+			{
+				infoMessage += "is ENABLED for current current user, showing D2M checkbox";
+				
+				var showD2MCheckBoxInterval = setInterval(function(){
+										
+					var dateIsLoaded = $("[ng-model='vm.startshipdate.value']").val();
+					
+					if (dateIsLoaded)
+					{
+						clearInterval(showD2MCheckBoxInterval);
+
+						$("#"+D2M_TEMPLATE_SHIPMENT_ID).show();	
+						
+						$("#"+D2M_TEMPLATE_CHECKBOX_SHIPMENT_ID).prop( "checked", true );
+						
+						$("#"+D2M_TEMPLATE_CHECKBOX_SHIPMENT_ID).attr('readonly',true);
+						
+						$("[property='Batches']").hide();//avoid showing batches since
+							
+						if (IsEventAttached($dm2CheckBox, "change", OnD2MCheckBoxChange) === false)
+						{
+							$dm2CheckBox.on("change", OnD2MCheckBoxChange);													
+						}
+						
+						LoadReturnAddressFromShipperAddress("SwitchOnOffD2MShipment()");						
+					}
+				},50);
+				
+					var setReturn = setInterval(function(){
+										
+					var returnDeliveryMethodIsLoaded = $("[property='ReturnDeliveryMethod'] select").val();
+					
+					if (returnDeliveryMethodIsLoaded != undefined)
+					{
+						clearInterval(setReturn);
+
+						$('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDelivery"]').prop("checked", true);
+																							
+						$("[property='ReturnDeliveryMethod'] select").val("number:4");//Carrier Email Return Label -> $('select option[value="number:4"]').prop("selected",true); 						
+					}
+				},150);								
+			}
+			else
+			{
+				infoMessage += "is NOT ENABLED for current user and shipper, hiding D2M checkbox";
+				
+				var hideD2MInterval = setInterval(function(){					
+					clearInterval(hideD2MInterval);
+					$("#"+D2M_TEMPLATE_SHIPMENT_ID).hide();//removing full DIV
+					$("[property='Shipper'] select option[value='string:Lincolnshire_D2M']").remove();												
+						$("[property='Service'] option[value='"+ UPS_GROUND_SERVICE +"']").remove();
+					$("[property='Service'] option[value='"+ NEXT_DAY_AIR_SERVICE +"']").remove();						
+				},50);								
+			}
+	}
+	else
+	{
+		infoMessage = "WARNING " + infoMessage + "called outside of shipping action";
+	}
+	
+	LogMethodInfo(infoMessage);
+    }
+
+// function SetReturnDeliveryCheckBoxAndInsurance(enabled, shipmentRequest) // returns void
+function SetReturnDeliveryCheckBoxAndInsurance(enabled = false,shipmentRequest)
+	{		
+		debugger;
+		if (shipmentRequest != undefined && enabled == true)
+		{			
+			if ((shipmentRequest.PackageDefaults.Consignee.Country.toUpperCase() != USCOUNTRY) 
+				&& (shipmentRequest.PackageDefaults.Consignee.Country.toUpperCase() != USACRONYM))
+			{
+				$('select option[value="number:1"]').prop("selected",true);				
+			}
+			else	
+			{
+				$('select option[value="number:1"]').prop("selected",false);				
+			}
+		}
+	}
+
+// function EnableD2MShipping() // returns void
+function EnableD2MShipping()
+	{		
+		var userMethodParams = { "ActionMessage": "EnableD2MShipping"};
+            
+		var data = { Data: JSON.stringify(userMethodParams), UserContext: client.userContext };
+		
+		var response = thinClientAPIRequest('UserMethod', data, false);
+		
+		if (response!=undefined && response.responseJSON.ErrorCode !== 0) 
+		{
+			alert("Error while executing UserMethod: " + response.responseJSON.ErrorCode);
+		} 
+		else 
+		{				
+			vm.profile = DecodeReturnString(response.responseJSON.Data);
+		}
+	}
+
+// Source: Alliance Animal (ALAMAL)_AllianceAnimal Client SBR_1749.cs
+// PostLoad(loadValue, shipmentRequest) // returns void
+this.PostLoad = function(loadValue, shipmentRequest) {
+        if (shipmentRequest.PackageDefaults.ErrorCode == 1)
+        {
+           alert(shipmentRequest.PackageDefaults.ErrorMessage);
+           shipmentRequest.PackageDefaults.ErrorCode = 0;
+        }
+
+        
+    }
+
+// Source: AlstonBird (ALBI)_ClientBusinessRules_1866.cs
+// delegateTravelerLabel(shipmentRequest) // returns undefined
+        function delegateTravelerLabel(shipmentRequest) {
+
+            //vm.currentShipment.PackageDefaults.Service = vm.selectedServices[0];            
+            var data = { Data: JSON.stringify(shipmentRequest) };
+            
+            debugger;
+            
+            var result = client.thinClientAPIRequest('UserMethod', data, false).responseJSON;
+            var travelerlabelresp = JSON.parse(atob(result.Data));
+            var travelerlabelpdf64 = travelerlabelresp.DocumentResponses[0].PdfData[0];
+            
+            // This works but only when the user switches to the new tab and refereshes page
+            var dataURI = "data:application/pdf;base64," + travelerlabelpdf64;
+            window.open(dataURI, '_blank');
+
+            // This also fails
+            //let pdfWindow = window.open("")
+            //setTimeout(() => pdfWindow.document.title = 'Delegate Label',50);
+            //const iframe = pdfWindow.document.createElement('iframe');
+            //iframe.width = '100%';
+            //iframe.height = '100%';
+            //iframe.title = 'PDF Viewer';  
+            //iframe.src = 'data:application/pdf;base64, ' + encodeURI(travelerlabelpdf64);
+            //pdfWindow.document.body.appendChild(iframe);
+            
+            
+            // Original code that fails on the document.write call
+            //let pdfWindow = window.open("")
+            //setTimeout(() => pdfWindow.document.title = 'Delegate Label',50);
+            //pdfWindow.document.write(
+            //    "<iframe width='100%' height='100%' src='data:application/pdf;base64, " +
+            //    encodeURI(travelerlabelpdf64) + "'></iframe>"
+            //    )            
+
+            alert("Delegate Label Created");
+        }
+
+// validateClientMatter() // returns undefined
+    this.validateClientMatter = function() {
+
+        if( theVM.currentShipment.Packages[0].ShipperReference === null) {
+            alert('Client Matter field is required. Please enter a valid client matter number!');
+            setFocus('input[name="ShipperReference_txt"]');            
+            return;
+        }
+        
+        var cmFound = false;
+        var cm = theVM.currentShipment.Packages[0].ShipperReference;
+        var cmValidationList = theVM.fieldOptions.ShipperReference.FieldOptionValidations;
+        for(var i = 0; i < cmValidationList.length; i++) {
+            var cmValidationItem = cmValidationList[i];
+            if( cmValidationItem.Value == cm) {
+                cmFound = true;
+                break;
+            }
+        }
+        if( cmFound )
+            theVM.saveLicensePlate();
+        else {
+            alert("Client Matter field is invalid. Please enter a valid client matter number!");
+            setFocus('input[name="ShipperReference_txt"]');                        
+        }
+    }
+
+// Info(msg) // returns undefined
+                Info: function (msg) {
+                    uibalert.removeClass('alert-success alert-danger');
+                    uibalert.find('span:eq(1)').text(msg);
+                    uibalert.addClass('alert-info').show();
+                },
+
+// Success(msg) // returns undefined
+                Success: function (msg) {
+                    uibalert.removeClass('alert-info alert-danger');
+                    uibalert.find('span:eq(1)').text(msg);
+                    uibalert.addClass('alert-success').show();
+                },
+
+// Danger(msg) // returns undefined
+                Danger: function (msg) {
+                    uibalert.removeClass('alert-info alert-success');
+                    uibalert.find('span:eq(1)').text(msg);
+                    uibalert.addClass('alert-danger').show();
+                }
+
+// Source: Altard State (ALTARDSTATE)_Altard State Client Rules_1668.cs
+// function ShowAlert(title, msg) // returns undefined
+    function ShowAlert(title, msg){
+        vm.currentShipment.AlertTitle = title;
+        vm.currentShipment.AlertMessage = msg;
+        $alertModal.modal('show');
+    }
+
+// this.PreShip(shipmentRequest, userParams) // returns undefined
+    this.PreShip = function(shipmentRequest, userParams) {
+        shipmentRequest.SendViewModelToClient = this.GetViewModelFromTemplate;
+
+	    // Verify all items have been packed
+	    var omscheck = shipmentRequest.Packages[0].MiscReference4;
+
+    	// If OMS check for items not fully packed and prompt, otherwise disallow partial packs
+	    if( omscheck == "OMS") {
+    		if( orderItemList !== null)	{
+    			var orderItemListCount1 = orderItemList.length;
+    			for (var i = 0; i < orderItemListCount1; i++) {
+    				if( orderItemList[i].qtyordered != orderItemList[i].qtyshipped ) {
+    					var msg = 'SKU: ' + orderItemList[i].itemsku + ' has not been fully packed. Click OK to continue or Cancel to continue packing.';
+    					var r = confirm(msg);
+    					if( r === false )
+    						throw Error("Ship cancelled - please continue packing.");
+    				}
+    			}
+    		}
+    	} else {
+    		if( orderItemList !== null)	{
+    			var orderItemListCount = orderItemList.length;
+    			for (var j = 0; j < orderItemListCount; j++) {
+    				if( orderItemList[j].qtyordered != orderItemList[j].qtyshipped ) {
+    					var msg2 = 'SKU: ' + orderItemList[j].itemsku + ' has not been fully packed.';
+    					throw Error(msg2);
+    				}
+    			}
+    		}
+    	}
+	    var itempackedlist = JSON.stringify(orderItemList);
+
+	    //alert("itempackedlist JSONized: " + itempackedlist);
+
+  
+   	    userParams.PACKEDDATA = itempackedlist;
+        };
+
+// this.handleItemSkuTextChanged(event) // returns undefined
+    this.handleItemSkuTextChanged = function(event) {
+
+        var newitemsku = this.Packages[0].MiscReference10;
+		if( newitemsku.trim().length === 0 )
+			return;
+
+        //debugger;
+        
+		//alert("Item number: " + orderItemList[1].itemcode + "  qtyordered: " + orderItemList[1].qtyordered + " qtyshipped: " + orderItemList[1].qtyshipped);
+
+		// Check for item code SHIPCOMPLETE indicating that this order is complete
+		if( newitemsku == "SHIPCOMPLETE") {
+
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference5 = "SHIPCOMPLETE";
+		    //var pkg = sox_current_shipment.packages[sox_current_package_idx];
+			//pkg.misc_reference_5 = "SHIPCOMPLETE";
+			//$("#item_sku_txt").val("");			
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+			vm.checkShip();
+			return;
+		}
+
+		// Check for SHIP indicating that this box is complete but not the whole order
+		if( newitemsku == "SHIP") {
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference5 = "";		    
+		    //var pkg = sox_current_shipment.packages[sox_current_package_idx];
+			//pkg.misc_reference_5 = "";
+			//$("#item_sku_txt").val("");			
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";			
+			vm.checkShip();
+			return;
+		}
+
+		// Pad the input sku to 14 digits with leading zeros
+		var skulen = newitemsku.length;
+		var newitemskupad = "";
+		if( skulen == 6)
+			newitemskupad = '00000000' + newitemsku;
+		else if( skulen == 7)
+			newitemskupad = '0000000' + newitemsku;
+		else if( skulen == 8)
+			newitemskupad = '000000' + newitemsku;
+		else if( skulen == 9)
+			newitemskupad = '00000' + newitemsku;
+		else if( skulen == 10)
+			newitemskupad = '0000' + newitemsku;
+		else if( skulen == 11)
+			newitemskupad = '000' + newitemsku;
+		else if( skulen == 12)
+			newitemskupad = '00' + newitemsku;
+		else if( skulen == 13)
+			newitemskupad = '0' + newitemsku;
+		else
+			newitemskupad = newitemsku;
+			
+		newitemsku = newitemskupad;
+
+		//alert("newitemsku: " + newitemsku);
+
+        //alert("orderItemList length: " + orderItemList.length);
+        
+        //alert("orderItemList itemsku: " + orderItemList[0].itemsku);
+       
+       //debugger;
+       
+		// Verify item sku is on this order
+		var itemFound = false;
+		var orderItemListCount = orderItemList.length;
+		for (var i = 0; i < orderItemListCount; i++) {
+		    if( itemFound === true)
+		        break;
+			var skuarr = orderItemList[i].itemsku.split(",");
+			for(var j = 0; j < skuarr.length; j++) {
+				if( skuarr[j] == newitemsku ) {
+					itemFound = true;
+					break;
+				}
+			}
+		}
+		
+		//alert("itemFound: " + itemFound);
+		
+		if( itemFound === false) {
+			ShowAlert("Pack Error","This SKU (" + newitemsku + ") does not belong in this shipment. Please remove it before proceeding.");
+            $("#mr10").css("background-color","Red");        							
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+            angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+            return;			
+		}
+
+		// Search for itemcode
+		itemFound = false;
+		var fullyPacked = false;
+		var svSkuCode = "";
+		var orderItemListCount = orderItemList.length;
+		for (var i = 0; i < orderItemListCount; i++) {
+			if( itemFound == true)
+				break;
+			
+			var nextitem = false;
+			var skuarr = orderItemList[i].itemsku.split(",");
+			for(var j = 0; j < skuarr.length; j++) {
+				if( skuarr[j] == newitemsku ) {
+					if( orderItemList[i].qtyshipped == orderItemList[i].qtyordered ) {
+						fullyPacked = true;
+						nextitem = true;
+						break;
+					} else {
+						itemFound = true;
+						fullyPacked = false;
+						var tmpqtyshipped = Number(orderItemList[i].qtyshipped);
+						var tmptotqtyshipped = Number(orderItemList[i].totqtyshipped);
+						var tmpqtyordered = Number(orderItemList[i].qtyordered);
+						if( (tmpqtyshipped + tmptotqtyshipped) < tmpqtyordered) {
+							var calcqty1 = tmpqtyshipped + 1 + tmptotqtyshipped;
+							var calcqty2 = tmpqtyordered - tmpqtyshipped - tmptotqtyshipped;
+							/*alert("Calc quantity 1: " + calcqty1 + " qtyordered: " + tmpqtyordered);*/
+							/*alert("Calc quantity 2: " + calcqty2);*/
+							if( calcqty1 <= tmpqtyordered) {
+								var tmpnewqty = tmpqtyshipped + 1;
+								orderItemList[i].qtyshipped = tmpnewqty;
+								orderItemList[i].modified = true;
+								svSkuCode = newitemsku;
+								/*alert("Item added to box ok");*/
+							} else {
+							    ShowAlert("Pack Error","Scanned quantity for SKU (" + newitemsku + ") would exceed order quantity. Please remove extras from the shipment and try again.");
+								$("#mr10").css("background-color","Red");        							
+                                vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+                                angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+								return;						
+							}
+						} else {
+							ShowAlert("Pack Alert","This item has been fully packed");
+							$("#mr10").css("background-color","Red");        							
+                            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+                            angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+							return;						
+						}
+					}
+				}
+			}
+			if( nextitem == true)
+				continue;
+		}
+
+		if( fullyPacked == true) {
+			ShowAlert("Pack Alert","This item has been fully packed");
+			$("#mr10").css("background-color","Red");        							
+			vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+			angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+			return;					
+		}
+
+		$("#mr10").css("background-color","Green");        	    
+
+		//if( itemFound == false) {
+		//	ShowAlert("Pack Error 2","This SKU (" + newitemsku + ") does not belong in this shipment. Please remove it before proceeding.");
+		//} else {
+        //    $("#mr10").css("background-color","Green");        	    
+		//}
+
+        vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+        angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+		}
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// this.PostLoad(loadValue, shipmentRequest) // returns void
+    this.PostLoad = function(loadValue, shipmentRequest) {
+        debugger;
+        if (loadValue.toUpperCase() == 'TEST')
+        {
+            alert("Test data for batches has been loaded");
+        }
+    }
+
+// Source: 2.2 Update 4 (21UPDATE4)_cbr doc ready_1721.cs
+// PageLoaded(location) // returns void
+this.PageLoaded = function(location) {   
+         alert( "PageLoaded!" );
+    }
+
+// PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {  
+        alert( "PreShip!" );
+    }
+
+// PreRate(shipmentRequest, userParams) // returns void
+this.PreRate = function(shipmentRequest, userParams) {
+        alert('PreRate');
+    }
+
+// RemovePackage(shipmentRequest, packageIndex) // returns void
+this.RemovePackage = function(shipmentRequest, packageIndex) {
+        alert( "RemovePackage!" );
+    }
+
+// Source: 2.2 Update 4 (21UPDATE4)_CBR1.5_1735.cs
+// ShowErrorAlert(ErrorMessage) // returns undefined
+      ShowErrorAlert: function (ErrorMessage)
+      {
+        var divAlert = $('<div />').attr('id', this.GetRandomAlphaNumericString());
+
+        $(divAlert).addClass('alert alert-dismissible alert-bottom alert-danger ng-scope')
+          .css({ 'z-index': 1550, 'cursor': 'pointer' })
+          .attr('role', 'alert')
+          .append($('<button />')
+            .attr('type', 'button')
+            .addClass('close')
+            .append($('<span />')
+              .attr('aria-hidden', 'false')
+              .text('x'))
+            .append($('<span />')
+              .addClass('sr-only')
+              .text('Close')))
+          .append($('<div />')
+            .append($('<div />')
+              // .append($('<span />').addClass('glyphicon glyphicon-alert'))
+              // .css({ 'position': 'relative', 'top': '2px' })
+              .addClass('ng-scope alert-message')
+              .text(ErrorMessage)
+              .prepend($('<span />')
+                .css('padding-right', '10px')
+                .addClass('glyphicon glyphicon-alert custom-error-icon'))));
+
+        $('body').append($(divAlert).show());
+        /*
+          <button type="button" class="close" onclick="$(this).closest('div').hide();">
+            <span aria-hidden="false">×</span>
+            <span class="sr-only">Close</span>
+          </button>
+          <div>
+            <div class="ng-scope alert-message"></div>
+          </div>
+        */
+      }
+
+// CheckForMatchingConsignee(CustomerOrderObject) // returns boolean or undefined on error
+      CheckForMatchingConsignee: function (CustomerOrderObject)
+      {
+        try
+        {
+          var con = $('name-address[nameaddress="vm.currentShipment.PackageDefaults.Consignee"]');
+
+          let a = {
+            //conCompany: $(con).find('input[name="company"]').val().trim().toUpperCase().replaceAll(' ','') ,
+            conAddress1: $(con).find('input[name="address1"]').val().trim().toUpperCase(),
+            conCity: $(con).find('input[name="city"]').val().trim().toUpperCase(),
+            conState: $(con).find('input[name="stateProvince"]').val().trim().toUpperCase(),
+            conPostalCode: $(con).find('input[name="postalCode"]').val().trim().substring(0, 5)
+          };
+
+          let b = {
+            //conCompany: CustomerOrderObject.shipAddress1.CONSIGNEE_COMPANY.trim().toUpperCase().replaceAll(' ', '') ,
+            conAddress1: CustomerOrderObject.shipAddress1.trim().toUpperCase(),
+            conCity: CustomerOrderObject.shipCity.trim().toUpperCase(),
+            conState: CustomerOrderObject.shipState.trim().toUpperCase(),
+            conPostalCode: CustomerOrderObject.shipZipCode.trim().substring(0, 5)
+          };
+
+          /* Remove all the spaces in the strings so we get a good comparison, not one that's thrown off by an extra space. */
+          let aa = JSON.stringify(a).replaceAll(' ', '');
+          let bb = JSON.stringify(b).replaceAll(' ', '');
+
+          /* Quick comparison to see if the strings match. */
+          if (aa != bb)
+          {
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + CustomerOrderObject.orderNumber + ' (' + CustomerOrderObject.orderId + '). Primary order data to follow.', Data: a });
+            Logger.Log({ Source: 'CheckForMatchingConsignee()', Message: 'Could not add order ' + CustomerOrderObject.orderNumber + ' (' + CustomerOrderObject.orderId + '). Subsequent order data to follow.', Data: b });
+          }
+
+          return (aa == bb);
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'CheckForMatchingConsignee()', Error: error });
+        }
+      }
+
+// Source: AAFES (GEDC) (GEDC)_AAFES CBR_1682.cs
+// NewShipment(shipmentRequest) // returns void
+this.NewShipment = function (shipmentRequest) {
+        $(document).ready(function() {
+            $('[id="Consignee Name Address"]').on('keydown', $('[id="Consignee Name Address"]').find("input[name='code']"), function(e) { 
+                var keyCode = e.keyCode || e.which; 
+
+                if (keyCode == 9) { 
+                    e.preventDefault(); 
+                    // look up the address on tab
+                    $('[caption="Consignee Name Address"]').find('button[ng-click="search(nameaddress)"]').click();
+                } 
+            });
+        });
+    }
+
+// Source: AGCS (ffund)_Fireman's Fund Reference Configuration Rule_21.cs
+// CheckValidation(referenceValue, referenceList) // returns throws an error when the reference is not valid
+this.CheckValidation = function(referenceValue, referenceList) {
+        var readyToShip = false;
+        for (var item in referenceList) {
+            //alert(referenceList[item]);
+            if (referenceList[item].Value == referenceValue) {
+                readyToShip = true;
+                break;
+            }
+        }
+        if (readyToShip === false) throw { message: "Unable to validate shipment", errorCode: "001" };
+    };
+
+// Source: Alight Solutions (ALISOL)_DirectToMobileCBR_2434.cs
+// this.PreShip(shipmentRequest, userParams) // returns false when validation fails; otherwise undefined
+    this.PreShip = function (shipmentRequest, userParams) 
+	{
+		debugger;
+		
+		shipmentRequest = SetShipmentRequestUserData(shipmentRequest);
+		
+		if (CurrentShipmentIsD2M())
+		{
+			
+			var loadedEmailValue = shipmentRequest.PackageDefaults.Consignee.Email;
+			
+			if(loadedEmailValue === '')
+			{
+				alert("Recipient email address is required for Direct to Mobile shipments");
+				return false;
+			}
+			
+			SetReturnDeliveryCheckBoxAndInsurance(true,shipmentRequest);
+			
+			SetReturnDeliveryAddressEmail(shipmentRequest.PackageDefaults.Consignee.Email);			
+					
+			if (shipmentRequest.Packages !== undefined) 
+			{
+				for (var x = 0; x < shipmentRequest.Packages.length; x++) 
+				{
+					shipmentRequest.Packages[x].ReturnDeliveryAddressEmail = shipmentRequest.PackageDefaults.Consignee.Email;
+					shipmentRequest.Packages[x].CommercialInvoiceMethod = 0;
+				}
+			}												
+		}		
+    };
+
+// EnableD2MShipping() // returns undefined; may alert on error response
+    function EnableD2MShipping()
+	{		
+		var userMethodParams = { "ActionMessage": "EnableD2MShipping"};
+            
+		var data = { Data: JSON.stringify(userMethodParams), UserContext: client.userContext };
+		
+		var response = thinClientAPIRequest('UserMethod', data, false);
+		
+		if (response!=undefined && response.responseJSON.ErrorCode !== 0) 
+		{
+			alert("Error while executing UserMethod: " + response.responseJSON.ErrorCode);
+		}
+		else 
+		{				
+			vm.profile = DecodeReturnString(response.responseJSON.Data);
+		}
+	}
+
+// Source: Alliance Animal (ALAMAL)_AllianceAnimal Client SBR_1749.cs
+// PostLoad(loadValue, shipmentRequest) // returns void
+this.PostLoad = function(loadValue, shipmentRequest) {
+        if (shipmentRequest.PackageDefaults.ErrorCode == 1)
+        {
+           alert(shipmentRequest.PackageDefaults.ErrorMessage);
+           shipmentRequest.PackageDefaults.ErrorCode = 0;
+        }
+
+        
+    }
+
+// Source: AlstonBird (ALBI)_ClientBusinessRules_1866.cs
+// function delegateTravelerLabel(shipmentRequest) // returns void
+        function delegateTravelerLabel(shipmentRequest) {
+
+            //vm.currentShipment.PackageDefaults.Service = vm.selectedServices[0];            
+            var data = { Data: JSON.stringify(shipmentRequest) };
+            
+            debugger;
+            
+            var result = client.thinClientAPIRequest('UserMethod', data, false).responseJSON;
+            var travelerlabelresp = JSON.parse(atob(result.Data));
+            var travelerlabelpdf64 = travelerlabelresp.DocumentResponses[0].PdfData[0];
+            
+            // This works but only when the user switches to the new tab and refereshes page
+            var dataURI = "data:application/pdf;base64," + travelerlabelpdf64;
+            window.open(dataURI, '_blank');
+
+            // This also fails
+            //let pdfWindow = window.open("")
+            //setTimeout(() => pdfWindow.document.title = 'Delegate Label',50);
+            //const iframe = pdfWindow.document.createElement('iframe');
+            //iframe.width = '100%';
+            //iframe.height = '100%';
+            //iframe.title = 'PDF Viewer';  
+            //iframe.src = 'data:application/pdf;base64, ' + encodeURI(travelerlabelpdf64);
+            //pdfWindow.document.body.appendChild(iframe);
+            
+            
+            // Original code that fails on the document.write call
+            //let pdfWindow = window.open("")
+            //setTimeout(() => pdfWindow.document.title = 'Delegate Label',50);
+            //pdfWindow.document.write(
+            //    "<iframe width='100%' height='100%' src='data:application/pdf;base64, " +
+            //    encodeURI(travelerlabelpdf64) + "'></iframe>"
+            //    )            
+
+            alert("Delegate Label Created");
+        }
+
+// function validateClientMatter() // returns void
+    this.validateClientMatter = function() {
+
+        if( theVM.currentShipment.Packages[0].ShipperReference === null) {
+            alert('Client Matter field is required. Please enter a valid client matter number!');
+            setFocus('input[name="ShipperReference_txt"]');            
+            return;
+        }
+        
+        var cmFound = false;
+        var cm = theVM.currentShipment.Packages[0].ShipperReference;
+        var cmValidationList = theVM.fieldOptions.ShipperReference.FieldOptionValidations;
+        for(var i = 0; i < cmValidationList.length; i++) {
+            var cmValidationItem = cmValidationList[i];
+            if( cmValidationItem.Value == cm) {
+                cmFound = true;
+                break;
+            }
+        }
+        if( cmFound )
+            theVM.saveLicensePlate();
+        else {
+            alert("Client Matter field is invalid. Please enter a valid client matter number!");
+            setFocus('input[name="ShipperReference_txt"]');                        
+        }
+    }
+
+// Source: Altard State (ALTARDSTATE)_Altard State Client Rules_1668.cs
+// function ShowAlert(title, msg) // returns undefined
+    function ShowAlert(title, msg){
+        vm.currentShipment.AlertTitle = title;
+        vm.currentShipment.AlertMessage = msg;
+        $alertModal.modal('show');
+    }
+
+// this.PostLoad(loadValue, shipmentRequest) // returns undefined
+    this.PostLoad = function(loadValue, shipmentRequest) {
+        shipmentRequest.SendViewModelToClient = this.GetViewModelFromTemplate;
+        shipmentRequest.itemSkuTextChanged = this.handleItemSkuTextChanged;
+        shipmentRequest.viewPackedBoxListModal = this.handleViewPackedBoxListModal;       
+        if( shipmentRequest.PackageDefaults.Consignee.Company == "Order not found") {
+            ShowAlert("Order Error", "Order not found");
+            angular.element('[ng-model="vm.loadValue"]').focus();    	
+        } else {
+            var json = jQuery.parseJSON(shipmentRequest.Packages[0].UserData1);
+    	    orderItemList = json;
+    	    shipmentRequest.orderItemListPB = json;
+    	    //vm.getWeight();
+            angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	
+        }
+    };
+
+// this.PreShip(shipmentRequest, userParams) // returns undefined
+    this.PreShip = function(shipmentRequest, userParams) {
+        shipmentRequest.SendViewModelToClient = this.GetViewModelFromTemplate;
+
+	    // Verify all items have been packed
+	    var omscheck = shipmentRequest.Packages[0].MiscReference4;
+
+    	// If OMS check for items not fully packed and prompt, otherwise disallow partial packs
+    	if( omscheck == "OMS") {
+    		if( orderItemList !== null)	{
+    			var orderItemListCount1 = orderItemList.length;
+    			for (var i = 0; i < orderItemListCount1; i++) {
+    				if( orderItemList[i].qtyordered != orderItemList[i].qtyshipped ) {
+    					var msg = 'SKU: ' + orderItemList[i].itemsku + ' has not been fully packed. Click OK to continue or Cancel to continue packing.';
+    					var r = confirm(msg);
+    					if( r === false )
+    						throw Error("Ship cancelled - please continue packing.");
+    				}
+    			}
+    		}
+    	} else {
+    		if( orderItemList !== null)	{
+    			var orderItemListCount = orderItemList.length;
+    			for (var j = 0; j < orderItemListCount; j++) {
+    				if( orderItemList[j].qtyordered != orderItemList[j].qtyshipped ) {
+    					var msg2 = 'SKU: ' + orderItemList[j].itemsku + ' has not been fully packed.';
+    					throw Error(msg2);
+    				}
+    			}
+    		}
+    	}
+	    var itempackedlist = JSON.stringify(orderItemList);
+
+    	//alert("itempackedlist JSONized: " + itempackedlist);
+
+  
+   	    userParams.PACKEDDATA = itempackedlist;
+        };
+
+// this.handleItemSkuTextChanged(event) // returns undefined
+    this.handleItemSkuTextChanged = function(event) {
+
+        var newitemsku = this.Packages[0].MiscReference10;
+		if( newitemsku.trim().length === 0 )
+			return;
+
+        //debugger;
+        
+		//alert("Item number: " + orderItemList[1].itemcode + "  qtyordered: " + orderItemList[1].qtyordered + " qtyshipped: " + orderItemList[1].qtyshipped);
+
+		// Check for item code SHIPCOMPLETE indicating that this order is complete
+		if( newitemsku == "SHIPCOMPLETE") {
+
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference5 = "SHIPCOMPLETE";
+		    //var pkg = sox_current_shipment.packages[sox_current_package_idx];
+			//pkg.misc_reference_5 = "SHIPCOMPLETE";
+			//$("#item_sku_txt").val("");			
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+			vm.checkShip();
+			return;
+		}
+
+		// Check for SHIP indicating that this box is complete but not the whole order
+		if( newitemsku == "SHIP") {
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference5 = "";		    
+		    //var pkg = sox_current_shipment.packages[sox_current_package_idx];
+			//pkg.misc_reference_5 = "";
+			//$("#item_sku_txt").val("");			
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";			
+			vm.checkShip();
+			return;
+		}
+
+		// Pad the input sku to 14 digits with leading zeros
+		var skulen = newitemsku.length;
+		var newitemskupad = "";
+		if( skulen == 6)
+			newitemskupad = '00000000' + newitemsku;
+		else if( skulen == 7)
+			newitemskupad = '0000000' + newitemsku;
+		else if( skulen == 8)
+			newitemskupad = '000000' + newitemsku;
+		else if( skulen == 9)
+			newitemskupad = '00000' + newitemsku;
+		else if( skulen == 10)
+			newitemskupad = '0000' + newitemsku;
+		else if( skulen == 11)
+			newitemskupad = '000' + newitemsku;
+		else if( skulen == 12)
+			newitemskupad = '00' + newitemsku;
+		else if( skulen == 13)
+			newitemskupad = '0' + newitemsku;
+		else
+			newitemskupad = newitemsku;
+			
+		newitemsku = newitemskupad;
+
+		//alert("newitemsku: " + newitemsku);
+
+        //alert("orderItemList length: " + orderItemList.length);
+        
+        //alert("orderItemList itemsku: " + orderItemList[0].itemsku);
+       
+       //debugger;
+       
+		// Verify item sku is on this order
+		var itemFound = false;
+		var orderItemListCount = orderItemList.length;
+		for (var i = 0; i < orderItemListCount; i++) {
+		    if( itemFound === true)
+		        break;
+			var skuarr = orderItemList[i].itemsku.split(",");
+			for(var j = 0; j < skuarr.length; j++) {
+				if( skuarr[j] == newitemsku ) {
+					itemFound = true;
+					break;
+				}
+			}
+		}
+		
+		//alert("itemFound: " + itemFound);
+		
+		if( itemFound === false) {
+			ShowAlert("Pack Error","This SKU (" + newitemsku + ") does not belong in this shipment. Please remove it before proceeding.");
+            $("#mr10").css("background-color","Red");        	        				
+            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+            angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+            return;			
+		}
+
+		// Search for itemcode
+		itemFound = false;
+		var fullyPacked = false;
+		var svSkuCode = "";
+		var orderItemListCount = orderItemList.length;
+		for (var i = 0; i < orderItemListCount; i++) {
+			if( itemFound == true)
+				break;
+			
+			var nextitem = false;
+			var skuarr = orderItemList[i].itemsku.split(",");
+			for(var j = 0; j < skuarr.length; j++) {
+				if( skuarr[j] == newitemsku ) {
+					if( orderItemList[i].qtyshipped == orderItemList[i].qtyordered ) {
+						fullyPacked = true;
+						nextitem = true;
+						break;
+					} else {
+						itemFound = true;
+						fullyPacked = false;
+						var tmpqtyshipped = Number(orderItemList[i].qtyshipped);
+						var tmptotqtyshipped = Number(orderItemList[i].totqtyshipped);
+						var tmpqtyordered = Number(orderItemList[i].qtyordered);
+						if( (tmpqtyshipped + tmptotqtyshipped) < tmpqtyordered) {
+							var calcqty1 = tmpqtyshipped + 1 + tmptotqtyshipped;
+							var calcqty2 = tmpqtyordered - tmpqtyshipped - tmptotqtyshipped;
+							/*alert("Calc quantity 1: " + calcqty1 + " qtyordered: " + tmpqtyordered);*/
+							/*alert("Calc quantity 2: " + calcqty2);*/
+							if( calcqty1 <= tmpqtyordered) {
+								var tmpnewqty = tmpqtyshipped + 1;
+								orderItemList[i].qtyshipped = tmpnewqty;
+								orderItemList[i].modified = true;
+								svSkuCode = newitemsku;
+								/*alert("Item added to box ok");*/
+							} else {
+							    ShowAlert("Pack Error","Scanned quantity for SKU (" + newitemsku + ") would exceed order quantity. Please remove extras from the shipment and try again.");
+								$("#mr10").css("background-color","Red");        	        				
+                                vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+                                angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+								return;						
+							}
+						} else {
+							ShowAlert("Pack Alert","This item has been fully packed");
+							$("#mr10").css("background-color","Red");        	        				
+                            vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+                            angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+							return;						
+						}
+					}
+				}
+			}
+			if( nextitem == true)
+				continue;
+		}
+
+		if( fullyPacked == true) {
+			ShowAlert("Pack Alert","This item has been fully packed");
+			$("#mr10").css("background-color","Red");        	        				
+			vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+			angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+			return;					
+		}
+
+		$("#mr10").css("background-color","Green");        	    	
+
+		//if( itemFound == false) {
+		//	ShowAlert("Pack Error 2","This SKU (" + newitemsku + ") does not belong in this shipment. Please remove it before proceeding.");
+		//} else {
+        //    $("#mr10").css("background-color","Green");        	    	
+		//}
+
+        vm.currentShipment.Packages[vm.packageIndex].MiscReference10 = "";
+        angular.element('[ng-model="vm.currentShipment.Packages[vm.packageIndex].MiscReference10"]').focus();    	                                
+		}
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// this.PostLoad(loadValue, shipmentRequest) // returns void
+    this.PostLoad = function(loadValue, shipmentRequest) {
+        debugger;
+        if (loadValue.toUpperCase() == 'TEST')
+        {
+            alert("Test data for batches has been loaded");
+        }
+    }
+
+// Source: Asia Waterjet FZCO (ASIAWATERJETFZCO)_Asia_WaterJet_CBR_1870.cs
+// PageLoaded(location) // returns void
+    this.PageLoaded = function(location) {
+        //22 May 2023 - Below Code (Line 4 to 7) is added to navigate to Shipping screen on login instead of Welcome Screen.
+        if (location === '/') {
+            document.location = '#!/shipping';
+        }
+
+        $(".dropdown-menu li:first a").text("Shipping");
+        if (location === '/shipping') {
+            //06 June 2023 - Below Code (Line 14 to 20) is added to remove the unwanted weight Units.
+            $(document).ready(function() {
+                setTimeout(function() {
+                    $('select:eq(24) option[label="OZ"]').remove();
+                    $('select:eq(24) option[label="MG"]').remove();
+                    $('select:eq(24) option[label="G"]').remove();
+                }, 1500);
+            });
+
+           
+            this.vm.returnStatus = this.GetReturnStatus();
+            
+            var UserCountry=this.vm.profile.UserInformation.Address.Country.toLowerCase();
+            pickuplink='https://www.ups.com/'+ UserCountry +'/en/business-solutions/pickup-dropoff-options/ups-on-call-pickup.page';
+             var desc = [
+                '<span style="font-weight:bold;">Instructions</span><br>Shipments using service level as UPS Worldwide Express Freight must be palletized, stackable, fork-liftable, shrink-wrapped and banded to the skip.<br/>Shipments destined to Saudi Arabia must be packaged separately.<br/><b>For shipments originating from USA:</b><br>i.	Email all export documents ( Ex : Invoice, Shipper’s export declaration and packing list) to <a href="mailto:internationaldocs.us@ups.com">internationaldocs.us@ups.com</a> with the tracking number as the subject header of the email on the same day the shipment is picked up<br>ii.	For shipments valued over USD 2,500: <br>1.	Shippers filing directly with the Census Bureau must supply the AES Internal Transaction Number (ITN) at the time of pickup by UPS. The ITN should be placed on the label or on the invoice as close to the total value as possible.<br>2.	UPS can file the AES information on behalf of the shipper for a fee. The shipper must supply all necessary information for the filing, including their EIN number, License/License Exemption/License Exception and Export Control Classification Number (ECCN).<br><b>For shipments originating from EU countries:</b><br>i.	Shippers Export Declaration (SED)/ Export Procedure:<br>1.	First step: the exporter or his representative has to lodge an export declaration at the customs house of export responsible for supervising the place where the exporter is established. The customs house of export is responsible for granting the release for export and issue an Export Accompanying Document (EAD) with a unique Movement Reference Number (MRN).<br>2.	Second step: the carrier launches the MRN electronically to the customs house of exit that is responsible to supervise the physical export.<br><b>Please contact your local UPS customer care to schedule a pick-up at your convenience.'
+            ];
+            
+            var name = document.querySelector("body > div.main-container > div.container-fluid.body-content.body > div > div.ng-scope > div > div > div:nth-child(2)");
+            name.appendChild(document.createElement('div')).innerHTML = desc;
+            
+            alert('Please click on "Close Manifest" to transfer all your shipping information to UPS.')
+        }
+	
+		 if (location === '/closemanifest') {
+        $('.panel-footer').append('<div style="margin-left:10px"><b>For scheduling pick-up, please <a target="_blank" href="'+ pickuplink +'">click here</a> to access the contact details of nearest UPS center.</div>'); 
+    
+    }
+    }
+
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {
+
+        var freightfound = 0;
+        var frieghterr = 0;
+
+        for (var i = 0; i <= shipmentRequest.Packages.length - 1; i++) {
+            if (parseInt(shipmentRequest.Packages[i].Weight.Amount) >= 70) {
+                freightfound = "1";
+            }
+            if (freightfound == "1") {
+                if (parseInt(shipmentRequest.Packages[i].Weight.Amount) < 70) {
+                    frieghterr = "1";
+                }
+            }
+        }
+        if (freightfound == "0") {
+            shipmentRequest.PackageDefaults.Service = {
+                Symbol: "CONNECTSHIP_UPS.UPS.EXPSVR"
+            }
+        } else {
+            if (frieghterr == "0") {
+                shipmentRequest.PackageDefaults.Service = {
+                    Symbol: "CONNECTSHIP_UPS.UPS.EXPFRT"
+                }
+            } else {
+                alert("Cannot create one shipment with 2 different service levels.");
+            }
+        }
+        for (var i = 0; i <= shipmentRequest.Packages.length - 1; i++) {
+            if (shipmentRequest.PackageDefaults.Service.Symbol == "CONNECTSHIP_UPS.UPS.EXPFRT") {
+                shipmentRequest.Packages[i].Packaging = "CUSTOMER_PALLET";
+            }
+            shipmentRequest.Packages[i].ImportDelivery = true;
+
+        }
+        if (shipmentRequest.PackageDefaults.OriginAddress.Country == "US") {
+            if ($('select[name="CarrierInstructions"]').val() == '?') {
+                alert("Please confirm shipment value");
+                throw ("Excpetion");
+            } else {
+                if (shipmentRequest.Packages[0].ConsigneeReference == null || shipmentRequest.Packages[0].ConsigneeReference == "") {
+                    if ($('select[name="CarrierInstructions"]').val() == 'string:Yes') {
+                        alert("Please Enter ITN/ EES number in ConsigneeReference");
+                        throw ("Excpetion");
+                    }
+                }
+            }
+        } else {
+            if (shipmentRequest.PackageDefaults.OriginAddress.Country != "undefined") {
+                alert("For EU Exports : Shipments above 1000 EUR, a formal export declaration is required. A formal electronic export declaration must be sent to customs authorities by the exporter or their representative. Customs authorities grant the release for export and issue an Export Accompanying Document (EAD) with a unique Movement Reference Number (MRN). The EAD has to accompany the shipment. UPS is responsible for the exit clearance at the EU border.")
+            }
+        }
+    }
+
+// PostShip(shipmentRequest, shipmentResponse) // returns void
+    this.PostShip = function(shipmentRequest, shipmentResponse) {
+        let confirmReprocess = confirm("Do you want to create more shipments?" + "\n" + " OK = YES and CANCEL = NO");
+
+        if (confirmReprocess) {
+            document.location = '#!/shipping';
+        } else {
+            document.location = '#!/closemanifest';
+        }
+    }
+
+// Source: Avery Dennison (Avery)_Avery Reference Rule_28.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams){
+        // Chris Smith - Changed from Ref4 through Ref8 TO Ref2 through Ref6
+        CheckValidation(shipmentRequest.Packages[0].MiscReference2,
+            this.vm.profile.FieldOptions.MiscReference2.FieldOptionValidations);
+        CheckValidation(shipmentRequest.Packages[0].MiscReference3,
+            this.vm.profile.FieldOptions.MiscReference3.FieldOptionValidations);
+        CheckValidation(shipmentRequest.Packages[0].MiscReference4,
+            this.vm.profile.FieldOptions.MiscReference4.FieldOptionValidations);
+        CheckValidation(shipmentRequest.Packages[0].MiscReference5,
+            this.vm.profile.FieldOptions.MiscReference5.FieldOptionValidations);
+        CheckValidation(shipmentRequest.Packages[0].MiscReference6,
+            this.vm.profile.FieldOptions.MiscReference6.FieldOptionValidations);
+            
+        //shipmentRequest.Packages[0].ConsigneeReference = userID
+        shipmentRequest.Packages[0].ShipperReference = shipmentRequest.Packages[0].MiscReference2 + "-" + shipmentRequest.Packages[0].MiscReference3 + "-" + shipmentRequest.Packages[0].MiscReference4 + "-" + shipmentRequest.Packages[0].MiscReference5 + "-" + shipmentRequest.Packages[0].MiscReference6
+    }
+
+// function CheckValidation(checkValue, checkField) // returns validated value or throws Error
+    function CheckValidation(checkValue, checkField){
+        
+        for(var item in checkField){
+            if(checkField[item].Value == checkValue)return checkValue;
+        }
+        throw new Error(checkValue + " is not a valid value.");
+    }
+
+// Source: Barnes & Noble Education, Inc. (BNEDUCAT)_BarnesAndNoble Client BR_1588.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {   
+        var cont = this.ValidateShipment(shipmentRequest);
+        if(!cont){
+            throw {errorCode:999,message:"You cannot ship  greater than 50lb."};
+        }
+    }
+
+// this.ValidateShipment(shipmentRequest) // returns boolean
+this.ValidateShipment = function(shipmentRequest){
+    var weight = shipmentRequest.Packages[0].Weight;
+    var weightLimit = 0;
+    var totalWeight = 0;
+            weightLimit = 50;
+    var i;
+    for(i = 0; i < shipmentRequest.Packages.length; i++)
+    {
+        var pkgWeight = parseFloat(shipmentRequest.Packages[i].Weight.Amount);
+        if(pkgWeight > weightLimit){
+           return confirm("One or more packages is 50lb or greater.  Are you sure you want to continue?");
+        //throw {errorCode:999,message:"You cannot ship  greater than " + weightLimit + " " + weight.Units + "."};
+    } else{
+        return true;
+    }
+    }
+
+}
+
+// this.ValidatePackage(pkg) // returns void
+this.ValidatePackage = function(pkg){
+    debugger;
+    var weight = pkg.Weight;
+    var weightLimit = 0;
+    var totalWeight = 0;
+            weightLimit = 50;
+
+        var pkgWeight = parseFloat(pkg.Weight.Amount);
+        if(pkgWeight > weightLimit){
+            alert("Previous package weight is greater than 50lb.");
+        } 
+    }
+
+// Source: Ben Bridge Jewelers (BENBRIJEW)_Ben Bridge Client Rules_1865.cs
+// NewShipment(shipmentRequest) // returns void
+this.NewShipment = function(shipmentRequest) { 
+        shipmentRequest.SendViewModelToClient = this.GetViewModelFromTemplate;
+        shipmentRequest.AlertTitle = '';
+        shipmentRequest.AlertMessage = '';
+        angular.element('[ng-model="vm.loadValue"]').focus();
+    }
+
+// PostLoad(loadValue, shipmentRequest) // returns void
+this.PostLoad = function(loadValue, shipmentRequest) {
+        
+        shipmentRequest.SendViewModelToClient = this.GetViewModelFromTemplate;
+
+        if( shipmentRequest.Packages[0].UserData1 !== null )	{
+		    if( shipmentRequest.Packages[0].UserData1.length > 0 ) {
+		        if( shipmentRequest.Packages[0].UserData1.substring(0,1) == "~") {
+                    shipmentRequest.AlertTitle = "ShipExec Alert";
+                    shipmentRequest.AlertMessage = shipmentRequest.Packages[0].UserData1.substring(1);
+                    angular.element('[ng-model="AlertModalNewShipment"]').modal('show');
+		            }
+		        else {
+                    shipmentRequest.AlertTitle = "ShipExec Alert";
+                    shipmentRequest.AlertMessage = shipmentRequest.Packages[0].UserData1;
+                    angular.element('[ng-model="AlertModal"]').modal('show');
+		        }
+			}
+		}
+    }
+
+// Source: bhargavitest (BHARGAVITEST)_ClientScriptTest_1591.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {  
+        alert('Test');
+    }
+
+// Source: BHARTIYA HANDICRAFTS (BHARTIYAHCFT)_ISMEA_FTP_1584.cs
+// getFTPUploaded() // returns void
+function getFTPUploaded() {
+        var selectedShipper = document.getElementById("Shipper").value;
+		var shipper = '';
+		debugger;
+		if (selectedShipper !== "")
+		{
+			selectedShipper = JSON.parse(selectedShipper);
+			shipper = selectedShipper.Name;
+		}
+        var data = { Action: 'ExportFTP', Shipper: shipper };
+
+        $.post('api/ShippingService/UserMethod',
+            {UserContext: userContext, Data: JSON.stringify(data) },
+            function(response, status, xhr) {
+            }
+        ).done(function(response) {
+            debugger;
+            var resp = JSON.stringify(response);
+            resp = JSON.parse(resp);
+            debugger;
+            if (resp.Data !== "" && resp.Data !== undefined)
+            {
+                alert('Lastest File: \n' + DecodeReturnString(resp.Data).substring(0,resp.Data.length -1));
+            }
+            else if (resp.ErrorMessage !== undefined)
+            {
+                if (resp.ErrorCode == '104')
+                {
+                    alert('Lastest File: \nNo files found!');
+                }
+                else
+                {
+                    alert(resp.ErrorMessage);
+                }
+            }
+        });
+    }
+
+// DecodeReturnString(data) // returns parsed string or undefined on error
+function DecodeReturnString(data)
+    { 
+        try
+        { 
+            return JSON.parse($("<div />").html(data).text());
+        }
+        catch (error)
+        { 
+            console.log(error.name);
+            console.log(error.message);
+            console.log(data);
+        }
+    }
+
+// Source: Boston Scientific (BOSTON)_Admin_Profile_CBR_2481.cs
+// PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {  
+     // We will require the actual shipment to send weight and dims in kg/cm
+     // However, because US Vendors are sending the product the client gui needs to be in Lb/In.
+    
+      debugger;
+      
+       //cm=in/0.39370
+     this.vm.currentShipment.Packages.forEach(pkg => {
+         
+         if(pkg.Dimensions === undefined || pkg.Dimensions.Units === undefined ||  pkg.Dimensions.Length === undefined ||  pkg.Dimensions.Width === undefined ||  pkg.Dimensions.Height === undefined){
+           throw Error('ERROR:' + " Missing Dimensions");
+         }
+         
+         
+         if (pkg.Dimensions.Units === 0){
+             pkg.Dimensions.Length = Number(pkg.Dimensions.Length/0.39370).toFixed(2);
+             pkg.Dimensions.Width = Number(pkg.Dimensions.Width/0.39370).toFixed(2);
+             pkg.Dimensions.Height = Number(pkg.Dimensions.Height/0.39370).toFixed(2);
+             pkg.Dimensions.Units = 1;
+         }
+         
+     });
+      
+      
+     //kg = lbs*0.453592    
+     this.vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Weight.Units === "LB"){
+             pkg.Weight.Amount = Number(pkg.Weight.Amount * 0.453592).toFixed(2);
+             pkg.Weight.Units = "KG";
+         }
+         
+     });
+     
+      if(shipmentRequest.Packages[0].AesTransactionNumber !== null){
+              shipmentRequest.Packages[0].Comments = shipmentRequest.Packages[0].Comments + "\n ITN/AES Filer " + shipmentRequest.Packages[0].AesTransactionNumber;
+             
+          }
+   
+    }
+
+// PreRate(shipmentRequest, userParams) // returns void
+    this.PreRate = function(shipmentRequest, userParams) {
+     // We will require the actual shipment to send weight and dims in kg/cm
+     // However, because US Vendors are sending the product the client gui needs to be in Lb/In.
+    
+     // debugger;
+     
+      this.vm.currentShipment.Packages.forEach(pkg => {
+         
+         if(pkg.Dimensions === undefined || pkg.Dimensions.Units === undefined ||  pkg.Dimensions.Length === undefined ||  pkg.Dimensions.Width === undefined ||  pkg.Dimensions.Height === undefined){
+           throw Error('ERROR:' + " Missing Dimensions");
+         }
+         
+         
+         if (pkg.Dimensions.Units === 0){
+             pkg.Dimensions.Length = Number(pkg.Dimensions.Length/0.39370).toFixed(2);
+             pkg.Dimensions.Width = Number(pkg.Dimensions.Width/0.39370).toFixed(2);
+             pkg.Dimensions.Height = Number(pkg.Dimensions.Height/0.39370).toFixed(2);
+             pkg.Dimensions.Units = 1;
+         }
+         
+     });
+     
+     
+     //kg = lbs*0.453592    
+     this.vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Weight.Units === "LB"){
+             pkg.Weight.Amount = Number(pkg.Weight.Amount * 0.453592).toFixed(2);
+             pkg.Weight.Units = "KG";
+         }
+         
+     });
+    }
+
+// Source: Boston Scientific (BOSTON)_Boston Coyol Client Business Rules_2474.cs
+// this.PageLoaded(location) // returns undefined
+this.PageLoaded = function(location) {  
+    if (location === '/shipping') {
+       // debugger;
+       
+       // Get the Logon Profiles Custom Data Values Which Determine the Shipping Options Available to them
+        if (this.vm.profile.UserInformation.Address.CustomData === "undefined" || this.vm.profile.UserInformation.Address.CustomData === null){
+           throw ({ message: 'User Is Missing Required Custom Data Values in Management Studio User Manager Setup Under Address Tab.', errorCode: '' }); 
+        }
+     
+        this.GetCustomDataItems();
+            console.log(st_AddressType + ' ' + sf_AddressType + ' ' + uPS_Service + ' ' + return_Type + ' ' + user_description + ' ' + dims + ' ' + user_orderNumber + ' ' + cost_Center + ' ' + user_partNumber + ' ' + insured_Value);
+        
+        this.ShippingLoaded();
+        
+        var checkExist = setInterval(function () 
+        {
+            if (($) && ($('input[type=text][ng-model="vm.loadValue"]'))) 
+            {
+                clearInterval(checkExist);
+                $('#sf_Address').focus();
+                $("#sf_Address").prop("selectedIndex", 0);
+                $("#st_Address").prop("selectedIndex", 0);
+                $("#svc_select").prop("selectedIndex", 5);
+            
+                
+            }
+        }, 400);
+        
+        //Get Address Book Data
+        var addressBookData = {
+            CompanyId: client.userContext.CompanyId,
+            UserId: client.userContext.UserId
+        };
+        AddressBooks = client.thinClientAPIRequest('GetAddressBooks_AddressBook', addressBookData, false).responseJSON;
+        AddressBooks.AddressBooks.forEach(item => {
+            if(item.Name === "COYOL_ShipToAddress"){
+                shipToAddressBookId = item.Id;
+            }
+            if(item.Name === "COYOL_ShipFromAddress"){
+                shipFromAddressBookId = item.Id;
+            }
+        });
+        console.log("shipToAddressBookId: " + shipToAddressBookId);
+        console.log("shipFromAddressBookId " + shipFromAddressBookId);    
+        
+        //Get the Shipper Account Number from Profile
+        this.GetShipperAccount(); 
+        console.log(thisShipperAccount);
+
+        this.vm.shipToAddressBookEntries = this.GetShipToAddresses();
+        //Setup Ship To Address Drop Down Change Event
+       $('body').on('change', '#st_Address', function(e) {             // Not seeing a difference between using either of these as far as GUI reacts.
+            var userSelectedShipToCompany = $('#st_Address option:selected').text();
+            console.log("User Selected ShipTo Company :" + userSelectedShipToCompany);
+            for(let i = 0; i < ShipToAddressBook.AddressBookEntries.length; i++){
+                if(userSelectedShipToCompany ==  ShipToAddressBook.AddressBookEntries[i].Company){
+                    SelectedShipToAddress = ShipToAddressBook.AddressBookEntries[i];
+                    vm.populateShipToAddress();
+                }
+            } 
+            
+            var checkExist = setInterval(function () 
+            {
+                if (($) && ($('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]'))) 
+                {
+                    clearInterval(checkExist);
+                    $('input[type=text][ng-model="nameaddress.Address2"]').focus();
+                    $('input[type=text][ng-model="nameaddress.Address3"]').focus();
+                    $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').focus();
+                    
+                    
+                }
+            }, 300);
+        });
+
+        
+        this.vm.returnAddressBookEntries = this.GetShipFromAddresses();
+        //Setup Ship From Address Drop Down Change Event
+        $('body').on('change', '#sf_Address', function(e) {
+            //debugger;
+            SelectedReturnAddress = null;
+            var userSelectedReturnCompany = $('#sf_Address option:selected').text();
+            console.log("User Selected Return Company :" + userSelectedReturnCompany);
+            for(let i = 0; i < ShipFromAddressBook.AddressBookEntries.length; i++){
+                if(userSelectedReturnCompany ==  ShipFromAddressBook.AddressBookEntries[i].Company){
+                    SelectedReturnAddress = ShipFromAddressBook.AddressBookEntries[i];
+                    vm.populateReturnAddress();
+                }
+            } 
+            var checkExist = setInterval(function () 
+            {
+                if (($) && ($('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]'))) 
+                {
+                    /* Stop the timer. */
+                    clearInterval(checkExist);
+                    $('input[type=text][ng-model="nameaddress.Address2"]').focus();
+                    $('input[type=text][ng-model="nameaddress.Address3"]').focus();
+                    $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').focus();
+                  
+                }
+            }, 300);
+         
+        });
+        
+        $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeclaredValueCustoms.Amount"]', function(e){
+             
+            if(vm.currentShipment.Packages[vm.packageIndex].DeclaredValueCustoms.Amount > 2500 ){
+                alert('ITN/AES Transaction Number Required');
+                vm.currentShipment.Packages[0].SedMethod = 2;
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].AesTransactionNumber"]').focus();
+                
+            }
+        });
+        
+        
+       // $('#billWeight').after('<div id="billable_weight"><strong id="billable_weight_text"></strong></div>');
+       // $('#volumetricWeight').after('<div id="custom_volumetric"><span id="volumetric_value_text"></span></div>');
+       
+        $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]', function(e){
+            // debugger;
+              totalShipWeight = 0;
+              
+              vm.currentShipment.Packages.forEach(pkg => {
+                totalShipWeight += Number(pkg.Weight.Amount);
+              });
+              
+              totalShipWeight = Number(totalShipWeight).toFixed(2);
+              //console.log(totalShipWeight);
+             
+              document.getElementById('totWgt').innerHTML = totalShipWeight;
+         });
+       
+          $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Length"],[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Width"],[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Height"]', function(e){
+           
+            totalVolumetricResult = 0;
+           
+            vm.currentShipment.Packages.forEach(pkg => {
+                totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+            });
+            //debugger;
+             totalVolumetricResult = Number(totalVolumetricResult).toFixed(2);
+            console.log(totalVolumetricResult);
+         
+            $('#volumetric_value_text').html(totalVolumetricResult+' Lbs');
+         
+            document.getElementById('totVolumeWgt').innerHTML = totalVolumetricResult;
+            
+            if (totalVolumetricResult > Number(maxvolumetric))
+            {
+                $('#totVolumeWgt').html('<span>'+totalVolumetricResult+' Lbs <br> <small style="color:red;font-weight:normal;">Weight Over Maximum Allowed Please Review</small></span>');
+                throw ({ 'Shipping halted due to Over Maximum Weight Rule': 'Shipping halted due to Over Maximum Weight Rule' });
+            }
+           
+        });
+       
+    }
+};
+
+// this.PreShip(shipmentRequest, userParams) // returns undefined
+this.PreShip = function(shipmentRequest, userParams) {    
+  
+    // We will require the actual shipment to send weight and dims in kg/cm
+    // However, because US Vendors are sending the product the client gui needs to be in Lb/In.
+    
+    debugger;
+    //kg = lbs*0.453592 
+    totalShipWeight = 0;
+    totalVolumetricResult = 0;
+    
+    vm.currentShipment.Packages.forEach(pkg => {
+        totalShipWeight += Number(pkg.Weight.Amount);
+        totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+    });
+              
+    totalShipWeight = Number(totalShipWeight).toFixed(2);
+    console.log(totalShipWeight);
+    console.log(totalVolumetricResult);
+    if (totalShipWeight > 150)
+    {
+        alert("Total Shipment Weight Exceeds Shipment Weight Limit of 150lbs")
+        throw new Error("Shipping halted due to Over Maximum Weight Rule " + totalShipWeight);
+    }
+    
+    if (totalVolumetricResult > Number(maxvolumetric))
+    {
+        alert("Total Shipment Weight Exceeds Total Shipment Volumetric Weight Limit of " + Number(maxvolumetric))
+        throw new Error("Shipping halted due to Total Shipment Volumetric Weight Rule " + Number(totalVolumetricResult).toFixed(2));
+    }
+    
+     vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Weight.Units === "LB"){
+             pkg.Weight.Amount = Number(pkg.Weight.Amount * 0.453592).toFixed(2);
+             pkg.Weight.Units = "KG";
+         }
+         
+     });
+     
+    //cm=in/0.39370
+     vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Dimensions.Units === 0){
+             pkg.Dimensions.Length = Number(pkg.Dimensions.Length/0.39370).toFixed(2)
+             pkg.Dimensions.Width = Number(pkg.Dimensions.Width/0.39370).toFixed(2)
+             pkg.Dimensions.Height = Number(pkg.Dimensions.Height/0.39370).toFixed(2)
+             pkg.Dimensions.Units = 1;
+         }
+         
+     });
+     
+     
+    // debugger;
+      if(Number(vm.currentShipment.Packages[0].DeclaredValueCustoms.Amount).toFixed(2) > 2500 ){
+          if(vm.currentShipment.Packages[0].ExportInformationCode === null){
+              vm.currentShipment.Packages[vm.packageIndex].ExportInformationCode = "OS";
+          }
+          if(vm.currentShipment.Packages[0].AesTransactionNumber === null){
+              vm.currentShipment.Packages[0].SedMethod = 2;
+              $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].AesTransactionNumber"]').focus();
+              throw new Error('Missing AES/ITN Number');
+          } 
+          if(shipmentRequest.Packages[0].AesTransactionNumber !== null){
+              shipmentRequest.Packages[0].Comments = shipmentRequest.Packages[0].Comments + "\n ITN/AES Filer " + shipmentRequest.Packages[0].AesTransactionNumber;
+             
+          }
+      }
+     
+    console.log(shipmentRequest);
+  
+};
+
+// this.GetShipFromAddresses() // returns address book entries array
+this.GetShipFromAddresses = function(){
+    var payloadShipFromAddress = {
+        "Skip": 0,
+        "Take": 0,
+        "WhereClauses": [{
+           "FieldName": "Code",
+                    "FieldValue": sf_AddressType,   //'ze-'
+                    "Operator": 6
+                }]
+    };
+ 
+    var sfdata = {
+        CompanyId: client.userContext.CompanyId,
+        addressBookIds: shipFromAddressBookId,
+        SearchCriteria: payloadShipFromAddress
+    };
+   
+    ShipFromAddressBook = client.thinClientAPIRequest('GetAddressBookEntries_AddressBook', sfdata, false).responseJSON;
+    
+     //debugger;
+    
+    for(let i = 0; i < ShipFromAddressBook.AddressBookEntries.length; i++){
+    
+        ShipFromAddressBook.AddressBookEntries[i].Code = ShipFromAddressBook.AddressBookEntries[i].Code.replace("&amp;",'&');
+        ShipFromAddressBook.AddressBookEntries[i].Company = ShipFromAddressBook.AddressBookEntries[i].Company.replace("&amp;",'&');
+   }
+
+
+    console.log(ShipFromAddressBook.AddressBookEntries);
+    
+    return ShipFromAddressBook.AddressBookEntries;
+};
+
+// this.RemovePackage(shipmentRequest, packageIndex) // returns undefined
+this.RemovePackage = function(shipmentRequest, packageIndex) {
+      var totalShipWeight = 0;
+      vm.currentShipment.Packages.forEach(pkg => {
+        totalShipWeight += Number(pkg.Weight.Amount);
+      });
+      totalShipWeight = Number(totalShipWeight).toFixed(2);
+      document.getElementById('totWgt').innerHTML = totalShipWeight;
+      
+      var totalVolumetricResult = 0;
+      vm.currentShipment.Packages.forEach(pkg => {
+           totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+      });
+      totalVolumetricResult = Number(totalVolumetricResult).toFixed(2);
+      $('#volumetric_value_text').html(totalVolumetricResult+' Lbs');
+      document.getElementById('totVolumeWgt').innerHTML = totalVolumetricResult;
+      if (totalVolumetricResult > Number(maxvolumetric))
+        {
+           $('#totVolumeWgt').html('<span>'+totalVolumetricResult+' Lbs <br> <small style="color:red;font-weight:normal;">Weight Over Maximum Allowed Please Review</small></span>');
+           throw ({ 'Shipping halted due to Over Maximum Weight Rule': 'Shipping halted due to Over Maximum Weight Rule' });
+        }
+  
+}
+
+// Source: Boston Scientific (BOSTON)_Boston Heredia Client Business Rules_2475.cs
+// this.PageLoaded(location) // returns undefined
+this.PageLoaded = function(location) { 
+    //debugger;
+    if (location === '/shipping') {
+        //debugger;
+       
+       // Get the Logon Profiles Custom Data Values Which Determine the Shipping Options Available to them
+        if (this.vm.profile.UserInformation.Address.CustomData === "undefined" || this.vm.profile.UserInformation.Address.CustomData === null){
+           throw ({ message: 'User Is Missing Required Custom Data Values in Management Studio User Manager Setup Under Address Tab.', errorCode: '' }); 
+        }
+     
+        this.GetCustomDataItems();
+            console.log(st_AddressType + ' ' + sf_AddressType + ' ' + uPS_Service + ' ' + return_Type + ' ' + user_description + ' ' + dims + ' ' + user_orderNumber + ' ' + cost_Center + ' ' + user_partNumber + ' ' + insured_Value);
+        
+        this.ShippingLoaded();
+        
+        var checkExist = setInterval(function () 
+        {
+            if (($) && ($('input[type=text][ng-model="vm.loadValue"]'))) 
+            {
+                clearInterval(checkExist);
+                $('#sf_Address').focus();
+                $("#sf_Address").prop("selectedIndex", 0);
+                $("#st_Address").prop("selectedIndex", 0);
+                $("#svc_select").prop("selectedIndex", 5);
+               // $("#rtn_typeselect").prop("selectedIndex", 0);
+                
+            }
+        }, 400);
+        
+        //Get Address Book Data
+        var addressBookData = {
+            CompanyId: client.userContext.CompanyId,
+            UserId: client.userContext.UserId
+        };
+        //debugger;
+        AddressBooks = client.thinClientAPIRequest('GetAddressBooks_AddressBook', addressBookData, false).responseJSON;
+        AddressBooks.AddressBooks.forEach(item => {
+            if(item.Name === "HEREDIA_ShipToAddress"){
+                shipToAddressBookId = item.Id;
+            }
+            if(item.Name === "HEREDIA_ShipFromAddress"){
+                shipFromAddressBookId = item.Id;
+            }
+        });
+        console.log("shipToAddressBookId: " + shipToAddressBookId);
+        console.log("shipFromAddressBookId " + shipFromAddressBookId);    
+        
+        //Get the Shipper Account Number from Profile
+       // debugger;
+        this.GetShipperAccount(); 
+        console.log(thisShipperAccount);
+        
+        this.vm.shipToAddressBookEntries = this.GetShipToAddresses();
+        //Setup Ship To Address Drop Down Change Event
+       $('body').on('change', '#st_Address', function(e) {             // Not seeing a difference between using either of these as far as GUI reacts.
+            var userSelectedShipToCompany = $('#st_Address option:selected').text();
+            console.log("User Selected ShipTo Company :" + userSelectedShipToCompany);
+            for(let i = 0; i < ShipToAddressBook.AddressBookEntries.length; i++){
+                if(userSelectedShipToCompany ==  ShipToAddressBook.AddressBookEntries[i].Company){
+                    SelectedShipToAddress = ShipToAddressBook.AddressBookEntries[i];
+                    vm.populateShipToAddress();
+                }
+            } 
+            var checkExist = setInterval(function () 
+            {
+                if (($) && ($('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]'))) 
+                {
+                    clearInterval(checkExist);
+                    $('input[type=text][ng-model="nameaddress.Address2"]').focus();
+                    $('input[type=text][ng-model="nameaddress.Address3"]').focus();
+                    $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').focus();
+                  
+                }
+            }, 300);
+        });
+
+        
+        this.vm.returnAddressBookEntries = this.GetShipFromAddresses();
+        //Setup Ship From Address Drop Down Change Event
+        $('body').on('change', '#sf_Address', function(e) {
+            //debugger;
+            SelectedReturnAddress = null;
+            var userSelectedReturnCompany = $('#sf_Address option:selected').text();
+            console.log("User Selected Return Company :" + userSelectedReturnCompany);
+            for(let i = 0; i < ShipFromAddressBook.AddressBookEntries.length; i++){
+                if(userSelectedReturnCompany ==  ShipFromAddressBook.AddressBookEntries[i].Company){
+                    SelectedReturnAddress = ShipFromAddressBook.AddressBookEntries[i];
+                    vm.populateReturnAddress();
+                }
+            } 
+            var checkExist = setInterval(function () 
+            {
+                if (($) && ($('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]'))) 
+                {
+                    /* Stop the timer. */
+                    clearInterval(checkExist);
+                    $('input[type=text][ng-model="nameaddress.Address2"]').focus();
+                    $('input[type=text][ng-model="nameaddress.Address3"]').focus();
+                    $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').focus();
+                  
+                }
+            }, 300);
+         
+        });
+      
+        $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeclaredValueCustoms.Amount"]', function(e){
+             
+            if(vm.currentShipment.Packages[vm.packageIndex].DeclaredValueCustoms.Amount > 2500 ){
+                alert('ITN/AES Transaction Number Required');
+                vm.currentShipment.Packages[0].SedMethod = 2;
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].AesTransactionNumber"]').focus();
+                
+            }
+        });
+      
+        // $('#billWeight').after('<div id="billable_weight"><strong id="billable_weight_text"></strong></div>');
+       // $('#volumetricWeight').after('<div id="custom_volumetric"><span id="volumetric_value_text"></span></div>');
+      
+         $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]', function(e){
+            // debugger;
+              totalShipWeight = 0;
+              
+              vm.currentShipment.Packages.forEach(pkg => {
+                totalShipWeight += Number(pkg.Weight.Amount);
+              });
+              
+              totalShipWeight = Number(totalShipWeight).toFixed(2);
+              //console.log(totalShipWeight);
+             
+              document.getElementById('totWgt').innerHTML = totalShipWeight;
+         });
+       
+          $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Length"],[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Width"],[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Height"]', function(e){
+           
+            totalVolumetricResult = 0;
+           
+            vm.currentShipment.Packages.forEach(pkg => {
+                totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+            });
+             totalVolumetricResult = Number(totalVolumetricResult).toFixed(2);
+            //console.log(totalVolumetricResult);
+         
+            $('#volumetric_value_text').html(totalVolumetricResult+' Lbs');
+         
+            document.getElementById('totVolumeWgt').innerHTML = totalVolumetricResult;
+            //debugger;
+            if (totalVolumetricResult > Number(maxvolumetric))
+            {
+                $('#totVolumeWgt').html('<span>'+totalVolumetricResult+' Lbs <br> <small style="color:red;font-weight:normal;">Weight Over Maximum Allowed Please Review</small></span>');
+                throw ({ 'Shipping halted due to Over Maximum Weight Rule': 'Shipping halted due to Over Maximum Weight Rule' });
+            }
+           
+        });
+    }
+};
+
+// this.PreShip(shipmentRequest, userParams) // returns undefined
+this.PreShip = function(shipmentRequest, userParams) {    
+    // We will require the actual shipment to send weight and dims in kg/cm
+    // However, because US Vendors are sending the product the client gui needs to be in Lb/In.
+    
+    // debugger;
+    
+    totalShipWeight = 0;
+    totalVolumetricResult = 0;
+    
+    vm.currentShipment.Packages.forEach(pkg => {
+        totalShipWeight += Number(pkg.Weight.Amount);
+        totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+    });
+              
+    totalShipWeight = Number(totalShipWeight).toFixed(2);
+    console.log(totalShipWeight);
+    console.log(totalVolumetricResult);
+    if (totalShipWeight > 150)
+    {
+        alert("Total Shipment Weight Exceeds Shipment Weight Limit of 150lbs")
+        throw new Error("Shipping halted due to Over Maximum Weight Rule " + totalShipWeight);
+    }
+    
+    if (totalVolumetricResult > Number(maxvolumetric))
+    {
+        alert("Total Shipment Weight Exceeds Total Shipment Volumetric Weight Limit of " + Number(maxvolumetric))
+        throw new Error("Shipping halted due to Total Shipment Volumetric Weight Rule " + Number(totalVolumetricResult).toFixed(2));
+    }
+    
+    //kg = lbs*0.453592    
+    vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Weight.Units === "LB"){
+             pkg.Weight.Amount = Number(pkg.Weight.Amount * 0.453592).toFixed(2);
+             pkg.Weight.Units = "KG";
+         }
+         
+    });
+    
+  
+    //cm=in/0.39370
+    vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Dimensions.Units === 0){
+             pkg.Dimensions.Length = Number(pkg.Dimensions.Length/0.39370).toFixed(2)
+             pkg.Dimensions.Width = Number(pkg.Dimensions.Width/0.39370).toFixed(2)
+             pkg.Dimensions.Height = Number(pkg.Dimensions.Height/0.39370).toFixed(2)
+             pkg.Dimensions.Units = 1;
+       }
+         
+    });
+     
+   if(Number(shipmentRequest.Packages[0].DeclaredValueCustoms.Amount).toFixed(2) > 2500 ){
+          if(shipmentRequest.Packages[0].ExportInformationCode === null){
+              shipmentRequest.Packages[0].ExportInformationCode = "OS";
+          }
+          if(shipmentRequest.Packages[0].AesTransactionNumber === null){
+              shipmentRequest.Packages[0].SedMethod = 2;
+              $('input[type=text][ng-model="shipmentRequest.Packages[this.vm.packageIndex].AesTransactionNumber"]').focus();
+              throw new Error('Missing AES/ITN Number');
+          } 
+          
+          if(shipmentRequest.Packages[0].AesTransactionNumber !== null){
+              shipmentRequest.Packages[0].Comments = shipmentRequest.Packages[0].Comments + "\n ITN/AES Filer " + shipmentRequest.Packages[0].AesTransactionNumber;
+             
+          }
+      }
+};
+
+// this.RemovePackage(shipmentRequest, packageIndex) // returns undefined
+this.RemovePackage = function(shipmentRequest, packageIndex) {
+      
+      var totalShipWeight = 0;
+      vm.currentShipment.Packages.forEach(pkg => {
+        totalShipWeight += Number(pkg.Weight.Amount);
+      });
+      totalShipWeight = Number(totalShipWeight).toFixed(2);
+      document.getElementById('totWgt').innerHTML = totalShipWeight;
+      
+      var totalVolumetricResult = 0;
+      vm.currentShipment.Packages.forEach(pkg => {
+           totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+      });
+      totalVolumetricResult = Number(totalVolumetricResult).toFixed(2);
+      $('#volumetric_value_text').html(totalVolumetricResult+' Lbs');
+      document.getElementById('totVolumeWgt').innerHTML = totalVolumetricResult;
+      if (totalVolumetricResult > Number(maxvolumetric))
+        {
+           $('#totVolumeWgt').html('<span>'+totalVolumetricResult+' Lbs <br> <small style="color:red;font-weight:normal;">Weight Over Maximum Allowed Please Review</small></span>');
+           throw ({ 'Shipping halted due to Over Maximum Weight Rule': 'Shipping halted due to Over Maximum Weight Rule' });
+        }
+  
+      
+}
+
+// Source: Boston Scientific (BOSTON)_Boston_MULTI_2485.cs
+// this.PageLoaded(location) // returns void
+this.PageLoaded = function(location) {  
+    if (location === '/shipping') {
+       // debugger;
+       
+       // Get the Logon Profiles Custom Data Values Which Determine the Shipping Options Available to them
+        if (this.vm.profile.UserInformation.Address.CustomData === "undefined" || this.vm.profile.UserInformation.Address.CustomData === null){
+           throw ({ message: 'User Is Missing Required Custom Data Values in Management Studio User Manager Setup Under Address Tab.', errorCode: '' }); 
+        }
+     
+        this.GetCustomDataItems();
+            console.log(st_AddressType + ' ' + sf_AddressType + ' ' + uPS_Service + ' ' + return_Type + ' ' + user_description + ' ' + dims + ' ' + user_orderNumber + ' ' + cost_Center + ' ' + user_partNumber + ' ' + insured_Value);
+        
+        this.ShippingLoaded();
+        
+        var checkExist = setInterval(function () 
+        {
+            if (($) && ($('input[type=text][ng-model="vm.loadValue"]'))) 
+            {
+                clearInterval(checkExist);
+                $('#sf_Address').focus();
+                $("#sf_Address").prop("selectedIndex", 0);
+                $("#st_Address").prop("selectedIndex", 0);
+                $("#svc_select").prop("selectedIndex", 5);
+            
+                
+            }
+        }, 400);
+        
+        //Get Address Book Data
+        var addressBookData = {
+            CompanyId: client.userContext.CompanyId,
+            UserId: client.userContext.UserId
+        };
+        AddressBooks = client.thinClientAPIRequest('GetAddressBooks_AddressBook', addressBookData, false).responseJSON;
+        AddressBooks.AddressBooks.forEach(item => {
+            if(item.Name === "MULTI_ST"){
+                shipToAddressBookId = item.Id;
+            }
+            if(item.Name === "MULTI_SF"){
+                shipFromAddressBookId = item.Id;
+            }
+        });
+        console.log("shipToAddressBookId: " + shipToAddressBookId);
+        console.log("shipFromAddressBookId " + shipFromAddressBookId);    
+        
+        //Get the Shipper Account Number from Profile
+        //this.GetShipperAccount(); 
+        //console.log(thisShipperAccount);
+
+        this.vm.shipToAddressBookEntries = this.GetShipToAddresses();
+        //Setup Ship To Address Drop Down Change Event
+       $('body').on('change', '#st_Address', function(e) {             // Not seeing a difference between using either of these as far as GUI reacts.
+            var userSelectedShipToCompany = $('#st_Address option:selected').text();
+            console.log("User Selected ShipTo Company :" + userSelectedShipToCompany);
+            for(let i = 0; i < ShipToAddressBook.AddressBookEntries.length; i++){
+                if(userSelectedShipToCompany ==  ShipToAddressBook.AddressBookEntries[i].Company){
+                    SelectedShipToAddress = ShipToAddressBook.AddressBookEntries[i];
+                    vm.populateShipToAddress();
+                }
+            } 
+            
+            //Multi Profile only
+            
+            if(userSelectedShipToCompany == "BOSTON SCIENTIFIC COYOL"){
+                vm.currentShipment.PackageDefaults.Shipper = "BS_26737";
+                vm.currentShipment.Packages[vm.packageIndex].ConsigneeReference = "26737";
+                //vm.currentShipment.PackageDefaults.Service = {
+                //    Symbol:"UPSAPI.UPS.EXPEDITED"
+                //};
+            }
+            if(userSelectedShipToCompany == "BOSTON SCIENTIFIC HEREDIA"){
+                vm.currentShipment.PackageDefaults.Shipper = "BS_26701";
+                vm.currentShipment.Packages[vm.packageIndex].ConsigneeReference = "26701";
+               // vm.currentShipment.PackageDefaults.Service = {
+               //     Symbol:"UPSAPI.UPS.SAVER"
+               // };
+            }
+            
+            var checkExist = setInterval(function () 
+            {
+                if (($) && ($('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]'))) 
+                {
+                    clearInterval(checkExist);
+                    $('input[type=text][ng-model="nameaddress.Address2"]').focus();
+                    $('input[type=text][ng-model="nameaddress.Address3"]').focus();
+                    $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').focus();
+                  
+                }
+            }, 300);
+        });
+
+        
+        this.vm.returnAddressBookEntries = this.GetShipFromAddresses();
+        //Setup Ship From Address Drop Down Change Event
+        $('body').on('change', '#sf_Address', function(e) {
+            //debugger;
+            SelectedReturnAddress = null;
+            var userSelectedReturnCompany = $('#sf_Address option:selected').text();
+            console.log("User Selected Return Company :" + userSelectedReturnCompany);
+            for(let i = 0; i < ShipFromAddressBook.AddressBookEntries.length; i++){
+                if(userSelectedReturnCompany ==  ShipFromAddressBook.AddressBookEntries[i].Company){
+                    SelectedReturnAddress = ShipFromAddressBook.AddressBookEntries[i];
+                    vm.populateReturnAddress();
+                }
+            } 
+            var checkExist = setInterval(function () 
+            {
+                if (($) && ($('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]'))) 
+                {
+                    /* Stop the timer. */
+                    clearInterval(checkExist);
+                    $('input[type=text][ng-model="nameaddress.Address2"]').focus();
+                    $('input[type=text][ng-model="nameaddress.Address3"]').focus();
+                    $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]').focus();
+                  
+                }
+            }, 300);
+         
+        });
+        
+        $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].DeclaredValueCustoms.Amount"]', function(e){
+             
+            if(vm.currentShipment.Packages[vm.packageIndex].DeclaredValueCustoms.Amount > 2500 ){
+                alert('ITN/AES Transaction Number Required');
+                vm.currentShipment.Packages[0].SedMethod = 2;
+                $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].AesTransactionNumber"]').focus();
+                
+            }
+        });
+        
+        
+       // $('#billWeight').after('<div id="billable_weight"><strong id="billable_weight_text"></strong></div>');
+       // $('#volumetricWeight').after('<div id="custom_volumetric"><span id="volumetric_value_text"></span></div>');
+       
+        $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].Weight.Amount"]', function(e){
+            // debugger;
+              totalShipWeight = 0;
+              
+              vm.currentShipment.Packages.forEach(pkg => {
+                totalShipWeight += Number(pkg.Weight.Amount);
+              });
+              
+              totalShipWeight = Number(totalShipWeight).toFixed(2);
+              //console.log(totalShipWeight);
+             
+              document.getElementById('totWgt').innerHTML = totalShipWeight;
+         });
+       
+          $('body').on('keyup', '[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Length"],[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Width"],[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Height"]', function(e){
+           
+            totalVolumetricResult = 0;
+           
+            vm.currentShipment.Packages.forEach(pkg => {
+                totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+            });
+             totalVolumetricResult = Number(totalVolumetricResult).toFixed(2);
+            //console.log(totalVolumetricResult);
+         
+            $('#volumetric_value_text').html(totalVolumetricResult+' Lbs');
+         
+            document.getElementById('totVolumeWgt').innerHTML = totalVolumetricResult;
+            //debugger;
+            if (totalVolumetricResult > Number(maxvolumetric))
+            {
+                $('#totVolumeWgt').html('<span>'+totalVolumetricResult+' Lbs <br> <small style="color:red;font-weight:normal;">Weight Over Maximum Allowed Please Review</small></span>');
+                throw ({ 'Shipping halted due to Over Maximum Weight Rule': 'Shipping halted due to Over Maximum Weight Rule' });
+            }
+           
+        });
+       
+    }
+};
+
+// this.PreShip(shipmentRequest, userParams) // returns void
+this.PreShip = function(shipmentRequest, userParams) {    
+  
+    // We will require the actual shipment to send weight and dims in kg/cm
+     // However, because US Vendors are sending the product the client gui needs to be in Lb/In.
+    
+     // debugger;
+     
+     totalShipWeight = 0;
+    totalVolumetricResult = 0;
+    
+    vm.currentShipment.Packages.forEach(pkg => {
+        totalShipWeight += Number(pkg.Weight.Amount);
+        totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+    });
+              
+    totalShipWeight = Number(totalShipWeight).toFixed(2);
+    console.log(totalShipWeight);
+    console.log(totalVolumetricResult);
+    if (totalShipWeight > 150)
+    {
+        alert("Total Shipment Weight Exceeds Shipment Weight Limit of 150lbs")
+        throw new Error("Shipping halted due to Over Maximum Weight Rule " + totalShipWeight);
+    }
+    
+    if (totalVolumetricResult > Number(maxvolumetric))
+    {
+        alert("Total Shipment Weight Exceeds Total Shipment Volumetric Weight Limit of " + Number(maxvolumetric))
+        throw new Error("Shipping halted due to Total Shipment Volumetric Weight Rule " + Number(totalVolumetricResult).toFixed(2));
+    }
+     
+     //kg = lbs*0.453592    
+     vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Weight.Units === "LB"){
+             pkg.Weight.Amount = Number(pkg.Weight.Amount * 0.453592).toFixed(2);
+             pkg.Weight.Units = "KG";
+         }
+         
+     });
+     
+    //cm=in/0.39370
+     vm.currentShipment.Packages.forEach(pkg => {
+         if (pkg.Dimensions.Units === 0){
+             pkg.Dimensions.Length = Number(pkg.Dimensions.Length/0.39370).toFixed(2)
+             pkg.Dimensions.Width = Number(pkg.Dimensions.Width/0.39370).toFixed(2)
+             pkg.Dimensions.Height = Number(pkg.Dimensions.Height/0.39370).toFixed(2)
+             pkg.Dimensions.Units = 1;
+         }
+         
+     });
+     
+     
+    // debugger;
+      if(Number(vm.currentShipment.Packages[0].DeclaredValueCustoms.Amount).toFixed(2) > 2500 ){
+          if(vm.currentShipment.Packages[0].ExportInformationCode === null){
+              vm.currentShipment.Packages[vm.packageIndex].ExportInformationCode = "OS";
+          }
+          if(vm.currentShipment.Packages[0].AesTransactionNumber === null){
+              vm.currentShipment.Packages[0].SedMethod = 2;
+              $('input[type=text][ng-model="vm.currentShipment.Packages[vm.packageIndex].AesTransactionNumber"]').focus();
+              throw new Error('Missing AES/ITN Number');
+          } 
+          if(vm.currentShipment.Packages[0].AesTransactionNumber !== null){
+              vm.currentShipment.Packages[0].Comments = vm.currentShipment.Packages[0].Comments + "\n ITN/AES Filer " + vm.currentShipment.Packages[0].AesTransactionNumber;
+             
+          }
+      }
+     
+    console.log(shipmentRequest);
+  
+};
+
+// this.RemovePackage(shipmentRequest, packageIndex) // returns void
+this.RemovePackage = function(shipmentRequest, packageIndex) {
+      var totalShipWeight = 0;
+      vm.currentShipment.Packages.forEach(pkg => {
+        totalShipWeight += Number(pkg.Weight.Amount);
+      });
+      totalShipWeight = Number(totalShipWeight).toFixed(2);
+      document.getElementById('totWgt').innerHTML = totalShipWeight;
+      
+      var totalVolumetricResult = 0;
+      vm.currentShipment.Packages.forEach(pkg => {
+           totalVolumetricResult += ((Number(pkg.Dimensions.Length).toFixed(2)*Number(pkg.Dimensions.Width).toFixed(2)*Number(pkg.Dimensions.Height)).toFixed(2))/166;
+      });
+      totalVolumetricResult = Number(totalVolumetricResult).toFixed(2);
+      $('#volumetric_value_text').html(totalVolumetricResult+' Lbs');
+      document.getElementById('totVolumeWgt').innerHTML = totalVolumetricResult;
+      if (totalVolumetricResult > Number(maxvolumetric))
+        {
+           $('#totVolumeWgt').html('<span>'+totalVolumetricResult+' Lbs <br> <small style="color:red;font-weight:normal;">Weight Over Maximum Allowed Please Review</small></span>');
+           throw ({ 'Shipping halted due to Over Maximum Weight Rule': 'Shipping halted due to Over Maximum Weight Rule' });
+        }
+  
+}
+
+// Source: BULGARI (BULGARI)_Bulgari Reference Rules 2_1576.cs
+// cvsContinue() // returns void
+    function cvsContinue() {
+        $('body').delegate('div[ng-if="vm.rateResults.length > 0"] tr td a', 'click', serviceUpgrade)
+        $('body').delegate('[ng-model="vm.ReasonForUpgrade"]', 'click', function () {
+            if (this.value != '?') {
+                $('button:contains("Ship")').prop('disabled', false);
+            }
+        })
+
+        var validateAddressOnRate = getObjectValue(vm.profile.ProfileSetting.ValidateAddressOnRate);
+        if (validateAddressOnRate == 'true') {
+            $('body').delegate('[ng-click="vm.returnData(button.role)"]', 'click', defaultRateService)
+        } else {
+            defaultRateService();
+        }
+    }
+
+// serviceUpgrade() // returns void
+    function serviceUpgrade() {
+        var ignoreReasonService = [
+            'UPS Next Day Air Saver (UPS Adapter)',
+            'UPS Next Day Air EAM (UPS Adapter)',
+            'UPS Next Day Air (UPS Adapter)',
+            'UPS Second Day Air AM (UPS Adapter)'
+        ]
+
+        var selectedService = $(this).text();
+        var ignoreReason = ignoreReasonService.indexOf(selectedService) >= 0;
+        if ($('[ng-model="vm.ReasonForUpgrade"]').val() != '?') {
+            $('button:contains("Ship")').prop('disabled', false);
+        }
+
+        if (!ignoreReason) {
+            $('[name="reasonForUpgrade_txt"]').hide();
+        } else {
+            $('[name="reasonForUpgrade_txt"]').show();
+        }
+    }
+
+// getObjectValue(varReference) // returns string
+    function getObjectValue(varReference){
+        if(varReference) return varReference;
+        return "";
+    }
+
+// this.client.dismiss // returns jQuery delegated focus handler
+        dismiss: $('body').delegate('*', 'focus', function () { $('div[role="alert"]:visible').hide(); })
+
+// Source: Bulgari MX (BULGARIMX)_BulgariMx Reference Rules_1778.cs
+// function SendFreightCollect(shipmentRequest) // returns undefined; may throw an error for missing billing information
+    function SendFreightCollect(shipmentRequest) {
+        var selection = shipmentRequest.Packages[0].MiscReference20;
+        if (selection.indexOf("-") > -1) {
+            var position = selection.indexOf("-");
+            shipmentRequest.PackageDefaults.Consignee.Account = selection.substring(position + 2);
+            shipmentRequest.PackageDefaults.Terms = "CONSIGNEE";
+        } else {
+            throw new error({ "number": "001", "description": "Receiver Billing Information not found." });
+        }
+    }
+
+// Source: Cabinet Works Group (MASCO)_Masco Client Side Business Rules_1752.cs
+// SWOGShipment() // returns void
+    this.SWOGShipment = function () {
+        // Custom function that fires when SWOG button is clicked
+        // If Shipper is "MCD" "MCT" or "MCC" there is no validation done on SWOGS and then focus on Dimensions when completed
+        
+        // Get current Shipper from screen       
+        var shipper = this.currentShipment.PackageDefaults.Shipper;        
+
+        debugger;
+        // Define initial SWOG array and counter
+        var swogArray = ["SWOG_START"];
+        var counter = 0;
+
+        // If the masterOrderNumber has an initial SWOG value from PreLoad, push that into the swogArray before collecting new ones.  Set the counter to 1.
+        if (masterOrderNumber != '') {
+            swogArray.push(masterOrderNumber);
+            swogArray = unique(swogArray);
+            counter = 1;
+        }
+
+        do {
+            // Prompt for SWOG data entry until END_SWOG is scanned
+            var swog = window.prompt("Enter SWOG order number.  Scan END_SWOG Barcode when complete", "");
+            debugger;
+            // Make sure swog is not empty
+            if (swog != '') {
+                if (counter > 0 && swogArray.length > 1) {
+                    // This check is only done when the Shipper is NOT MCD, MCT or MCC
+                    if (shipper != "MCD" && shipper != "MCT" && shipper != "MCC") {
+                        // Make sure the entry is valid (not 'END_SWOG' AND length is greater than 9, not the same as the first entry in the array)
+                        if (swog != 'END_SWOG' && swog.length > 9 && swog.substring(0, 9) != swogArray[1].substring(0, 9)) {
+                            alert("The order that you scanned = " + swog + " is invalid for this SWOG and will be removed.");
+                            swog = '';
+                        }
+                    }
+                }
+                // If masterOrderNumber is not empty, this function was called from PreShip.  Otherwise it came from clicking SWOG
+                if (masterOrderNumber != '') {
+                    // function called from PreShip...validate length of swog
+                    if ((swog != '' && swog.length > 9) || swog == 'END_SWOG') {
+                        // Add the swog to the swogArray
+                        swogArray.push(swog);
+                        // Make sure that only unique entries are in the swogArray
+                        swogArray = unique(swogArray);
+                        counter++;
+                    }
+                }
+                else {
+                    // function called from clicking button...do not validate length of swog
+                    if (swog != ''  || swog == 'END_SWOG') {
+                        // Add the swog to the swogArray
+                        swogArray.push(swog);
+                        // Make sure that only unique entries are in the swogArray
+                        swogArray = unique(swogArray);
+                        counter++;
+                    }
+                }                
+            }
+        } while (swog != 'END_SWOG');        
+
+        // Put '|' between each SWOG number
+        var swogOrderNumbers = "";
+        swogArray.forEach(function (item, index, array) { swogOrderNumbers = swogOrderNumbers + "|" + item; });
+        swogOrderNumbers = removeFirstChar(swogOrderNumbers);
+
+        // Store final swog data in UserData1
+        //this.currentShipment.Packages[0].ShipperReference = 123;
+        //this.currentShipment.Packages[0].ConsigneeReference = swogOrderNumbers;
+        this.currentShipment.Packages[0].UserData1 = swogOrderNumbers;
+
+        // If Shipper IS MCD, MCT or MCC then put focus on length field in dimensions
+        if (shipper == "MCD" || shipper == "MCT" || shipper == "MCC") {
+            lengthText = ('[ng-model="vm.currentShipment.Packages[vm.packageIndex].Dimensions.Length"]');
+            setFocus(lengthText);
+        }
+        // Clear out masterOrderNumber
+        masterOrderNumber = "";
+        debugger;
+    }
+
+// PreLoad(loadValue, shipmentRequest, userParams) // returns void
+  this.PreLoad = function (loadValue, shipmentRequest, userParams) {
+
+    // 🔄 Reset any previous SWOG starter
+    masterOrderNumber = "";
+
+    // 🧾 First prompt: general input
+    var firstInput = window.prompt(
+        'Enter Package Dimensions (###x###x###)\n' +
+        '— OR type PACKSIZE_CONTINUE to skip dimensions\n' +
+        '— OR enter a SWOG Order Number to start the SWOG function:',
+        ''
+    );
+
+    if (firstInput === null) {
+        userParams.dimensions = "";
+        return;  // ❌ Cancelled
+    }
+
+    firstInput = firstInput.trim();
+    var dimRegex = /^[0-9]+\s*x\s*[0-9]+\s*x\s*[0-9]+$/i;
+
+    if (firstInput.toUpperCase() === 'PACKSIZE_CONTINUE') {
+        userParams.dimensions = 'PACKSIZE_CONTINUE';
+        return;  // ✅ Skip dimensions
+    }
+
+    if (dimRegex.test(firstInput)) {
+        userParams.dimensions = firstInput.toLowerCase();
+        return;  // ✅ Valid dimensions directly
+    }
+
+    // 🌀 Else: treat as SWOG starter
+    masterOrderNumber = firstInput;
+    this.vm.swogShipment();
+
+    // 🧾 Second prompt after SWOG
+    var dimsAfterSwog = window.prompt(
+        'Enter Package Dimensions (###x###x###), type PACKSIZE_CONTINUE to skip, or leave blank:',
+        ''
+    );
+
+    if (dimsAfterSwog === null) {
+        userParams.dimensions = "";  // ❌ Cancelled
+        return;
+    }
+
+    dimsAfterSwog = dimsAfterSwog.trim();
+
+    if (dimsAfterSwog.toUpperCase() === 'PACKSIZE_CONTINUE') {
+        userParams.dimensions = 'PACKSIZE_CONTINUE';  // ✅ PACKSIZE_CONTINUE accepted in second prompt too
+    } else if (dimRegex.test(dimsAfterSwog)) {
+        userParams.dimensions = dimsAfterSwog.toLowerCase();  // ✅ Dimensions entered
+    } else {
+        userParams.dimensions = "";  // ❌ Nothing valid entered
+    }
+}
+
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// getNotification() // returns void; updates notification state and may trigger alert/display handling
+            function getNotification() {
+                var data = { CompanyId: vm.clientContext.Company.Id }
+                thinClient.httpClient('GetClientNotifications', data).then(function (ret) {
+                    if (!vm.shipping.setNotification(ret.Notifications)) {
+                        if (vm.clientContext.Site.Name == undefined)
+                            vm.notification = null;
+                        else {
+                            var data = { CompanyId: vm.clientContext.Company.Id, SiteId: vm.clientContext.Site.Id };
+                            thinClient.httpClient('GetClientNotifications', data).then(function (ret) {
+                                if (!vm.shipping.setNotification(ret.Notifications))
+                                    vm.notification = null;
+
+                                vm.thinClient.loadData.show();
+                            })
+                        }
+                    }
+                    vm.thinClient.loadData.show();
+                })
+
+                this.setNotification = function(notifications) {
+                    var notification = notifications.at(-1);
+                    if (notification == undefined) return false;
+
+                    this.notification = {
+                        Title: thinClient.htmlText(notification.Title),
+                        Message: thinClient.htmlText(notification.Message)
+                    }
+                    return true;
+                }
+            }
+
+// selectDownloadFile(event) // returns void; may notify danger on file update errors
+            function selectDownloadFile(event) {
+                this.menu.guide.selectedDownloadFile = event.target.innerText;
+                if (this.menu.guide.inputFile.selected) {
+                    if (this.menu.guide.selectedDownloadFile.slice(-3) == this.menu.guide.inputFile.selected.name.slice(-3))
+                        updateFile();
+                } else {
+                    var payload = { Action: 'downloadFile', Data: this.menu.guide.selectedDownloadFile };
+                    var data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                    thinClient.httpClient('UserMethod', data).then(function (ret) {
+                        if (ret.ErrorCode === 0) {
+                            var data = JSON.parse(atob(ret.Data));
+
+                            let linkData = `data:${data.fileType};base64,${data.encodedFile}`;
+                            let downloadLink = document.createElement("a");
+                            downloadLink.style.display = "none";
+                            downloadLink.download = data.fileName;
+                            downloadLink.href = linkData;
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                        }
+                    });
+                }
+
+                function updateFile() {
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var request = {
+                            Key: vm.shipping.menu.guide.selectedDownloadFile,
+                            Value: JSON.stringify({
+                                fileType: vm.shipping.menu.guide.inputFile.selected.type,
+                                fileName: vm.shipping.menu.guide.inputFile.selected.name,
+                                encodedFile: this.result.split(',')[1]
+                            })
+                        }
+                        var payload = { Action: 'updateFile', Data: request };
+                        var data = { UserContext: undefined, Data: JSON.stringify(payload) };
+                        thinClient.httpClient('UserMethod', data).then(function (ret) {
+                            if (ret.ErrorCode !== 0)
+                                vm.notificationService.notifyDanger(ret.ErrorCode + " - " + ret.ErrorMessage);
+                        }).catch(function (response) {
+                            vm.notificationService.notifyDanger(vm.translations.Common.ErrorConnectingWCFService + ": " + response.status + " " + response.statusText);
+                        })
+                        vm.shipping.menu.guide.inputFile.selected = null;
+                        $(vm.shipping.menu.guide.inputFile.selector).val(null);
+                        vm.thinClient.loadData.show();
+
+                    }
+                    if (vm.shipping.menu.guide.inputFile.selected) reader.readAsDataURL(vm.shipping.menu.guide.inputFile.selected);
+                }
+            }
+
+// PostLoad(loadValue, shipmentRequest) // returns void; performs validation/error-message handling and panel alert text assignment
+    this.PostLoad = function(loadValue, shipmentRequest) {
+        thinClient.loading.hide();
+        this.vm.labelImage = null;
+
+
+        if (this.vm.shipping.customer.value == 'AMAZON') {
+            this.vm.profile.FieldOptions.ConsigneeReference.IsDisabled = true;
+            this.vm.profile.FieldOptions.ShipperReference.IsDisabled = true;
+            this.vm.profile.FieldOptions.MiscReference16.IsDisabled = true;
+
+            if (this.vm.loadValue == 'Return') {
+                this.vm.profile.FieldOptions.MiscReference16.IsDisabled = false;
+                //this.vm.profile.FieldOptions.MiscReference16.IsRequired = true;
+            }
+        }
+
+        if((shipmentRequest.PackageDefaults.ErrorMessage ?? '').includes('Invalid Service Option')) {
+            this.vm.shipping.activePanel = 0;
+            this.vm.shipping.panelMessage = shipmentRequest.PackageDefaults.ErrorMessage;
+        }
+        this.vm.loadValue = null;
+    }
+
+// Source: CBR Doc Ready (CBRDOCREADY)_cbr doc ready_1722.cs
+// PreRate(shipmentRequest, userParams) // returns void
+this.PreRate = function(shipmentRequest, userParams) {
+        alert('PreRate');
+    }
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// function PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function(shipmentRequest, userParams) {   
+        debugger;
+        var usCountry = "UNITED_STATES";
+        var usAcronym = "US";
+        var PackageRequests=shipmentRequest.Packages;
+        
+        $(PackageRequests).each(function (x, item)
+          {
+              var value = item.DeclaredValueCustoms.Amount;
+              var tN = item.AesTransactionNumber;
+              if (value >= 2500 && tN ===null)
+              {
+                    alert("Please check with clarios-na-trade@clarios.com if EEI filing is needed");
+              }             
+             item.Description=$('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val();
+            
+          });
+          
+          // For International Destination Rule Applies to all use cases and all carriers
+          if ((shipmentRequest.PackageDefaults.Consignee.Country != usCountry) && (shipmentRequest.PackageDefaults.Consignee.Country != usAcronym))
+                {
+                    shipmentRequest.PackageDefaults.MiscReference8 = "Y";
+                }
+                else
+                {
+                    shipmentRequest.PackageDefaults.MiscReference8 = "N";
+                }
+             
+    }
+
+// function ShowAlert(strValu) // returns void
+            function ShowAlert(strValu) {
+                
+                $("#"+strValu).attr("style", "position: relative;bottom: -23px;position: absolute;  top: 30%;  z-index: 0; left: 30%;  width: 552px;  height: 50Px;  widht: 300px; display: block;");
+            }
+
+// function HideAlert(strValu) // returns void
+            function HideAlert(strValu) {
+                
+                $("#"+strValu).attr("style", "position: relative;bottom: -23px;position: absolute;  top: 30%;  z-index: 0; left: 30%;  width: 552px;  height: 50Px;  widht: 300px; display: none;");
+                 
+                  }
+
+// Source: Clarios (CLRS)_Clarios_Rule_Paperless_2440.cs
+// this.PreShip(shipmentRequest, userParams) // returns void
+    this.PreShip = function (shipmentRequest, userParams) {
+        console.log("PreShip In");
+        
+        userParams.paperless = JSON.stringify(this.vm.paperless);
+        console.log('paperless:', userParams.paperless);
+        
+        var usCountry = "UNITED_STATES";
+        var usAcronym = "US";
+        var PackageRequests = shipmentRequest.Packages;
+
+        $(PackageRequests).each(function (x, item) {
+            var value = item.DeclaredValueCustoms.Amount;
+            var tN = item.AesTransactionNumber;
+            if (value >= 2500 && tN === null) {
+                alert("Please check with clarios-na-trade@clarios.com if EEI filing is needed");
+            }
+            item.Description = $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val();
+
+        });
+
+        // For International Destination Rule Applies to all use cases and all carriers
+        if ((shipmentRequest.PackageDefaults.Consignee.Country != usCountry) && (shipmentRequest.PackageDefaults.Consignee.Country != usAcronym)) {
+            shipmentRequest.PackageDefaults.MiscReference8 = "Y";
+        }
+        else {
+            shipmentRequest.PackageDefaults.MiscReference8 = "N";
+        }
+
+        console.log("PreShip Out");
+    };
+
+// function ShowAlert(strValu) // returns void
+    function ShowAlert(strValu) {
+
+        $("#" + strValu).attr("style", "position: relative;bottom: -23px;position: absolute;  top: 30%;  z-index: 0; left: 30%;  width: 552px;  height: 50Px;  widht: 300px; display: block;");
+    }
+
+// function HideAlert(strValu) // returns void
+    function HideAlert(strValu) {
+
+        $("#" + strValu).attr("style", "position: relative;bottom: -23px;position: absolute;  top: 30%;  z-index: 0; left: 30%;  width: 552px;  height: 50Px;  widht: 300px; display: none;");
+
+    }
+
+// Source: CNH_DEALER CONNECT (CNH)_CNH Billing Rule_74.cs
+// function PageLoaded(location) // returns undefined
+this.PageLoaded = function(location){
+        if(location =="/shipping"){
+            // $('body').delegate('name-address[address-property-name="OriginAddress"] input[name="PostalCode"]', 'keydown', function() {
+            //    alert('hello');
+            //});
+            $('body').delegate('name-address[address-property-name="OriginAddress"] input[ng-model="nameaddress.Code"]', 'keydown', function(event) {
+                if(event.which == 13 || event.which == 9)$('name-address[address-property-name="OriginAddress"] button[title="Search Addresses"]').click();
+            });
+            
+            $('body').delegate('name-address[address-property-name="Consignee"] input[ng-model="nameaddress.Code"]', 'keydown', function(event) {
+                if(event.which == 13 || event.which == 9){
+                    $('name-address[address-property-name="Consignee"] button[title="Search Addresses"]').click();
+                }else{
+                //    var $code = $('name-address[address-property-name="Consignee"] input[ng-model="nameaddress.Code"]');
+                //    if($code.val().toUpperCase().substring(0,1)!="R")$code.val("R" + $code.val());
+                }
+            });
+        }
+    };
+
+// function PostSelectAddressBook(shipmentRequest, nameaddress) // returns undefined
+this.PostSelectAddressBook = function (shipmentRequest, nameaddress) {
+       // alert(shipmentRequest.PackageDefaults.Consignee.Code);
+        if(nameaddress.AddressBook.Name == "Return To Address Book")SelectBillingOption(nameaddress, shipmentRequest);
+    };
+
+// function SelectBillingOption(nameAddress, shipmentRequest) // returns undefined
+function SelectBillingOption(nameAddress, shipmentRequest){
+        var customName1 = "Custom1";
+        var customName2 = "Custom2";
+        var customValue1, customValue2;
+        var CustomSTData = nameAddress.CustomData;
+        //alert(CustomSTData.length);
+       
+        try{
+            for(var Custom in CustomSTData){
+                if(CustomSTData[Custom]){
+                    if(CustomSTData[Custom].Key==customName1)customValue1 = CustomSTData[Custom].Value;
+                    if(CustomSTData[Custom].Key==customName2)customValue2 = CustomSTData[Custom].Value;
+                }
+            }
+        }catch(err){
+            throw({message:"Unable to get billing data", number:"001"});
+        }
+        //alert(customValue1);
+        if(customValue2 != "PP"){
+            shipmentRequest.PackageDefaults.Terms = "CONSIGNEE";
+            nameAddress.Account = customValue1;
+        }
+    }
+
+// Source: ConAgra (ConAgra)_ConAgra Rules_1544.cs
+// function NewShipment(shipmentRequest) // returns void
+  this.NewShipment = function (shipmentRequest) {
+   // alert(JSON.stringify(shipmentRequest));
+    var originCustomData = shipmentRequest.PackageDefaults.OriginAddress.CustomData;
+     shipmentRequest.Packages[0].ShipperReference = GetKeyValue('Custom1', originCustomData);
+     
+  };
+
+// function PreRate(shipmentRequest, userParams) // returns void
+  this.PreRate = function(shipmentRequest, userParams) {
+      var DIUnit = shipmentRequest.Packages[0].DryIceWeight.Units;
+      var DIWt = shipmentRequest.Packages[0].DryIceWeight.Amount;
+      var DINote = "Incorrect shipping of Dry Ice can result in fines upward of $75,000 for each violation as well as cancellation of shipping privileges for all of Conagra Brands. Please contact DL-SmallParcelDeliveryService@conagra.com with questions or for specific instructions and restrictions";
+   //   alert(DIUnit);
+   //   alert(DIWt);
+   //   alert(JSON.stringify(shipmentRequest.Packages[0].DryIceWeight));
+  for (var index = 0; index < shipmentRequest.Packages.length; ++index) {  
+    switch(shipmentRequest.Packages[index].DryIceWeight.Units) {
+      case "LB":
+        if (shipmentRequest.Packages[index].DryIceWeight.Amount > 5.5) {
+            alert(DINote);
+            throw new Error("Package # " + (index + 1) + " dry ice amount is over allowable weight, please check your Dry Ice value or unit of measure for accuracy.");
+        } else {
+          
+        }
+      break;
+      case "KG":
+            if (shipmentRequest.Packages[index].DryIceWeight.Amount > 2.49476) {
+                alert(DINote);
+                throw new Error("Package # " + (index + 1) + " dry ice amount is over allowable weight, please check your Dry Ice value or unit of measure for accuracy.");
+        } else {
+           
+        }
+      break;
+      case "G":
+            if (shipmentRequest.Packages[index].DryIceWeight.Amount > 2494.76) {
+                alert(DINote);
+                throw new Error("Package # " + (index + 1) + " dry ice amount is over allowable weight, please check your Dry Ice value or unit of measure for accuracy.");
+        } else {
+           
+        }
+      break;
+      case "OZ":
+            if (shipmentRequest.Packages[index].DryIceWeight.Amount > 88) {
+                alert(DINote);
+                throw new Error("Package # " + (index + 1) + " dry ice amount is over allowable weight, please check your Dry Ice value or unit of measure for accuracy.");
+        } else {
+           
+        }
+      break;
+      default:
+
+    }}
+
+    };
+

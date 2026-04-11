@@ -1,0 +1,1039 @@
+// Source: 2.2 Update 4 (21UPDATE4)_CBR1.5_1735.cs
+// GetUniqueArrayFromString(inString, stringDelimiter) // returns an array of unique trimmed strings
+      GetUniqueArrayFromString: function (inString, stringDelimiter = ',')
+      {
+        var trimArray = $.grep(inString.split(stringDelimiter), function (a)
+        {
+          return a.trim().length > 0;
+        });
+
+        /* Get rid of any duplicate array entries. */
+        trimArray = trimArray.filter((e, i, a) => a.indexOf(e) === i);
+
+        return trimArray;
+      },
+
+// GetUniqueCSVStringFromArray(inArray) // returns a CSV string with duplicates removed
+      GetUniqueCSVStringFromArray: function (inArray)
+      {
+        /* Get rid of any duplicate array entries. */
+        var uniqueArray = inArray.filter((e, i, a) => a.indexOf(e) === i);
+        var newUniqueString = '';
+
+        $(uniqueArray).each(function (a, b)
+        {
+          if (b.trim().length > 0)
+          {
+            newUniqueString += b.trim() + ',';
+          }
+        });
+
+        return newUniqueString;
+      },
+
+// GetUniqueCSVStringFromString(inString) // returns a CSV string with duplicates removed
+      GetUniqueCSVStringFromString: function (inString)
+      {
+        var uniqueArray = this.GetUniqueArrayFromString(inString, undefined);
+        return this.GetUniqueCSVStringFromArray(uniqueArray);
+      },
+
+// Source: ACCENTURE (ACCENTUREV5)_UserOnlyData_1572.cs
+// PageLoaded(location) // returns void
+    this.PageLoaded = function (location) {
+
+        if (location == '/shipping') {
+            this.vm.profile.Shippers.sort(compare('Name'));
+        }
+    };
+
+// compare(key) // returns a comparison function
+    function compare(key) {
+        return function(a, b) {
+            if (a[key] > b[key]) return 1;
+            if (a[key] < b[key]) return -1;
+            return 0;
+        };
+    }
+
+// Source: AlstonBird (ALBI)_ClientBusinessRules_1866.cs
+// customRateResults(vm) // returns nothing; configures mailroom rate result selection and sorting-related SortIndex handling
+        function customRateResults(vm) {
+            var selectService = selectSortIndex();
+            vm.selectService = [ selectService ];
+            vm.selectedRow = selectService.Symbol;
+
+            vm.customOnSelectService = customOnSelectService;
+
+            function selectSortIndex () {
+                for(var index in rateResults) {
+                    if (rateResults[index].SortIndex === 0) {
+                        return rateResults[index].PackageDefaults.Service;
+                    }
+                }
+            }
+
+            function customOnSelectService(service, serviceType) {
+                if (this.profile.ProfileSetting.ServiceSelectionMode === this.serviceSelectionMode.ShipByService) {
+                    this.onSelectService(service, serviceType)
+                } else {
+                    this.selectService = [ service ];
+                    this.selectedRow = service.Symbol;
+                    if (!this.profile.ProfileSetting.DisableJustificationMessage) {
+                        this.selectedRow = service.Symbol;
+                        if (serviceType === "ApplicableService" && selectSortIndex() !== service)
+                            this.justify = true;
+                        else if (serviceType === "NotApplicableService")
+                            this.justify = true;
+                        else
+                            this.justify = false;
+                    } else this.justify = false;
+                }
+            }
+        }
+
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// ShowAssignGoodsPane() // returns void
+    ShowAssignGoodsPane()
+    {
+      let that = this;
+
+      //get rid of any previous entries
+      $('#listItemContainer li:gt(0)').remove();
+
+      //change the column width to make the descriptions longer
+      //change this back when the user clicks the 'Apply' button
+      $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+      //set a reference to the packages object as well as the commodities objects
+      this.packages = this.viewModel.currentShipment.Packages;
+      this.goods = this.json.data.map(m => m.boxes).flat();
+      this.goods.sort((a, b) => { return a.skuId - b.skuId });
+
+      //loop the commodities to create a master list item for each
+      $(this.goods).each(function(a, b)
+      {
+        let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+        b.UniqueId = k;
+
+        //copy the source element
+        let item = $('#liClone').clone(true).data(b);
+
+        //change the id of the main containing element so we don't run into issue later
+        //each clone is a discreet list item which corresponds to a commodity
+        $(item).attr('id', k);
+
+        //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+        //to parseFloat so this is the simplest way to get around that.
+        //let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+        $(item).find('.goods-sku').html('SKU: <strong>' + b.skuId + '</strong>');
+        $(item).find('.goods-quantity').html('Quantity: <strong>' + b.quantity + '</strong>');
+        $(item).find('.goods-declared-value').html('Unit Cost: <strong>$' + b.unitPrice + '</strong>');
+
+        //append it to our list
+        $('#divAssignCommodities ul.list-group').append(item);
+
+        //assign all goods to the first package
+        that.packages[0].CommodityContents.push(that.GetCommodityContentObject(b));
+
+        //update the weight and declared value in the root of the object
+        let weight = that.packages[0].Weight;
+        let dva = that.packages[0].DeclaredValueAmount;
+        const thisWeight = (+b.quantity * +b.weightLbs);
+        const thisValue = (+b.quantity * +b.unitPrice);
+
+        if (!weight.Amount) { weight.Amount = 0; }
+        that.packages[0].Weight.Amount += (+b.quantity * +b.weightLbs).toFixed(2);
+
+        if (!dva.Amount) { dva.Amount = 0; }
+        that.packages[0].DeclaredValueAmount.Amount += Math.round((+b.quantity * +b.unitPrice) * 100) / 100;
+
+        //show it gracefully
+        $(item).show();
+      });
+
+      //that.UpdatePackageCounts();
+      //$('li[heading=Goods] a:first').click();
+      $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+      $('.scan-input:visible').first().focus();
+      $('#divAssignCommodities').find('[data-toggle="tooltip"]').tooltip();
+    }
+
+// MoveGoodToBox(li, destBox) // returns void
+    MoveGoodToBox(li, destBox)
+    {
+      let vm = this.ClassViewModel;
+      let that = this;
+      let data = $(li).data();
+      let destCC = this.packages[destBox - 1].CommodityContents || [];
+
+      //find the box the item currently resides in
+      //split this statement up over a few calls to make it easier to read
+      let allGoods = this.packages.map(m => m.CommodityContents).flat();
+      let item = allGoods.find(cc => cc.UniqueId == data.UniqueId);
+
+      if (+item.PkgIndex == +destBox) { console.log('Item already exists in box.'); return false; }
+
+      //remove the item from its current box
+      this.packages[item.PkgIndex - 1].CommodityContents = this.packages[item.PkgIndex - 1].CommodityContents.filter(p => p.UniqueId != data.UniqueId);
+
+      //add it to the new box
+      item.PkgIndex = destBox;
+      destCC.push(item);
+      $(li).find('.pkg-index-text').fadeOut().promise().done(function(e) { $(this).text(destBox).fadeIn(); });
+
+      //console.log(vm.currentShipment.Packages);
+      $('li[heading="Goods"]:visible:first > a').trigger('click');
+      $('#goods .btn-group').find('.btn:gt(0)').not('.active').first().trigger('click');
+
+      //update the weights and values
+      //this data will have changed by now so get a new reference to the object
+      allGoods = this.packages.map(m => m.CommodityContents).flat();
+      //the items array will have the CommodityContents object for every package in the shipment
+
+      //sort by package index
+      //update the weight and declared values for all the packages in the shipment
+      allGoods = allGoods.sort((a, b) => { return a.PkgIndex - b.PkgIndex });
+      $(allGoods).each(function(a, b)
+      {
+        let pkg = that.packages[b.PkgIndex - 1];
+
+        if ((a == 0) || (b.PkgIndex != allGoods[a - 1].PkgIndex))
+        {
+          pkg.Weight.Amount = 0;
+          pkg.DeclaredValueAmount.Amount = 0;
+        }
+
+        pkg.Weight.Amount += +b.PVTotalWeight;
+        pkg.DeclaredValueAmount.Amount += +b.PVTotalValue;
+      });
+    }
+
+// Source: Carrier Misroute (CMR) (CMR)_Client Business Rules_2487.cs
+// getShipperCustomers(shippers) // returns an array of customer options sorted by name with disabled entries last
+            function getShipperCustomers(shippers) {
+                var shipper = shippers.find(shipper => shipper.Symbol == vm.shipping.slic);
+                if (shipper == undefined)
+                     return [{ name: '--- No Shipper Configured ---', disabled: true }];
+
+                var customData = shipper.CustomData.filter(c => c.Key.toUpperCase() == "CUSTOMER");
+                var customers = customData.map(function(c) {
+                    var customer = c.Value.toUpperCase();
+
+                    if (customer == 'AMAZON')
+                        return { name: "Amazon", value: customer, hasLoad: true, hasReturn: true, autoShip: true };
+                    else if (customer == 'UPS')
+                        return { name: "UPS", value: customer, hasCameraImage: true, hasFileImage: true, autoShip: false };
+                    else if (customer == 'DEMO')
+                        return { name: "Demo", value: customer, hasLoad: false, hasReturn: true, hasCameraImage: true, hasFileImage: false, autoShip: false };
+                    else if (customer == 'FANATICS')
+                        return { name: "Fanatics", value: customer, hasReturn: true, hasCameraImage: true, autoShip: false };
+                    else
+                        return { name: `--- ${customer} ---`, disabled: true };
+                });
+
+                customers.sort(function(a, b) {
+                    if (a.disabled && !b.disabled) return 1;
+                    if (!a.disabled && b.disabled) return -1;
+                    return a.name.localeCompare(b.name);
+                });
+                return [{ name: '--- Select Customer Option ---', selector: 'select[ng-model="vm.shipping.customer"]', disabled: true }].concat(customers);
+            }
+
+// Source: Clarios (CLRS)_Clarios_Rule_1705.cs
+// CloseAllShippers() // returns void
+function CloseAllShippers() {
+        debugger;
+        
+        var getManifestItemsList,getManifestItemsemethod,methodParams,authorizationToken;
+        var allOrdersSelectedCarrier = [];
+        var allShipperSelectedCarrier,getShipperCarriersmethod,getShipperCarriersmethodParams,CloseAllShippersResponse,CloseAllShippersResults
+        
+            getShipperCarriersmethod='api/ShippingService/GetShipperCarriers';
+            getManifestItemsemethod='api/ShippingService/GetManifestItems';
+            authorizationToken = clientService.authorizationToken();
+            
+        
+            let selectedValCarrier = AllCarriersList.find(Carriers => Carriers.Id == $("#CarriersList option:selected").val()).Symbol;
+           
+            $.each(Array(AllShipperList.length), function(i)
+            {
+                
+                 getShipperCarriersmethodParams = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                 allShipperSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getShipperCarriersmethod, data: getShipperCarriersmethodParams, async: false, headers: authorizationToken }).responseJSON;
+    
+               if(allShipperSelectedCarrier.Carriers && allShipperSelectedCarrier.Carriers.length !=0){ 
+               
+                    methodParams = {"Carrier":selectedValCarrier,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                    getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + getManifestItemsemethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                    
+                   
+                    if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                    {
+                        debugger;
+                      var CloseManifestmethod,methodParams,CloseAllShippersResults
+                        CloseManifestmethod='api/ShippingService/CloseManifest';
+                         $.each(Array(getManifestItemsList.ManifestItems.length), function(j)
+                          {
+                                  
+                                  
+                                   allOrdersSelectedCarrier.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                              });
+                              methodParams ={"Carrier":selectedValCarrier,"ManifestItems":allOrdersSelectedCarrier,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                              CloseAllShippersResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseManifestmethod, data: methodParams, async: false, headers: authorizationToken }).responseJSON;
+                              allOrdersSelectedCarrier = [];
+                    }
+               }
+               
+          
+            });
+            
+            if(CloseAllShippersResponse != undefined)
+            {
+                    if(CloseAllShippersResponse.ErrorCode==-1){
+                            
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers');
+                            
+                        }else
+                        {
+                                CloseAllShippersResults = CloseAllShippersResponse.CloseManifestResults[0].ErrorCode;
+                                if(CloseAllShippersResults!=0){
+                                    
+                                      $('#divAllshippersErrorMsg').hide();
+                                      $('#divAllshippersunsuccessfulcloseoutMsg').show();
+                                      $('#divAllshippersAndCarriersErrorMsg').hide();
+                                      $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                      
+                                      ShowAlert('ErrorModalCloseShippers');
+                                     
+                                }else if(CloseAllShippersResults==0){
+                                    
+                                     $('#divsuccessfulAllShippers').show();
+                                     $('#divsuccessfulAllShippersAndAllCarriers').hide();
+                                     
+                                      ShowAlert('successfulModalCloseShippers');
+                                     
+                                }
+                        }
+           }else
+           {
+                             $('#divAllshippersErrorMsg').show();
+                             $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                             $('#divAllshippersAndCarriersErrorMsg').hide();
+                             $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                 
+                             ShowAlert('ErrorModalCloseShippers'); 
+                            
+           }
+                         
+       $('#loaderspinnerImg').hide();
+       
+        
+    }
+
+// ClosecOutAllShippersAndAllCarriers() // returns void
+function ClosecOutAllShippersAndAllCarriers() {
+        
+                        var CloseAllShippersAllCarrierResponse,closeallgetManifestItemsemethod,CloseAllShippersAllCarriermethod,methodParams,authorizationToken,CloseAllShippersAllCarrierResults,getallShipperallCarriersmethod
+                             CloseAllShippersAllCarriermethod='api/ShippingService/CloseManifest';
+                             getallShipperallCarriersmethod='api/ShippingService/GetShipperCarriers';
+                             closeallgetManifestItemsemethod='api/ShippingService/GetManifestItems';
+                            
+                             var allOrdersSelectedCarrierfromallclose = [];
+                             debugger;
+       
+         $.each(Array(AllCarriersList.length), function(k)
+        {
+             $.each(Array(AllShipperList.length), function(i)
+            {
+                       var getShipperCarriersmethodParameters = {"ShipperId":AllShipperList[i].Id,"CompanyId":userContextDetails.CompanyId};
+                         authorizationToken = clientService.authorizationToken();
+                         var allShipperallCarrierSelectedCarrier =  $.post({url: clientService.config.ApiUrl + '/' + getallShipperallCarriersmethod, data: getShipperCarriersmethodParameters, async: false, headers: authorizationToken }).responseJSON;
+            
+                       if(allShipperallCarrierSelectedCarrier.Carriers && allShipperallCarrierSelectedCarrier.Carriers.length !=0){ 
+                       
+                           var closeallmethodParams = {"Carrier":AllCarriersList[k].Symbol,"Shipper":AllShipperList[i].Symbol,"SearchCriteria":{"OrderByClauses":[{"FieldName":"ShipDate","Direction":"DESC"}]},"IncludeImported":false,"CompanyId":userContextDetails.CompanyId};
+                           var getManifestItemsList =  $.post({url: clientService.config.ApiUrl + '/' + closeallgetManifestItemsemethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                            
+                            if(getManifestItemsList.ManifestItems && getManifestItemsList.ManifestItems.length !=0)
+                            {
+                                var CloseManifestmethod,methodParams,authorizationToken,CloseAllShippersResults
+                                    authorizationToken = clientService.authorizationToken();
+                                
+                                       $.each(Array( getManifestItemsList.ManifestItems.length), function(j)
+                                      {
+                                          
+                                           allOrdersSelectedCarrierfromallclose.push({"Attributes":getManifestItemsList.ManifestItems[j].Attributes,"ShipDate":getManifestItemsList.ManifestItems[j].ShipDate,"Symbol":getManifestItemsList.ManifestItems[j].Symbol,"Name":getManifestItemsList.ManifestItems[j].Name});
+                                      });
+                                      var closeallmethodParams ={"Carrier":AllCarriersList[k].Symbol,"ManifestItems":allOrdersSelectedCarrierfromallclose,"Shipper":AllShipperList[i].Symbol,"Print":true,"UserParams":{},"CompanyId":userContextDetails.CompanyId};
+                                      CloseAllShippersAllCarrierResponse =  $.post({url: clientService.config.ApiUrl + '/' + CloseAllShippersAllCarriermethod, data: closeallmethodParams, async: false, headers: authorizationToken }).responseJSON;
+                                       allOrdersSelectedCarrierfromallclose = [];
+                            }
+                       }
+             });                  
+        });
+        
+            if(CloseAllShippersAllCarrierResponse != undefined){
+                                 if(CloseAllShippersAllCarrierResponse.ErrorCode==-1){
+                                    
+                                     $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+                                }else
+                                {
+                                        CloseAllShippersAllCarrierResults = CloseAllShippersAllCarrierResponse.CloseManifestResults[0].ErrorCode;
+                                        if(CloseAllShippersAllCarrierResults!=0){
+                                            
+                                        $('#divAllshippersErrorMsg').hide();
+                                        $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                        $('#divAllshippersAndCarriersErrorMsg').hide();
+                                        $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').show();
+                                      
+                                        ShowAlert('ErrorModalCloseShippers');
+                                        }else if(CloseAllShippersAllCarrierResults==0){
+                                            
+                                        $('#divsuccessfulAllShippers').hide();
+                                        $('#divsuccessfulAllShippersAndAllCarriers').show();
+                                      
+                                        ShowAlert('successfulModalCloseShippers');
+                                        }
+                                 }
+            }else{
+                
+                                    $('#divAllshippersErrorMsg').hide();
+                                     $('#divAllshippersunsuccessfulcloseoutMsg').hide();
+                                     $('#divAllshippersAndCarriersErrorMsg').show();
+                                     $('#divAllshipperAndCarrierssunsuccessfulcloseoutMsg').hide();
+                                         
+                                     ShowAlert('ErrorModalCloseShippers');
+            }
+            $('#loaderspinnerImg').hide();
+           
+        
+    }
+
+// Source: FNA (FENDI)_Revision 3_2482.cs
+// getAddressBookEntries(addressBookName, context) // returns address book entries array or undefined
+    function getAddressBookEntries(addressBookName, context) {
+        var searchCriteria = { WhereClauses: [{ FieldName: "Name", FieldValue: addressBookName, Operator: 0 }] };
+        var data = { SearchCriteria: searchCriteria, CompanyId: context.CompanyId, SiteId: context.SiteId, UserId: context.UserId };
+        debugger;
+        //var response = ajaxPost('GetAddressBooks', data);
+        var response = thinClientAPIRequest('GetAddressBooks_Shared', data, false);
+        debugger;
+        if (response.TotalRecords == 0) {
+            var addressBookEntry = { Code: 'Error: AddressBook "' + addressBookName + '" Not Found' };
+            return [addressBookEntry];
+        } else {
+            var addressBookId = response.AddressBooks[0].Id;
+
+            searchCriteria = { OrderByClauses: [{ FieldName: "Code", Direction: "asc", FieldType: 3 }] };
+            data = { AddressBookIds: [addressBookId], SearchCriteria: searchCriteria, CompanyId: context.CompanyId, SiteId: context.SiteId, UserId: context.UserId };
+            //response = ajaxPost('GetAddressBookEntries', data);
+            response = thinClientAPIRequest('GetAddressBookEntries_Shared', data, false);
+            debugger;
+            if (response.TotalRecords > 0) {
+                return response.AddressBookEntries;
+            }
+        }
+    }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// VoidReal() // returns void
+  function VoidReal()
+  {
+    var ShipID = $('#ShipID').val();
+    var GlobalMSn = $('#GlobalMSn').val();
+    var Carrier = $('#Carrier').val();
+
+    var searchParams =
+    {
+      "SearchCriteria": {
+        "Skip": 0,
+        "Take": 200,
+        "WhereClauses": [
+          {
+            "FieldName": "ShipId",
+            "FieldValue": ShipID,
+            "Operator": 0
+          }
+        ],
+        "OrderByClauses": [
+          {
+            "FieldName": "GlobalMsn",
+            "Direction": "desc"
+          }
+        ]
+      },
+      "CompanyId": "4cf9324f-c58c-4694-ad37-3adcd3056c9b"
+    };
+    var data = searchParams;
+    var response = client.thinClientAPIRequest('SearchPackageHistory', data, false).done(function (response)
+    {
+      console.log(response);
+      if (response.ErrorCode != 0)
+      {
+        client.alert.Danger(response.ErrorMessage);
+      } else
+      {
+        console.log(response.Packages.length)
+        console.log(response.Packages)
+        response.Packages.forEach((package2, idx, array) =>
+        {
+          console.log(package2.GlobalMsn);
+          var currentPackage = [];
+          currentPackage.push(package2.GlobalMsn);
+          var voidParams =
+          {
+            "GlobalMsns": currentPackage,
+            "CompanyId": "4cf9324f-c58c-4694-ad37-3adcd3056c9b"
+          };
+          console.log('Processing: ' + package2.GlobalMsn)
+          var data2 = voidParams;
+		  console.log(voidParams);
+          var response2 = client.thinClientAPIRequest('VoidPackages_History', data2, true).done(function (response2)
+          {
+            console.log(response2);
+            if (response2.Packages[0].ErrorCode != 0)
+            {
+              client.alert.Danger(response2.Packages[0].ErrorMessage)
+            }
+            if (idx === array.length - 1)
+            {
+              CloseModalClose();
+              var elemento = document.querySelector('button[ng-click="vm.changeReport()"]'); if (elemento) { elemento.click(); }
+            }
+
+          });
+        });
+       
+      }
+    });
+  }
+
+// Source: Interstate-McBee (INTERSTATE-MCBEE)_Interstate McBee_1748.cs
+// compare(a, b) // returns number
+    function compare( a, b ) {
+        //console.log("entered compare");
+        if ( a.Name < b.Name ){
+            //console.log("exited compare");
+            return -1;
+        }
+        if ( a.Name > b.Name ){
+            //console.log("exited compare");
+            return 1;
+        }
+        //console.log("exited compare");
+        return 0;
+    }
+
+// AddPackage(shipmentRequest, packageIndex) // returns undefined
+     this.AddPackage = function(shipmentRequest, packageIndex) {
+       
+        shipmentRequest.PackageDefaults.UserData1 = null;
+		var shipService = "";
+		if(shipmentRequest.PackageDefaults.Service!==undefined){
+			shipService = shipmentRequest.PackageDefaults.Service.Symbol;
+		}
+		var LTLFlag = false;
+		if (shipService.includes("_LTL.") || shipService.includes("_UPSFREIGHT")){
+			LTLFlag = true;
+		}
+		if(LTLFlag)
+		{
+		    if((shipmentRequest.Packages[packageIndex].MiscReference20 != undefined && shipmentRequest.Packages[packageIndex].MiscReference20 != null && shipmentRequest.Packages[packageIndex].MiscReference20 != "")
+		        &&(shipmentRequest.Packages[packageIndex].ParentContainerCode == null || shipmentRequest.Packages[packageIndex].ParentContainerCode == "") ){
+                    shipmentRequest.Packages[packageIndex].ParentContainerCode ="P" + shipmentRequest.Packages[packageIndex].MiscReference20 + "-" + packageIndex;
+		    }
+		var dims = "0x0x0";
+		
+		var lastPackage = shipmentRequest.Packages[packageIndex - 1];
+
+		var length =0;
+        var width = 0;
+        var height =0;
+	    if(lastPackage.Dimensions!=undefined){
+			if(lastPackage.Dimensions.Length!= undefined && lastPackage.Dimensions.Width!=undefined && lastPackage.Dimensions.Height!=undefined){
+				length =lastPackage.Dimensions.Length;
+				width = lastPackage.Dimensions.Width;
+				height =lastPackage.Dimensions.Height;
+			} 	
+		}
+
+        const dimArr=[length,width,height];
+        
+        //To sort dimensions in descending order.
+        dimArr.sort(function(a, b){return b-a});
+		dims = dimArr[0]+"x"+dimArr[1]+"x"+dimArr[2];
+		if(dims!="0x0x0"){
+			const   dimtblx ="34,48,52,12,14,18,18,28,37".split(",");  
+            const   dimtbly ="32,40,36,52,44,32,52,44,37".split(","); 
+			for (let i = 0; i < dimtblx.length; i++){
+				var   x = dimtblx[i];
+                var   y = dimtbly[i];
+				if (i < 3)
+                {
+                    
+                    if (dimArr[0] == x && dimArr[1] == y )
+                        break;
+                    if (dimArr[0] == x && dimArr[1] == y )
+                    {                           
+                        dims= x + "x" + y + "x" + dimArr[1];                    
+                        break;
+                    }
+                    if (dimArr[1] == x && dimArr[2] == y )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];           
+                    break;
+                    }
+                }
+				else{                  
+                     
+                    if (dimArr[0] == y && dimArr[1] == x )
+                    {
+                        dims = x + "x" + y + "x" + dimArr[2];                    
+                        break;
+                    }
+                    if (dimArr[0] == y && dimArr[2] == x )
+                    {
+                       dims = x + "x" + y + "x" + dimArr[1];
+                    
+                       break;
+                    }
+                    if (dimArr[1] == y && dimArr[2] == x )
+                    {
+                    dims = x + "x" + y + "x" + dimArr[0];                
+                    break;
+                    }
+                }
+			}
+			if(lastPackage.BolComment == null)
+			   lastPackage.BolComment = ""; 
+			
+			shipmentRequest.Packages[packageIndex-1].BolComment = lastPackage.BolComment+" "+dims;
+			
+		}
+		//debugger;
+		shipmentRequest.Packages[packageIndex - 1].Description = "DIESEL ENGINE PARTS NMFC # 133300, SUB 4, Class 60 L"+packageIndex; // + " L" + packageIndex-1;
+		
+		if(shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == null || shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber == "" ){
+			shipmentRequest.Packages[packageIndex - 1].WaybillBolNumber = shipmentRequest.Packages[packageIndex-1].MiscReference20;
+		}
+		}
+	
+	//setRef1Focus script start
+	$("#referenceTab").children()[0].click();
+	$('div[property = "MiscReference1"]').children().ready(function () {
+	     $('div[property = "MiscReference1"]').children().focus();
+	});
+	//setRef1Focus script end
+	 
+}
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// GetUniqueArrayFromString(inString, stringDelimiter) // returns an array of non-empty trimmed strings
+            GetUniqueArrayFromString: function (inString, stringDelimiter = ',') {
+                //debugger;
+                var trimArray = $.grep(inString.split(stringDelimiter), function (a) {
+                    return a.trim().length > 0;
+                });
+                /* Get rid of any duplicate array entries. */
+                //trimArray = trimArray.filter((e, i, a) => a.indexOf(e) === i);
+                return trimArray;
+            }
+
+// GetUniqueCSVStringFromArray(inArray) // returns a CSV string
+            GetUniqueCSVStringFromArray: function (inArray) {
+                /* Get rid of any duplicate array entries. */
+                var uniqueArray = inArray.filter((e, i, a) => a.indexOf(e) === i);
+                var newUniqueString = '';
+                $(uniqueArray).each(function (a, b) {
+                    if (b.trim().length > 0) {
+                        newUniqueString += b.trim() + ',';
+                    }
+                });
+                return newUniqueString;
+            }
+
+// GetUniqueCSVStringFromString(inString) // returns a CSV string
+            GetUniqueCSVStringFromString: function (inString) {
+                var uniqueArray = this.GetUniqueArrayFromString(inString, undefined);
+                return this.GetUniqueCSVStringFromArray(uniqueArray);
+            }
+
+// Source: PackVerify Demos (PACKVERIFY)_PV Sliding Panel CBR_1858.cs
+// ShowAssignGoodsPane() // returns void
+ShowAssignGoodsPane()
+    {
+      let that = this;
+
+      //get rid of any previous entries
+      $('#listItemContainer li:gt(0)').remove();
+
+      //change the column width to make the descriptions longer
+      //change this back when the user clicks the 'Apply' button
+      $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+      //set a reference to the packages object as well as the commodities objects
+      this.packages = this.viewModel.currentShipment.Packages;
+      this.goods = this.json.data.map(m => m.boxes).flat();
+      this.goods.sort((a, b) => { return a.skuId - b.skuId });
+
+      //loop the commodities to create a master list item for each
+      $(this.goods).each(function(a, b)
+      {
+        let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+        b.UniqueId = k;
+
+        //copy the source element
+        let item = $('#liClone').clone(true).data(b);
+
+        //change the id of the main containing element so we don't run into issue later
+        //each clone is a discreet list item which corresponds to a commodity
+        $(item).attr('id', k);
+
+        //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+        //to parseFloat so this is the simplest way to get around that.
+        //let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+        $(item).find('.goods-sku').html('SKU: <strong>' + b.skuId + '</strong>');
+        $(item).find('.goods-quantity').html('Quantity: <strong>' + b.quantity + '</strong>');
+        $(item).find('.goods-declared-value').html('Unit Cost: <strong>$' + b.unitPrice + '</strong>');
+
+        //append it to our list
+        $('#divAssignCommodities ul.list-group').append(item);
+
+        //assign all goods to the first package
+        that.packages[0].CommodityContents.push(that.GetCommodityContentObject(b));
+
+        //update the weight and declared value in the root of the object
+        let weight = that.packages[0].Weight;
+        let dva = that.packages[0].DeclaredValueAmount;
+        const thisWeight = (+b.quantity * +b.weightLbs);
+        const thisValue = (+b.quantity * +b.unitPrice);
+
+        if (!weight.Amount) { weight.Amount = 0; }
+        that.packages[0].Weight.Amount += (+b.quantity * +b.weightLbs).toFixed(2);
+
+        if (!dva.Amount) { dva.Amount = 0; }
+        that.packages[0].DeclaredValueAmount.Amount += Math.round((+b.quantity * +b.unitPrice) * 100) / 100;
+
+        //show it gracefully
+        $(item).show();
+      });
+
+      //that.UpdatePackageCounts();
+      //$('li[heading=Goods] a:first').click();
+      $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+      $('.scan-input:visible').first().focus();
+      $('#divAssignCommodities').find('[data-toggle="tooltip"]').tooltip();
+    }
+
+// MoveGoodToBox(li, destBox) // returns boolean|undefined
+MoveGoodToBox(li, destBox)
+    {
+      let vm = this.ClassViewModel;
+      let that = this;
+      let data = $(li).data();
+      let destCC = this.packages[destBox - 1].CommodityContents || [];
+
+      //find the box the item currently resides in
+      //split this statement up over a few calls to make it easier to read
+      let allGoods = this.packages.map(m => m.CommodityContents).flat();
+      let item = allGoods.find(cc => cc.UniqueId == data.UniqueId);
+
+      if (+item.PkgIndex == +destBox) { console.log('Item already exists in box.'); return false; }
+
+      //remove the item from its current box
+      this.packages[item.PkgIndex - 1].CommodityContents = this.packages[item.PkgIndex - 1].CommodityContents.filter(p => p.UniqueId != data.UniqueId);
+
+      //add it to the new box
+      item.PkgIndex = destBox;
+      destCC.push(item);
+      $(li).find('.pkg-index-text').fadeOut().promise().done(function(e) { $(this).text(destBox).fadeIn(); });
+
+      //console.log(vm.currentShipment.Packages);
+      $('li[heading="Goods"]:visible:first > a').trigger('click');
+      $('#goods .btn-group').find('.btn:gt(0)').not('.active').first().trigger('click');
+
+      //update the weights and values
+      //this data will have changed by now so get a new reference to the object
+      allGoods = this.packages.map(m => m.CommodityContents).flat();
+      //the items array will have the CommodityContents object for every package in the shipment
+
+      //sort by package index
+      //update the weight and declared values for all the packages in the shipment
+      allGoods = allGoods.sort((a, b) => { return a.PkgIndex - b.PkgIndex });
+      $(allGoods).each(function(a, b)
+      {
+        let pkg = that.packages[b.PkgIndex - 1];
+
+        if ((a == 0) || (b.PkgIndex != allGoods[a - 1].PkgIndex))
+        {
+          pkg.Weight.Amount = 0;
+          pkg.DeclaredValueAmount.Amount = 0;
+        }
+
+        pkg.Weight.Amount += +b.PVTotalWeight;
+        pkg.DeclaredValueAmount.Amount += +b.PVTotalValue;
+      });
+    }
+
+// Source: Purolator (PURT)_PurolatorCBR_1906.cs
+// function RenameShipperGroupManager() // returns void
+function RenameShipperGroupManager() {
+        var loaded = setInterval(function() {
+            var div = $('div[ng-if="vm.groupType && vm.groupType.Symbol !== vm.enumGroupTypes.TradeDirect"]');
+            if (div.length > 0) {
+                clearInterval(loaded);
+                var div2 = div.find('div[class="row"]');
+                var div3 = div2.find('div[class="col-md-3 ng-binding"]');
+                var div4 = div3.find('div[class="form-group"]');
+                var label = div4.find('label');
+                RenameElement(label, 'Gateway', 'passerelle');
+
+                //Sorting
+                var select = div4.find('select[name="shipper"]');
+                //$("[label$=jander]")
+                select.html($("option[label^=\'Purolator\']").sort(function (a, b) {
+                    //debugger;
+                    return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+                }));
+                //adding select gateway
+                select.prepend($('<option>', {
+                    value: '',
+                    text: lang == 'en-US' ? 'Select Gateway...' : 'Sélectionnez Passerelle...'
+                }));
+                select.prop("selectedIndex", 1);
+
+                //var date = new Date();
+                //var dateStr = date.getFullYear() + "-" + ("00" + (date.getMonth() + 1)).slice(-2) + "-" + ("00" + date.getDate()).slice(-2);
+                //var input = $('input[datepicker-options="vm.shipDateOptions"]');
+                //input.val(dateStr);
+                //debugger;
+                //this.vm;
+                //input.hide();
+
+                //$('body').delegate(select, 'change', HidingDefaultShipDate); 
+            }
+        }, 50);
+        
+    }
+
+// function RenameShipper() // returns void
+function RenameShipper() {
+        var loaded = setInterval(function() {
+            var shipper = $('shipper-carrier');           
+            if (shipper.length > 0) {
+                clearInterval(loaded);
+                var div1 = shipper.find('div[class="col-md-4 col-sm-4 col-xs-12 no-left-padding"]');
+                var div2 = div1.find('div[class="customDivLeft"]');
+                var div3 = div2.find('div[class="side-by-side clearfix form-group"]');
+                var label = div3.find('label');
+                RenameElement(label, 'Gateway', 'passerelle');
+
+                //Sorting
+                var select = $('select[ng-model="vm.selectedShipper"]');
+                select.html($("option[label]").sort(function (a, b) {
+                    //debugger;
+                    return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+                }));
+                //adding select gateway
+                select.prepend($('<option>', {
+                    value: '',
+                    text: lang == 'en-US' ? 'Select Gateway...' : 'Sélectionnez Passerelle...'
+                }));
+                select.prop("selectedIndex", 0);
+            }
+        }, 50);
+    }
+
+// Source: Revvity Omics (PerkinElmer)_Perkin Elmer Reference Rule_1531.cs
+// PageLoaded(location) // returns void
+    this.PageLoaded = function (location) {
+        if (location == '/shipping') {
+            var shippers = this.vm.profile.Shippers;
+            this.vm.profile.Shippers = shippers.sort(function (a, b) {
+                if (a.Name > b.Name) return 1;
+                if (a.Name < b.Name) return -1;
+                return 0;
+            });
+        }
+    }
+
+// Source: Soundoff Signal (SOS)_Warehouse Shipping CBR_1803.cs
+// LoadSampleData() // returns void
+  async LoadSampleData()
+  {
+    let that = this;
+    //Static orders from a local file
+    //const json = await that.MakeUserMethodRequest('GetDemoData').then(function(jsonData)
+    //{
+    let Sample = new SampleData();
+    that.OrderJson = Sample.GetSampleData();
+
+    //create an array of order numbers
+    let orders = $(that.OrderJson).map(function(a, b) { return b.CSshipper.trim() }).get().sort();
+
+    //order data by CSshipitem after grouping by CSshipper
+    //add 3 dot menu item to the last td in the table for intl shipment to edit goods information
+    //hide table row after row is completed
+    //hide intl panel if not an intl shipment
+
+    //the data is setup so that the orders do not come in as an array, but rather as multiple orders with the same CSshipper value
+    //where CSshipper is the order number.  Get the unique orders here and then add them to the select box.
+    //when an option is selected, get all corresponding orders from the global OrderJson object
+    let uniqueOrders = [...new Set(orders)];
+
+    let sel = $('select[event=SelectOrderFromJson');
+    let options = '';
+    uniqueOrders.forEach(order =>
+    {
+      options += `<option value="${order}">${order}</option>`;
+    });
+
+    $(sel).append(options);
+
+    //let optAddBulk = '<option value="AddMultiple">Add Multiple Items</option>';
+    //let optRemoveBulk = '<option value="RemoveMultiple">Remove Multiple Items</option>';
+
+    //$(sel.append(optAddBulk, optRemoveBulk));
+
+    //put the event handler in here
+    $(sel).on('change', function(e)
+    {
+      $('[data-toggle="tooltip"]').tooltip('hide');
+
+      let v = $(this).val();
+      $('.panel-heading-container [sos-key=OrderNumber]').text(v);
+
+      //if (v == 'AddMultiple')
+      //{
+      //  that.ShowMultipleOperationsDialog(false);
+      //  return;
+      //}
+      //else if (v == 'RemoveMultiple')
+      //{
+      //  that.ShowMultipleOperationsDialog(true);
+      //  return;
+      //}
+
+      //$('.well').fadeOut().promise().done(function()
+      //{
+      let o = that.OrderJson.filter(order => order.CSshipper.trim() == v);
+      //  //that.AddOrderDataToScreen(o);
+      that.CreateOrderTable(o);
+      //  //$(that.tableId).closest('.panel-body').css({ 'min-height': 'calc(100vh - 255px)', 'overlay': 'auto' });
+      //});
+    });
+
+    //});
+    //    let jsonData = json.responseJSON;
+  }
+
+// AddItemHtmlToContainer(ListItem, ContainerIndex) // returns void
+  AddItemHtmlToContainer = (ListItem, ContainerIndex) =>
+  {
+    //need to put the items in the panels in the same order they appear in the table.
+    //get all the row indexes from the panel list and sort the list descending
+    const parent = $(this.H.PanelOpenContainersId).find(`.container-parent[container-index=${ContainerIndex}]`);
+    let listitems = $(parent).find('ul.list-group').first().find('li:visible');
+    let currentItems = $(listitems).map(function(i, val) { return $(this).data() }).get();
+    let itemIndexes = $(currentItems).map((a, b) => +b.RowIndex).get().sort((c, d) => d - c);
+    let ul = $(parent).find('ul.list-group').first();
+
+    //get the last available index in the list items
+    const lastIndex = itemIndexes.filter(i => +i < +$(ListItem).attr('row-index'))[0];
+
+    //if there were no items with a lower index than the new item, add it to the top of the list
+    if (!lastIndex && lastIndex !== 0)
+    {
+      $(ListItem).prependTo(ul);
+      //$(parent).find('ul:first').prepend(ListItem);
+    }
+    else //find the list item that has a row-index less than the current list item and append the current list item after that
+    {
+      const prevItem = $(parent).find(`ul li:visible[row-index=${lastIndex}]`).first();
+      //$(ul).append(ListItem).insertAfter(prevItem);
+      $(ListItem).appendTo(ul).insertAfter(prevItem);
+    }
+
+    //show the list item gracefully
+    $(ListItem).slideDown().css('display', 'block').show();
+  }
+
+// GetTableDataPackedInBoxesTooltip(PackedItems) // returns string
+  GetTableDataPackedInBoxesTooltip = (PackedItems) =>
+  {
+    PackedItems.sort((a, b) => a.ContainerIndex - b.ContainerIndex);
+    //ContainerIndex: x
+    //Count: y
+    let div = '<div>';
+
+    $(PackedItems).each((a, b) =>
+    {
+      div += `<div>Box: ${b.ContainerIndex} Count: ${b.Count}</div>`;
+    });
+
+    div += `</div>`;
+
+    return div;
+  }
+
+// Source: Volt Lighting (VOLT)_Volt_Business_Rules_1666.cs
+// function getTrailerSortCodeByShipper() // returns void
+    function getTrailerSortCodeByShipper(){
+        var Shipper = $("#CVIS_Shippers").val();
+        if(Shipper != "0"){
+            var usermethodParams = { "action": 6, "orderNumber": "0", "percentageComplete":"0", "trailerNumber":"", "shipper":Shipper};
+			var data = { UserContext: userContext, "Data": JSON.stringify(usermethodParams) };
+        	var response = client.thinClientAPIRequest('UserMethod', data, false).done(function (response) {
+				if (response.ErrorCode != 0) {
+					client.alert.Danger(response.ErrorMessage);
+				} else {
+					$("#TrailerSortCode").val(response.Data);
+				}
+			});     
+			
+			/*$.ajax({
+            type: "POST",
+                url: "api/ShippingService/UserMethod",
+                async: false,
+                cache: false,
+                dataType: "json",
+                data: { UserContext: userContext, "Data": JSON.stringify(usermethodParams) },
+                success: function(response) {
+                    $("#TrailerSortCode").val(response.Data);
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            });*/
+        }
+        
+    }
+
+// Source: Worldwide Cargo Services Inc (WORLDWIDECSI)_API TEST_1781.cs
+// byService(a, b) // returns number used for sort ordering
+        function byService(a, b) {
+            var sortingArr = [
+                "UPS Next Day Air EAM (UPS Adapter)",
+                "UPS Next Day Air (UPS Adapter)",
+                "UPS Next Day Air Saver (UPS Adapter)",
+                "UPS Second Day Air AM (UPS Adapter)",
+                "UPS Second Day Air (UPS Adapter)",
+                "UPS Three-Day Select (UPS Adapter)",
+                "UPS Ground (UPS Adapter)"
+            ]
+            return sortingArr.indexOf(a.Name) - sortingArr.indexOf(b.Name);
+        }
+

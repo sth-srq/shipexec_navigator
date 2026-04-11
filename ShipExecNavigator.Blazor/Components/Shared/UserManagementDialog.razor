@@ -1,0 +1,1051 @@
+@using PSI.Sox
+@using CompanyInfo = ShipExecNavigator.Shared.Models.CompanyInfo
+@inject IShipExecService ShipExecService
+@inject IJSRuntime JS
+@inject IXmlViewerService XmlViewerService
+@inject IXmlRefLookupService XmlRefLookupService
+
+<div class="um-panel">
+    <div class="um-panel-toolbar">
+        <button class="um-create-user-btn" @onclick="EnqueueCreateVariance">&#x2795; Create User</button>
+        <button class="um-upload-btn" @onclick="() => _showImportUsersDialog = true">&#x1F4CC; Import</button>
+        <button class="um-upload-btn" @onclick="() => _showUploadDialog = true">&#x2B06; Upload</button>
+        <button class="um-export-btn" @onclick="HandleExportAsync" disabled="@_isExporting">
+            @if (_isExporting) { <span class="um-export-spinner"></span> }
+            &#x2B07; Export
+        </button>
+        @if (_pendingVariances.Count > 0)
+        {
+            <button class="um-apply-btn" @onclick="ApplyVariancesAsync" disabled="@_isApplying">
+                @if (_isApplying)
+                {
+                    <span class="um-export-spinner"></span>
+                }
+                &#x2705; Apply Changes (@_pendingVariances.Count)
+            </button>
+            <button class="um-discard-btn" @onclick="DiscardVariances" disabled="@_isApplying">
+                &#x1F5D1; Discard
+            </button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(_applyError))
+    {
+        <div class="um-delete-banner um-delete-banner--error" style="margin:0.4rem 0.5rem">
+            <span>&#9888; @_applyError</span>
+            <button class="um-find-clear-btn" @onclick="() => _applyError = null">&#x2715;</button>
+        </div>
+    }
+
+    @if (FoundUserIds is { Count: > 0 })
+    {
+        <div class="um-find-banner">
+            <span>&#x1F50D; AI found @FoundUserIds.Count user@(FoundUserIds.Count == 1 ? "" : "s")</span>
+            <button class="um-find-clear-btn" @onclick="OnClearFound">&#x2715; Clear</button>
+        </div>
+    }
+
+    <CreateUserDialog IsVisible="_showCreateUserDialog"
+                   CompanyName="@_companyInfo?.DisplayName"
+                   CompanyId="@(_companyInfo?.Id ?? Guid.Empty)"
+                   Prefill="@_createPrefill"
+                   OnClose="() => _showCreateUserDialog = false"
+                   OnUserCreated="HandleUserCreated" />
+
+    <ImportUsersDialog IsVisible="_showImportUsersDialog"
+                       CanApply="true"
+                       OnClose="() => _showImportUsersDialog = false"
+                       OnUsersApplied="HandleUsersImportedAsync" />
+
+    <UploadDialog IsVisible="_showUploadDialog"
+                  OnClose="() => _showUploadDialog = false" />
+
+    @if (_isLoading)
+    {
+        <div class="um-loading">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Loading users&hellip;</span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="um-error">&#9888; @_errorMessage</div>
+    }
+    else if (_users.Count == 0)
+    {
+        <div class="um-empty">No users found for this company.</div>
+    }
+    else
+    {
+        <table class="um-table">
+            <thead>
+                <tr>
+                    <th class="um-col-toggle"></th>
+                    <th>Username</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                            @foreach (var (user, idx) in _users.Select((u, i) => (u, i)))
+                            {
+                                var isExpanded = _expandedUserIds.Contains(user.Id);
+                                var isFound = FoundUserIds?.Contains(user.Id) == true;
+                                <tr class='um-user-row @(idx % 2 == 0 ? "um-row--even" : "") @(isFound ? "um-row--found" : "")' @onclick="() => ToggleUserAsync(user.Id)">
+                                    <td class="um-col-toggle">
+                                        <span class="um-toggle-icon">@(isExpanded ? "▲" : "▼")</span>
+                                    </td>
+                                    <td>@user.UserName</td>
+                                    <td>@user.Email</td>
+                                </tr>
+                                @if (isExpanded)
+                                {
+                                    <tr class="um-detail-row">
+                                        <td colspan="3">
+                                            @if (_loadingIds.Contains(user.Id))
+                                            {
+                                                <div class="um-loading">
+                                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                    <span>Loading detail&hellip;</span>
+                                                </div>
+                                            }
+                                            else if (_detailErrors.TryGetValue(user.Id, out var detailErr))
+                                            {
+                                                <div class="um-detail-error">&#9888; @detailErr</div>
+                                            }
+                                            else if (_userDetails.TryGetValue(user.Id, out var d) && d is not null)
+                                            {
+                                                <table class="um-summary-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Email</th>
+                                                            <th>Company</th>
+                                                            <th>Site</th>
+                                                            <th>Profile</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>@d.Email</td>
+                                                            <td>@(string.IsNullOrEmpty(d.CompanyName) ? "—" : d.CompanyName)</td>
+                                                            <td>@(string.IsNullOrEmpty(d.SiteName)   ? "—" : d.SiteName)</td>
+                                                            <td>@(d.ProfileId.HasValue ? (XmlRefLookupService.GetRefOptions("ProfileId")?.FirstOrDefault(o => o.Value == d.ProfileId.ToString())?.Display ?? d.ProfileId.ToString()) : "—")</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                                var activeTab = _activeTab.TryGetValue(user.Id, out var t) ? t : "roles";
+                                                <div class="um-tab-bar">
+                                                    <button class='um-tab @(activeTab == "xml" ? "um-tab--active" : "")'
+                                                            @onclick='() => SetTab(user.Id, "xml")'>Settings</button>
+                                                    <button class='um-tab @(activeTab == "roles" ? "um-tab--active" : "")'
+                                                            @onclick='() => SetTab(user.Id, "roles")'>Roles</button>
+                                                    <button class='um-tab @(activeTab == "permissions" ? "um-tab--active" : "")'
+                                                            @onclick='() => SetTab(user.Id, "permissions")'>Permissions</button>
+                                                    <button class='um-tab @(activeTab == "address" ? "um-tab--active" : "")'
+                                                            @onclick='() => SetTab(user.Id, "address")'>Address</button>
+                                                    <button class='um-tab @(activeTab == "config" ? "um-tab--active" : "")'
+                                                            @onclick='() => SetTab(user.Id, "config")'>Default Config</button>
+                                                </div>
+                                                <div class='um-perm-section @(activeTab != "xml" ? "um-tab-hidden" : " um-tab-panel-active")'>
+                                                    @if (_userXmlTrees.TryGetValue(user.Id, out var xmlTree) && xmlTree is not null)
+                                                    {
+                                                        var userXmlHandler = _userXmlModifiedHandlers.GetValueOrDefault(user.Id);
+                                                        <div class="um-xml-tree-panel">
+                                                            <CascadingValue Name="UseStringEnumValues" Value="true" IsFixed="true">
+                                                                <CascadingValue Name="TreeVersion" Value="_xmlVersion" IsFixed="false">
+                                                                    <CascadingValue Name="OnNodeModified" Value="userXmlHandler" IsFixed="true">
+                                                                        <XmlNodeTree Node="xmlTree" />
+                                                                    </CascadingValue>
+                                                                </CascadingValue>
+                                                            </CascadingValue>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="um-perm-none">Loading XML&hellip;</span>
+                                                    }
+                                                    @if (_xmlErrors.TryGetValue(user.Id, out var xmlErr))
+                                                    {
+                                                        <div class="um-perm-save-error" style="margin-top:0.3rem">&#9888; @xmlErr</div>
+                                                    }
+                                                </div>
+                                                @if (_roles.TryGetValue(user.Id, out var roles))
+                                                {
+                                                    <div class='um-perm-section @(activeTab != "roles" ? "um-tab-hidden" : " um-tab-panel-active")'>
+                                                        @if (roles.Count > 0)
+                                                        {
+                                                            <div class="um-perm-grid">
+                                                                @foreach (var role in roles.OrderBy(r => r.Name))
+                                                                {
+                                                                    var isRoleChecked = _roleChecked.TryGetValue(user.Id, out var rset) && rset.Contains(role.Id);
+                                                                    <label class="um-perm-item">
+                                                                        <input type="checkbox" checked="@isRoleChecked"
+                                                                               @onchange="e => ToggleRole(user.Id, role.Id, (bool)e.Value!)" />
+                                                                        @role.Name
+                                                                    </label>
+                                                                }
+                                                            </div>
+                                                            <div class="um-perm-footer">
+                                                                @if (_roleSavingIds.Contains(user.Id))
+                                                                {
+                                                                    <span class="um-perm-saving">
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        Saving&hellip;
+                                                                    </span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <button class="um-perm-save @(_roleDirty.Contains(user.Id) ? "um-perm-save--active" : "")"
+                                                                            disabled="@(!_roleDirty.Contains(user.Id))"
+                                                                            @onclick="() => SaveRolesAsync(user.Id)">
+                                                                        &#x1F4BE; Save Roles
+                                                                    </button>
+                                                                    @if (_roleSaveErrors.TryGetValue(user.Id, out var roleSaveErr))
+                                                                    {
+                                                                        <span class="um-perm-save-error">&#9888; @roleSaveErr</span>
+                                                                    }
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="um-perm-none">No roles available.</span>
+                                                        }
+                                                    </div>
+                                                }
+                                                @if (_permissions.TryGetValue(user.Id, out var perms))
+                                                {
+                                                    <div class='um-perm-section @(activeTab != "permissions" ? "um-tab-hidden" : " um-tab-panel-active")'>
+                                                        @if (perms.Count > 0)
+                                                        {
+                                                            <div class="um-perm-grid">
+                                                                @foreach (var perm in perms.OrderBy(p => p.Name))
+                                                                {
+                                                                    var isChecked = _permChecked.TryGetValue(user.Id, out var set) && set.Contains(perm.Id);
+                                                                    <label class="um-perm-item">
+                                                                        <input type="checkbox" checked="@isChecked"
+                                                                               @onchange="e => TogglePermission(user.Id, perm.Id, (bool)e.Value!)" />
+                                                                        @perm.Name
+                                                                    </label>
+                                                                }
+                                                            </div>
+                                                            <div class="um-perm-footer">
+                                                                @if (_savingIds.Contains(user.Id))
+                                                                {
+                                                                    <span class="um-perm-saving">
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        Saving&hellip;
+                                                                    </span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <button class="um-perm-save @(_permDirty.Contains(user.Id) ? "um-perm-save--active" : "")"
+                                                                            disabled="@(!_permDirty.Contains(user.Id))"
+                                                                            @onclick="() => SavePermissionsAsync(user.Id)">
+                                                                        &#x1F4BE; Save Permissions
+                                                                    </button>
+                                                                    @if (_saveErrors.TryGetValue(user.Id, out var saveErr))
+                                                                    {
+                                                                        <span class="um-perm-save-error">&#9888; @saveErr</span>
+                                                                    }
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="um-perm-none">No permissions available.</span>
+                                                        }
+                                                    </div>
+                                                }
+                                                <div class='um-perm-section @(activeTab != "address" ? "um-tab-hidden" : " um-tab-panel-active")'>
+                                                    <div class="um-form-grid">
+                                                        <label class="um-form-label">Company</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Company"
+                                                               @oninput="e => { d.Address.Company = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Contact</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Contact"
+                                                               @oninput="e => { d.Address.Contact = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Address 1</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Address1"
+                                                               @oninput="e => { d.Address.Address1 = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Address 2</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Address2"
+                                                               @oninput="e => { d.Address.Address2 = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Address 3</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Address3"
+                                                               @oninput="e => { d.Address.Address3 = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">City</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.City"
+                                                               @oninput="e => { d.Address.City = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">State / Province</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.StateProvince"
+                                                               @oninput="e => { d.Address.StateProvince = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Postal Code</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.PostalCode"
+                                                               @oninput="e => { d.Address.PostalCode = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Country</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Country"
+                                                               @oninput="e => { d.Address.Country = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Phone</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Phone"
+                                                               @oninput="e => { d.Address.Phone = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Fax</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Fax"
+                                                               @oninput="e => { d.Address.Fax = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Email</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Email"
+                                                               @oninput="e => { d.Address.Email = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">SMS</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Sms"
+                                                               @oninput="e => { d.Address.Sms = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Account</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Account"
+                                                               @oninput="e => { d.Address.Account = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Tax ID</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.TaxId"
+                                                               @oninput="e => { d.Address.TaxId = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Tax ID Type</label>
+                                                        <select class="um-form-select"
+                                                                @onchange="e => { d.Address.TaxIdType = Enum.Parse<TaxIdType>(e.Value!.ToString()!); MarkAddressDirty(user.Id); }">
+                                                            <option value="Undefined" selected="@(d.Address.TaxIdType == TaxIdType.Undefined)">Undefined</option>
+                                                            <option value="Individual" selected="@(d.Address.TaxIdType == TaxIdType.Individual)">Individual</option>
+                                                            <option value="Business" selected="@(d.Address.TaxIdType == TaxIdType.Business)">Business</option>
+                                                            <option value="Passport" selected="@(d.Address.TaxIdType == TaxIdType.Passport)">Passport</option>
+                                                            <option value="Military" selected="@(d.Address.TaxIdType == TaxIdType.Military)">Military</option>
+                                                        </select>
+                                                        <label class="um-form-label">Code</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Code"
+                                                               @oninput="e => { d.Address.Code = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Group</label>
+                                                        <input type="text" class="um-form-input" value="@d.Address.Group"
+                                                               @oninput="e => { d.Address.Group = e.Value?.ToString() ?? string.Empty; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">P.O. Box</label>
+                                                        <input type="checkbox" checked="@d.Address.PoBox"
+                                                               @onchange="e => { d.Address.PoBox = (bool)e.Value!; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Residential</label>
+                                                        <input type="checkbox" checked="@d.Address.Residential"
+                                                               @onchange="e => { d.Address.Residential = (bool)e.Value!; MarkAddressDirty(user.Id); }" />
+                                                        <label class="um-form-label">Is Validated</label>
+                                                        <input type="checkbox" checked="@d.Address.IsValidated"
+                                                               @onchange="e => { d.Address.IsValidated = (bool)e.Value!; MarkAddressDirty(user.Id); }" />
+                                                    </div>
+                                                    <div class="um-perm-footer">
+                                                        @if (_addressSavingIds.Contains(user.Id))
+                                                        {
+                                                            <span class="um-perm-saving">
+                                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                Saving&hellip;
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="um-perm-save @(_addressDirty.Contains(user.Id) ? "um-perm-save--active" : "")"
+                                                                    disabled="@(!_addressDirty.Contains(user.Id))"
+                                                                    @onclick="() => SaveAddressAsync(user.Id)">
+                                                                &#x1F4BE; Save Address
+                                                            </button>
+                                                            @if (_addressSaveErrors.TryGetValue(user.Id, out var addrSaveErr))
+                                                            {
+                                                                <span class="um-perm-save-error">&#9888; @addrSaveErr</span>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class='um-perm-section @(activeTab != "config" ? "um-tab-hidden" : " um-tab-panel-active")'>
+                                                    <div class="um-form-grid">
+                                                        <label class="um-form-label">Export Delimiter</label>
+                                                        <select class="um-form-select"
+                                                                @onchange="e => { d.DefaultConfiguration.ExportFileDelimiter = Enum.Parse<Delimiter>(e.Value!.ToString()!); MarkConfigDirty(user.Id); }">
+                                                            <option value="Comma" selected="@(d.DefaultConfiguration.ExportFileDelimiter == Delimiter.Comma)">Comma</option>
+                                                            <option value="Semicolon" selected="@(d.DefaultConfiguration.ExportFileDelimiter == Delimiter.Semicolon)">Semicolon</option>
+                                                            <option value="Tab" selected="@(d.DefaultConfiguration.ExportFileDelimiter == Delimiter.Tab)">Tab</option>
+                                                        </select>
+                                                        <label class="um-form-label">Export Qualifier</label>
+                                                        <select class="um-form-select"
+                                                                @onchange="e => { d.DefaultConfiguration.ExportFileQualifier = Enum.Parse<Qualifier>(e.Value!.ToString()!); MarkConfigDirty(user.Id); }">
+                                                            <option value="None" selected="@(d.DefaultConfiguration.ExportFileQualifier == Qualifier.None)">None</option>
+                                                            <option value="DoubleQuotes" selected="@(d.DefaultConfiguration.ExportFileQualifier == Qualifier.DoubleQuotes)">Double Quotes</option>
+                                                            <option value="SingleQuote" selected="@(d.DefaultConfiguration.ExportFileQualifier == Qualifier.SingleQuote)">Single Quote</option>
+                                                        </select>
+                                                        <label class="um-form-label">Group Separator</label>
+                                                        <select class="um-form-select"
+                                                                @onchange="e => { d.DefaultConfiguration.ExportFileGroupSeparator = Enum.Parse<GroupSeparator>(e.Value!.ToString()!); MarkConfigDirty(user.Id); }">
+                                                            <option value="Comma" selected="@(d.DefaultConfiguration.ExportFileGroupSeparator == GroupSeparator.Comma)">Comma</option>
+                                                            <option value="Period" selected="@(d.DefaultConfiguration.ExportFileGroupSeparator == GroupSeparator.Period)">Period</option>
+                                                        </select>
+                                                        <label class="um-form-label">Decimal Separator</label>
+                                                        <select class="um-form-select"
+                                                                @onchange="e => { d.DefaultConfiguration.ExportFileDecimalSeparator = Enum.Parse<DecimalSeparator>(e.Value!.ToString()!); MarkConfigDirty(user.Id); }">
+                                                            <option value="Comma" selected="@(d.DefaultConfiguration.ExportFileDecimalSeparator == DecimalSeparator.Comma)">Comma</option>
+                                                            <option value="Period" selected="@(d.DefaultConfiguration.ExportFileDecimalSeparator == DecimalSeparator.Period)">Period</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="um-perm-footer">
+                                                        @if (_configSavingIds.Contains(user.Id))
+                                                        {
+                                                            <span class="um-perm-saving">
+                                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                Saving&hellip;
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="um-perm-save @(_configDirty.Contains(user.Id) ? "um-perm-save--active" : "")"
+                                                                    disabled="@(!_configDirty.Contains(user.Id))"
+                                                                    @onclick="() => SaveDefaultConfigAsync(user.Id)">
+                                                                &#x1F4BE; Save Default Configuration
+                                                            </button>
+                                                            @if (_configSaveErrors.TryGetValue(user.Id, out var cfgSaveErr))
+                                                            {
+                                                                <span class="um-perm-save-error">&#9888; @cfgSaveErr</span>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnUsersJson { get; set; }
+    [Parameter] public List<Guid>? FoundUserIds { get; set; }
+    [Parameter] public EventCallback OnClearFound { get; set; }
+    [Parameter] public List<UserDeleteItem>? AiPendingDeletes { get; set; }
+    [Parameter] public EventCallback OnDeletesHandled { get; set; }
+    [Parameter] public List<UserEditItem>? AiPendingEdits { get; set; }
+    [Parameter] public EventCallback OnEditsHandled { get; set; }
+    [Parameter] public EventCallback<string> OnUsersMetaJson { get; set; }
+    [Parameter] public UserAddItem? AiCreatePrefill { get; set; }
+    [Parameter] public EventCallback OnCreateHandled { get; set; }
+    [Parameter] public EventCallback<List<UserVariance>> OnVariancesChanged { get; set; }
+
+    private List<User> _users = [];
+    private bool _isLoading;
+    private bool _showCreateUserDialog;
+    private bool _showUploadDialog;
+    private bool _showImportUsersDialog;
+    private bool _isExporting;
+    private bool _isAiDeleting;
+    private string? _aiDeleteError;
+    private List<UserDeleteItem>? _lastProcessedDeletes;
+    private List<UserEditItem>? _lastProcessedEdits;
+    private UserAddItem? _createPrefill;
+    private UserAddItem? _lastProcessedCreatePrefill;
+    private bool _isAiEditing;
+    private string? _aiEditError;
+    private readonly List<UserVariance> _pendingVariances = [];
+    private bool _isApplying;
+    private string? _applyError;
+    private Guid? _activeCreateVarianceId;
+    private CompanyInfo? _companyInfo;
+    private string _errorMessage = string.Empty;
+    private readonly HashSet<Guid> _expandedUserIds = [];
+    private readonly HashSet<Guid> _loadingIds = [];
+    private readonly Dictionary<Guid, User?> _userDetails = [];
+    private readonly Dictionary<Guid, string> _detailErrors = [];
+    private readonly Dictionary<Guid, List<Permission>> _permissions = [];
+    private readonly Dictionary<Guid, HashSet<Guid>> _permChecked = [];
+    private readonly HashSet<Guid> _permDirty = [];
+    private readonly HashSet<Guid> _savingIds = [];
+    private readonly Dictionary<Guid, string> _saveErrors = [];
+    private readonly Dictionary<Guid, List<Role>> _roles = [];
+    private List<Role> _allRoles = [];
+    private List<Permission> _allPermissions = [];
+    private readonly Dictionary<Guid, HashSet<Guid>> _roleChecked = [];
+    private readonly HashSet<Guid> _roleDirty = [];
+    private readonly HashSet<Guid> _roleSavingIds = [];
+    private readonly Dictionary<Guid, string> _roleSaveErrors = [];
+    private readonly HashSet<Guid> _addressDirty = [];
+    private readonly HashSet<Guid> _addressSavingIds = [];
+    private readonly Dictionary<Guid, string> _addressSaveErrors = [];
+    private readonly HashSet<Guid> _configDirty = [];
+    private readonly HashSet<Guid> _configSavingIds = [];
+    private readonly Dictionary<Guid, string> _configSaveErrors = [];
+    private readonly Dictionary<Guid, string> _activeTab = [];
+    private readonly Dictionary<Guid, string> _xmlText = [];
+    private readonly Dictionary<Guid, string> _xmlErrors = [];
+    private readonly Dictionary<Guid, XmlNodeViewModel?> _userXmlTrees = [];
+    private readonly Dictionary<Guid, global::System.Action> _userXmlModifiedHandlers = [];
+    private int _xmlVersion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _companyInfo = ShipExecService.GetCurrentCompany();
+        var rolesTask = ShipExecService.GetRolesAsync();
+        await Task.WhenAll(LoadUsersAsync(), rolesTask);
+        _allRoles = await rolesTask;
+
+        // Permissions require a valid user context; use the first user if available
+        if (_users.Count > 0)
+        {
+            try { _allPermissions = await ShipExecService.GetPermissionsAsync(_users[0].Id); }
+            catch { /* non-fatal: AI edit of permissions will just have an empty list */ }
+        }
+
+        await EmitUsersMetaJsonAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AiPendingDeletes is { Count: > 0 } && !ReferenceEquals(AiPendingDeletes, _lastProcessedDeletes))
+        {
+            _lastProcessedDeletes = AiPendingDeletes;
+            await ExecuteAiDeletesAsync(AiPendingDeletes);
+        }
+
+        if (AiPendingEdits is { Count: > 0 } && !ReferenceEquals(AiPendingEdits, _lastProcessedEdits))
+        {
+            _lastProcessedEdits = AiPendingEdits;
+            await ExecuteAiEditsAsync(AiPendingEdits);
+        }
+
+        if (AiCreatePrefill is not null && !ReferenceEquals(AiCreatePrefill, _lastProcessedCreatePrefill))
+        {
+            _lastProcessedCreatePrefill = AiCreatePrefill;
+            var label = !string.IsNullOrWhiteSpace(AiCreatePrefill.Email) ? AiCreatePrefill.Email : "new user";
+            _pendingVariances.Add(new UserVariance
+            {
+                Kind        = UserVarianceKind.Create,
+                Email       = AiCreatePrefill.Email,
+                Username    = AiCreatePrefill.Email,
+                CreatePrefill = AiCreatePrefill,
+                Description = $"Create user '{label}'",
+            });
+            if (OnCreateHandled.HasDelegate)
+                await OnCreateHandled.InvokeAsync();
+            await NotifyVariancesChanged();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExecuteAiDeletesAsync(List<UserDeleteItem> items)
+    {
+        foreach (var item in items)
+        {
+            if (!Guid.TryParse(item.Id, out var userId)) continue;
+            if (_pendingVariances.Any(v => v.Kind == UserVarianceKind.Delete && v.UserId == userId))
+                continue; // already queued
+            _pendingVariances.Add(new UserVariance
+            {
+                Kind        = UserVarianceKind.Delete,
+                UserId      = userId,
+                Username    = item.Username,
+                Email       = item.Email,
+                Description = $"Delete user '{item.Username}' ({item.Email})",
+            });
+        }
+
+        if (OnDeletesHandled.HasDelegate)
+            await OnDeletesHandled.InvokeAsync();
+
+        await NotifyVariancesChanged();
+        StateHasChanged();
+    }
+
+    private async Task ExecuteAiEditsAsync(List<UserEditItem> items)
+    {
+        foreach (var item in items)
+        {
+            if (!Guid.TryParse(item.Id, out var userId)) continue;
+            var changedFields = string.Join(", ", item.Edits.Select(e => $"{e.Key}={e.Value}"));
+            _pendingVariances.Add(new UserVariance
+            {
+                Kind        = UserVarianceKind.Edit,
+                UserId      = userId,
+                Username    = item.Username,
+                Email       = item.Email,
+                EditItem    = item,
+                Description = $"Edit '{item.Username}': {changedFields}",
+            });
+        }
+
+        if (OnEditsHandled.HasDelegate)
+            await OnEditsHandled.InvokeAsync();
+
+        await NotifyVariancesChanged();
+        StateHasChanged();
+    }
+
+    private async Task ApplyVariancesAsync()
+    {
+        if (_pendingVariances.Count == 0) return;
+
+        // Handle Create variances one-at-a-time via the dialog (password required).
+        var firstCreate = _pendingVariances.FirstOrDefault(v => v.Kind == UserVarianceKind.Create);
+        if (firstCreate is not null)
+        {
+            _activeCreateVarianceId = firstCreate.Id;
+            _createPrefill = firstCreate.CreatePrefill;
+            _showCreateUserDialog = true;
+            StateHasChanged();
+            return;
+        }
+
+        // Apply Delete and Edit variances via the service.
+        _isApplying = true;
+        _applyError = null;
+        StateHasChanged();
+        try
+        {
+            var results = await ShipExecService.ApplyUserVariancesAsync([.._pendingVariances]);
+            var failed = results.Where(r => !r.Success).ToList();
+            if (failed.Count > 0)
+                _applyError = string.Join("; ", failed.Select(r => $"{r.EntityName}: {r.Message}"));
+            if (failed.Count == 0)
+                _pendingVariances.Clear();
+            else
+                _pendingVariances.RemoveAll(v =>
+                    !failed.Any(f => string.Equals(f.EntityName, v.Username, StringComparison.OrdinalIgnoreCase)));
+            await LoadUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _applyError = ex.Message;
+        }
+        finally
+        {
+            _isApplying = false;
+            await NotifyVariancesChanged();
+            StateHasChanged();
+        }
+    }
+
+    private void EnqueueCreateVariance()
+    {
+        _createPrefill = null;
+        _showCreateUserDialog = true;
+        StateHasChanged();
+    }
+
+    private async Task DiscardVariances()
+    {
+        _pendingVariances.Clear();
+        _activeCreateVarianceId = null;
+        _createPrefill = null;
+        _showCreateUserDialog = false;
+        _applyError = null;
+        await NotifyVariancesChanged();
+        StateHasChanged();
+    }
+
+    private async Task RemoveVariance(Guid id)
+    {
+        _pendingVariances.RemoveAll(v => v.Id == id);
+        await NotifyVariancesChanged();
+        StateHasChanged();
+    }
+
+    private async Task EmitUsersMetaJsonAsync()
+    {
+        if (!OnUsersMetaJson.HasDelegate) return;
+
+        var meta = new
+        {
+            availablePermissions = _allPermissions.Select(p => new { id = p.Id, name = p.Name }),
+            availableRoles       = _allRoles.Select(r => new { id = r.Id, name = r.Name }),
+        };
+        var json = System.Text.Json.JsonSerializer.Serialize(meta,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await OnUsersMetaJson.InvokeAsync(json);
+    }
+
+    private async Task NotifyVariancesChanged()
+    {
+        if (OnVariancesChanged.HasDelegate)
+            await OnVariancesChanged.InvokeAsync([.._pendingVariances]);
+    }
+
+    private async Task HandleUserCreated(Guid newUserId)
+    {
+        // Remove the variance that was just fulfilled via the dialog.
+        if (_activeCreateVarianceId.HasValue)
+        {
+            _pendingVariances.RemoveAll(v => v.Id == _activeCreateVarianceId.Value);
+            _activeCreateVarianceId = null;
+            _createPrefill = null;
+        }
+        _showCreateUserDialog = false;
+        await NotifyVariancesChanged();
+        await LoadUsersAsync();
+
+        // If more Create variances remain, open the dialog for the next one.
+        var nextCreate = _pendingVariances.FirstOrDefault(v => v.Kind == UserVarianceKind.Create);
+        if (nextCreate is not null)
+        {
+            _activeCreateVarianceId = nextCreate.Id;
+            _createPrefill = nextCreate.CreatePrefill;
+            _showCreateUserDialog = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleUsersImportedAsync(List<ApplyResultItem> _)
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task HandleExportAsync()
+    {
+        _isExporting = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            var csv = await ShipExecService.ExportUsersCsvAsync();
+            var companySlug = (_companyInfo?.Name ?? "users").Replace(" ", "_");
+            var filename = $"{companySlug}_{DateTime.Now:yyyyMMdd}.csv";
+            await JS.InvokeVoidAsync("downloadFile", filename, csv, "text/csv");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Export failed: {ex.Message}";
+        }
+        finally
+        {
+            _isExporting = false;
+        }
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        _isLoading = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            await JS.InvokeVoidAsync("console.group", "UserManagement >> GetUsers");
+            await JS.InvokeVoidAsync("console.log", "[Request] GetUsers");
+            _users = await ShipExecService.GetUsersAsync();
+            var json = System.Text.Json.JsonSerializer.Serialize(_users,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            await JS.InvokeVoidAsync("console.log", $"[Response] {_users.Count} user(s):", json);
+            await JS.InvokeVoidAsync("console.groupEnd");
+            if (OnUsersJson.HasDelegate)
+                await OnUsersJson.InvokeAsync(json);
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", "[Error] GetUsers:", ex.Message);
+            _errorMessage = $"Failed to load users: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ToggleUserAsync(Guid userId)
+    {
+        if (!_expandedUserIds.Add(userId))
+        {
+            _expandedUserIds.Remove(userId);
+            return;
+        }
+
+        if (_userDetails.ContainsKey(userId))
+            return;
+
+        _loadingIds.Add(userId);
+        _detailErrors.Remove(userId);
+        try
+        {
+            await JS.InvokeVoidAsync("console.group", $"UserManagement >> GetUser ({userId})");
+            await JS.InvokeVoidAsync("console.log", "[Request] GetUser", new { UserId = userId });
+            var detail = await ShipExecService.GetUserDetailAsync(userId);
+            _userDetails[userId] = detail;
+            if (detail is not null)
+            {
+                detail.Address ??= new NameAddress();
+                detail.DefaultConfiguration ??= new DefaultConfiguration();
+                _xmlText[userId] = SerializeUserXml(detail);
+                var tree = await ParseXmlToTreeAsync(_xmlText[userId]);
+                _userXmlTrees[userId] = tree;
+                if (tree is not null)
+                {
+                    XmlRefLookupService.Extend(tree);
+                    global::System.Action treeHandler = () => _ = InvokeAsync(async () =>
+                    {
+                        await OnUserXmlTreeModifiedAsync(userId);
+                        StateHasChanged();
+                    });
+                    _userXmlModifiedHandlers[userId] = treeHandler;
+                }
+            }
+            var json = System.Text.Json.JsonSerializer.Serialize(detail,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            await JS.InvokeVoidAsync("console.log", "[Response] GetUser:", json);
+            await JS.InvokeVoidAsync("console.groupEnd");
+
+            try
+            {
+                var perms = await ShipExecService.GetPermissionsAsync(userId);
+                _permissions[userId] = perms;
+                var userPerms = _userDetails.TryGetValue(userId, out var u) && u?.Permissions != null
+                    ? u.Permissions.Select(p => p.Id).ToHashSet()
+                    : [];
+                _permChecked[userId] = userPerms;
+            }
+            catch (Exception pex)
+            {
+                await JS.InvokeVoidAsync("console.warn", "[Warning] GetPermissions:", pex.Message);
+                _permissions[userId] = [];
+                _permChecked[userId] = [];
+            }
+
+            try
+            {
+                var roles = await ShipExecService.GetRolesAsync();
+                _roles[userId] = roles;
+                var userRoles = _userDetails.TryGetValue(userId, out var ur) && ur?.Roles != null
+                    ? ur.Roles.Select(r => r.Id).ToHashSet()
+                    : [];
+                _roleChecked[userId] = userRoles;
+            }
+            catch (Exception rex)
+            {
+                await JS.InvokeVoidAsync("console.warn", "[Warning] GetRoles:", rex.Message);
+                _roles[userId] = [];
+                _roleChecked[userId] = [];
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", "[Error] GetUser:", ex.Message);
+            _detailErrors[userId] = ex.Message;
+        }
+        finally
+        {
+            _loadingIds.Remove(userId);
+        }
+    }
+
+    private void TogglePermission(Guid userId, Guid permId, bool isChecked)
+    {
+        if (!_permChecked.TryGetValue(userId, out var set))
+        {
+            set = [];
+            _permChecked[userId] = set;
+        }
+        if (isChecked) set.Add(permId);
+        else set.Remove(permId);
+        _permDirty.Add(userId);
+        _saveErrors.Remove(userId);
+        if (_userDetails.TryGetValue(userId, out var pu) && pu is not null &&
+            _permissions.TryGetValue(userId, out var allP))
+            pu.Permissions = allP.Where(p => set.Contains(p.Id)).ToList();
+    }
+
+    private async Task SavePermissionsAsync(Guid userId)
+    {
+        if (!_userDetails.TryGetValue(userId, out var user) || user is null) return;
+        if (!_permissions.TryGetValue(userId, out var allPerms)) return;
+        if (!_permChecked.TryGetValue(userId, out var checkedIds)) return;
+
+        _savingIds.Add(userId);
+        _saveErrors.Remove(userId);
+        try
+        {
+            var selectedPerms = allPerms.Where(p => checkedIds.Contains(p.Id)).ToList();
+            await ShipExecService.UpdateUserPermissionsAsync(user, selectedPerms);
+            user.Permissions = selectedPerms;
+            _permDirty.Remove(userId);
+        }
+        catch (Exception ex)
+        {
+            _saveErrors[userId] = ex.Message;
+        }
+        finally
+        {
+            _savingIds.Remove(userId);
+        }
+    }
+
+    private void ToggleRole(Guid userId, Guid roleId, bool isChecked)
+    {
+        if (!_roleChecked.TryGetValue(userId, out var set))
+        {
+            set = [];
+            _roleChecked[userId] = set;
+        }
+        if (isChecked) set.Add(roleId);
+        else set.Remove(roleId);
+        _roleDirty.Add(userId);
+        _roleSaveErrors.Remove(userId);
+        if (_userDetails.TryGetValue(userId, out var ru) && ru is not null &&
+            _roles.TryGetValue(userId, out var allR))
+            ru.Roles = allR.Where(r => set.Contains(r.Id)).ToList();
+    }
+
+    private async Task SaveRolesAsync(Guid userId)
+    {
+        if (!_userDetails.TryGetValue(userId, out var user) || user is null) return;
+        if (!_roles.TryGetValue(userId, out var allRoles)) return;
+        if (!_roleChecked.TryGetValue(userId, out var checkedIds)) return;
+
+        _roleSavingIds.Add(userId);
+        _roleSaveErrors.Remove(userId);
+        try
+        {
+            var selectedRoles = allRoles.Where(r => checkedIds.Contains(r.Id)).ToList();
+            await ShipExecService.UpdateUserRolesAsync(user, selectedRoles);
+            user.Roles = selectedRoles;
+            _roleDirty.Remove(userId);
+        }
+        catch (Exception ex)
+        {
+            _roleSaveErrors[userId] = ex.Message;
+        }
+        finally
+        {
+                    _roleSavingIds.Remove(userId);
+                    }
+                }
+
+                private void MarkAddressDirty(Guid userId)
+                {
+                    _addressDirty.Add(userId);
+                    _addressSaveErrors.Remove(userId);
+                }
+
+                private void MarkConfigDirty(Guid userId)
+                {
+                    _configDirty.Add(userId);
+                    _configSaveErrors.Remove(userId);
+                }
+
+                private async Task SetTab(Guid userId, string tab)
+                {
+                    if (tab == "xml" && _userDetails.TryGetValue(userId, out var xmlUser) && xmlUser is not null)
+                    {
+                        var xml = SerializeUserXml(xmlUser);
+                        _xmlText[userId] = xml;
+                        _xmlErrors.Remove(userId);
+                        var tree = await ParseXmlToTreeAsync(xml);
+                        _userXmlTrees[userId] = tree;
+                        if (tree is not null) { XmlRefLookupService.Extend(tree); _xmlVersion++; }
+                    }
+                    _activeTab[userId] = tab;
+                }
+
+                private static string SerializeUserXml(User user)
+                {
+                    try
+                    {
+                        var sb = new System.Text.StringBuilder();
+                        using var writer = new System.IO.StringWriter(sb);
+                        var ns = new System.Xml.Serialization.XmlSerializerNamespaces();
+                        ns.Add(string.Empty, string.Empty);
+                        var ser = new System.Xml.Serialization.XmlSerializer(typeof(User));
+                        ser.Serialize(writer, user, ns);
+                        return sb.ToString();
+                    }
+                    catch (Exception ex)
+                    {
+                        return $"<!-- Serialization error: {ex.Message} -->";
+                    }
+                }
+
+                private static bool TryDeserializeUserXml(string xml, out User? user)
+                {
+                    user = null;
+                    try
+                    {
+                        var ser = new System.Xml.Serialization.XmlSerializer(typeof(User));
+                        using var reader = new System.IO.StringReader(xml);
+                        user = ser.Deserialize(reader) as User;
+                        return user is not null;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private void OnXmlInput(Guid userId, string newXml)
+                {
+                    _xmlText[userId] = newXml;
+                    if (TryDeserializeUserXml(newXml, out var parsed) && parsed is not null)
+                    {
+                        parsed.Address ??= new NameAddress();
+                        parsed.DefaultConfiguration ??= new DefaultConfiguration();
+                        _userDetails[userId] = parsed;
+                        _permChecked[userId] = parsed.Permissions?.Select(p => p.Id).ToHashSet() ?? [];
+                        _roleChecked[userId] = parsed.Roles?.Select(r => r.Id).ToHashSet() ?? [];
+                        _addressDirty.Add(userId);
+                        _configDirty.Add(userId);
+                        _permDirty.Add(userId);
+                        _roleDirty.Add(userId);
+                        _xmlErrors.Remove(userId);
+                    }
+                    else
+                    {
+                        _xmlErrors[userId] = "Invalid XML \u2014 fix errors before changes propagate.";
+                    }
+                }
+
+                private async Task SaveAddressAsync(Guid userId)
+                {
+                    if (!_userDetails.TryGetValue(userId, out var user) || user is null) return;
+                    _addressSavingIds.Add(userId);
+                    _addressSaveErrors.Remove(userId);
+                    try
+                    {
+                        await ShipExecService.UpdateUserAsync(user);
+                        _addressDirty.Remove(userId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _addressSaveErrors[userId] = ex.Message;
+                    }
+                    finally
+                    {
+                        _addressSavingIds.Remove(userId);
+                    }
+                }
+
+                private async Task SaveDefaultConfigAsync(Guid userId)
+                {
+                    if (!_userDetails.TryGetValue(userId, out var user) || user is null) return;
+                    _configSavingIds.Add(userId);
+                    _configSaveErrors.Remove(userId);
+                    try
+                    {
+                        await ShipExecService.UpdateUserAsync(user);
+                        _configDirty.Remove(userId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _configSaveErrors[userId] = ex.Message;
+                    }
+                    finally
+                    {
+                        _configSavingIds.Remove(userId);
+                    }
+                }
+
+                private async Task<XmlNodeViewModel?> ParseXmlToTreeAsync(string xml)
+                {
+                    try
+                    {
+                        using var ms = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(xml));
+                        var tree = await XmlViewerService.LoadStreamAsync(ms);
+                        XmlViewerService.ExpandToDepth(tree, 2);
+                        return tree;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+
+                private async Task OnUserXmlTreeModifiedAsync(Guid userId)
+                {
+                    if (!_userXmlTrees.TryGetValue(userId, out var tree) || tree is null) return;
+                    var newXml = await XmlViewerService.SerializeAsync(tree);
+                    OnXmlInput(userId, newXml);
+                    _xmlVersion++;
+                }
+            }

@@ -1,0 +1,1585 @@
+// Source: ASEA (ASEA_DOMESTIC)_ASEA CBR_1861.cs
+// ShowAssignGoodsPane() // returns void
+    ShowAssignGoodsPane()
+    {
+      let that = this;
+
+      //get rid of any previous entries
+      $('#listItemContainer li:gt(0)').remove();
+
+      //change the column width to make the descriptions longer
+      //change this back when the user clicks the 'Apply' button
+      $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+      //set a reference to the packages object as well as the commodities objects
+      this.packages = this.viewModel.currentShipment.Packages;
+      this.goods = this.json.data.map(m => m.boxes).flat();
+      this.goods.sort((a, b) => { return a.skuId - b.skuId });
+
+      //loop the commodities to create a master list item for each
+      $(this.goods).each(function(a, b)
+      {
+        let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+        b.UniqueId = k;
+
+        //copy the source element
+        let item = $('#liClone').clone(true).data(b);
+
+        //change the id of the main containing element so we don't run into issue later
+        //each clone is a discreet list item which corresponds to a commodity
+        $(item).attr('id', k);
+
+        //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+        //to parseFloat so this is the simplest way to get around that.
+        //let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+        $(item).find('.goods-sku').html('SKU: <strong>' + b.skuId + '</strong>');
+        $(item).find('.goods-quantity').html('Quantity: <strong>' + b.quantity + '</strong>');
+        $(item).find('.goods-declared-value').html('Unit Cost: <strong>$' + b.unitPrice + '</strong>');
+
+        //append it to our list
+        $('#divAssignCommodities ul.list-group').append(item);
+
+        //assign all goods to the first package
+        that.packages[0].CommodityContents.push(that.GetCommodityContentObject(b));
+
+        //update the weight and declared value in the root of the object
+        let weight = that.packages[0].Weight;
+        let dva = that.packages[0].DeclaredValueAmount;
+        const thisWeight = (+b.quantity * +b.weightLbs);
+        const thisValue = (+b.quantity * +b.unitPrice);
+
+        if (!weight.Amount) { weight.Amount = 0; }
+        that.packages[0].Weight.Amount += (+b.quantity * +b.weightLbs).toFixed(2);
+
+        if (!dva.Amount) { dva.Amount = 0; }
+        that.packages[0].DeclaredValueAmount.Amount += Math.round((+b.quantity * +b.unitPrice) * 100) / 100;
+
+        //show it gracefully
+        $(item).show();
+      });
+
+      //that.UpdatePackageCounts();
+      //$('li[heading=Goods] a:first').click();
+      $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+      $('.scan-input:visible').first().focus();
+      $('#divAssignCommodities').find('[data-toggle="tooltip"]').tooltip();
+    }
+
+// MoveGoodToBox(li, destBox) // returns void
+    MoveGoodToBox(li, destBox)
+    {
+      let vm = this.ClassViewModel;
+      let that = this;
+      let data = $(li).data();
+      let destCC = this.packages[destBox - 1].CommodityContents || [];
+
+      //find the box the item currently resides in
+      //split this statement up over a few calls to make it easier to read
+      let allGoods = this.packages.map(m => m.CommodityContents).flat();
+      let item = allGoods.find(cc => cc.UniqueId == data.UniqueId);
+
+      if (+item.PkgIndex == +destBox) { console.log('Item already exists in box.'); return false; }
+
+      //remove the item from its current box
+      this.packages[item.PkgIndex - 1].CommodityContents = this.packages[item.PkgIndex - 1].CommodityContents.filter(p => p.UniqueId != data.UniqueId);
+
+      //add it to the new box
+      item.PkgIndex = destBox;
+      destCC.push(item);
+      $(li).find('.pkg-index-text').fadeOut().promise().done(function(e) { $(this).text(destBox).fadeIn(); });
+
+      //console.log(vm.currentShipment.Packages);
+      $('li[heading="Goods"]:visible:first > a').trigger('click');
+      $('#goods .btn-group').find('.btn:gt(0)').not('.active').first().trigger('click');
+
+      //update the weights and values
+      //this data will have changed by now so get a new reference to the object
+      allGoods = this.packages.map(m => m.CommodityContents).flat();
+      //the items array will have the CommodityContents object for every package in the shipment
+
+      //sort by package index
+      //update the weight and declared values for all the packages in the shipment
+      allGoods = allGoods.sort((a, b) => { return a.PkgIndex - b.PkgIndex });
+      $(allGoods).each(function(a, b)
+      {
+        let pkg = that.packages[b.PkgIndex - 1];
+
+        if ((a == 0) || (b.PkgIndex != allGoods[a - 1].PkgIndex))
+        {
+          pkg.Weight.Amount = 0;
+          pkg.DeclaredValueAmount.Amount = 0;
+        }
+
+        pkg.Weight.Amount += +b.PVTotalWeight;
+        pkg.DeclaredValueAmount.Amount += +b.PVTotalValue;
+      });
+    }
+
+// Source: F Schumacher (FSCHUMAC)_Product Area (8942X4) CBR with PV_1816.cs
+// AddCommoditiesToPackage(packageIndex, commodityContent) // returns void
+      AddCommoditiesToPackage: function (packageIndex, commodityContent)
+      {
+        /* The commodityContent object has a number of items that can't be pushed to the shipmentRequest array. */
+        /* Create a new object just with the items needed in the shipmentRequest.Packages[packageIndex].CommodityContents array. */
+        try
+        {
+          var shipmentRequest = SessionData.GetCurrentViewModel().currentShipment;
+
+          if (!shipmentRequest.Packages[packageIndex].CommodityContents)
+          {
+            shipmentRequest.Packages[packageIndex].CommodityContents = [];
+          }
+          shipmentRequest.Packages[packageIndex].CommodityContents.push(commodityContent);
+
+          UpdateCommodities(packageIndex);
+
+          /* If there are no commodities yet, the buttons will not exist to click. */
+          /* As a workaround, trigger the .change event for the selectClonedBoxTypes select box.  This will trigger an update of the view model, and the commodities list. */
+          /* Need to find a way to trigger the same view model update on the nth package in the shipment. */
+
+
+
+          // if ($('#goods').find('div.ng-table-counts.btn-group:eq(' + packageIndex + ')').length === 0)
+          // {
+          //   console.log(packageIndex);
+          //   console.log('No button group found.  No commodites loaded.');
+          //   $('#selectClonedBoxTypes').trigger('change');
+          // }
+          // else
+          // {
+          //   /* Clicking the button below refreshes the commodities list in the UI. */
+          //   /* Find the first button that does not have the .active class. */
+          //   console.log('Button group found.  Commodities loaded');
+          //   $('#goods').find('div.ng-table-counts.btn-group').find('button:not(.active):first').click();
+          // }
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'AddCommoditiesToPackage()', Error: error});
+        }
+      }
+
+// RemoveCommoditiesFromPackage(packageIndex, commodityContent) // returns void
+      RemoveCommoditiesFromPackage: function (packageIndex, commodityContent)
+      {
+        try
+        {
+          var shipmentRequest = SessionData.GetCurrentViewModel().currentShipment;
+
+          if (!shipmentRequest.Packages[packageIndex].CommodityContents)
+          {
+            shipmentRequest.Packages[packageIndex].CommodityContents = [];
+          }
+          shipmentRequest.Packages[packageIndex].CommodityContents.pop(commodityContent);
+
+          /* Update the commodities by clicking on the active tab. */
+          //$('div.ui-tab-container > div.ng-isolate-scope > ul > li.active > a').click();
+          UpdateCommodities(packageIndex);
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'RemoveCommoditiesFromPackage()', Error: error });
+        }
+      }
+
+// AddCommoditiesToTable(CommodityContents) // returns void
+      AddCommoditiesToTable: function (CommodityContents)
+      {
+        /* Incoming CommodityContents Structure - ARRAY. */
+        /*
+          "COMMODITY_CONTENTS_QUANTITY": 2.0,
+          "COMMODITY_CONTENTS_QUANTITY_UNIT_MEASURE": "EACH",
+          "COMMODITY_CONTENTS_UNIT_VALUE": 0.01,
+          "COMMODITY_CONTENTS_PRODUCT_CODE": "MS66184",
+          "COMMODITY_CONTENTS_ORIGIN_COUNTRY": "US",
+          "Order_Number": "50980336.4",
+          "COMMODITY_CONTENTS_DESCRIPTION": "DONT FRET",
+          "COMMODITY_CONTENTS_COMMENTS": null,
+          "COMMODITY_CONTENTS_TARRIFFCODE1": null,
+          "COMMODITY_CONTENTS_TARRIFCODE2": "",
+          "COMMODITY_CONTENTS_AVERAGEWEIGHT": 0.0
+        */
+        try
+        {
+          for (var x = 0; x < CommodityContents.length; x++)
+          {
+            /* Map the CommodityContent object here that will be used on the server.  By matching the structure here, hoping to push it straight to the viewmodel without any translation. */
+            var CommodityObject = {
+              UnitWeight: { Amount: "1" },
+              Quantity: CommodityContents[x].COMMODITY_CONTENTS_QUANTITY,
+              ProductCode: CommodityContents[x].COMMODITY_CONTENTS_PRODUCT_CODE,
+              UnitValue: { Amount: CommodityContents[x].COMMODITY_CONTENTS_UNIT_VALUE, Currency: 'USD' },
+              QuantityUnitMeasure: GetTranslatedUnitOfMeasurement(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY_UNIT_MEASURE),
+              Description: CommodityContents[x].COMMODITY_CONTENTS_DESCRIPTION,
+              OriginCountry: (CommodityContents[x].COMMODITY_CONTENTS_ORIGIN_COUNTRY.length > 0 ? CommodityContents[x].COMMODITY_CONTENTS_ORIGIN_COUNTRY : 'US'),
+              ConsigneePostalCode: (CommodityContents[x].CONSIGNEE_POSTALCODE ? CommodityContents[x].CONSIGNEE_POSTALCODE.substring(0, 5) : null),
+              EntryId: GetRandomNumber(8),
+              OrderNumber: CommodityContents[x].Order_Number,
+              HarmonizedCode: CommodityContents[x].COMMODITY_CONTENTS_TARRIFFCODE1,
+              HarmonizedCode2: CommodityContents[x].COMMODITY_CONTENTS_TARRIFCODE2,
+              AverageWeight: CommodityContents[x].COMMODITY_CONTENTS_AVERAGEWEIGHT,
+              UserData1: CommodityContents[x].COMMODITY_CONTENTS_COMMENTS
+            };
+
+            $('#tablePackVerifyOrderDetails')
+              .append($('<tr />').addClass('not-packed').attr('title', 'Order Number: ' + CommodityObject.OrderNumber)
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_PRODUCT_CODE + ' ' + CommodityContents[x].COMMODITY_CONTENTS_DESCRIPTION))
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY))
+                .append($('<td />').text(0))
+                .append($('<td />').text(CommodityContents[x].COMMODITY_CONTENTS_QUANTITY))
+                .append($('<td />').append('<span class="glyphicon glyphicon-plus trigger-icon add-box-item" title="Add this item to the current box." style="color: green;"></span>'))
+                .data(CommodityObject))
+              .promise().done(function ()
+              {
+                UpdateItemCounts();
+                HideLoader();
+              })
+          }
+        }
+        catch (error)
+        {
+          Logger.Log({ Source: 'AddCommoditiesToTable()', Error: error, Data: CommodityContents });
+        }
+      }
+
+// Source: Gem Group (GEM)_Gem_1843.cs
+// Split() // returns void
+function Split()
+  {
+    var TotalPackages = vm.currentShipment.Packages.length - (vm.packageIndex);
+
+    var rows = document.querySelectorAll("#miTabla")[0].rows;
+
+    for (var ii = 0; ii < rows.length; ii++)
+    {
+      if (ii != 0)
+      {
+        var commodityPerPkg = Math.floor(rows[ii].cells[2].textContent / (TotalPackages));
+        console.log("Packages: " + commodityPerPkg)
+        for (let i = vm.packageIndex; i < vm.currentShipment.Packages.length; i++)
+        {
+          console.log("Adding package: " + i)
+          console.log(rows[ii])
+          rows[ii].cells[10].textContent = commodityPerPkg;
+          AddCommodity(rows[ii], 0, i);
+        }
+        rows[ii].cells[10].textContent = 0;
+      }
+    }
+
+
+  }
+
+// AddCommodity(fila, Type, newPackageIndex) // returns void
+function AddCommodity(fila, Type, newPackageIndex)
+  {
+    console.log("Trying to get package for index: " + newPackageIndex)
+    if (fila.cells[2].textContent == "" || fila.cells[2].textContent == 0)
+    {
+      client.alert.Danger("No Commodity Left");
+      return;
+    }
+    if (fila.cells[10].textContent == "" || Number(fila.cells[10].textContent) <= 0 || isNaN(fila.cells[10].textContent))
+    {
+      client.alert.Danger("Invalid Amount to Ship: ");
+      return;
+    }
+    console.log("10: " + fila.cells[10].textContent)
+    console.log("2: " + fila.cells[2].textContent)
+    if (Number(fila.cells[10].textContent) > Number(fila.cells[2].textContent))
+    {
+      client.alert.Danger("Ship Quantity can't be more that QTY ");
+      return;
+    }
+    var packageIndex = 0;
+    if (Type == 1)
+    {
+      packageIndex = vm.packageIndex;
+    } else
+    {
+      packageIndex = newPackageIndex;
+    }
+    console.log(fila.cells[12].textContent ? fila.cells[12].textContent : "Not found in cell 12");
+    console.log("Getting isBundle: " + fila.cells[12].textContent)
+    if (fila.cells[12] && fila.cells[12].textContent == "true")
+    {
+      console.log("Bundle")
+      console.log(fila.cells[13].textContent)
+      var kitDetails = JSON.parse(fila.cells[13].textContent)
+      if (kitDetails.length < 1)
+      {
+        client.alert.Danger("WARNING: Kit Details are empty when Commodity Set to Kit");
+        fila.cells[10].textContent = 0;
+        return;
+      } else
+      {
+        kitDetails.forEach(detail =>
+        {
+          console.log(detail)
+          console.log(detail.KitComponentPartDesc)
+          detail.UnitsPerAssembly = detail.UnitsPerAssembly * fila.cells[10].textContent;
+          console.log("Adding units: " + detail.UnitsPerAssembly)
+          addToCommodityList(detail, packageIndex, true)
+        });
+      }
+    } else
+    {
+      console.log("Not bundle")
+      addToCommodityList(fila.cells, packageIndex, false)
+    }
+
+    fila.cells[2].textContent = fila.cells[2].textContent - fila.cells[10].textContent;
+    fila.cells[10].textContent = 0;
+    console.log(vm.currentShipment.Packages[packageIndex].CommodityContents);
+  }
+
+// addToCommodityList(cells, index, isBundle) // returns void
+function addToCommodityList(cells, index, isBundle)
+  {
+    var OldCommodity = vm.currentShipment.Packages[index].CommodityContents;
+    var NewCommodity;
+    let min = 5;
+    let max = 100;
+    let randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+    let anotherRandom = Date.now().toString(36) + Math.random().toString(36).substr(2, 12);
+    if (!cells || cells === "")
+    {
+      client.alert.Danger("Error: Commodity Data unavailable");
+      console.log(cells);
+      return;
+    }
+    if (isBundle)
+    {
+      let price = 0;
+      if (cells.InternationalInfo == null || cells.InternationalInfo.ExportUnitPrice == null)
+      {
+        price = cells.SaleUnitPrice
+        console.log('Value price updated to: ' + price)
+      } else
+      {
+        price = cells.InternationalInfo.ExportUnitPrice
+        console.log('Value price updated 2: ' + price)
+      }
+      NewCommodity = [
+        {
+          "UnitValue": {
+            "Currency": cells.InternationalInfo.ExportCurrencyCode,
+            "Amount": price
+          },
+          "UnitWeight": {
+            "Units": "LB",
+            "Amount": cells.UnitWeight
+          },
+          "QuantityUnitMeasure": "PC",
+          "ExportQuantityUnitMeasure1": "PC",
+          "ExportQuantityUnitMeasure2": "PC",
+          "LicenseUnitValue": {
+            "Currency": "USD"
+          },
+          "DdtcUnitMeasure": "PC",
+          "packageIndex": index,
+          "Origin": {
+            "AddressBookIdToProcess": null
+          },
+          "OriginCountry": cells.InternationalInfo.CountryOfOrigin,
+          "ProductCode": cells.KitComponentPart,
+          "HarmonizedCode": cells.InternationalInfo.ExportTariffCode,
+          "Quantity": cells.UnitsPerAssembly,
+          "Description": cells.KitComponentPartDesc,
+          "LicenseExpirationDate": null,
+          "NaftaRvcAvgStartDate": null,
+          "nAFTARVCAvgEndDate": null,
+          "$$hashKey": "object:" + index + "1" + anotherRandom
+        }];
+    } else
+    {
+      let price = 0;
+      if (cells[17].textContent == null || cells[17].textContent == "")
+      {
+        price = cells[4].textContent
+        console.log('Value price updated to: ' + price)
+      } else
+      {
+        price = cells[17].textContent
+        console.log('Value price updated 2: ' + price)
+      }
+      NewCommodity = [
+        {
+          "UnitValue": {
+            "Currency": cells[15].textContent,
+            "Amount": price
+          },
+          "UnitWeight": {
+            "Units": "LB",
+            "Amount": cells[7].textContent
+          },
+          "QuantityUnitMeasure": "PC",
+          "ExportQuantityUnitMeasure1": "PC",
+          "ExportQuantityUnitMeasure2": "PC",
+          "LicenseUnitValue": {
+            "Currency": cells[16].textContent
+          },
+          "DdtcUnitMeasure": "PC",
+          "packageIndex": index,
+          "Origin": {
+            "AddressBookIdToProcess": null
+          },
+          "OriginCountry": cells[14].textContent,
+          "ProductCode": cells[1].textContent,
+          "HarmonizedCode": cells[16].textContent,
+          "Quantity": cells[10].textContent,
+          "Description": cells[5].textContent,
+          "LicenseExpirationDate": null,
+          "NaftaRvcAvgStartDate": null,
+          "nAFTARVCAvgEndDate": null,
+          "$$hashKey": "object:" + index + "1" + randomNumber
+        }];
+      //This is wrong an not tested
+      //if(line.InternationalDetails!=null && line.InternationalDetails.ExportUnitPrice==null)
+      //{
+      //    "UnitValue": cells[17].SaleUnitPrice;
+      //}
+      //else if(line.InternationalDetails!=null && line.InternationalDetails.ExportUnitPrice!=null)
+      //{
+      //   "UnitValue":cells[15].InternationalInfo.ExportUnitPrice ; 
+      //}
+    }
+    if (!OldCommodity || OldCommodity.length === 0)
+    {
+      vm.currentShipment.Packages[index].CommodityContents = NewCommodity;
+    } else
+    {
+      vm.currentShipment.Packages[index].CommodityContents = OldCommodity.concat(NewCommodity);
+    }
+  }
+
+// Source: GENERAL INSULATION (GENINSU)_Client Rules_1700.cs
+// AddPackage(shipmentRequest, packageIndex) // returns undefined
+this.AddPackage = function(shipmentRequest, packageIndex) {
+        $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+       $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val(''); 
+       shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = '';
+        
+    }
+
+// PreviousPackage(shipmentRequest, packageIndex) // returns undefined
+this.PreviousPackage = function(shipmentRequest, packageIndex) {		  
+    $('select[name="SubClassNumbers'+eval(packageIndex+1)+'"]').empty();   
+    $('select[name="NMFCNumbers'+eval(packageIndex+1)+'"]').val(''); 
+    shipmentRequest.Packages[eval(packageIndex+1)].MiscReference19 = '';
+    }
+
+// NextPackage(shipmentRequest, packageIndex) // returns undefined
+this.NextPackage = function(shipmentRequest, packageIndex) {  
+    $('select[name="SubClassNumbers'+eval(packageIndex-1)+'"]').empty();
+    $('select[name="NMFCNumbers'+eval(packageIndex-1)+'"]').val('');  
+
+    shipmentRequest.Packages[eval(packageIndex-1)].MiscReference19 = ''; 
+
+    }
+
+// Source: Hewlett Packard Enterprise (HPE)_HPEClientBR_1683.cs
+// AddPackage(shipmentRequest, packageIndex) // returns undefined
+function(shipmentRequest, packageIndex) {
+        shipmentRequest.Packages[packageIndex].ShipperReference = shipmentRequest.Packages[0].ShipperReference;
+        shipmentRequest.Packages[packageIndex].ConsigneeReference = shipmentRequest.Packages[0].ConsigneeReference;
+        shipmentRequest.Packages[packageIndex].Description = shipmentRequest.Packages[0].Description;
+        shipmentRequest.Packages[packageIndex].Packaging = shipmentRequest.Packages[0].Packaging;
+        shipmentRequest.Packages[packageIndex].Dimensions = shipmentRequest.Packages[0].Dimensions;
+        shipmentRequest.Packages[packageIndex].MiscReference1 = shipmentRequest.Packages[0].MiscReference1;
+        //shipmentRequest.Packages[packageIndex].MiscReference2 = shipmentRequest.Packages[0].MiscReference2;
+        //shipmentRequest.Packages[packageIndex].MiscReference3 = shipmentRequest.Packages[0].MiscReference3;
+        //shipmentRequest.Packages[packageIndex].CommodityContents = shipmentRequest.Packages[0].CommodityContents;
+        //shipmentRequest.Packages[packageIndex].CommodityClass = shipmentRequest.Packages[0].CommodityClass;
+    }
+
+// Source: L9 Sports (L9SPORTS)_L9 Client Rules_1694.cs
+// UpdateGoodsObject(pkgCount, listItem) // returns void
+  UpdateGoodsObject(pkgCount, listItem)
+  {
+    const itemkey = $(listItem).attr('hash-key');
+    const goodkey = $(listItem).attr('goods-key');
+    const findex = +$(listItem).attr('pkg-index');
+
+    let val = $(listItem).find('.goods-declared-value');
+    let cost = $(val).find('strong').text().replace('$', '');
+
+    cost = (cost / pkgCount).toFixed(2);
+
+    //get the object that matches the hash-key from the working array
+    //this will be the template to use when creating new packages after a split operation
+    //working on a copy of the vm commodity object so we can abandon changes if needed
+    let src = $.grep(this.working, function(value, i) { return value.$$hashKey == itemkey; })[0];
+
+    //update the declared value for the first package
+    src.UnitValue.Amount = cost;
+
+    for (let y = 1; y < pkgCount; y++)
+    {
+      let ccobj = this.GetNewCommodityObject(src);
+      ccobj.packageIndex = findex + y;
+
+      this.working.push(ccobj);
+
+      this.UpdateScreenMarkup(ccobj, listItem);
+    }
+  }
+
+// UpdateScreenMarkup(ccobj, li) // returns void
+  UpdateScreenMarkup(ccobj, li)
+  {
+    //this is all setting up the first list item to be cloned in the next function
+    //hide the split button
+    $(li).find('.btn-show-split-form').fadeOut();
+
+    //show the input for number of items in this pkg
+    $(li).find('.num-of-items-in-pkg').fadeIn();
+
+    //display the header
+    $(li).find('.header-logo').css('display', 'block');
+
+    $(li).find('.goods-declared-value').html('<strong>$' + ccobj.UnitValue.Amount + '</strong> ' + 'USD' + ')');
+
+    this.CreateListViewItem(ccobj.packageIndex, li)
+
+    let input = $('#listItemContainer').find('.num-of-items-in-pkg');
+    $(input).tooltip({ container: 'body' });
+
+    //when done creating elements, focus on the first visible non-disabled input box
+    $('#listItemContainer').find($('.num-of-items-in-pkg:visible:not(:disabled)').first().focus());
+
+    //if there was a single item (i.e a KIT), split evenly and close
+    let qty = +$(li).find('.goods-quantity strong').text();
+    if (qty === 1)
+    {
+      let these = $('#listItemContainer').find('li[goods-key=' + $(li).attr('goods-key') + ']');
+      $(these).attr('pkg-status', 'packed');
+      $(these).find('.num-of-items-in-pkg').val(1).attr('disabled', 'disabled');
+      $(these).find('.goods-quantity > strong').text(1);
+      $(these).find('.split-pkgs-modal').hide().find('input').val([]);
+      //$('#btnApplyCommodityAssignments').trigger('click');
+    }
+  }
+
+// CreateListViewItem(idx, li) // returns void
+  CreateListViewItem(idx, li)
+  {
+    //the hash-key attr is the object id for the commodity in relation to the package
+    //if we keep it, all packages will have the same hash-key (pkg 0)
+    let item = $(li).clone(true).removeAttr('hash-key').removeAttr('id');
+    $(item).attr('pkg-index', idx);
+
+    $(item).find('.pkg-index-text').text(idx + 1);
+    $(item).find('.goods-quantity').html('(<strong>0</strong>');
+
+    let lastInList = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+    //i have no idea why the opacity changes when i use .show().  first time i've ever seen that.
+    //anyway, set it implicitly here so the element shows
+    $(item).appendTo('#listItemContainer').insertAfter(lastInList).find('.num-of-items-in-pkg').css('opacity', '1').show();
+  }
+
+// UpdatePkgCountsInWorkingObject(li) // returns void
+  UpdatePkgCountsInWorkingObject(li)
+  {
+    let goodkey = $(li).attr('goods-key');
+    let pkgindex = $(li).attr('pkg-index');
+    let itemcount = $(li).find('.num-of-items-in-pkg').val();
+
+    //find the object in this.working that has the matching pkg-index and goods-key, then update it
+    let w = $.grep(this.working, function(pkg, i) { return pkg.GoodsKey == goodkey && pkg.packageIndex == pkgindex  })[0];
+
+    w.Quantity = itemcount;
+  }
+
+// UpdateListItemPackageQuantities(li) // returns void
+  UpdateListItemPackageQuantities(li)
+  {
+    this.UpdatePkgCountsInWorkingObject(li);
+
+    let numOfItems = $(li).find('.num-of-items-in-pkg');
+    let remItems = $(li).find('.goods-quantity > strong');
+
+    if (!$(numOfItems).val()) { return; }
+
+    let x = (+$(remItems).text() - $(numOfItems).val());
+
+    //sanity check to make sure we didn't pack more items that we had
+    if (x < 0)
+    {
+      $(remItems).addClass('bad-math');
+      return;
+    }
+
+    $(remItems).removeClass('bad-math');
+    $(numOfItems).attr('disabled', 'disabled');
+    $(li).attr('pkg-status', 'packed');
+
+    //move to the next list item and update then focus
+    $(li).next().find('.goods-quantity > strong').text(x)
+
+    //on the second-to-last list item, use the input value to auto-set the last item
+    //to get the number of rows that have already been assigned, count the list items with the goods-key
+    //that have disabled input boxes
+    let rowsForThisGood = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]');
+    let rowsDone = $(rowsForThisGood).find('input:disabled:visible').length;
+
+    if (rowsForThisGood.length == (rowsDone + 1))
+    {
+      let lastLi = $('#listItemContainer').find('li[goods-key="' + $(li).attr('goods-key') + '"]').last();
+
+      $(lastLi).attr('pkg-status', 'packed');
+
+      let lastVal = $(li).next().find('.goods-quantity > strong').text();
+      $(lastLi).find('.num-of-items-in-pkg').val(lastVal).attr('disabled', 'disabled');
+
+      $('#listItemContainer').find('.assign-to-pkg:visible').first().focus();
+
+      this.UpdatePkgCountsInWorkingObject(lastLi);
+    }
+  }
+
+// ApplyCommodityAssignments() // returns void
+  ApplyCommodityAssignments()
+  {
+    let that = this;
+
+    //every list item will have a pkg-index attr, get that highest value to determine how many pkgs we need
+    //don't use pkg-status.length because that will include multiple commodities and the end result will be wrong
+    let packed = $('#listItemContainer').find('li[pkg-status=packed]');
+
+    //first get all the pkg-index attributes, then get the highest number and add one
+    let pkgs = $(packed).map(function(x, value) { return +$(this).attr('pkg-index') }).toArray();
+    let pkgCount = Math.max(...pkgs) + 1;
+
+    while (this.packages.length < pkgCount)
+    {
+      //the vm.addPackage isn't firing, just click the button
+      $('button[ng-click="vm.addPackage();"]').trigger('click').promise().done(function(e) { });
+    }
+
+    //loop the pkg count, get the commodities for that pkg, write the objects to the vm CommodityContents object
+    for (let p = 0; p < pkgCount; p++)
+    {
+      let w = $.grep(this.working, function(item, i) { return item.packageIndex == p });
+      this.packages[p].CommodityContents = w;
+    }
+
+    //click the General tab
+    $('li[heading=General]:visible a').first().click();
+    this.HideAssignGoodsPane();
+
+    //after we are done, move back to the first package in the shipment
+    while ($('#spanCurrentPackageIndex').text() !== '1')
+    {
+      $('button[ng-click="vm.previousPackage();"]').first().click();
+    }
+
+  }
+
+// GetNewCommodityObject(obj) // returns object
+  GetNewCommodityObject(obj)
+  {
+    let c = {};
+
+    Object.keys(obj).forEach(key =>
+    {
+      if (key != '$$hashKey' && key != 'packageIndex')
+      {
+        let value = obj[key];
+        if (value) c[key] = value;
+      }
+    });
+
+    return c;
+  }
+
+// Source: MarkenLLP (MLLP)_Inbound Returns CBR_PR_TO_US_2506.cs
+// function setCommodityDelegate() // returns void
+    function setCommodityDelegate() {
+        checkElmLoaded('[name="commoditiesModalForm"]').then((elm) => {
+            debugger;
+            const parentElm = elm;
+            if (elm) {
+                debugger;
+                var footer = elm.querySelector('.modal-footer');
+                if (footer) {
+                    var saveButton = footer.querySelector('[value="Save"]');
+                    if (saveButton) {
+                        saveButton.addEventListener('click', function (e) {
+                            debugger;
+                            var form = e.target.parentElement.parentElement;
+                            var quantityUOM = form.querySelector('[ng-model="vm.commodityContent.QuantityUnitMeasure"]');
+                            if (quantityUOM && quantityUOM.options) {
+                                console.log('clicked');
+                                var optionArray = Array.from(quantityUOM.options);
+
+                                if (optionArray && optionArray.length > 0)
+                                    var eachOption = optionArray.filter((x) => x.value == 'string:EA');
+                                console.log('eachOption');
+                                console.log(eachOption);
+                                if (eachOption && eachOption.length == 1) {
+                                    var indexOfEAOption = optionArray.indexOf(eachOption[0]);
+                                    if (indexOfEAOption > 0) {
+                                        quantityUOM.selectedIndex = indexOfEAOption;
+                                        console.log('index');
+                                        console.log(indexOfEAOption);
+                                        quantityUOM.dispatchEvent(new window.Event('change', { bubbles: true }));
+                                        console.log('dispatched');
+                                    }
+                                }
+
+                                debugger;
+                                setTimeout(setCommodityDelegate, 500);
+                            }
+
+                            //that.vm.commodityContent.QuantityUnitMeasure = 'EA';
+                        })
+                    }
+                }
+            }
+        });
+    }
+
+// Source: MarkenLLP (MLLP)_Marken_Phase2_CBR_2500.cs
+// NewShipment(shipmentRequest) // returns void
+    this.NewShipment = function (shipmentRequest) {
+        //debugger;
+        clearUploadMessages();
+        this.clearSessionState();
+        setUploadDelegates(shipmentRequest);
+        this.currentShipment = shipmentRequest;
+
+        //Declaring variables.
+        var custom1_values, custom1, custom2, custom3, custom4, custom5, custom6, customData;
+        var customValues = {};
+        var customKeysArray = [];
+        var CustomData_AfterCustom4 = [];
+        var item;
+
+        customData = this.vm.profile.UserInformation.Address.CustomData;
+        // Iterate over the CustomData array and map values to their respective keys
+        $.each(customData, function (index, item) {
+            customValues[item.Key] = item.Value;
+        });
+
+        if (this.vm.profile.Name == 'Outbound Labels Leg 2 Allowed User Profile') {
+            for (var i in customData.length) {
+                item = customData[i];
+                customKeysArray.push(item.Key);
+            }
+
+            var startIndex = -1;
+            // Find the index of the key "Custom5"
+            for (var i = 0; i < customData.length; i++) {
+                if (customData[i].Key === "Custom5") {
+                    startIndex = i;
+                    break;
+                }
+            }
+
+            // If "Custom5" is found, start storing values from it onwards
+            if (startIndex !== -1) {
+                for (var j = startIndex; j < customData.length; j++) {
+                    CustomData_AfterCustom4.push(customData[j].Value);
+                }
+            }
+
+            // Now, customValues object contains all custom values accessible by their keys
+            var custom1 = customValues['Custom1'];
+            var custom2 = customValues['Custom2'];
+            var custom3 = customValues['Custom3'];
+            var custom4 = customValues['Custom4'];
+            var custom5 = customValues['Custom5'];
+            var custom6 = customValues['Custom6'];
+        } else {
+            //debugger;
+            custom1 = customValues['Custom1'];
+            custom2 = customValues['Custom2'];
+        }
+
+        //Checking DryIceRequired sets true via User Custom1 data.
+        if (custom1.split(',').length > 1) {
+            custom1_values = Tools.GetUniqueArrayFromString(custom1, ',');
+        } else {
+            throw new Error("Custom1 is not Comma delimited string.");
+        }
+
+        //Setting the Leg1Shipper
+        shipmentRequest.PackageDefaults.Shipper = custom1_values[0];
+
+        //Creating Dry Ice Required Checkbox
+        if ($('#DryIceRequired').length == 0 && custom1_values[1] == "true") {
+            //Adding DryIceRequired checkbox and its label.
+            $('div.col-md-6:last').append($('<input />', {
+                type: 'checkbox',
+                id: 'DryIceRequired',
+                name: 'DryIceRequired'
+            }));
+            $('div.col-md-6:last').append($('<label />', {
+                for: 'DryIceRequired',
+                text: 'Dry Ice Required'
+            }));
+        }
+
+        //Comparing the User Custom2 with the Profile enabled Services and remove the unmatched services from the Service UI.
+        var arrayValues_custom2;
+        if (custom2 != null || custom2 != undefined) {
+            arrayValues_custom2 = Tools.GetUniqueArrayFromString(custom2, ',');
+            var matchedValues = [];
+            var profileServices = this.vm.profile.Services;
+            profileServices.forEach(function (value1) {
+                var serviceExists = arrayValues_custom2.some(function (value) {
+                    return value1.Name.indexOf(value) !== -1;
+                });
+                if (serviceExists) {
+                    matchedValues.push(value1);
+                }
+            });
+
+            //Populating the Matched services on the Service UI.
+            $(document).ready(function () {
+                var mySelect = $('select[multiple="multiple"][property="Service"]');
+                mySelect.empty(); //Clearing the existing Services listed out in the Service UI list.
+
+                for (var i in matchedValues) {
+                    mySelect.append($('<option></option>').attr('value', matchedValues[i].Symbol).text(matchedValues[i].Name));
+
+                }
+            });
+        }
+
+        //Retrieving Custom Data values after CustomData4(Leg2 Companies).
+        var CustomDataCount = this.vm.profile.UserInformation.Address.CustomData.length;
+
+        var CustomData_FirstValues = []; //Fetch the First strings from Customdata after Custom4.
+        var CustomData_OtherValues = []; //Fetch the rest of other strings from Customdata after Custom4.
+
+        // Loop through each inner array in CustomData_AfterCustom4
+        for (var i = 0; i < CustomData_AfterCustom4.length; i++) {
+
+            var customData = CustomData_AfterCustom4[i];
+
+            //var customData_values = customData.Value;
+
+            var valuesArray = Tools.GetUniqueArrayFromString(customData, ',');
+
+            var firstValue = valuesArray.shift().trim();
+
+            //Store the first string from the Custom data.
+            CustomData_FirstValues.push(firstValue);
+
+            //Store the remaining values
+            CustomData_OtherValues.push(valuesArray.map(val => val.trim()));
+        }
+
+
+        //debugger;
+        //Enabling the MiscReference1 field based on Profile.
+        if (this.vm.profile.Name == "Outbound Labels Leg 2 Allowed User Profile") {
+
+           // debugger;
+
+            $(document).ready(function () {
+                $('[property="MiscReference1"]').hide(); //When page loaded, MISCREFERENCE1 will be hidden.
+                $('body').delegate('#DryIceRequired', 'change', function (e) {
+                    if ($('#DryIceRequired').is(':checked')) {
+                        //debugger;
+                        $('[property="MiscReference1"]').show();
+                        shipmentRequest.Packages[0].MiscReference5 = "true";
+                    } else {
+                        $('[property="MiscReference1"]').hide();
+                        shipmentRequest.Packages[0].MiscReference5 = "false";
+                    }
+                });
+            });
+
+            $(document).ready(function () {
+                if (custom1_values[2] == "true") {
+                    $('#EmptyPackaging').hide();
+                    $('label[for="EmptyPackaging"]').hide();
+                }
+                else {
+                    $('#EmptyPackaging').show();
+                    $('label[for="EmptyPackaging"]').show();
+                }
+
+            });
+
+            //Creating Central Labs Frozen Sample Return Checkbox
+            if ($('#CentralLabsFrozenSamplesReturn').length == 0 && custom1_values[2] == "true") {
+                //debugger;
+                var checkboxAndLabelContainer = $('<div>').addClass('inline-checkbox').append(
+                    $('<input />').addClass('checkbox').attr({
+                        'type': 'checkbox',
+                        'id': 'CentralLabsFrozenSamplesReturn',
+                        'name': 'CentralLabsFrozenSamplesReturn'
+                    }),
+                    $('<label />').attr('for', 'CentralLabsFrozenSamplesReturn').text('Central Labs Frozen Samples Return')
+                );
+
+                $('div.companyPopupModal').append(checkboxAndLabelContainer);
+
+            }
+            else {
+                //Creating Empty Packaging Checkbox
+                if ($('#EmptyPackaging').length == 0) {
+                    //debugger;
+                    var checkboxAndLabelContainer_Empty = $('<div>').addClass('inline-checkbox').append(
+                        $('<input />').addClass('checkbox').attr({
+                            'type': 'checkbox',
+                            'id': 'EmptyPackaging',
+                            'name': 'EmptyPackaging'
+                        }),
+                        $('<label />').attr('for', 'EmptyPackaging').text('Empty Packaging')
+                    );
+
+                    $('div.companyPopupModal').append(checkboxAndLabelContainer_Empty);
+
+                }
+
+
+
+                //Setting MiscReference7 to true if Empty Packaging Checkbox is checked.
+                $('body').delegate('#EmptyPackaging', 'change', function (e) {
+                    if ($('#EmptyPackaging').is(':checked')) {
+                        shipmentRequest.Packages[0].MiscReference8 = "true";
+                    } else {
+                        shipmentRequest.Packages[0].MiscReference8 = "false";
+                    }
+                });
+            }
+
+
+            //Setting Leg2 Dry Ice weight hidden by default
+            $(document).ready(function () {
+                $('#Leg2DryIceWeight').hide();
+                $('label[for="Leg2DryIceWeight"]').hide();
+            });
+            //Setting MiscReference7 to true if Central Labs Frozen Sample Return Checkbox is checked.
+            $('body').delegate('#CentralLabsFrozenSamplesReturn', 'change', function (e) {
+                if ($('#CentralLabsFrozenSamplesReturn').is(':checked')) {
+                    shipmentRequest.Packages[0].MiscReference7 = "true";
+
+                    $('#Leg2DryIceWeight').show();
+                    $('label[for="Leg2DryIceWeight"]').show();
+
+                } else {
+                    shipmentRequest.Packages[0].MiscReference7 = "false";
+                    $('#Leg2DryIceWeight').hide();
+                    $('label[for="Leg2DryIceWeight"]').hide();
+                }
+            });
+
+            //Creating Leg2 Dry Ice Weight
+            if ($('#Leg2DryIceWeight').length == 0) {
+                //debugger;
+                var checkboxAndLabelContainer = $('<div>').append(
+                    $('<label />').attr({
+                        'for': 'Leg2DryIceWeight',
+                        'style': 'position:absolute;right:20px;top:120px;width:160px;'
+
+                    }).text('Dry Ice Weight'),
+                    $('<input />').attr({
+                        'type': 'text',
+                        'id': 'Leg2DryIceWeight',
+                        'name': 'Leg2DryIceWeight',
+                        'style': 'position:absolute;right:20px;border:1px solid black;top:140px;width:160px;'
+                    }),
+                );
+
+                $('div.companyPopupModal').append(checkboxAndLabelContainer);
+            }
+
+            //Setting MiscReference10 to true if Leg2 Dry Ice Weight is present.
+            $('body').delegate('#Leg2DryIceWeight', 'change', function (e) {
+                shipmentRequest.Packages[0].MiscReference10 = $(this).val();
+            });
+            //Creating Leg2 Package Weight
+            if ($('#Leg2PackageWeight').length == 0) {
+                //debugger;
+                var checkboxAndLabelContainer = $('<div>').append(
+                    $('<label />').attr({
+                        'for': 'Leg2PackageWeight',
+                        'style': 'position:absolute;right:20px;top:70px;width:160px;'
+
+                    }).text('Package Weight'),
+                    $('<input />').attr({
+                        'type': 'text',
+                        'id': 'Leg2PackageWeight',
+                        'name': 'Leg2PackageWeight',
+                        'style': 'position:absolute;right:20px;border:1px solid black;top:90px;width:160px;'
+                    }),
+                );
+
+                $('div.companyPopupModal').append(checkboxAndLabelContainer);
+            }
+            //debugger;
+            //Setting MiscReference7 to true if Leg2 Package Weight is present.
+            $('body').delegate('#Leg2PackageWeight', 'change', function (e) {
+                //debugger;
+                shipmentRequest.Packages[0].MiscReference9 = $(this).val();
+            });
+
+            $('#divModalCompanyPopup').delegate('#Leg2PackageWeight', 'change', function (e) {
+                //debugger;
+                shipmentRequest.Packages[0].MiscReference9 = $(this).val();
+            });
+
+            //Manual Upload
+            var commodityLists = GetCommodityContents();
+            $.each(commodityLists.CommodityContents, function (index, option) {
+                var textMessage = commodityLists.CommodityContents[index].Description + ' ' + commodityLists.CommodityContents[index].HarmonizedCode;
+
+                $('#commodityKey').append($('<option>', {
+                    value: JSON.stringify(option),
+                    text: textMessage
+                }));
+            });
+
+            $('#addButton').one('click', function () {
+
+                var showMessage = $('<div>').attr('id', 'displayMessage').text("Commodity added").css('font-weight', 'bold');
+                $('.manualUpload').after(showMessage);
+
+                var quantity = $('#quantity').val();
+                if (quantity % 1 !== 0) {
+                    alert("Qty is invalid");
+                }
+                else {
+                    //Store Quantity in MiscReference15
+                    shipmentRequest.Packages[0].MiscReference15 = quantity;
+                }
+
+                //Store commodity content in Misc Reference14
+                shipmentRequest.Packages[0].MiscReference14 = $('#commodityKey').val();
+            });
+
+            //Creating Service Dropdown if User Custom4 is present.
+            var hasCustom4 = false;
+            for (var i = 0; i < this.vm.profile.UserInformation.Address.CustomData.length; i++) {
+                if (this.vm.profile.UserInformation.Address.CustomData[i].Key === "Custom4") {
+                    hasCustom4 = true;
+                    break;
+                }
+            }
+            if (hasCustom4) {
+                if (custom4 != '' && custom4 != 'undefined' && custom4 != null && $('#Service').length === 0) {
+                    //Creating Service Dropdown menu.
+                    var labelAndSelect1 = $('<label />').attr('for', 'Service').text('Service: ')
+                        .add($('<select />').addClass('btn btn-xs btn-primary').attr({
+                            'id': 'Service',
+                            'name': 'Service'
+                        }).fadeIn());
+
+                    $('div.companyPopupModal').prepend(labelAndSelect1);
+
+                    var arrayOfValues_custom4 = Tools.GetUniqueArrayFromString(custom4, ',');
+
+                    if (arrayOfValues_custom4.length > 1) {
+                        $.each(arrayOfValues_custom4, function (i, e) {
+                            $('#Service').append($('<option>', {
+                                value: e,
+                                text: e
+                            }));
+                        });
+
+                        $('div.companyPopupModal').prepend($('<div />', {
+                            'class': 'spacer'
+                        }));
+
+                    } else {
+                        throw new Error("Custom4 is not comma-delimited.");
+                    }
+                }
+            } else {
+                alert("Custom4 is not present");
+            }
+
+
+            //Use case: 5 User Custom data fields -> Leg2 companies will be present only at the custom5 field.
+            var CustomData5_FirstValues = [];
+            var CustomData5_OtherValues = [];
+
+            //if (CustomDataCount == 5) {
+            //debugger;
+            if ($('#Company').length === 0) {
+
+                var custom5_Values = [];
+                custom5_Values = Tools.GetUniqueArrayFromString(custom5, ',');
+                var custom5_firstValue = custom5_Values.shift().trim();
+
+                //Store the first value
+                CustomData5_FirstValues.push(custom5_firstValue);
+
+                // Store the remaining values
+                CustomData5_OtherValues.push(custom5_Values.map(val => val.trim()));
+                //debugger;
+                $('#CompanyName').val(custom5_Values[0]);
+                $('#CompanyContact').val(custom5_Values[1]);
+                $('#CompanyAddress').val(custom5_Values[2]);
+                $('#CompanyCity').val(custom5_Values[3]);
+                if (custom5_Values.Length > 7) {
+                    //debugger;
+                    $('#CompanyStateProvince').val(custom5_Values[4]);
+                    $('#CompanyPostalCode').val(custom5_Values[5]);
+                    $('#CompanyCountry').val(custom5_Values[6]);
+                    $('#CompanyPhone').val(custom5_Values[7]);
+
+                } else {
+                    // debugger;
+                    $('#CompanyStateProvince').val("");
+                    $('#CompanyPostalCode').val(custom5_Values[4]);
+                    $('#CompanyCountry').val(custom5_Values[5]);
+                    $('#CompanyPhone').val(custom5_Values[6]);
+
+                }
+
+                $('body').delegate('#Leg2LabelRequired', 'change', this.vm, function (e) {
+                    //debugger;
+                    if ($('#Leg2LabelRequired').is(':checked')) {
+                        //debugger;
+                        shipmentRequest.Packages[0].MiscReference6 = "true";
+                        CompanyPopup.InitElements(function (selectedCompany, selectedService) {
+
+                            //debugger;
+                            shipmentRequest.Packages[0].MiscReference2 = CustomData5_OtherValues.toString();
+
+                            shipmentRequest.Packages[0].MiscReference3 = selectedService;
+
+                        });
+                    }
+                });
+            }
+
+
+            if ($('#Company').length === 0) {
+
+                if ((custom5 != '' && custom5 != 'undefined' && custom5 != null) && (custom6 != '' && custom6 != 'undefined' && custom6 != null)) {
+                    //Creating Company Dropdown menu.
+                    var labelAndSelect = $('<label />').attr('for', 'Company').text('Company: ')
+                        .add($('<select />').addClass('btn btn-xs btn-primary').attr({
+                            'id': 'Company',
+                            'name': 'Company'
+                        }).fadeIn());
+
+                    //$('div.modal-body').prepend(labelAndSelect);
+                    $('div.companyPopupModal').prepend(labelAndSelect);
+
+
+
+                    $.each(CustomData_FirstValues, function (i, e) {
+                        $('#Company').append($('<option>', {
+                            value: e,
+                            text: e
+                        }));
+                    });
+
+                    $('div.companyPopupModal').prepend($('<div />', {
+                        'class': 'spacer' // Ensure you define this class in your CSS with the desired spacing
+                    }));
+
+                    // Event listener for company selection change
+                    $('body').delegate('#Company', 'change', function (e) {
+                        //debugger;
+                        var selectedCompany = $(this).find(":selected").val();
+                        CompanyPopup.populateCorrespondingValues(selectedCompany, CustomData_FirstValues, CustomData_OtherValues);
+                    });
+
+                    // Trigger change event on company dropdown to populate corresponding values by default
+                    $('#Company').trigger('change');
+
+                }
+
+                //If Leg2LabelRequired check box is checked, setting MiscReference6 to true and populating the Company and Service values on the Modal.
+                $('body').delegate('#Leg2LabelRequired', 'change', this.vm, function (e) {
+                    if ($('#Leg2LabelRequired').is(':checked')) {
+                        shipmentRequest.Packages[0].MiscReference6 = "true";
+
+                        if ((custom4 != '' || custom4 != 'undefined' || custom4 != null) || (custom5 != '' || custom5 != 'undefined' || custom5 != null) && (custom6 != '' || custom6 != 'undefined' || custom6 != null)) {
+
+                            CompanyPopup.InitElements(function (selectedCompany, selectedService) {
+
+                                var com = CompanyPopup.populateCorrespondingValues(selectedCompany, CustomData_FirstValues, CustomData_OtherValues);
+
+                                shipmentRequest.Packages[0].MiscReference2 = com.toString();
+                                shipmentRequest.Packages[0].MiscReference3 = selectedService;
+
+                            });
+                            $("#buttonCompanyPopup").click();
+                        }
+                    }
+                });
+            }
+
+            //debugger;
+            //Setting Leg1 and Leg2 PDF Invoice default by False.         
+            shipmentRequest.Packages[0].MiscReference11 = "false";
+            shipmentRequest.Packages[0].MiscReference12 = "false";
+
+
+        } else {
+            $(document).ready(function () {
+                $('[property="MiscReference1"]').hide(); //When page loaded, MISCREFERENCE1 will be hidden.
+                $('body').delegate('#DryIceRequired', 'change', function (e) {
+                    if ($('#DryIceRequired').is(':checked')) {
+                        //debugger;
+                        $('[property="MiscReference1"]').show();
+                        shipmentRequest.Packages[0].MiscReference5 = "true";
+
+                    } else {
+                        $('[property="MiscReference1"]').hide();
+                        shipmentRequest.Packages[0].MiscReference5 = "false";
+                    }
+                });
+            });
+
+            //Setting Leg1 PDF Invoice default by False
+            //debugger;
+            shipmentRequest.Packages[0].MiscReference11 = "false";
+
+        }
+        //debugger;
+        //Assigning the User address to Return Address
+        shipmentRequest.PackageDefaults.ReturnAddress = this.vm.profile.UserInformation.Address;
+        //this.vm.profile.Shippers= this.vm.profile.UserInformation.Address;
+
+        //Assigning the Weight Units to "KG" if Ship From country is not US.
+        //debugger;
+        var selectedShipper = shipmentRequest.PackageDefaults.Shipper; //$('select[ng-model="vm.currentShipment.PackageDefaults.Shipper"]').val();
+        var map = $.grep(this.vm.profile.Shippers, function (shipper) {
+            console.log(shipper.Symbol);
+            return shipper.Symbol == selectedShipper;
+        })[0];
+        if (map.Country != "US") {
+            //debugger;
+            shipmentRequest.Packages[0].Weight.Units = "KG";
+        }
+        
+        
+         //Setting Proactive recovery
+        $(document).ready(function () {
+            debugger;
+            $('body').delegate('[property="ProactiveRecovery"]', 'change', function (e) {
+                debugger;
+                if (e.target.checked == true) {
+                    shipmentRequest.Packages[0].ProactiveRecovery = true;
+                    $('select option[value="number:1"]').prop("selected", true);
+                    shipmentRequest.Packages[0].ProactiveRecoveryType = 1;
+                    
+                     var total=0;
+                for (var i = 0; i < shipmentRequest.Packages[0].SelectedProactiveRecoveryInstructions.length; i++) {
+                    total += shipmentRequest.Packages[0].SelectedProactiveRecoveryInstructions[i]
+                }
+                var inst=[];
+                inst.push(total);
+                debugger;
+				shipmentRequest.Packages[0].ProactiveRecoveryInstructions=inst[0].toString();
+               
+                }
+                else {
+                    $('select option[selected="selected"]').prop("selected", true);
+                }
+            });
+
+
+        });
+        
+    }
+
+// Source: PackVerify Demos (PACKVERIFY)_PV Sliding Panel CBR_1858.cs
+// ShowAssignGoodsPane() // returns void
+ShowAssignGoodsPane()
+    {
+      let that = this;
+
+      //get rid of any previous entries
+      $('#listItemContainer li:gt(0)').remove();
+
+      //change the column width to make the descriptions longer
+      //change this back when the user clicks the 'Apply' button
+      $('div.ui-tab-container').toggleClass('col-md-8 col-md-6').siblings('div').toggleClass('col-md-4 col-md-6')
+
+      //set a reference to the packages object as well as the commodities objects
+      this.packages = this.viewModel.currentShipment.Packages;
+      this.goods = this.json.data.map(m => m.boxes).flat();
+      this.goods.sort((a, b) => { return a.skuId - b.skuId });
+
+      //loop the commodities to create a master list item for each
+      $(this.goods).each(function(a, b)
+      {
+        let k = 'e' + (Math.random() + 1).toString(36).substring(2);
+        b.UniqueId = k;
+
+        //copy the source element
+        let item = $('#liClone').clone(true).data(b);
+
+        //change the id of the main containing element so we don't run into issue later
+        //each clone is a discreet list item which corresponds to a commodity
+        $(item).attr('id', k);
+
+        //the customer is sending amounts that have sometimes 10 digits after the decimal point which is throwing exceptions when trying
+        //to parseFloat so this is the simplest way to get around that.
+        //let cost = Math.round(b.UnitValue.Amount * 100) / 100;
+
+        $(item).find('.goods-sku').html('SKU: <strong>' + b.skuId + '</strong>');
+        $(item).find('.goods-quantity').html('Quantity: <strong>' + b.quantity + '</strong>');
+        $(item).find('.goods-declared-value').html('Unit Cost: <strong>$' + b.unitPrice + '</strong>');
+
+        //append it to our list
+        $('#divAssignCommodities ul.list-group').append(item);
+
+        //assign all goods to the first package
+        that.packages[0].CommodityContents.push(that.GetCommodityContentObject(b));
+
+        //update the weight and declared value in the root of the object
+        let weight = that.packages[0].Weight;
+        let dva = that.packages[0].DeclaredValueAmount;
+        const thisWeight = (+b.quantity * +b.weightLbs);
+        const thisValue = (+b.quantity * +b.unitPrice);
+
+        if (!weight.Amount) { weight.Amount = 0; }
+        that.packages[0].Weight.Amount += (+b.quantity * +b.weightLbs).toFixed(2);
+
+        if (!dva.Amount) { dva.Amount = 0; }
+        that.packages[0].DeclaredValueAmount.Amount += Math.round((+b.quantity * +b.unitPrice) * 100) / 100;
+
+        //show it gracefully
+        $(item).show();
+      });
+
+      //that.UpdatePackageCounts();
+      //$('li[heading=Goods] a:first').click();
+      $('#divAssignCommodities').show().animate({ left: 0 }, 400);
+      $('.scan-input:visible').first().focus();
+      $('#divAssignCommodities').find('[data-toggle="tooltip"]').tooltip();
+    }
+
+// GetCommodityContentObject(data) // returns cc object
+GetCommodityContentObject(data)
+    {
+      let cc = {};
+      cc.Quantity = data.quantity;
+      cc.ProductCode = data.skuId;
+      cc.QuantityUnitMeasure = 'EA';
+      cc.UnitValue = { Currency: 'USD', Amount: +data.unitPrice };
+      cc.UnitWeight = { Units: 'LB', Amount: +data.weightLbs };
+      cc.UniqueId = data.UniqueId;
+      cc.PkgIndex = data.PkgIndex || 1;
+      cc.PVTotalWeight = (+data.quantity * +data.weightLbs);
+      cc.PVTotalValue = (+data.quantity * +data.unitPrice);
+
+      return cc;
+    }
+
+// MoveGoodToBox(li, destBox) // returns false or void
+MoveGoodToBox(li, destBox)
+    {
+      let vm = this.ClassViewModel;
+      let that = this;
+      let data = $(li).data();
+      let destCC = this.packages[destBox - 1].CommodityContents || [];
+
+      //find the box the item currently resides in
+      //split this statement up over a few calls to make it easier to read
+      let allGoods = this.packages.map(m => m.CommodityContents).flat();
+      let item = allGoods.find(cc => cc.UniqueId == data.UniqueId);
+
+      if (+item.PkgIndex == +destBox) { console.log('Item already exists in box.'); return false; }
+
+      //remove the item from its current box
+      this.packages[item.PkgIndex - 1].CommodityContents = this.packages[item.PkgIndex - 1].CommodityContents.filter(p => p.UniqueId != data.UniqueId);
+
+      //add it to the new box
+      item.PkgIndex = destBox;
+      destCC.push(item);
+      $(li).find('.pkg-index-text').fadeOut().promise().done(function(e) { $(this).text(destBox).fadeIn(); });
+
+      //console.log(vm.currentShipment.Packages);
+      $('li[heading="Goods"]:visible:first > a').trigger('click');
+      $('#goods .btn-group').find('.btn:gt(0)').not('.active').first().trigger('click');
+
+      //update the weights and values
+      //this data will have changed by now so get a new reference to the object
+      allGoods = this.packages.map(m => m.CommodityContents).flat();
+      //the items array will have the CommodityContents object for every package in the shipment
+
+      //sort by package index
+      //update the weight and declared values for all the packages in the shipment
+      allGoods = allGoods.sort((a, b) => { return a.PkgIndex - b.PkgIndex });
+      $(allGoods).each(function(a, b)
+      {
+        let pkg = that.packages[b.PkgIndex - 1];
+
+        if ((a == 0) || (b.PkgIndex != allGoods[a - 1].PkgIndex))
+        {
+          pkg.Weight.Amount = 0;
+          pkg.DeclaredValueAmount.Amount = 0;
+        }
+
+        pkg.Weight.Amount += +b.PVTotalWeight;
+        pkg.DeclaredValueAmount.Amount += +b.PVTotalValue;
+      });
+    }
+
+// Source: Purolator (PURT)_PurolatorCBR_1906.cs
+// HideRenameCommodityContents() // returns void
+    function HideRenameCommodityContents() {
+        debugger;
+        var loaded = setInterval(function() {
+            var formCommo = $('form[name="commoditiesModalForm"]');
+            if (formCommo.length > 0) {
+                clearInterval(loaded);
+                var divOD = $('div[property="CommodityContent.OriginDescription"]');
+                divOD.hide();
+                var divCC = $('div[property="CommodityContent.CommodityCondition"]');
+                divCC.hide();
+
+                //Tabs
+                var ulNavs = formCommo.find('ul[class="nav nav-tabs"]');
+                var commTabs = ulNavs.eq(0);
+                var liTabs = commTabs.find('li');
+                for(var i=0; i<=liTabs.length; i++) {
+                    if (i !== 0 && i !== 4 && i !== 5)
+                    {
+                        var element = liTabs.eq(i);
+                        element.hide();
+                    }
+                }
+                
+                //Restricted Article
+                var divs = formCommo.find('div[ng-repeat="raTypes in vm.profile.RestrictedArticleTypes"]');
+                var numOfElements = divs.length;
+                for(var i=0; i<=numOfElements; i++) {
+                    if (i < 7)
+                    {
+                        var element = divs.eq(i);
+                        element.hide();
+                    }
+                }
+                
+                //Renaming NAFTA to CUSMA
+                var liNAFTA = $('li[index="4"]');
+                liNAFTA.hide();
+                var ahrefNAFTA = liNAFTA.find('a[ng-click="select($event)"]');
+                RenameElement(ahrefNAFTA, 'CUSMA', 'CUSMA');
+                var divNAFTA = $('div[property="CommodityContent.NaftaProducer"]');
+                var lblNAFTAProducer = divNAFTA.find('label');
+                RenameElement(lblNAFTAProducer, 'CUSMA Producer Indicator', 'Indicateur ACEUM pour les producteurs');
+
+                //RemovingCurrencyCommodity();
+
+            }
+        }, 50);
+        
+    }
+
+// RemovingCurrencyCommodity() // returns void
+    function RemovingCurrencyCommodity() {
+        var loaded = setInterval(function() {
+            var divDecVal = $('div[value-property="CommodityContent.UnitValue.Amount"]');
+            if (divDecVal.length > 0) {
+                clearInterval(loaded);
+                //var div = divDecVal.find('div[class="input-group my-group"]');
+                var select = $('select[ng-model="vm.commodityContent.UnitValue.Currency"]');
+                //debugger;
+                select.empty();
+                select.append($('<option>', {
+                    label: 'CAD',
+                    value: 'string:CAD',
+                    text: 'CAD'
+                }));
+                select.append($('<option>', {
+                    label: 'USD',
+                    value: 'string:USD',
+                    text: 'USD'
+                }));
+                select.prop("selectedIndex", 1);
+            }
+        }, 50);
+    }
+
+// Source: Soundoff Signal (SOS)_Warehouse Shipping CBR_1803.cs
+// GetTableDataPackedInBoxesTooltip(PackedItems) // returns HTML string
+  GetTableDataPackedInBoxesTooltip = (PackedItems) =>
+  {
+    PackedItems.sort((a, b) => a.ContainerIndex - b.ContainerIndex);
+    //ContainerIndex: x
+    //Count: y
+    let div = '<div>';
+
+    $(PackedItems).each((a, b) =>
+    {
+      div += `<div>Box: ${b.ContainerIndex} Count: ${b.Count}</div>`;
+    });
+
+    div += `</div>`;
+
+    return div;
+  }
+
+// Source: SPEEDTECH (SPEEDTECH)_SpeedTech Client Side Business Rules_1645.cs
+// function DrawDataInReturnForm() // returns undefined
+    function DrawDataInReturnForm(){
+        var carrierEmailReturnLabelMethod = 5;
+        $('form[name="returnForm"]').find('[ng-model="vm.currentShipment.Packages[vm.packageIndex].Description"]').val(RETURN_DEFAULT_DESCRIPTION);
+        $('form[name="returnForm"]').find('[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDelivery"]').prop("checked", true);
+        $('select[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDeliveryMethod"]>option:eq('+ carrierEmailReturnLabelMethod +')').prop('selected', true);
+        $('input[ng-model="vm.currentShipment.Packages[vm.packageIndex].ReturnDeliveryAddressEmail"]').val(shipmentRequestObject.PackageDefaults.Consignee.Email);
+    }
+
+// function MarkShipmentAsReturn() // returns undefined
+    function MarkShipmentAsReturn(){
+        for (let i = 0; i < vm.currentShipment.Packages.length; i++) 
+        {
+             vm.currentShipment.Packages[i].ReturnDelivery = true;
+             vm.currentShipment.Packages[i].ReturnDeliveryMethod = 4;
+             vm.currentShipment.Packages[i].ReturnDeliveryAddressEmail = shipmentRequestObject.PackageDefaults.Consignee.Email;
+             vm.currentShipment.Packages[i].Description = RETURN_DEFAULT_DESCRIPTION;             
+        }
+    }
+
+// function UnMarkShipmentAsReturn() // returns undefined
+    function UnMarkShipmentAsReturn(){
+        for (let i = 0; i < vm.currentShipment.Packages.length; i++) 
+        {
+             vm.currentShipment.Packages[i].ReturnDelivery = false;
+             vm.currentShipment.Packages[i].ReturnDeliveryMethod = undefined;
+             vm.currentShipment.Packages[i].ReturnDeliveryAddressEmail = '';
+             vm.currentShipment.Packages[i].Description = '';
+        }
+    }
+
+// Source: Xing Hung (XINGHUNG)_ClinetSideBussRules_1587.cs
+// BuildShipment(ret) // returns void
+this.BuildShipment = function (ret) {
+        $buildShipmentModal.modal('hide');
+
+        var weightPerPackage;
+        var multiPackage = vm.currentShipment.Packages.length > 1;
+
+        if (ret.TotalWeight !== undefined && ret.TotalWeight !== 0 && ret.TotalWeight !== "")
+            weightPerPackage = (ret.TotalWeight / ret.TotalPackages).toFixed(3);
+
+        for (var i = 0; i < ret.TotalPackages; i++) {
+            vm.packageIndex = vm.currentShipment.Packages.length - 1;
+            if (i > 0 || multiPackage) {
+                vm.addPackage();
+                multiPackage = true;
+            }
+
+            if (weightPerPackage !== undefined)
+                vm.currentShipment.Packages[vm.packageIndex].Weight.Amount = weightPerPackage;
+            if (ret.WeightUnit !== undefined)
+                vm.currentShipment.Packages[vm.packageIndex].Weight.Units = ret.WeightUnit;
+            else
+                vm.currentShipment.Packages[vm.packageIndex].Weight.Units = vm.translations.WeightUnit;
+        }
+
+        vm.totalPackages = vm.currentShipment.Packages.length;
+
+        ret.TotalWeight = '';
+        ret.TotalPackages = '';
+    }
+

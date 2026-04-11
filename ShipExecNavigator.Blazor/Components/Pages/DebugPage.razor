@@ -1,0 +1,50 @@
+@page "/debug"
+@inject IShipExecService ShipExecService
+
+<PageTitle>ShipExec Navigator</PageTitle>
+
+<div class="debug-page">
+
+    @{ var _debugCompany = ShipExecService.GetCurrentCompany(); }
+    @if (_debugCompany is not null)
+    {
+        <div class="company-heading">@_debugCompany.DisplayName</div>
+    }
+
+    <div class="page-tab-bar">
+        <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
+        <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
+        <a class="page-tab" href="/tools">&#x1F527; Tools</a>
+        <span class="page-tab page-tab--active" style="display:none">&#x1F41B; Debug</span>
+    </div>
+
+    <div class="debug-panel">
+        <div class="debug-hero">
+            <h1 class="debug-hero-title">Debug &amp; Templates</h1>
+            <p class="debug-hero-sub">Manage and export ShipExec templates.</p>
+        </div>
+
+        <div class="debug-actions">
+            <button class="debug-btn debug-btn--green" @onclick="() => _showGet = true">
+                &#x1F4CB; Get Templates
+            </button>
+            <button class="debug-btn debug-btn--blue" @onclick="() => _showGetCbr = true">
+                &#x1F4BB; Get Client Business Rules
+            </button>
+            <button class="debug-btn debug-btn--blue" @onclick="() => _showSave = true">
+                &#x1F4BE; Save Templates
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<GetTemplatesDialog          IsVisible="_showGet"    OnClose="() => _showGet    = false" />
+<GetClientBusinessRulesDialog IsVisible="_showGetCbr" OnClose="() => _showGetCbr = false" />
+<SaveTemplatesDialog          IsVisible="_showSave"   OnClose="() => _showSave   = false" />
+
+@code {
+    private bool _showGet;
+    private bool _showGetCbr;
+    private bool _showSave;
+}
