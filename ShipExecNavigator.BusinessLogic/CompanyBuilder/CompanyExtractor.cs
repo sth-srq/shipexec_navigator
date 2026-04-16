@@ -182,33 +182,37 @@ namespace ShipExecNavigator.BusinessLogic.Tools
 
             foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                Type propType   = prop.PropertyType;
-                Type underlying = Nullable.GetUnderlyingType(propType) ?? propType;
-
-                // Unwrap List<T> → T, or T[] → T
-                if (underlying.IsGenericType &&
-                    underlying.GetGenericTypeDefinition() == typeof(List<>))
-                    underlying = underlying.GetGenericArguments()[0];
-                else if (underlying.IsArray)
-                    underlying = underlying.GetElementType() ?? underlying;
-
-                if (underlying.IsEnum && underlying.Assembly == soxAssembly)
+                try
                 {
-                    // Respect any [XmlElement(ElementName = "...")] override; fall back to the property name.
-                    var    xmlElem = prop.GetCustomAttribute<XmlElementAttribute>();
-                    string eltName = xmlElem?.ElementName ?? prop.Name;
+                    Type propType   = prop.PropertyType;
+                    Type underlying = Nullable.GetUnderlyingType(propType) ?? propType;
 
-                    // Register only the first enum type seen for a given element name to avoid
-                    // double-processing when multiple PSI.Sox types share the same property name.
-                    if (!results.Any(r => r.ElementName == eltName))
-                        results.Add((eltName, underlying));
+                    // Unwrap List<T> → T, or T[] → T
+                    if (underlying.IsGenericType &&
+                        underlying.GetGenericTypeDefinition() == typeof(List<>))
+                        underlying = underlying.GetGenericArguments()[0];
+                    else if (underlying.IsArray)
+                        underlying = underlying.GetElementType() ?? underlying;
+
+                    if (underlying.IsEnum && underlying.Assembly == soxAssembly)
+                    {
+                        // Respect any [XmlElement(ElementName = "...")] override; fall back to the property name.
+                        var    xmlElem = prop.GetCustomAttribute<XmlElementAttribute>();
+                        string eltName = xmlElem?.ElementName ?? prop.Name;
+
+                        // Register only the first enum type seen for a given element name to avoid
+                        // double-processing when multiple PSI.Sox types share the same property name.
+                        if (!results.Any(r => r.ElementName == eltName))
+                            results.Add((eltName, underlying));
+                    }
+                    else if (!underlying.IsPrimitive        &&
+                             underlying != typeof(string)   &&
+                             underlying.Assembly == soxAssembly)
+                    {
+                        CollectEnumProperties(underlying, soxAssembly, visited, results);
+                    }
                 }
-                else if (!underlying.IsPrimitive        &&
-                         underlying != typeof(string)   &&
-                         underlying.Assembly == soxAssembly)
-                {
-                    CollectEnumProperties(underlying, soxAssembly, visited, results);
-                }
+                catch (FileNotFoundException) { /* assembly for this property type not present — skip */ }
             }
         }
 
@@ -234,34 +238,38 @@ namespace ShipExecNavigator.BusinessLogic.Tools
 
             foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                Type propType   = prop.PropertyType;
-                Type underlying = Nullable.GetUnderlyingType(propType) ?? propType;
-
-                // Unwrap List<T> → T, or T[] → T
-                Type elementType = underlying;
-                if (underlying.IsGenericType &&
-                    underlying.GetGenericTypeDefinition() == typeof(List<>))
-                    elementType = underlying.GetGenericArguments()[0];
-                else if (underlying.IsArray)
-                    elementType = underlying.GetElementType() ?? underlying;
-
-                if (Nullable.GetUnderlyingType(propType) == typeof(Guid))
+                try
                 {
-                    var    xmlElem = prop.GetCustomAttribute<XmlElementAttribute>();
-                    string eltName = !string.IsNullOrEmpty(xmlElem?.ElementName)
-                        ? xmlElem.ElementName
-                        : prop.Name;
-                    results.Add(eltName);
-                }
+                    Type propType   = prop.PropertyType;
+                    Type underlying = Nullable.GetUnderlyingType(propType) ?? propType;
 
-                if (!elementType.IsPrimitive     &&
-                    elementType != typeof(string) &&
-                    elementType != typeof(Guid)   &&
-                    !elementType.IsEnum           &&
-                    elementType.Assembly == soxAssembly)
-                {
-                    CollectNullableGuidProperties(elementType, soxAssembly, visited, results);
+                    // Unwrap List<T> → T, or T[] → T
+                    Type elementType = underlying;
+                    if (underlying.IsGenericType &&
+                        underlying.GetGenericTypeDefinition() == typeof(List<>))
+                        elementType = underlying.GetGenericArguments()[0];
+                    else if (underlying.IsArray)
+                        elementType = underlying.GetElementType() ?? underlying;
+
+                    if (Nullable.GetUnderlyingType(propType) == typeof(Guid))
+                    {
+                        var    xmlElem = prop.GetCustomAttribute<XmlElementAttribute>();
+                        string eltName = !string.IsNullOrEmpty(xmlElem?.ElementName)
+                            ? xmlElem.ElementName
+                            : prop.Name;
+                        results.Add(eltName);
+                    }
+
+                    if (!elementType.IsPrimitive     &&
+                        elementType != typeof(string) &&
+                        elementType != typeof(Guid)   &&
+                        !elementType.IsEnum           &&
+                        elementType.Assembly == soxAssembly)
+                    {
+                        CollectNullableGuidProperties(elementType, soxAssembly, visited, results);
+                    }
                 }
+                catch (FileNotFoundException) { /* assembly for this property type not present — skip */ }
             }
         }
 
