@@ -3042,12 +3042,26 @@
         if (shippersNode is null) return;
         await EnsureCategoryLoadedAsync(shippersNode);
 
+        // Resolve client-specific logic for shipper matching
+        var clientLogic = ClientSpecificLogic.ClientLogicResolver.Resolve(loadedFileName);
+
+        // Build a list of existing shippers and a map back to their tree nodes for client-specific matching
+        var existingShippers = new List<PSI.Sox.Shipper>();
+        var shipperNodeMap = new Dictionary<PSI.Sox.Shipper, XmlNodeViewModel>();
+        foreach (var child in shippersNode.Children.Where(c =>
+            c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase)))
+        {
+            var s = BuildShipperFromTreeNode(child);
+            existingShippers.Add(s);
+            shipperNodeMap[s] = child;
+        }
+
         var opts = new System.Text.Json.JsonSerializerOptions { WriteIndented = false };
         foreach (var item in items)
         {
             if (item.Edits is null || item.Edits.Count == 0) continue;
 
-            // Find the shipper tree node by symbol first, fall back to name
+            // Find the shipper tree node by symbol first, then name, then id
             var shipperNode = shippersNode.Children.FirstOrDefault(c =>
                 c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase) &&
                 c.Children.Any(gc =>
@@ -3061,6 +3075,24 @@
                     c.Children.Any(gc =>
                         gc.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
                         string.Equals(gc.NodeValue, item.Name, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            if (shipperNode is null && !string.IsNullOrEmpty(item.Id))
+            {
+                shipperNode = shippersNode.Children.FirstOrDefault(c =>
+                    c.NodeName.Equals("Shipper", StringComparison.OrdinalIgnoreCase) &&
+                    c.Children.Any(gc =>
+                        gc.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(gc.NodeValue, item.Id, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            // Use client-specific matching as a final fallback (e.g. Wesbanco parenthesized key)
+            if (shipperNode is null && !string.IsNullOrEmpty(item.Name))
+            {
+                var incoming = new PSI.Sox.Shipper { Name = item.Name, Symbol = item.Symbol };
+                var matched = clientLogic.FindMatchingShipper(existingShippers, incoming);
+                if (matched is not null)
+                    shipperNodeMap.TryGetValue(matched, out shipperNode);
             }
 
             if (shipperNode is null) continue;

@@ -93,13 +93,17 @@
     <File Path="References/PSI.Sox.dll" />
     <File Path="References/PSI.Sox.Wcf.dll" />
   </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Tools/ShipExecNavigator.RAGLoader/ShipExecNavigator.RAGLoader.csproj" />
+    <Project Path="Tools/ShipExecNavigator.Tools.EnvironmentMapper/ShipExecNavigator.Tools.EnvironmentMapper.csproj" />
+    <Project Path="Tools/ShipExecNavigator.Tools.VarianceGenerator/ShipExecNavigator.Tools.VarianceGenerator.csproj" />
+  </Folder>
   <Project Path="ShipExecNavigator.AppLogic/ShipExecNavigator.AppLogic.csproj" />
   <Project Path="ShipExecNavigator.Blazor/ShipExecNavigator.Blazor.csproj" />
   <Project Path="ShipExecNavigator.BusinessLogic/ShipExecNavigator.BusinessLogic.csproj" Id="a6c2d097-1a30-488c-b95d-91514c3d1238" />
   <Project Path="ShipExecNavigator.CBRAnalyzer/ShipExecNavigator.CBRAnalyzer.csproj" />
   <Project Path="ShipExecNavigator.ClientSpecificLogic/ShipExecNavigator.ClientSpecificLogic.csproj" Id="5d6f584e-cfd3-487b-bb3a-28bcd979df6d" />
   <Project Path="ShipExecNavigator.DAL/ShipExecNavigator.DAL.csproj" />
-  <Project Path="ShipExecNavigator.DesktopClient/ShipExecNavigator.DesktopClient.csproj" />
   <Project Path="ShipExecNavigator.Model/ShipExecNavigator.Model.csproj" Id="b899a241-66b1-47ea-be52-6556a6746c09" />
   <Project Path="ShipExecNavigator.RAGLoader/ShipExecNavigator.RAGLoader.csproj" />
   <Project Path="ShipExecNavigator.Shared/ShipExecNavigator.Shared.csproj" />

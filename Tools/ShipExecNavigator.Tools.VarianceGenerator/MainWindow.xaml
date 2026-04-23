@@ -1,0 +1,61 @@
+<Window x:Class="ShipExecNavigator.Tools.VarianceGenerator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Variance Generator — Company XML Diff → Variance JSON" Height="700" Width="1050"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Before (original) file -->
+        <Grid Grid.Row="0" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Before (original):" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="BeforePath" IsReadOnly="True" Margin="4,0"/>
+            <Button Grid.Column="2" Content="Browse..." Width="80" Click="BrowseBefore_Click"/>
+        </Grid>
+
+        <!-- After (modified) file -->
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="After (modified):" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="AfterPath" IsReadOnly="True" Margin="4,0"/>
+            <Button Grid.Column="2" Content="Browse..." Width="80" Click="BrowseAfter_Click"/>
+        </Grid>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Generate Variances" Width="140" Click="Generate_Click"/>
+            <Button Content="Copy JSON" Width="100" Margin="8,0,0,0" Click="CopyJson_Click"/>
+        </StackPanel>
+
+        <!-- Summary -->
+        <TextBlock Grid.Row="3" x:Name="SummaryText" Margin="0,0,0,4" FontWeight="SemiBold"/>
+
+        <!-- JSON output -->
+        <TextBox Grid.Row="4"
+                 x:Name="JsonOutput"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 FontFamily="Consolas"
+                 FontSize="12"
+                 Background="#FF1E1E1E"
+                 Foreground="#FFDCDCDC"
+                 TextWrapping="NoWrap"/>
+    </Grid>
+</Window>

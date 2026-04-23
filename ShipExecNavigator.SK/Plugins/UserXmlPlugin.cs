@@ -22,7 +22,9 @@ public sealed class UserXmlPlugin
     [KernelFunction("find_users")]
     [Description(
         "Returns the list of users from the loaded ShipExec company as a JSON array with " +
-        "id, username, and email. Use this when the user asks to FIND, SEARCH, or FILTER users. " +
+        "id, username, email, profileId, and profileName. Use this when the user asks to FIND, " +
+        "SEARCH, or FILTER users, or when asking about users per profile, user counts by profile, " +
+        "or any profile-user relationship. " +
         "You MUST then filter the returned list to find matching users and respond with a " +
         "```user-find code block containing a JSON array of the matching entries.")]
     public string FindUsers(
@@ -34,9 +36,11 @@ public sealed class UserXmlPlugin
             var users = doc.RootElement.EnumerateArray()
                 .Select(el => new
                 {
-                    id       = el.TryGetProperty("Id",       out var idProp) ? idProp.GetString()       ?? "" : "",
-                    username = el.TryGetProperty("UserName", out var unProp) ? unProp.GetString()       ?? "" : "",
-                    email    = el.TryGetProperty("Email",    out var emProp) ? emProp.GetString()       ?? "" : "",
+                    id          = el.TryGetProperty("Id",          out var idProp)  ? idProp.GetString()  ?? "" : "",
+                    username    = el.TryGetProperty("UserName",    out var unProp)  ? unProp.GetString()  ?? "" : "",
+                    email       = el.TryGetProperty("Email",       out var emProp)  ? emProp.GetString()  ?? "" : "",
+                    profileId   = el.TryGetProperty("ProfileId",   out var piProp)  ? piProp.ToString()       : "",
+                    profileName = el.TryGetProperty("ProfileName", out var pnProp)  ? pnProp.GetString() ?? "" : "",
                 })
                 .Where(u => !string.IsNullOrEmpty(u.id))
                 .ToList();
@@ -47,6 +51,7 @@ public sealed class UserXmlPlugin
                    "```user-find code block containing ONLY the JSON array of matching entries " +
                    "(each object must have `id`, `username`, and `email` string fields, " +
                    "exactly as returned by this function). " +
+                   "You can group or count users by profileId/profileName to answer profile-related questions. " +
                    "Do NOT include any JavaScript — the Navigator will highlight those users directly.";
         }
         catch (Exception ex)

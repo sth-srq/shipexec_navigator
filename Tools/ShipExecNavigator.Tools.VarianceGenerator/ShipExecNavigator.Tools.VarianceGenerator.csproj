@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>ShipExecNavigator.Tools.VarianceGenerator</RootNamespace>
+    <AssemblyName>ShipExecNavigator.Tools.VarianceGenerator</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\ShipExecNavigator.BusinessLogic\ShipExecNavigator.BusinessLogic.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PSI.Sox">
+      <HintPath>..\..\References\PSI.Sox.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Configuration">
+      <HintPath>..\..\References\PSI.Sox.Configuration.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Runtime-only assemblies required by PSI.Sox's type graph for XmlSerializer
+       reflection. These are not called directly but must be resolvable. -->
+  <ItemGroup>
+    <None Include="$(ProgramFiles)\UPS Professional Services Inc\ShipExec\Core\Microsoft.Owin.dll"
+          Condition="Exists('$(ProgramFiles)\UPS Professional Services Inc\ShipExec\Core\Microsoft.Owin.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(ProgramFiles)\UPS Professional Services Inc\ShipExec\Core\Microsoft.AspNet.Identity.Core.dll"
+          Condition="Exists('$(ProgramFiles)\UPS Professional Services Inc\ShipExec\Core\Microsoft.AspNet.Identity.Core.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(ProgramFiles)\UPS Professional Services Inc\ShipExec\Core\Owin.dll"
+          Condition="Exists('$(ProgramFiles)\UPS Professional Services Inc\ShipExec\Core\Owin.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="9.0.5" />
+  </ItemGroup>
+
+</Project>

@@ -155,6 +155,25 @@ public sealed class CompanyIndexPlugin
                "PoBox, Residential.";
     }
 
+    // ── User operations ──────────────────────────────────────────────────────
+
+    [KernelFunction("find_users")]
+    [Description(
+        "Returns all user entries with all fields as a JSON array. Each user has fields " +
+        "like Id, UserName, Email, ProfileId, ProfileName, SiteId, SiteName, etc. " +
+        "Use this when the user asks about users — counts, filtering, profile assignments, " +
+        "users per profile, user counts by profile name, or any user-related analytical query. " +
+        "You can group or count users by ProfileId/ProfileName to answer profile-related questions.")]
+    public string FindUsers(
+        [Description("The user's request about users")] string userRequest)
+    {
+        var json = ResolveCategoryJson("Users");
+        if (json is null)
+            return "No user data available.";
+
+        return $"User data:\n{json}";
+    }
+
     // ── Generic entity operations ─────────────────────────────────────────────
 
     [KernelFunction("find_entities")]
@@ -163,7 +182,7 @@ public sealed class CompanyIndexPlugin
         "Supported entity types: Profile, Site, User, CarrierRoute, ClientBusinessRule, " +
         "DataConfigurationMapping, DocumentConfiguration, Machine, PrinterConfiguration, " +
         "PrinterDefinition, ScaleConfiguration, Schedule, ServerBusinessRule, SourceConfiguration. " +
-        "Use this to inspect entity data before performing delete or edit operations.")]
+        "Use this to inspect entity data, answer analytical questions, or before performing delete or edit operations.")]
     public string FindEntities(
         [Description("The singular entity type name (e.g. 'Profile', 'Site', 'Machine')")] string entityType,
         [Description("The user's request describing what to do with the entities")] string userRequest)
