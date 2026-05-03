@@ -1,0 +1,132 @@
+@inject IShipExecService ShipExecService
+
+@if (IsVisible)
+{
+    <div class="st-backdrop" @onclick="HandleClose">
+        <div class="st-dlg" @onclick:stopPropagation>
+
+            <div class="st-header">
+                <div class="st-title">&#x1F4BE; Save Templates</div>
+                <button class="st-close" @onclick="HandleClose" disabled="@_isSaving">&#x2715;</button>
+            </div>
+
+            <div class="st-body">
+
+                @if (_phase == Phase.FolderInput)
+                {
+                    <p class="st-hint">
+                        All templates stored in the database will be written to the chosen folder.
+                        Each file is named <code>{company}_{type}_{name}_{id}.html</code>.
+                    </p>
+
+                    <div class="st-field">
+                        <label class="st-label">Output Folder</label>
+                        <input class="st-input" @bind="_folderPath" @bind:event="oninput"
+                               placeholder="e.g. C:\ShipExecTemplates" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="st-error">&#9888; @_errorMessage</div>
+                    }
+
+                    <div class="st-footer">
+                        <button class="st-btn-secondary" @onclick="HandleClose">Cancel</button>
+                        <button class="st-btn-primary" @onclick="SaveAsync"
+                                disabled="@(string.IsNullOrWhiteSpace(_folderPath))">
+                            Save
+                        </button>
+                    </div>
+                }
+                else if (_phase == Phase.Saving)
+                {
+                    <div class="st-saving-row">
+                        <span class="st-spinner"></span>
+                        <span>Saving templates to <strong>@_folderPath</strong>&hellip;</span>
+                    </div>
+                }
+                else if (_phase == Phase.Results)
+                {
+                    <div class="st-summary-row">
+                        <span class="st-pill st-pill--ok">&#x2714; @_results.Count(r => r.Success) saved</span>
+                        @if (_results.Any(r => !r.Success))
+                        {
+                            <span class="st-pill st-pill--err">&#9888; @_results.Count(r => !r.Success) failed</span>
+                        }
+                        <span class="st-folder-note">&#x1F4C1; @_folderPath</span>
+                    </div>
+
+                    <div class="st-result-list">
+                        @foreach (var r in _results)
+                        {
+                            <div class="st-result-item @(r.Success ? "" : "st-result-item--err")">
+                                <span class="st-result-icon">@(r.Success ? "✔" : "✘")</span>
+                                <span class="st-result-name" title="@r.FileName">@r.FileName</span>
+                                <span class="st-result-type">@r.TemplateType</span>
+                                @if (!string.IsNullOrEmpty(r.Error))
+                                {
+                                    <span class="st-result-error" title="@r.Error">@r.Error</span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="st-footer">
+                        <button class="st-btn-secondary" @onclick="ResetToInput">&#x2190; Back</button>
+                        <button class="st-btn-secondary" @onclick="HandleClose">Close</button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private enum Phase { FolderInput, Saving, Results }
+    private Phase _phase = Phase.FolderInput;
+
+    private string _folderPath    = @"C:\ShipExecTemplates";
+    private bool   _isSaving;
+    private string _errorMessage  = string.Empty;
+    private List<TemplateSaveResult> _results = [];
+
+    private async Task SaveAsync()
+    {
+        _isSaving     = true;
+        _errorMessage = string.Empty;
+        _phase        = Phase.Saving;
+        try
+        {
+            _results = await ShipExecService.SaveTemplatesToFolderAsync(_folderPath.Trim());
+            _phase   = Phase.Results;
+        }
+        catch (Exception ex)
+        {
+            _phase        = Phase.FolderInput;
+            _errorMessage = $"Failed to save templates: {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void ResetToInput()
+    {
+        _results = [];
+        _phase   = Phase.FolderInput;
+    }
+
+    private void HandleClose()
+    {
+        if (_isSaving) return;
+        _phase        = Phase.FolderInput;
+        _results      = [];
+        _errorMessage = string.Empty;
+        OnClose.InvokeAsync();
+    }
+}

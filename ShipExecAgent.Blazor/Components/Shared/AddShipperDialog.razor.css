@@ -1,0 +1,204 @@
+/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+.asd-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+/* ── Dialog shell ─────────────────────────────────────────────────────────── */
+.asd-dlg {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: 800px;
+    max-width: 96vw;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.asd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem 0.75rem;
+    border-bottom: 1px solid #ddd;
+    background: #337ab7;
+    flex-shrink: 0;
+}
+
+.asd-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.asd-close {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    line-height: 1;
+    transition: background-color 0.12s, color 0.12s;
+}
+
+    .asd-close:hover {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+.asd-body {
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+.asd-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.asd-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 0.15rem;
+}
+
+/* ── Field rows ───────────────────────────────────────────────────────────── */
+.asd-field-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.asd-field {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.asd-field--wide {
+    flex: 2;
+    min-width: 200px;
+}
+
+.asd-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.asd-req {
+    color: #ef4444;
+}
+
+.asd-input {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.85rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+    .asd-input:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+
+/* ── Checkboxes ───────────────────────────────────────────────────────────── */
+.asd-check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+    .asd-check input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #6366f1;
+    }
+
+/* ── Error ────────────────────────────────────────────────────────────────── */
+.asd-error {
+    padding: 0.5rem 0.75rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #b91c1c;
+    font-size: 0.82rem;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.asd-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid rgba(43, 63, 107, 0.08);
+    background: #f8fafc;
+    flex-shrink: 0;
+}
+
+.asd-btn-primary {
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    background: #4f46e5;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .asd-btn-primary:hover:not(:disabled) {
+        background: #4338ca;
+    }
+
+    .asd-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.asd-btn-secondary {
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+    background: #e5e7eb;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .asd-btn-secondary:hover {
+        background: #d1d5db;
+    }

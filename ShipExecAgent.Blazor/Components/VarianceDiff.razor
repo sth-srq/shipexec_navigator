@@ -1,0 +1,119 @@
+@using ShipExecAgent.Services
+@using Newtonsoft.Json.Linq
+
+@if (Variance is not null)
+{
+    <div class="variance-item mb-3">
+
+        @* ── Header ───────────────────────────────────────────── *@
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <strong>@Variance.EntityName</strong>
+            <span class="badge @GetBadgeClass()">@Variance.ChangeType</span>
+        </div>
+
+        @* ── Update: field-level diff ─────────────────────────── *@
+        @if (Variance.ChangeType == "Update")
+        {
+            @* Variable declared in @{} block to avoid Razor scope errors *@
+            var diffs = GetFieldDiffs();
+
+            @if (diffs.Count == 0)
+            {
+                <p class="text-muted small mb-0">No field-level differences detected.</p>
+            }
+            else
+            {
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:30%">Field</th>
+                            <th style="width:35%">New value</th>
+                            <th style="width:35%">Original value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var diff in diffs)
+                        {
+                            <tr>
+                                <td><code>@diff.FieldName</code></td>
+                                <td style="background-color:#d4edda;color:#155724;">@diff.NewValue</td>
+                                <td style="background-color:#f8d7da;color:#721c24;">@diff.OriginalValue</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+        else
+        {
+            @* ── Add / Remove: full JSON block ──────────────────── *@
+            var json = Variance.ChangeType == "Add" ? Variance.NewXML : Variance.OriginalXML;
+            <pre class="p-2 rounded small mb-0"
+                 style="background-color:@(Variance.ChangeType == "Add" ? "#d4edda" : "#f8d7da")">@json</pre>
+        }
+
+    </div>
+}
+
+@code {
+
+    [Parameter, EditorRequired]
+    public VarianceInfo Variance { get; set; } = default!;
+
+    private string GetBadgeClass() => Variance.ChangeType switch
+    {
+        "Add"    => "bg-success",
+        "Remove" => "bg-danger",
+        "Update" => "bg-warning text-dark",
+        _        => "bg-secondary"
+    };
+
+    private record FieldDiff(string FieldName, string NewValue, string OriginalValue);
+
+    private List<FieldDiff> GetFieldDiffs()
+    {
+        var result = new List<FieldDiff>();
+
+        if (string.IsNullOrWhiteSpace(Variance.OriginalXML) ||
+            string.IsNullOrWhiteSpace(Variance.NewXML))
+            return result;
+
+        JObject original;
+        JObject modified;
+
+        try
+        {
+            original = JObject.Parse(Variance.OriginalXML);
+            modified = JObject.Parse(Variance.NewXML);
+        }
+        catch
+        {
+            return result;
+        }
+
+        var allKeys = original.Properties().Select(p => p.Name)
+            .Union(modified.Properties().Select(p => p.Name));
+
+        foreach (var key in allKeys)
+        {
+            var origVal = FormatToken(original[key]);
+            var newVal  = FormatToken(modified[key]);
+
+            if (origVal != newVal)
+                result.Add(new FieldDiff(key, newVal, origVal));
+        }
+
+        return result;
+    }
+
+    private static string FormatToken(JToken? token)
+    {
+        if (token is null || token.Type == JTokenType.Null)
+            return "(none)";
+
+        if (token is JValue jv)
+            return jv.Value?.ToString() ?? "null";
+
+        return token.ToString(Newtonsoft.Json.Formatting.None);
+    }
+}

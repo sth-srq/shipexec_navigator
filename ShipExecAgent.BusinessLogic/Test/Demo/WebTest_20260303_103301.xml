@@ -1,0 +1,1378 @@
+<Company xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Id>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</Id>
+  <Name>WebTest</Name>
+  <Symbol>WBT</Symbol>
+  <LicenseId>12345</LicenseId>
+  <Enabled>false</Enabled>
+  <ProfileId xsi:nil="true" />
+  <AdapterRegistrations>
+    <AdapterRegistration>
+      <Id>2157</Id>
+      <AdapterDefinitionId>1</AdapterDefinitionId>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <AdapterDefinition>
+        <Id>1</Id>
+        <Guid>f7d56223-ab4d-402b-a695-733ae0740e8d</Guid>
+        <Name>CSAdapter</Name>
+        <Symbol>PSI.Sox.CsAdapter</Symbol>
+        <AdapterType>Shipping Grouping AddressValidation</AdapterType>
+        <FileName>C:\Program Files\UPS Professional Services Inc\ShipExec\Core\Adapters\PSI.Sox.CsAdapter.dll</FileName>
+      </AdapterDefinition>
+      <DefaultAdapterSettings>
+        <AdapterSetting>
+          <Id>0</Id>
+          <Name>Amp Admin Url</Name>
+          <Description>Amp Admin Url</Description>
+          <ControlType>1</ControlType>
+          <Value>http://localhost/amp/adminxml</Value>
+          <GroupName>Url</GroupName>
+          <Symbol>AMP_ADMIN_URL</Symbol>
+          <IsRequired>true</IsRequired>
+          <AdapterRegistrationId>0</AdapterRegistrationId>
+          <ShowWarning>false</ShowWarning>
+        </AdapterSetting>
+        <AdapterSetting>
+          <Id>0</Id>
+          <Name>Amp Url</Name>
+          <Description>Amp Url</Description>
+          <ControlType>1</ControlType>
+          <Value>http://localhost/amp/xml</Value>
+          <GroupName>Url</GroupName>
+          <Symbol>AMP_URL</Symbol>
+          <IsRequired>true</IsRequired>
+          <AdapterRegistrationId>0</AdapterRegistrationId>
+          <ShowWarning>false</ShowWarning>
+        </AdapterSetting>
+        <AdapterSetting>
+          <Id>0</Id>
+          <Name>Hold WorldEase Consolidations</Name>
+          <Description>If enabled, any new WorldEase Consolidations will be created in a hold status. All shipments added to the consolidation will be shipped with a closeout mode of Hold until the group is changed to Release.</Description>
+          <ControlType>2</ControlType>
+          <Value>false</Value>
+          <Symbol>WORLD_EASE_SHIP_MODE</Symbol>
+          <IsRequired>false</IsRequired>
+          <AdapterRegistrationId>0</AdapterRegistrationId>
+          <ShowWarning>true</ShowWarning>
+          <Note>Before making changes, please make sure that all WorldEase groups are closed.</Note>
+        </AdapterSetting>
+      </DefaultAdapterSettings>
+      <Status>Ready</Status>
+    </AdapterRegistration>
+  </AdapterRegistrations>
+  <CarrierRoutes>
+    <CarrierRoute>
+      <Id>3498</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3249</CarrierId>
+      <Carrier>
+        <Id>3249</Id>
+        <Symbol>TANDATA_LTL.CEVA</Symbol>
+        <Name>CEVA LOGISTICS (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3499</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3250</CarrierId>
+      <Carrier>
+        <Id>3250</Id>
+        <Symbol>CONNECTSHIP_GLOBAL.DEFAULT</Symbol>
+        <Name>Default Global (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3500</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3251</CarrierId>
+      <Carrier>
+        <Id>3251</Id>
+        <Symbol>TANDATA_LTL.LTL</Symbol>
+        <Name>Default LTL (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3501</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3252</CarrierId>
+      <Carrier>
+        <Id>3252</Id>
+        <Symbol>TANDATA_LTL.DOMX</Symbol>
+        <Name>Dometic LTL (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3502</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3253</CarrierId>
+      <Carrier>
+        <Id>3253</Id>
+        <Symbol>TANDATA_LTL.DOMC</Symbol>
+        <Name>Dometic LTL Canada (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3503</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3254</CarrierId>
+      <Carrier>
+        <Id>3254</Id>
+        <Symbol>CONNECTSHIP_GLOBAL.GLOE</Symbol>
+        <Name>Global Expedited (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3504</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3255</CarrierId>
+      <Carrier>
+        <Id>3255</Id>
+        <Symbol>CONNECTSHIP_GLS.GLS</Symbol>
+        <Name>GLS Europe (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3505</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3256</CarrierId>
+      <Carrier>
+        <Id>3256</Id>
+        <Symbol>CONNECTSHIP_GLOBAL.TESTLTL</Symbol>
+        <Name>TestLTL (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3506</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3257</CarrierId>
+      <Carrier>
+        <Id>3257</Id>
+        <Symbol>CONNECTSHIP_UPSFREIGHT.UPS</Symbol>
+        <Name>TForce Freight (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3507</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3258</CarrierId>
+      <Carrier>
+        <Id>3258</Id>
+        <Symbol>CONNECTSHIP_UPS.UPS</Symbol>
+        <Name>UPS (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3508</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3259</CarrierId>
+      <Carrier>
+        <Id>3259</Id>
+        <Symbol>CONNECTSHIP_UPSMAILINNOVATIONS.UPS</Symbol>
+        <Name>UPS Mail Innovations (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3509</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3260</CarrierId>
+      <Carrier>
+        <Id>3260</Id>
+        <Symbol>TANDATA_USPS.USPS</Symbol>
+        <Name>USPS (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3510</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>0</RouteType>
+      <CarrierId>3261</CarrierId>
+      <Carrier>
+        <Id>3261</Id>
+        <Symbol>CONNECTSHIP_ENDICIA.USPS</Symbol>
+        <Name>USPS (Endicia) (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3511</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3249</CarrierId>
+      <Carrier>
+        <Id>3249</Id>
+        <Symbol>TANDATA_LTL.CEVA</Symbol>
+        <Name>CEVA LOGISTICS (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3512</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3250</CarrierId>
+      <Carrier>
+        <Id>3250</Id>
+        <Symbol>CONNECTSHIP_GLOBAL.DEFAULT</Symbol>
+        <Name>Default Global (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3513</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3251</CarrierId>
+      <Carrier>
+        <Id>3251</Id>
+        <Symbol>TANDATA_LTL.LTL</Symbol>
+        <Name>Default LTL (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3514</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3252</CarrierId>
+      <Carrier>
+        <Id>3252</Id>
+        <Symbol>TANDATA_LTL.DOMX</Symbol>
+        <Name>Dometic LTL (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3515</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3253</CarrierId>
+      <Carrier>
+        <Id>3253</Id>
+        <Symbol>TANDATA_LTL.DOMC</Symbol>
+        <Name>Dometic LTL Canada (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3516</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3254</CarrierId>
+      <Carrier>
+        <Id>3254</Id>
+        <Symbol>CONNECTSHIP_GLOBAL.GLOE</Symbol>
+        <Name>Global Expedited (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3517</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3255</CarrierId>
+      <Carrier>
+        <Id>3255</Id>
+        <Symbol>CONNECTSHIP_GLS.GLS</Symbol>
+        <Name>GLS Europe (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3518</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3256</CarrierId>
+      <Carrier>
+        <Id>3256</Id>
+        <Symbol>CONNECTSHIP_GLOBAL.TESTLTL</Symbol>
+        <Name>TestLTL (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3519</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3257</CarrierId>
+      <Carrier>
+        <Id>3257</Id>
+        <Symbol>CONNECTSHIP_UPSFREIGHT.UPS</Symbol>
+        <Name>TForce Freight (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3520</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3258</CarrierId>
+      <Carrier>
+        <Id>3258</Id>
+        <Symbol>CONNECTSHIP_UPS.UPS</Symbol>
+        <Name>UPS (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3521</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3259</CarrierId>
+      <Carrier>
+        <Id>3259</Id>
+        <Symbol>CONNECTSHIP_UPSMAILINNOVATIONS.UPS</Symbol>
+        <Name>UPS Mail Innovations (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3522</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3260</CarrierId>
+      <Carrier>
+        <Id>3260</Id>
+        <Symbol>TANDATA_USPS.USPS</Symbol>
+        <Name>USPS (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+    <CarrierRoute>
+      <Id>3523</Id>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <RouteType>2</RouteType>
+      <CarrierId>3261</CarrierId>
+      <Carrier>
+        <Id>3261</Id>
+        <Symbol>CONNECTSHIP_ENDICIA.USPS</Symbol>
+        <Name>USPS (Endicia) (CSAdapter)</Name>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterRegistrationId>2157</AdapterRegistrationId>
+      </Carrier>
+      <AdapterRegistrationId>2157</AdapterRegistrationId>
+      <AdapterRegistration>
+        <Id>2157</Id>
+        <AdapterDefinitionId>1</AdapterDefinitionId>
+        <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+        <AdapterDefinition>
+          <Id>1</Id>
+          <Guid>00000000-0000-0000-0000-000000000000</Guid>
+          <Name>CSAdapter</Name>
+          <AdapterType />
+        </AdapterDefinition>
+        <Status>Ready</Status>
+      </AdapterRegistration>
+      <IsEditable>false</IsEditable>
+    </CarrierRoute>
+  </CarrierRoutes>
+  <PrinterDefinitions>
+    <PrinterDefinition>
+      <Id>1134</Id>
+      <Alias>LP1</Alias>
+      <Stock>
+        <Id>1</Id>
+        <Symbol>LETTER</Symbol>
+        <Name>8.5" x 11" Plain Paper (Letter)</Name>
+        <Height>11000</Height>
+        <Width>8500</Width>
+      </Stock>
+      <StockId>1</StockId>
+      <Model>
+        <Id>11</Id>
+        <Symbol>Generic.PCLPrinter</Symbol>
+        <Name>PCL Printer</Name>
+      </Model>
+      <ModelId>11</ModelId>
+      <PrintDirection>BottomFirst</PrintDirection>
+      <PrintActions>Raw</PrintActions>
+      <ImageType>None</ImageType>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+    </PrinterDefinition>
+  </PrinterDefinitions>
+  <Sites>
+    <Site>
+      <Id>c3ed8658-f322-4dd7-9dbd-b813f6128ce8</Id>
+      <Name>site1</Name>
+      <CompanyId>00000000-0000-0000-0000-000000000000</CompanyId>
+      <ProfileId xsi:nil="true" />
+      <Profiles>
+        <Profile>
+          <Id>9298</Id>
+          <Name>Site1Sub</Name>
+          <ProfileSettingsId>9282</ProfileSettingsId>
+          <DocumentConfigurationId xsi:nil="true" />
+          <PrinterConfigurationId xsi:nil="true" />
+          <ScaleConfigurationId xsi:nil="true" />
+          <UseHardwareSupport>false</UseHardwareSupport>
+          <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+          <SiteId>c3ed8658-f322-4dd7-9dbd-b813f6128ce8</SiteId>
+        </Profile>
+      </Profiles>
+      <Clients />
+      <Machines>
+        <Machine>
+          <Id>6</Id>
+          <Name>Site1Machine</Name>
+          <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+          <SiteId>c3ed8658-f322-4dd7-9dbd-b813f6128ce8</SiteId>
+          <ProfileId>9298</ProfileId>
+          <EnterpriseId xsi:nil="true" />
+        </Machine>
+      </Machines>
+      <Shippers />
+      <PrinterDefinitions />
+      <PrinterConfigurations />
+      <ScaleDefinitions>
+        <ScaleDefinition>
+          <Id>1</Id>
+          <Name>Detecto AS350D</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>8</DataBits>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>2</Id>
+          <Name>Detecto AS410D</Name>
+          <BaudRate>1200</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Space</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>3</Id>
+          <Name>Detecto AS420D</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>4</Id>
+          <Name>Fairbanks 70-2453</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Odd</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>5</Id>
+          <Name>Fairbanks 70-2455</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Odd</Parity>
+          <StopBits>Two</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>6</Id>
+          <Name>Fairbanks SCB R9000-14</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Odd</Parity>
+          <StopBits>Two</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>7</Id>
+          <Name>Fairbanks SCB R9000-14</Name>
+          <UsbVid>0B67</UsbVid>
+          <UsbPid>555E</UsbPid>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <PortType>Usb</PortType>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>8</Id>
+          <Name>FlexWeigh DWM-IV</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>9</Id>
+          <Name>GSE 552</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>8</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>10</Id>
+          <Name>Toledo 8213</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>11</Id>
+          <Name>Toledo 8213-0025</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>Two</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>12</Id>
+          <Name>Toledo 8520</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>13</Id>
+          <Name>Mettler-Toledo PS2 Plus</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Odd</Parity>
+          <StopBits>Two</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>14</Id>
+          <Name>Mettler-Toledo PS30</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>15</Id>
+          <Name>Mettler-Toledo PS30-2</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>16</Id>
+          <Name>Mettler-Toledo PS60</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Odd</Parity>
+          <StopBits>Two</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>17</Id>
+          <Name>Mettler-Toledo PS60</Name>
+          <UsbVid>0EB8</UsbVid>
+          <UsbPid>F000</UsbPid>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <PortType>Usb</PortType>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>18</Id>
+          <Name>Mettler-Toledo PS90</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Odd</Parity>
+          <StopBits>Two</StopBits>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>19</Id>
+          <Name>Mettler-Toledo PS90</Name>
+          <UsbVid>0EB8</UsbVid>
+          <UsbPid>F000</UsbPid>
+          <RequestCommand>13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <PortType>Usb</PortType>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>20</Id>
+          <Name>NCI 3825</Name>
+          <BaudRate>4800</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestEndCommand>03</RequestEndCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>21</Id>
+          <Name>NCI 3835</Name>
+          <BaudRate>4800</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestEndCommand>03</RequestEndCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>22</Id>
+          <Name>NCI 7620</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestEndCommand>03</RequestEndCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>23</Id>
+          <Name>NCI 7820</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestEndCommand>03</RequestEndCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>24</Id>
+          <Name>NCI 7880</Name>
+          <BaudRate>1200</BaudRate>
+          <DataBits>7</DataBits>
+          <Parity>Even</Parity>
+          <StopBits>One</StopBits>
+          <RequestCommand>87,13</RequestCommand>
+          <RequestEndCommand>03</RequestEndCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>25</Id>
+          <Name>CubiScan 110</Name>
+          <BaudRate>9600</BaudRate>
+          <DataBits>8</DataBits>
+          <StopBits>One</StopBits>
+          <RequestCommand>2,77,3,13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+        <ScaleDefinition>
+          <Id>26</Id>
+          <Name>CubiScan 110</Name>
+          <RequestCommand>2,77,3,13</RequestCommand>
+          <RequestTimeout>3000</RequestTimeout>
+          <PortType>Network</PortType>
+          <RetryCount>0</RetryCount>
+          <RetryDelay>0</RetryDelay>
+          <CompanyId xsi:nil="true" />
+          <SiteId xsi:nil="true" />
+        </ScaleDefinition>
+      </ScaleDefinitions>
+      <SourceConfigurations />
+      <DataConfigurationMappings />
+      <Schedules />
+    </Site>
+  </Sites>
+  <Profiles>
+    <Profile>
+      <Id>9295</Id>
+      <Name>default</Name>
+      <ProfileSettingsId>9279</ProfileSettingsId>
+      <DocumentConfigurationId xsi:nil="true" />
+      <PrinterConfigurationId xsi:nil="true" />
+      <ScaleConfigurationId xsi:nil="true" />
+      <ClientBusinessRuleId>1246</ClientBusinessRuleId>
+      <UseHardwareSupport>false</UseHardwareSupport>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+    </Profile>
+    <Profile>
+      <Id>9296</Id>
+      <Name>other</Name>
+      <ProfileSettingsId>9280</ProfileSettingsId>
+      <DocumentConfigurationId xsi:nil="true" />
+      <PrinterConfigurationId xsi:nil="true" />
+      <ScaleConfigurationId xsi:nil="true" />
+      <UseHardwareSupport>false</UseHardwareSupport>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+    </Profile>
+    <Profile>
+      <Id>9297</Id>
+      <Name>Site1</Name>
+      <ProfileSettingsId>9281</ProfileSettingsId>
+      <DocumentConfigurationId xsi:nil="true" />
+      <PrinterConfigurationId xsi:nil="true" />
+      <ScaleConfigurationId xsi:nil="true" />
+      <UseHardwareSupport>false</UseHardwareSupport>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+    </Profile>
+  </Profiles>
+  <Clients>
+    <Client>
+      <Id>2202</Id>
+      <Name>Test1</Name>
+      <AccessKey>cabca283-9ec8-498f-94a3-2c4c0ff7f706</AccessKey>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <EnterpriseId xsi:nil="true" />
+    </Client>
+    <Client>
+      <Id>2203</Id>
+      <Name>Test2</Name>
+      <AccessKey>f857282d-f110-48f7-86f4-a17bc7a5051a</AccessKey>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <EnterpriseId xsi:nil="true" />
+    </Client>
+    <Client>
+      <Id>2204</Id>
+      <Name>Test3</Name>
+      <AccessKey>48bf0eb9-8718-4e6b-a4ef-1f1ebc5dd9d7</AccessKey>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <EnterpriseId xsi:nil="true" />
+    </Client>
+    <Client>
+      <Id>2205</Id>
+      <Name>Test4</Name>
+      <AccessKey>c3ad0d93-f5b5-4158-a06d-eb56be17277c</AccessKey>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <EnterpriseId xsi:nil="true" />
+    </Client>
+  </Clients>
+  <Machines>
+    <Machine>
+      <Id>4</Id>
+      <Name>asd</Name>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <ProfileId>9295</ProfileId>
+      <EnterpriseId xsi:nil="true" />
+    </Machine>
+    <Machine>
+      <Id>5</Id>
+      <Name>o</Name>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <ProfileId>9296</ProfileId>
+      <EnterpriseId xsi:nil="true" />
+    </Machine>
+  </Machines>
+  <Shippers>
+    <Shipper>
+      <Id>16261</Id>
+      <Name>ExistingShipper_UNCHANGED</Name>
+      <Symbol>UNC</Symbol>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <Address1>Unchanged</Address1>
+      <Address2>ADDRESS2_CHANGED!</Address2>
+      <City>Bradenton</City>
+      <Company>Unchanged</Company>
+      <Contact>Unchanged</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+    <Shipper>
+      <Id>16262</Id>
+      <Name>ExistingShipper_TO_BE_MODIFIED</Name>
+      <Symbol>MOD</Symbol>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <Address1>Changed in code</Address1>
+      <Address2>ADDRESS2_CHANGED!</Address2>
+      <City>Bradenton</City>
+      <Company>MOD</Company>
+      <Contact>MOD</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+    <Shipper>
+      <Id>16263</Id>
+      <Name>ExistingShipper_TO_BE_DELETED</Name>
+      <Symbol>DEL</Symbol>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <Address1>DEL</Address1>
+      <Address2>ADDRESS2_CHANGED!</Address2>
+      <City>Bradenton</City>
+      <Company>DEL</Company>
+      <Contact>DEL</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+    <Shipper>
+      <Id>17777</Id>
+      <Name>Test</Name>
+      <Symbol>TST</Symbol>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <CustomData>
+        <CustomData>
+          <Key>test</Key>
+          <Value>test</Value>
+        </CustomData>
+      </CustomData>
+      <Address1>101 Street</Address1>
+      <City>Bradenton</City>
+      <Company>Test</Company>
+      <Contact>Shipping</Contact>
+      <Country>US</Country>
+      <Phone>1234567890</Phone>
+      <Email>testuser@odp.com</Email>
+      <PostalCode>34212</PostalCode>
+      <StateProvince>FL</StateProvince>
+    </Shipper>
+  </Shippers>
+  <DocumentConfigurations>
+    <DocumentConfiguration>
+      <Id>1128</Id>
+      <Name>main</Name>
+      <DocumentMappings>
+        <DocumentMapping>
+          <Id>1272</Id>
+          <CarrierId>3250</CarrierId>
+          <PrinterDefinitionId>1134</PrinterDefinitionId>
+          <Copies>1</Copies>
+          <PassThrough>false</PassThrough>
+          <DocumentId>14653</DocumentId>
+          <DocumentConfigurationId>1128</DocumentConfigurationId>
+          <Sequence>0</Sequence>
+        </DocumentMapping>
+      </DocumentMappings>
+      <CompanyId>b1322c23-db1a-4a77-8123-f9ae6ce4ce56</CompanyId>
+      <SiteId xsi:nil="true" />
+      <EnterpriseId xsi:nil="true" />
+    </DocumentConfiguration>
+  </DocumentConfigurations>
+  <PrinterConfigurations />
+  <ScaleConfigurations />
+  <EnterpriseId xsi:nil="true" />
+  <SourceConfigurations />
+  <DataConfigurationMappings />
+  <Schedules />
+</Company>

@@ -1,0 +1,149 @@
+@using ShipExecAgent.Services
+
+@if (DiffResult is not null)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+
+                @* ── Header ─────────────────────────────────────── *@
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Pending Changes
+                        @if (DiffResult.Variances is { Count: > 0 })
+                        {
+                            <span class="badge bg-warning text-dark ms-2">
+                                @DiffResult.Variances.Count
+                            </span>
+                        }
+                    </h5>
+                    <button type="button" class="btn-close"
+                            @onclick="HandleCancel"
+                            disabled="@_isApplying"
+                            aria-label="Close" />
+                </div>
+
+                @* ── Body — variances only ───────────────────────── *@
+                <div class="modal-body">
+
+                    @if (DiffResult.Variances is { Count: > 0 })
+                    {
+                        @foreach (var variance in DiffResult.Variances)
+                        {
+                            <VarianceDiff Variance="variance" />
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No variances found.</p>
+                    }
+
+                    @* Results rendered after Apply Changes completes *@
+                    @if (_applyResults is not null)
+                    {
+                        <hr />
+                        <h6 class="mb-3">Results</h6>
+                        @foreach (var item in _applyResults)
+                        {
+                            <div class="alert @(item.Success ? "alert-success" : "alert-danger") d-flex align-items-start gap-2 py-2 mb-2">
+                                <span class="badge @(item.Success ? "bg-success" : "bg-danger") mt-1">
+                                    @item.Operation
+                                </span>
+                                <div>
+                                    <strong>@item.EntityName</strong>
+                                    <div class="small text-muted">@item.Endpoint</div>
+                                    <div>@item.Message</div>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    @if (_error is not null)
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">
+                            <strong>Error:</strong> @_error
+                        </div>
+                    }
+
+                </div>
+
+                @* ── Footer ─────────────────────────────────────── *@
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            @onclick="HandleCancel"
+                            disabled="@_isApplying">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-primary"
+                            @onclick="HandleApplyChanges"
+                            disabled="@(_isApplying || _applyResults is not null)">
+                        @if (_isApplying)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"
+                                  role="status" aria-hidden="true"></span>
+                            <span>Applying…</span>
+                        }
+                        else if (_applyResults is not null)
+                        {
+                            <span>&#10003; Applied</span>
+                        }
+                        else
+                        {
+                            <span>Apply Changes</span>
+                        }
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter, EditorRequired]
+    public DiffResult DiffResult { get; set; } = default!;
+
+    /// <summary>Raised when Cancel or × is clicked.</summary>
+    [Parameter, EditorRequired]
+    public EventCallback OnClose { get; set; }
+
+    /// <summary>
+    /// Wired to Service.ApplyChanges(requests) in the parent.
+    /// The parent closes over the request list — this modal never sees RequestInfo.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public Func<Task<List<ApplyResultItem>>> ApplyChanges { get; set; } = default!;
+
+    private bool _isApplying;
+    private List<ApplyResultItem>? _applyResults;
+    private string? _error;
+
+    private async Task HandleApplyChanges()
+    {
+        _isApplying = true;
+        _error = null;
+
+        try
+        {
+            _applyResults = await ApplyChanges();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to apply changes: {ex.Message}";
+        }
+        finally
+        {
+            _isApplying = false;
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (!_isApplying)
+            await OnClose.InvokeAsync();
+    }
+}

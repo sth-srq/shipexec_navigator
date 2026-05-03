@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShipExec Navigator — Profile Diff Viewer</title>
+<style>
+/* ── Reset & base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    background: #f5f5f5;
+    color: #333;
+    min-height: 100vh;
+}
+
+/* ── App header ────────────────────────────────────────────────────────────── */
+.app-header {
+    background: #337ab7;
+    color: #fff;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+}
+.app-header-icon { font-size: 1.15rem; flex-shrink: 0; }
+.app-header-title { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.01em; }
+.app-header-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 10px;
+    padding: 0.15rem 0.55rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* ── Drop zone ─────────────────────────────────────────────────────────────── */
+.drop-zone-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 50px);
+    padding: 2rem;
+}
+.drop-zone {
+    background: #fff;
+    border: 2px dashed #ced4da;
+    border-radius: 14px;
+    padding: 3.5rem 4rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    max-width: 580px;
+    width: 100%;
+    user-select: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.drop-zone:hover, .drop-zone.drag-over {
+    border-color: #337ab7;
+    background: rgba(51,122,183,0.035);
+    box-shadow: 0 6px 28px rgba(51,122,183,0.14);
+}
+.dz-icon { font-size: 3.2rem; margin-bottom: 0.85rem; display: block; }
+.dz-title { font-size: 1.05rem; font-weight: 600; color: #212529; margin-bottom: 0.35rem; }
+.dz-hint  { font-size: 0.8125rem; color: #6c757d; margin-bottom: 1.4rem; line-height: 1.5; }
+.dz-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #337ab7;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 0.55rem 1.35rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(51,122,183,0.28);
+}
+.dz-btn:hover { background: #2e6da4; box-shadow: 0 4px 14px rgba(51,122,183,0.38); }
+
+/* ── Viewer shell ──────────────────────────────────────────────────────────── */
+.viewer { padding: 1.1rem 1.4rem 2rem; }
+
+/* ── Toolbar ───────────────────────────────────────────────────────────────── */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+.file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.22rem 0.65rem;
+    font-size: 0.78rem;
+    color: #495057;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.reload-btn {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 0.22rem 0.5rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: #6c757d;
+    transition: background 0.12s, color 0.12s;
+}
+.reload-btn:hover { background: #f0f0f0; color: #333; }
+.search-box {
+    flex: 1 1 180px;
+    min-width: 140px;
+    max-width: 320px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8125rem;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-box:focus { border-color: #337ab7; box-shadow: 0 0 0 2px rgba(51,122,183,0.18); }
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-left: auto;
+    background: #337ab7;
+    color: #fff;
+    border: 1px solid #2e6da4;
+    border-radius: 4px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s;
+}
+.export-btn:hover { background: #286090; border-color: #204d74; }
+
+/* ── Change filter bar (pairwise mode only) ────────────────────────────────── */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.7rem;
+}
+.filter-btn {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #495057;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+}
+.filter-btn:hover { background: #f0f0f0; }
+.filter-btn.active { background: #2e6da4; border-color: #2e6da4; color: #fff; }
+.filter-btn.active-add  { background: #198754; border-color: #198754; color: #fff; }
+.filter-btn.active-mod  { background: #e08000; border-color: #e08000; color: #fff; }
+.filter-btn.active-del  { background: #dc3545; border-color: #dc3545; color: #fff; }
+
+/* ── Change badge (pairwise mode) ──────────────────────────────────────────── */
+.ch-badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.ch-added    { background: rgba(25,135,84,0.12);  color: #198754; }
+.ch-modified { background: rgba(224,128,0,0.12);  color: #7c4f00; }
+.ch-removed  { background: rgba(220,53,69,0.12);  color: #842029; }
+
+/* second sticky column when Change is shown */
+thead th:nth-child(2).ch-col { position: sticky; left: 0; z-index: 15; background: #2e6da4; min-width: 100px; }
+td.ch-col { position: sticky; background: #fff; border-right: 1px solid #dee2e6; white-space: nowrap; }
+tbody tr:nth-child(even) td.ch-col { background: #fafafa; }
+
+/* ── Stats bar
+.stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.7rem;
+    font-size: 0.78rem;
+    color: #6c757d;
+}
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #e9ecef;
+    border-radius: 20px;
+    padding: 0.18rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+/* ── Legend ────────────────────────────────────────────────────────────────── */
+.legend {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.08);
+    flex-shrink: 0;
+}
+.sw-consensus { background: #fff; }
+.sw-absent    { background: repeating-linear-gradient(135deg, #e0e0e0 0, #e0e0e0 2px, transparent 2px, transparent 6px); }
+.sw-m0 { background: rgba(255,152,0,0.22); }
+.sw-m1 { background: rgba(33,150,243,0.18); }
+.sw-m2 { background: rgba(156,39,176,0.16); }
+.sw-m3 { background: rgba(0,150,136,0.16); }
+.sw-m4 { background: rgba(244,67,54,0.14); }
+
+/* ── Table wrapper — horizontal scroll ────────────────────────────────────── */
+.table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    background: #fff;
+    border: 1px solid #dee2e6;
+}
+table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    font-size: 0.8125rem;
+}
+thead th {
+    background: #2e6da4;
+    color: #fff;
+    font-weight: 600;
+    padding: 0.55rem 0.9rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    letter-spacing: 0.015em;
+    font-size: 0.78rem;
+}
+thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background: #245c8e;
+    min-width: 220px;
+    max-width: 380px;
+}
+tbody tr { transition: filter 0.08s; }
+tbody tr:nth-child(even) td { background-color: rgba(0,0,0,0.018); }
+tbody tr:hover td { filter: brightness(0.96); }
+tbody tr.expanded td { outline: 2px solid #337ab7; outline-offset: -2px; }
+tbody tr.hidden { display: none; }
+
+td {
+    padding: 0.38rem 0.9rem;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    vertical-align: middle;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: #fff;
+    border-right: 2px solid #dee2e6;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: 'Consolas', 'Cascadia Code', monospace;
+}
+tbody tr:nth-child(even) td:first-child { background: #fafafa; }
+
+/* Path cell formatting */
+.path-leaf  { font-weight: 600; }
+.path-crumb { color: #adb5bd; font-size: 0.72rem; }
+
+/* ── Value cell color variants ─────────────────────────────────────────────── */
+.cv-absent {
+    background: repeating-linear-gradient(135deg, #ebebeb 0, #ebebeb 2px, transparent 2px, transparent 6px) !important;
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 0.75rem;
+}
+.cv-m0 { background: rgba(255,152,0,0.12) !important; color: #7c4f00; }
+.cv-m1 { background: rgba(33,150,243,0.10) !important; color: #0d47a1; }
+.cv-m2 { background: rgba(156,39,176,0.10) !important; color: #4a148c; }
+.cv-m3 { background: rgba(0,150,136,0.10) !important; color: #004d40; }
+.cv-m4 { background: rgba(244,67,54,0.09) !important; color: #b71c1c; }
+
+mark {
+    background: rgba(255,214,0,0.55);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
+/* ── Expandable detail drawer ──────────────────────────────────────────────── */
+.detail-row td {
+    background: #f8f9fb !important;
+    padding: 0;
+    border-bottom: 2px solid #337ab7;
+    position: relative;
+    left: auto;
+    cursor: default;
+    max-width: none;
+    white-space: normal;
+}
+.detail-inner {
+    padding: 0.85rem 1.1rem;
+    overflow-x: auto;
+}
+.detail-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6c757d;
+    margin-bottom: 0.7rem;
+}
+.detail-grid {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.detail-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 7px;
+    padding: 0.6rem 0.85rem;
+    min-width: 170px;
+    max-width: 340px;
+    flex: 1 1 170px;
+}
+.detail-card-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #337ab7;
+    margin-bottom: 0.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.detail-card-value {
+    font-size: 0.8rem;
+    word-break: break-all;
+    font-family: 'Consolas', 'Cascadia Code', monospace;
+    color: #212529;
+}
+.detail-card-value.is-absent {
+    color: #adb5bd;
+    font-style: italic;
+    font-family: inherit;
+    font-size: 0.78rem;
+}
+.detail-card.is-diff { border-color: #ffc107; background: rgba(255,193,7,0.04); }
+
+/* ── Empty / error states ──────────────────────────────────────────────────── */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+.empty-state-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+.error-banner {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 7px;
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    color: #856404;
+    margin-bottom: 1rem;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+    <span class="app-header-icon">&#x1F4CA;</span>
+    <span class="app-header-title">ShipExec Navigator &mdash; Profile Diff Viewer</span>
+    <span class="app-header-badge">Offline</span>
+</div>
+
+<!-- Drop zone (shown until a file is loaded) -->
+<div class="drop-zone-wrap" id="dropZoneWrap">
+    <div class="drop-zone" id="dropZone">
+        <span class="dz-icon">&#x1F4C2;</span>
+        <div class="dz-title">Drop a Profile Diff CSV here</div>
+        <div class="dz-hint">
+            Load a <strong>ProfileDiff_*.csv</strong> (pairwise) or<br>
+            <strong>AllProfilesDiff_*.csv</strong> (all profiles) file<br>
+            exported from ShipExec Navigator.<br>
+            All processing happens locally &mdash; no data leaves your machine.
+        </div>
+        <button class="dz-btn" onclick="document.getElementById('fileInput').click()">
+            &#x1F4C1; Browse&hellip;
+        </button>
+        <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none">
+    </div>
+</div>
+
+<!-- Viewer (hidden until file loaded) -->
+<div class="viewer" id="viewer" style="display:none">
+
+    <div class="toolbar" id="toolbar">
+        <span class="file-badge" id="fileBadge">&#x1F4C4; &mdash;</span>
+        <button class="reload-btn" onclick="resetViewer()" title="Load a different file">&#x21BA; Load another file</button>
+        <input class="search-box" id="searchBox" type="text" placeholder="&#x1F50D; Search paths or values&hellip;" autocomplete="off">
+        <button class="export-btn" onclick="exportFiltered()" title="Export currently visible rows as CSV">&#x2B07; Export CSV</button>
+    </div>
+
+    <div class="filter-bar" id="filterBar" style="display:none"></div>
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="legend" id="legend"></div>
+    <div id="errorBanner" style="display:none" class="error-banner"></div>
+
+    <div class="table-wrap" id="tableWrap">
+        <table id="mainTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let g = {
+    headers: [],       // profile name columns (no "Path")
+    rows: [],          // [{path, values:[...], change?:'Added'|'Modified'|'Removed'}
+    searchTerm: '',
+    fileName: '',
+    expandedRowIdx: -1,
+    profileCount: 0,
+    // per-row colour maps: rowIdx -> {valueStr -> cssClass}
+    colorMaps: [],
+    isPairwise: false,   // true when exactly 2 profiles loaded
+    changeFilter: 'All'  // 'All'|'Added'|'Modified'|'Removed'
+};
+
+// Minority colour palette (consensus = no class; absent = cv-absent)
+const MINORITY_CLASSES = ['cv-m0','cv-m1','cv-m2','cv-m3','cv-m4'];
+
+// ── CSV parser ────────────────────────────────────────────────────────────────
+function parseCsv(text) {
+    const lines = [];
+    let i = 0, len = text.length;
+    while (i < len) {
+        const row = [];
+        while (i < len) {
+            if (text[i] === '"') {
+                i++; // opening quote
+                let cell = '';
+                while (i < len) {
+                    if (text[i] === '"' && text[i+1] === '"') { cell += '"'; i += 2; }
+                    else if (text[i] === '"') { i++; break; }
+                    else { cell += text[i++]; }
+                }
+                row.push(cell);
+            } else {
+                let cell = '';
+                while (i < len && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') cell += text[i++];
+                row.push(cell.trim());
+            }
+            if (i < len && text[i] === ',') i++;
+            else break;
+        }
+        while (i < len && (text[i] === '\r' || text[i] === '\n')) i++;
+        if (row.length > 0 && !(row.length === 1 && row[0] === '')) lines.push(row);
+    }
+    return lines;
+}
+
+// ── Colour assignment ─────────────────────────────────────────────────────────
+// For each row: count occurrences of each distinct value.
+// The plurality (most frequent) group gets no class (consensus / white).
+// Remaining groups in descending frequency get MINORITY_CLASSES[0..n].
+// Empty string = absent → always cv-absent regardless.
+function buildColorMap(values) {
+    const freq = new Map();
+    for (const v of values) {
+        if (v === '') continue; // absent handled separately
+        freq.set(v, (freq.get(v) || 0) + 1);
+    }
+    if (freq.size === 0) return {}; // all absent
+    // Sort by frequency descending, then by value for stable order
+    const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const map = {};
+    // Plurality = first entry → no class (consensus)
+    for (let i = 1; i < sorted.length; i++) {
+        map[sorted[i][0]] = MINORITY_CLASSES[Math.min(i - 1, MINORITY_CLASSES.length - 1)];
+    }
+    return map; // keys are non-consensus, non-empty values → css class
+}
+
+// ── Load & parse file ─────────────────────────────────────────────────────────
+function loadFile(file) {
+    if (!file) return;
+    g.fileName = file.name;
+    const reader = new FileReader();
+    reader.onload = e => processText(e.target.result);
+    reader.onerror = () => showError('Failed to read file.');
+    reader.readAsText(file, 'utf-8');
+}
+
+function processText(text) {
+    hideError();
+    const lines = parseCsv(text);
+    if (lines.length < 2) { showError('The CSV has no data rows. Make sure you are loading a ProfileDiff or AllProfilesDiff CSV file.'); return; }
+
+    const headerRow = lines[0];
+    if (headerRow.length < 2 || headerRow[0].toLowerCase() !== 'path') {
+        showError('Unexpected CSV format. Expected header: Path,"Profile1","Profile2",…'); return;
+    }
+
+    g.headers = headerRow.slice(1);
+    g.profileCount = g.headers.length;
+    g.isPairwise = g.profileCount === 2;
+    g.changeFilter = 'All';
+    g.rows = [];
+    g.colorMaps = [];
+    g.expandedRowIdx = -1;
+
+    for (let i = 1; i < lines.length; i++) {
+        const row = lines[i];
+        if (row.length < 2) continue;
+        const path = row[0];
+        // Pad values array to profile count
+        const values = [];
+        for (let c = 0; c < g.profileCount; c++) values.push(row[1 + c] !== undefined ? row[1 + c] : '');
+        // Derive change kind for pairwise files (A = col0, B = col1)
+        let change = null;
+        if (g.isPairwise) {
+            const a = values[0], b = values[1];
+            if (a === '' && b !== '')      change = 'Added';
+            else if (a !== '' && b === '') change = 'Removed';
+            else                           change = 'Modified';
+        }
+        g.rows.push({ path, values, change });
+        g.colorMaps.push(buildColorMap(values));
+    }
+
+    document.getElementById('dropZoneWrap').style.display = 'none';
+    document.getElementById('viewer').style.display = '';
+    renderFilterBar();
+    renderTable();
+    updateStats();
+    buildLegend();
+    document.getElementById('fileBadge').textContent = '\uD83D\uDCC4 ' + g.fileName;
+}
+
+// ── Filter bar (pairwise mode) ───────────────────────────────────────────────
+function renderFilterBar() {
+    const bar = document.getElementById('filterBar');
+    if (!g.isPairwise) { bar.style.display = 'none'; return; }
+    bar.style.display = '';
+    const counts = { All: g.rows.length, Added: 0, Modified: 0, Removed: 0 };
+    for (const r of g.rows) if (r.change) counts[r.change]++;
+    const activeClass = { All: 'active', Added: 'active-add', Modified: 'active-mod', Removed: 'active-del' };
+    bar.innerHTML = ['All','Added','Modified','Removed'].map(k => {
+        const isCur = g.changeFilter === k;
+        const cls = isCur ? 'filter-btn ' + activeClass[k] : 'filter-btn';
+        const label = k === 'All' ? ('All (' + counts.All + ')') :
+                      k === 'Added'    ? ('&#x2B; Added ('    + counts.Added    + ')') :
+                      k === 'Modified' ? ('&#x21C4; Modified (' + counts.Modified + ')') :
+                                         ('&#x2212; Removed (' + counts.Removed  + ')');
+        return '<button class="' + cls + '" onclick="setChangeFilter(\'' + k + '\')">' + label + '</button>';
+    }).join('');
+}
+
+function setChangeFilter(f) {
+    g.changeFilter = f;
+    g.expandedRowIdx = -1;
+    renderFilterBar();
+    renderTable();
+}
+
+// ── Path formatting ───────────────────────────────────────────────────────────
+const SEP = ' \u203a ';
+function formatPath(path, searchTerm) {
+    const parts = path.split(SEP);
+    const leaf = parts[parts.length - 1];
+    const crumbs = parts.slice(0, -1).join(SEP + ' ');
+    let leafHtml = searchTerm ? highlight(escHtml(leaf), searchTerm) : escHtml(leaf);
+    let crumbHtml = parts.length > 1
+        ? '<span class="path-crumb">' + escHtml(parts.slice(0, -1).join(SEP)) + ' ' + SEP + ' </span>'
+        : '';
+    return crumbHtml + '<span class="path-leaf">' + leafHtml + '</span>';
+}
+
+function highlight(html, term) {
+    if (!term) return html;
+    const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return html.replace(new RegExp('(' + esc + ')', 'gi'), '<mark>$1</mark>');
+}
+
+function escHtml(s) {
+    return String(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+}
+
+// ── Render table ──────────────────────────────────────────────────────────────
+function renderTable() {
+    const term = g.searchTerm.toLowerCase();
+    const colSpan = g.profileCount + 1 + (g.isPairwise ? 1 : 0);
+
+    // Build thead
+    const thead = document.getElementById('tableHead');
+    let thHtml = '<tr><th>Path</th>';
+    if (g.isPairwise) thHtml += '<th class="ch-col">Change</th>';
+    for (const h of g.headers) thHtml += '<th title="' + escHtml(h) + '">' + truncate(escHtml(h), 22) + '</th>';
+    thHtml += '</tr>';
+    thead.innerHTML = thHtml;
+
+    // Build tbody
+    const tbody = document.getElementById('tableBody');
+    const frag = [];
+    let visCount = 0;
+
+    for (let i = 0; i < g.rows.length; i++) {
+        const row = g.rows[i];
+        const colorMap = g.colorMaps[i];
+
+        // Change filter (pairwise only)
+        if (g.isPairwise && g.changeFilter !== 'All' && row.change !== g.changeFilter) {
+            frag.push('<tr class="data-row hidden" data-idx="' + i + '"></tr>');
+            frag.push('<tr class="detail-row" id="detail-' + i + '" style="display:none"><td colspan="' + colSpan + '"></td></tr>');
+            continue;
+        }
+
+        // Search filter
+        const rowText = [row.path, ...row.values].join(' ').toLowerCase();
+        const visible = !term || rowText.includes(term);
+        const hiddenClass = visible ? '' : ' hidden';
+        if (visible) visCount++;
+
+        // Path cell
+        let pathHtml = formatPath(row.path, term);
+        let rowHtml = '<tr class="data-row' + hiddenClass + '" data-idx="' + i + '" onclick="toggleDetail(' + i + ')">';
+        rowHtml += '<td title="' + escHtml(row.path) + '">' + pathHtml + '</td>';
+
+        // Change badge (pairwise mode)
+        if (g.isPairwise && row.change) {
+            const chClass = 'ch-badge ch-' + row.change.toLowerCase();
+            rowHtml += '<td class="ch-col"><span class="' + chClass + '">' + row.change + '</span></td>';
+        }
+
+        // Value cells
+        for (let c = 0; c < g.profileCount; c++) {
+            const val = row.values[c];
+            let cellClass = '';
+            let displayVal = '';
+            if (val === '') {
+                cellClass = 'cv-absent';
+                displayVal = '(absent)';
+            } else {
+                cellClass = colorMap[val] || ''; // empty = consensus
+                displayVal = term ? highlight(escHtml(val), term) : escHtml(val);
+            }
+            const classAttr = cellClass ? ' class="' + cellClass + '"' : '';
+            rowHtml += '<td' + classAttr + ' title="' + escHtml(val) + '">' + displayVal + '</td>';
+        }
+        rowHtml += '</tr>';
+        frag.push(rowHtml);
+
+        // Detail row placeholder (will be inserted on expand)
+        frag.push('<tr class="detail-row" id="detail-' + i + '" style="display:none"><td colspan="' + colSpan + '"></td></tr>');
+    }
+
+    tbody.innerHTML = frag.join('');
+
+    // Restore expanded row if still valid and visible
+    if (g.expandedRowIdx >= 0) {
+        const dataRow = tbody.querySelector('[data-idx="' + g.expandedRowIdx + '"]');
+        if (dataRow && !dataRow.classList.contains('hidden')) {
+            dataRow.classList.add('expanded');
+            renderDetailRow(g.expandedRowIdx);
+        } else {
+            g.expandedRowIdx = -1;
+        }
+    }
+
+    document.getElementById('tableWrap').querySelector('.empty-state') && document.getElementById('tableWrap').querySelector('.empty-state').remove();
+    if (visCount === 0 && g.rows.length > 0) {
+        const div = document.createElement('div');
+        div.className = 'empty-state';
+        div.innerHTML = '<span class="empty-state-icon">&#x1F50D;</span>No rows match your search.';
+        document.getElementById('tableWrap').appendChild(div);
+    }
+    updateStats(visCount);
+}
+
+function truncate(s, max) {
+    return s.length > max ? s.slice(0, max) + '\u2026' : s;
+}
+
+// ── Detail drawer ─────────────────────────────────────────────────────────────
+function toggleDetail(idx) {
+    const wasExpanded = g.expandedRowIdx === idx;
+
+    // Collapse any open row
+    if (g.expandedRowIdx >= 0) {
+        const prev = document.querySelector('[data-idx="' + g.expandedRowIdx + '"]');
+        if (prev) prev.classList.remove('expanded');
+        const prevDetail = document.getElementById('detail-' + g.expandedRowIdx);
+        if (prevDetail) prevDetail.style.display = 'none';
+        g.expandedRowIdx = -1;
+    }
+
+    if (wasExpanded) return;
+
+    g.expandedRowIdx = idx;
+    const row = document.querySelector('[data-idx="' + idx + '"]');
+    if (row) row.classList.add('expanded');
+    renderDetailRow(idx);
+}
+
+function renderDetailRow(idx) {
+    const detailTr = document.getElementById('detail-' + idx);
+    if (!detailTr) return;
+    const row = g.rows[idx];
+    const colorMap = g.colorMaps[idx];
+
+    let cardsHtml = '';
+    for (let c = 0; c < g.profileCount; c++) {
+        const val = row.values[c];
+        const isAbsent = val === '';
+        const isDiff = isAbsent ? true : !!colorMap[val]; // minority or absent = highlighted
+        const cardClass = isDiff ? ' is-diff' : '';
+        const valClass = isAbsent ? ' is-absent' : '';
+        const displayVal = isAbsent ? '(absent)' : escHtml(val);
+        cardsHtml += '<div class="detail-card' + cardClass + '">'
+            + '<div class="detail-card-name" title="' + escHtml(g.headers[c]) + '">' + escHtml(g.headers[c]) + '</div>'
+            + '<div class="detail-card-value' + valClass + '">' + displayVal + '</div>'
+            + '</div>';
+    }
+
+    const pathParts = row.path.split(SEP);
+    detailTr.querySelector('td').innerHTML =
+        '<div class="detail-inner">'
+        + '<div class="detail-title">&#x1F4CB; ' + escHtml(pathParts[pathParts.length - 1]) + ' &mdash; All Profile Values</div>'
+        + '<div class="detail-grid">' + cardsHtml + '</div>'
+        + '</div>';
+    detailTr.style.display = '';
+}
+
+// ── Stats bar ─────────────────────────────────────────────────────────────────
+function updateStats(visCount) {
+    if (visCount === undefined) visCount = g.rows.length;
+    const bar = document.getElementById('statsBar');
+    bar.innerHTML =
+        '<span class="stat-pill">&#x1F4CA; ' + g.profileCount + ' profile' + (g.profileCount !== 1 ? 's' : '') + '</span>'
+        + '<span class="stat-pill">&#x1F4DD; ' + g.rows.length + ' differing path' + (g.rows.length !== 1 ? 's' : '') + '</span>'
+        + (visCount < g.rows.length ? '<span class="stat-pill">&#x1F50D; ' + visCount + ' shown</span>' : '');
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+function buildLegend() {
+    const leg = document.getElementById('legend');
+    if (g.isPairwise) {
+        leg.innerHTML =
+            'Colour key: '
+            + '<span class="legend-item"><span class="ch-badge ch-added">Added</span> only in Profile B</span>'
+            + '<span class="legend-item"><span class="ch-badge ch-modified">Modified</span> value changed</span>'
+            + '<span class="legend-item"><span class="ch-badge ch-removed">Removed</span> only in Profile A</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-absent"></span>Absent / empty</span>'
+            + '<span style="margin-left:0.5rem;color:#adb5bd">&#x2014; click a row to expand</span>';
+    } else {
+        leg.innerHTML =
+            'Colour key: '
+            + '<span class="legend-item"><span class="legend-swatch sw-consensus"></span>Consensus (most common)</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-absent"></span>Absent</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-m0"></span>Minority group 1</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-m1"></span>Minority group 2</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-m2"></span>Minority group 3</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-m3"></span>Minority group 4</span>'
+            + '<span class="legend-item"><span class="legend-swatch sw-m4"></span>Minority group 5+</span>'
+            + '<span style="margin-left:0.5rem;color:#adb5bd">&#x2014; click a row to expand</span>';
+    }
+}
+
+// ── Export filtered CSV ───────────────────────────────────────────────────────
+function exportFiltered() {
+    const term = g.searchTerm.toLowerCase();
+    const lines = [];
+    lines.push(['Path', ...g.headers].map(v => '"' + v.replace(/"/g, '""') + '"').join(','));
+    for (const row of g.rows) {
+        const rowText = [row.path, ...row.values].join(' ').toLowerCase();
+        if (term && !rowText.includes(term)) continue;
+        lines.push([row.path, ...row.values].map(v => '"' + v.replace(/"/g, '""') + '"').join(','));
+    }
+    const csv = lines.join('\r\n');
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const base = g.fileName.replace(/\.csv$/i, '') || 'AllProfilesDiff';
+    downloadText(base + '_filtered_' + ts + '.csv', csv, 'text/csv');
+}
+
+function downloadText(name, text, mime) {
+    const blob = new Blob([text], { type: mime });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// ── Error helpers ─────────────────────────────────────────────────────────────
+function showError(msg) {
+    const b = document.getElementById('errorBanner');
+    b.textContent = '\u26A0\uFE0F ' + msg;
+    b.style.display = '';
+    document.getElementById('dropZoneWrap').style.display = 'flex';
+    document.getElementById('viewer').style.display = 'none';
+}
+
+function hideError() {
+    const b = document.getElementById('errorBanner');
+    if (b) b.style.display = 'none';
+}
+
+// ── Reset to drop zone ────────────────────────────────────────────────────────
+function resetViewer() {
+    g = { headers: [], rows: [], searchTerm: '', fileName: '', expandedRowIdx: -1, profileCount: 0, colorMaps: [], isPairwise: false, changeFilter: 'All' };
+    document.getElementById('viewer').style.display = 'none';
+    document.getElementById('dropZoneWrap').style.display = 'flex';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('searchBox').value = '';
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+document.getElementById('searchBox').addEventListener('input', function() {
+    g.searchTerm = this.value.trim();
+    renderTable();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && g.expandedRowIdx >= 0) {
+        toggleDetail(g.expandedRowIdx);
+    }
+});
+
+// ── Drag & drop ───────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) loadFile(f);
+});
+
+document.getElementById('fileInput').addEventListener('change', function() {
+    if (this.files[0]) loadFile(this.files[0]);
+});
+
+// Allow dropping anywhere on the viewer body too
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+    e.preventDefault();
+    const f = e.dataTransfer.files[0];
+    if (f && (f.name.endsWith('.csv') || f.type === 'text/csv')) loadFile(f);
+});
+</script>
+</body>
+</html>

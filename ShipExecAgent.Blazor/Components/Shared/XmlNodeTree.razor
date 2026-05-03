@@ -1,0 +1,585 @@
+@using ShipExecAgent.BusinessLogic.EntityComparison
+@using ShipExecAgent.Shared.Models
+@inject IXmlEnumService XmlEnumService
+@inject IXmlRefLookupService XmlRefLookupService
+
+<div id="node-@Node.Id" class="xml-node @(HighlightedNodeId == Node.Id ? "node--highlighted" : "") @(_isNonEditable && !Node.HasChildren ? "node--readonly" : "")" data-nodepath="@_plainNodePath">
+    <div class="@NodeLineClass"
+         @onclick="ToggleExpand"
+         @oncontextmenu="HandleContextMenu"
+         @oncontextmenu:preventDefault
+         @onkeydown="HandleKeyDown"
+         role="@(Node.HasChildren ? "button" : null)"
+         tabindex="@(Node.HasChildren ? 0 : null)">
+
+        <span class="expand-icon" style="@(Node.IsExpanded ? "transform: rotate(0deg)" : "")">
+            @if (Node.IsLoading)
+            { <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> }
+            else if (Node.HasChildren)
+            { @(Node.IsExpanded ? "▼" : "▶") }
+            else
+            { <span>·</span> }
+        </span>
+
+        <span class="node-type-icon" title="@GetNodeTypeTooltip()">
+            @(GetNodeTypeIcon())
+        </span>
+
+        <span class="node-label">@Node.NodeName</span>
+        @if (_isNonEditableRoot)
+        {
+            <span class="readonly-badge" title="Values are managed at the Company level">&#x1F512; read-only</span>
+        }
+
+        @* ── Attributes ── *@
+        @foreach (var attr in Node.DisplayAttributes)
+        {
+            <span class="attr-dot">&nbsp;·&nbsp;</span><span class="xml-attr-name">@attr.Name</span><span class="attr-eq">=</span>
+            @if (_editingAttrName == attr.Name)
+            {
+                @if (_editAllowedValues is { Count: > 0 })
+                {
+                    <select class="inline-edit inline-edit--attr inline-edit--select"
+                            @onchange="SelectAttrChanged"
+                            @onblur="CommitAttrEdit"
+                            @onkeydown="HandleEditKeyDown"
+                            @ref="_editRef"
+                            @onclick:stopPropagation
+                            @oncontextmenu:stopPropagation>
+                        @foreach (var opt in _editAllowedValues)
+                        {
+                            <option value="@opt.Value" selected="@(_editBuffer == opt.Value)">@opt.Display</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <input class="inline-edit inline-edit--attr"
+                           value="@_editBuffer"
+                           @oninput="e => _editBuffer = e.Value?.ToString() ?? string.Empty"
+                           @onblur="CommitAttrEdit"
+                           @onkeydown="HandleEditKeyDown"
+                           @ref="_editRef"
+                           @onclick:stopPropagation
+                           @oncontextmenu:stopPropagation />
+                }
+            }
+            else if (attr.Name.Equals("id", StringComparison.OrdinalIgnoreCase))
+            {
+                <span class="xml-attr-val">@attr.Value</span>
+            }
+            else
+            {
+                <span class="xml-attr-val @(attr.Value != attr.OriginalValue ? "xml-attr-val--changed" : "") @EditableClass"
+                      @onclick="() => StartAttrEdit(attr.Name, attr.Value)"
+                      @onclick:stopPropagation
+                      title="@EditHint">@attr.Value</span>
+            }
+        }
+
+        @* ── Element content ── *@
+        @if (!Node.HasChildren && !Node.HasValue && _editingValue)
+        {
+            <span class="node-sep">:&nbsp;</span>
+            @if (_editAllowedValues is { Count: > 0 })
+            {
+                <select class="inline-edit inline-edit--select"
+                        @onchange="SelectValueChanged"
+                        @onblur="CommitValueEdit"
+                        @onkeydown="HandleEditKeyDown"
+                        @ref="_editRef"
+                        @onclick:stopPropagation
+                        @oncontextmenu:stopPropagation>
+                    @foreach (var opt in _editAllowedValues)
+                    {
+                        <option value="@opt.Value" selected="@(_editBuffer == opt.Value)">@opt.Display</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <input class="inline-edit"
+                       value="@_editBuffer"
+                       @oninput="e => _editBuffer = e.Value?.ToString() ?? string.Empty"
+                       @onblur="CommitValueEdit"
+                       @onkeydown="HandleEditKeyDown"
+                       @ref="_editRef"
+                       @onclick:stopPropagation
+                       @oncontextmenu:stopPropagation />
+            }
+        }
+        else if (!Node.HasChildren && !Node.HasValue)
+        {
+            <span class="node-empty">:&nbsp;—</span>
+        }
+        else if (Node.HasValue)
+        {
+            <span class="node-sep">:&nbsp;</span>
+            @if (_editingValue)
+            {
+                @if (_editAllowedValues is { Count: > 0 })
+                {
+                    <select class="inline-edit inline-edit--select"
+                            @onchange="SelectValueChanged"
+                            @onblur="CommitValueEdit"
+                            @onkeydown="HandleEditKeyDown"
+                            @ref="_editRef"
+                            @onclick:stopPropagation
+                            @oncontextmenu:stopPropagation>
+                        @foreach (var opt in _editAllowedValues)
+                        {
+                            <option value="@opt.Value" selected="@(_editBuffer == opt.Value)">@opt.Display</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <input class="inline-edit"
+                           value="@_editBuffer"
+                           @oninput="e => _editBuffer = e.Value?.ToString() ?? string.Empty"
+                           @onblur="CommitValueEdit"
+                           @onkeydown="HandleEditKeyDown"
+                           @ref="_editRef"
+                           @onclick:stopPropagation
+                           @oncontextmenu:stopPropagation />
+                }
+            }
+            else
+            {
+                @if (Node.NodeName.Equals("id", StringComparison.OrdinalIgnoreCase) && ParentEntityType is null)
+                {
+                    <span class="xml-val">@Node.NodeValue</span>
+                }
+                else
+                {
+                    <span class="xml-val @(GetRefDisplayValue(Node.NodeValue) is not null ? "xml-val--ref" : "") @(Node.OriginalNodeValue is not null && Node.OriginalNodeValue.Trim() != (Node.NodeValue ?? string.Empty) ? "xml-val--changed" : "") @EditableClass"
+                          @onclick="StartValueEdit"
+                          @onclick:stopPropagation
+                          title="@EditHint">@(GetRefDisplayValue(Node.NodeValue) ?? Node.NodeValue)</span>
+                }
+            }
+        }
+        else if (!Node.IsExpanded)
+        {
+            <span class="@(Node.IsLazyLoadable && !Node.IsLazyLoaded ? "node-hint" : "node-info")">@(Node.IsLazyLoadable && !Node.IsLazyLoaded ? "\u00a0\u2014 click to load" : FormatCollapsedInfo())</span>
+        }
+        else
+        {
+            <span class="node-info">@FormatExpandedInfo()</span>
+        }
+    </div>
+
+    @{
+        var origNodeVal = Node.OriginalNodeValue?.Trim();
+        var nodeValChanged = Node.OriginalNodeValue is not null && origNodeVal != (Node.NodeValue ?? string.Empty);
+        var changedAttrList = Node.DisplayAttributes
+            .Where(a => !a.Name.Equals("id", StringComparison.OrdinalIgnoreCase) && a.Value != a.OriginalValue)
+            .ToList();
+    }
+    @if (nodeValChanged || changedAttrList.Count > 0)
+    {
+        <div class="xml-orig-line">
+            @if (nodeValChanged)
+            {
+                <span class="xml-val xml-val--orig">@(GetRefDisplayValue(origNodeVal) ?? origNodeVal)</span>
+            }
+            @foreach (var changedAttr in changedAttrList)
+            {
+                <span class="xml-attr-name">&nbsp;@changedAttr.Name</span><span class="attr-eq">=</span><span class="xml-attr-val xml-attr-val--orig">@changedAttr.OriginalValue</span>
+            }
+        </div>
+    }
+
+    @if (Node.IsExpanded && Node.HasChildren)
+    {
+        <div class="xml-children" style="--depth-color: @GetDepthColor()">
+            @foreach (var child in Node.Children)
+            {
+                @if (!IsHiddenChild(child) && !IsFilteredOut(child))
+                {
+                    <XmlNodeTree Node="child" ParentEntityType="@(IsRefEntityParent() ? Node.NodeName : null)" />
+                }
+            }
+        </div>
+
+    }
+</div>
+
+@code {
+    private bool IsRefEntityParent() =>
+        Node.NodeName.Equals("Role", StringComparison.OrdinalIgnoreCase) ||
+        Node.NodeName.Equals("Permission", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsHiddenChild(XmlNodeViewModel child)
+    {
+        if (child.NodeName.Equals("CompanyId", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (!child.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (int.TryParse(child.NodeValue, out var id) && id > 0)
+            return false; // positive integer Id — always visible
+        // GUID Id: only show when the parent element is a ref entity (Role, Permission)
+        return !IsRefEntityParent();
+    }
+
+    private bool IsFilteredOut(XmlNodeViewModel child) =>
+        !string.IsNullOrEmpty(TreeFilterCategory)
+        && Node.Depth == 0
+        && !child.NodeName.Equals(TreeFilterCategory, StringComparison.OrdinalIgnoreCase);
+
+    [Parameter, EditorRequired]
+    public XmlNodeViewModel Node { get; set; } = default!;
+
+    // Cascading from XmlViewer
+    [CascadingParameter(Name = "TreeVersion")]
+    private int Version { get; set; }
+
+    [CascadingParameter(Name = "NodeContextMenu")]
+    private Action<XmlNodeViewModel, double, double>? OnContextMenu { get; set; }
+
+    [CascadingParameter(Name = "OnNodeModified")]
+    private Action? OnNodeModified { get; set; }
+
+    // ── Inline edit state ─────────────────────────────────────────────────────
+
+    private bool _editingValue;
+    private string? _editingAttrName;
+    private string _editBuffer = string.Empty;
+    private IReadOnlyList<EnumOption>? _editAllowedValues;
+    private bool _focusPending;
+    private ElementReference _editRef;
+
+    private bool _isNonEditable;
+    private bool _isNonEditableRoot; // true only on the node that matches the configured path, not descendants
+    private string _plainNodePath = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        _plainNodePath = BuildPlainNodePath();
+        _isNonEditable = NonEditableNodes.IsNonEditable(_plainNodePath)
+            || (ParentEntityType is not null
+                && !Node.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase));
+
+        // Determine if this node is the root of a non-editable region
+        // (i.e. it matches a configured path, but its parent does NOT).
+        _isNonEditableRoot = _isNonEditable && !IsParentNonEditable();
+    }
+
+    private bool IsParentNonEditable()
+    {
+        if (Node.Parent is null) return false;
+        var parentPath = BuildPlainNodePath(Node.Parent);
+        return NonEditableNodes.IsNonEditable(parentPath);
+    }
+
+    private static string BuildPlainNodePath(XmlNodeViewModel node)
+    {
+        var parts = new List<string>();
+        var current = node;
+        while (current is not null)
+        {
+            parts.Insert(0, current.NodeName);
+            current = current.Parent;
+        }
+        return string.Join(".", parts);
+    }
+
+    private string NodeLineClass
+    {
+        get
+        {
+            var cls = Node.HasChildren ? "xml-node-line clickable" : "xml-node-line";
+            if (Node.HasDirectChange) return cls + " xml-node-line--changed";
+            if (Node.HasAnyChange)    return cls + " xml-node-line--has-change";
+            return cls;
+        }
+    }
+
+    private string EditableClass => _isNonEditable ? string.Empty : "editable";
+    private string? EditHint => _isNonEditable ? null : "Click to edit";
+
+    // ── Expand / collapse ─────────────────────────────────────────────────────
+
+    private async Task ToggleExpand()
+    {
+        if (_editingValue || _editingAttrName is not null) return;
+        if (!Node.HasChildren) return;
+
+        // Lazy loading: if the node is lazy-loadable and hasn't been loaded yet, trigger the load
+        if (Node.IsLazyLoadable && !Node.IsLazyLoaded && !Node.IsLoading)
+        {
+            if (OnLazyLoadAsync is not null)
+            {
+                Node.IsLoading = true;
+                Node.IsExpanded = true;
+                try
+                {
+                    await OnLazyLoadAsync.Invoke(Node);
+                }
+                finally
+                {
+                    Node.IsLoading = false;
+                }
+            }
+            return;
+        }
+
+        Node.IsExpanded = !Node.IsExpanded;
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+            ToggleExpand();
+        if (e.Key is "ArrowRight" && Node.HasChildren && !Node.IsExpanded)
+            ToggleExpand();
+        if (e.Key is "ArrowLeft" && Node.HasChildren && Node.IsExpanded)
+            ToggleExpand();
+    }
+
+    // ── Context menu ──────────────────────────────────────────────────────────
+
+    private void HandleContextMenu(MouseEventArgs e)
+    {
+        if (Node.HasValue) return;
+        OnContextMenu?.Invoke(Node, e.ClientX, e.ClientY);
+    }
+
+    // ── Inline value edit ─────────────────────────────────────────────────────
+
+    private void StartValueEdit()
+    {
+        if (_isNonEditable) return;
+        _editingValue = true;
+        _editingAttrName = null;
+        _editBuffer = Node.NodeValue ?? string.Empty;
+        if (Node.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase) && ParentEntityType is not null)
+        {
+            _editAllowedValues = XmlRefLookupService.GetRefOptionsByEntityType(ParentEntityType);
+        }
+        else
+        {
+            _editAllowedValues = (UseStringEnumValues
+                ? XmlEnumService.GetAllowedValuesAsStrings(Node.NodeName)
+                : XmlEnumService.GetAllowedValues(Node.NodeName))
+                ?? XmlRefLookupService.GetRefOptions(Node.NodeName);
+        }
+        _focusPending = true;
+    }
+
+    private void CommitValueEdit()
+    {
+        if (!_editingValue) return;
+        var oldValue = Node.NodeValue;
+        _editingValue = false;
+        _editAllowedValues = null;
+        var newValue = string.IsNullOrWhiteSpace(_editBuffer) ? null : _editBuffer.Trim();
+        Node.NodeValue = newValue;
+        // When a ref-entity Id changes, keep the sibling Name in sync
+        if (Node.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase)
+            && ParentEntityType is not null && newValue is not null)
+        {
+            var displayName = XmlRefLookupService.GetRefOptionsByEntityType(ParentEntityType)
+                ?.FirstOrDefault(o => o.Value == newValue)?.Display;
+            if (displayName is not null)
+            {
+                var nameNode = Node.Parent?.Children
+                    .FirstOrDefault(c => c.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase));
+                if (nameNode is not null)
+                    nameNode.NodeValue = displayName;
+            }
+        }
+        if (oldValue != newValue && OnNodeEdited is not null)
+        {
+            var oldDisplay = GetRefDisplayValue(oldValue) ?? TruncateValue(oldValue);
+            var newDisplay = GetRefDisplayValue(newValue) ?? TruncateValue(newValue);
+            OnNodeEdited(new Variance
+            {
+                NodeId = Node.Id,
+                PathDescription = BuildNodePath(),
+                Description = $"{oldDisplay} → {newDisplay}",
+                ChangeType = "Modified"
+            });
+        }
+        OnNodeModified?.Invoke();
+    }
+
+    private void SelectValueChanged(ChangeEventArgs e)
+    {
+        _editBuffer = e.Value?.ToString() ?? string.Empty;
+        CommitValueEdit();
+    }
+
+    // ── Inline attribute edit ─────────────────────────────────────────────────
+
+    private void StartAttrEdit(string attrName, string currentValue)
+    {
+        if (_isNonEditable) return;
+        _editingAttrName = attrName;
+        _editingValue = false;
+        _editBuffer = currentValue;
+        _editAllowedValues = (UseStringEnumValues
+            ? XmlEnumService.GetAllowedValuesAsStrings(attrName)
+            : XmlEnumService.GetAllowedValues(attrName))
+            ?? XmlRefLookupService.GetRefOptions(attrName);
+        _focusPending = true;
+    }
+
+    private void CommitAttrEdit()
+    {
+        if (_editingAttrName is null) return;
+        var attr = Node.Attributes.FirstOrDefault(a => a.Name == _editingAttrName);
+        var oldValue = attr?.Value;
+        if (attr is not null) attr.Value = _editBuffer;
+        if (oldValue != _editBuffer && OnNodeEdited is not null)
+        {
+            var attrName = _editingAttrName;
+            OnNodeEdited(new Variance
+            {
+                NodeId = Node.Id,
+                PathDescription = BuildNodePath(),
+                Description = $"@{attrName}: {TruncateValue(oldValue)} → {TruncateValue(_editBuffer)}",
+                ChangeType = "Modified",
+                UndoAttributeName = attrName
+            });
+        }
+        _editingAttrName = null;
+        _editAllowedValues = null;
+        OnNodeModified?.Invoke();
+    }
+
+    private void SelectAttrChanged(ChangeEventArgs e)
+    {
+        _editBuffer = e.Value?.ToString() ?? string.Empty;
+        CommitAttrEdit();
+    }
+
+    private void HandleEditKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { CommitValueEdit(); CommitAttrEdit(); }
+        if (e.Key == "Escape") { _editingValue = false; _editingAttrName = null; }
+    }
+
+    // ── Focus management ──────────────────────────────────────────────────────
+
+    private string? GetRefDisplayValue(string? rawValue)
+    {
+        if (string.IsNullOrEmpty(rawValue)) return null;
+        if (Node.NodeName.Equals("Id", StringComparison.OrdinalIgnoreCase) && ParentEntityType is not null)
+            return XmlRefLookupService.GetRefOptionsByEntityType(ParentEntityType)
+                ?.FirstOrDefault(o => o.Value == rawValue)?.Display;
+        return XmlRefLookupService.GetRefOptions(Node.NodeName)
+            ?.FirstOrDefault(o => o.Value == rawValue)?.Display;
+    }
+
+    [CascadingParameter(Name = "OnNodeEdited")]
+    private Action<Variance>? OnNodeEdited { get; set; }
+
+    [CascadingParameter(Name = "HighlightedNodeId")]
+    private Guid? HighlightedNodeId { get; set; }
+
+    [CascadingParameter(Name = "UseStringEnumValues")]
+    private bool UseStringEnumValues { get; set; }
+
+    [CascadingParameter(Name = "OnLazyLoadAsync")]
+    private Func<XmlNodeViewModel, Task>? OnLazyLoadAsync { get; set; }
+
+    [CascadingParameter(Name = "TreeFilterCategory")]
+    private string? TreeFilterCategory { get; set; }
+
+    /// <summary>
+    /// Set by the parent XmlNodeTree when it is a ref entity (Role, Permission).
+    /// Enables GUID-Id dropdown and makes all other child fields non-editable.
+    /// </summary>
+    [Parameter]
+    public string? ParentEntityType { get; set; }
+
+    private string BuildNodePath()
+    {
+        var parts = new List<string>();
+        var current = Node;
+        while (current is not null)
+        {
+            var idAttr = current.Attributes.FirstOrDefault(a => a.Name.Equals("id", StringComparison.OrdinalIgnoreCase))?.Value;
+            var label = idAttr is not null ? $"{current.NodeName}[{idAttr}]" : current.NodeName;
+            parts.Insert(0, label);
+            current = current.Parent;
+        }
+        return parts.Count > 3
+            ? "\u2026 \u203a " + string.Join(" \u203a ", parts.Skip(parts.Count - 3))
+            : string.Join(" \u203a ", parts);
+    }
+
+    // Plain dot-separated path used for NonEditableNodes matching (no id brackets, no truncation).
+    private string BuildPlainNodePath()
+    {
+        var parts = new List<string>();
+        var current = Node;
+        while (current is not null)
+        {
+            parts.Insert(0, current.NodeName);
+            current = current.Parent;
+        }
+        return string.Join(".", parts);
+    }
+
+    private string? GetChildSummary()
+    {
+        if (Node.Children.Count == 0) return null;
+        var nameChild = Node.Children.FirstOrDefault(c =>
+            c.NodeName.Equals("Name", StringComparison.OrdinalIgnoreCase) && c.HasValue);
+        if (nameChild is not null) return nameChild.NodeValue;
+        var symbolChild = Node.Children.FirstOrDefault(c =>
+            c.NodeName.Equals("Symbol", StringComparison.OrdinalIgnoreCase) && c.HasValue);
+        if (symbolChild is not null) return symbolChild.NodeValue;
+        var displayChild = Node.Children.FirstOrDefault(c =>
+            c.NodeName.Equals("DisplayName", StringComparison.OrdinalIgnoreCase) && c.HasValue);
+        return displayChild?.NodeValue;
+    }
+
+    private string FormatCollapsedInfo()
+    {
+        var summary = GetChildSummary();
+        return summary is not null
+            ? $": {summary}  ({Node.Children.Count})"
+            : $"({Node.Children.Count})";
+    }
+
+    private string FormatExpandedInfo()
+    {
+        var summary = GetChildSummary();
+        return summary is not null ? $": {summary}" : string.Empty;
+    }
+
+    private static string TruncateValue(string? value) =>
+        value is null ? "(empty)" : value.Length > 24 ? value[..21] + "\u2026" : value;
+
+    private string GetNodeTypeIcon()
+    {
+        if (Node.IsLazyLoadable && !Node.IsLazyLoaded) return "\u2601"; // cloud
+        if (Node.HasChildren) return "\uD83D\uDCC1"; // folder
+        if (Node.HasValue) return "\uD83D\uDCC4"; // document
+        return "\u25CB"; // empty circle
+    }
+
+    private string GetNodeTypeTooltip()
+    {
+        if (Node.IsLazyLoadable && !Node.IsLazyLoaded) return "Loadable section";
+        if (Node.HasChildren) return $"Group with {Node.Children.Count} items";
+        if (Node.HasValue) return "Property";
+        return "Empty";
+    }
+
+    private static readonly string[] DepthColors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b"];
+
+    private string GetDepthColor() => DepthColors[Node.Depth % DepthColors.Length];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusPending)
+        {
+            _focusPending = false;
+            try { await _editRef.FocusAsync(); } catch { /* ref not yet mounted */ }
+        }
+    }
+}

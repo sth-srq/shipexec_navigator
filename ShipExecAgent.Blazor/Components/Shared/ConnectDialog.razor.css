@@ -1,0 +1,325 @@
+/* ── Backdrop ───────────────────────────────────────────────────────────── */
+.connect-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Shared dialog chrome ───────────────────────────────────────────────── */
+.dlg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid rgba(43,63,107,0.1);
+    background: #337ab7;
+    border-radius: 4px 4px 0 0;
+}
+
+.dlg-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.dlg-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.12s, background-color 0.12s;
+}
+
+    .dlg-close:hover {
+        color: #fff;
+        background-color: rgba(255,255,255,0.15);
+    }
+
+.dlg-body {
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dlg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.dlg-label {
+    font-size: 0.78rem;
+    color: #6c757d;
+}
+
+.dlg-input {
+    background-color: #ffffff;
+    color: #212529;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.85rem;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+    .dlg-input:focus {
+        border-color: #337ab7;
+        box-shadow: 0 0 0 2px rgba(51,122,183,0.18);
+    }
+
+    .dlg-input::placeholder {
+        color: #adb5bd;
+    }
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+.connect-dlg {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: min(1125px, 94vw);
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+/* ── JWT textarea ─────────────────────────────────────────────────────────── */
+.connect-jwt {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.775rem;
+    resize: vertical;
+    min-height: 260px;
+}
+
+/* ── Error ──
+.connect-error {
+    background-color: #fff5f5;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    color: #c53030;
+    font-size: 0.825rem;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.connect-stored-hint {
+    background-color: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    color: #1e40af;
+    font-size: 0.79rem;
+    padding: 0.4rem 0.75rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connect-clear-btn {
+    background: none;
+    border: none;
+    color: #dc2626;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.connect-clear-btn:hover {
+    color: #991b1b;
+}
+
+/* ── Footer row ─────────────────────────────────────────────────────────── */
+.dlg-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.connect-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #337ab7;
+    border: 1px solid #2e6da4;
+    color: #fff;
+    border-radius: 4px;
+    padding: 0.52rem 1.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+    .connect-btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        background: #286090;
+        border-color: #204d74;
+    }
+
+    .connect-btn-primary:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .connect-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.connect-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #333;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+    .connect-btn-secondary:hover:not(:disabled) {
+        background: #e6e6e6;
+        border-color: #adadad;
+        transform: translateY(-1px);
+    }
+
+    .connect-btn-secondary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+/* ── Spinner ────────────────────────────────────────────────────────────── */
+.connect-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: connect-spin 0.7s linear infinite;
+}
+
+@keyframes connect-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Company label row (label + Load XML button) ───────────────────────── */
+.connect-company-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.05rem;
+}
+
+.connect-btn-load-xml {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: none;
+    border: 1px solid #2e6da4;
+    color: #2e6da4;
+    border-radius: 5px;
+    padding: 0.12rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.12s;
+    line-height: 1.4;
+}
+
+    .connect-btn-load-xml:hover:not(:disabled) {
+        background-color: rgba(46, 109, 164, 0.08);
+    }
+
+    .connect-btn-load-xml:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+/* ── Choose phase cards ─────────────────────────────────────────────────── */
+.connect-choose {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+}
+
+.connect-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 1.5px solid rgba(43,63,107,0.12);
+    border-radius: 10px;
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+    .connect-card:hover:not(:disabled) {
+        transform: translateY(-2px);
+        border-color: #3a7bd5;
+        box-shadow: 0 8px 24px rgba(58,123,213,0.14);
+        background: linear-gradient(135deg, #f8faff, #eef5ff);
+    }
+
+    .connect-card:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.connect-card-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.connect-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.connect-card-desc {
+    font-size: 0.78rem;
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.connect-card--local .connect-card-icon,
+.connect-card--local .connect-card-title {
+    color: #276749;
+}
+
+    .connect-card--local:hover:not(:disabled) {
+        border-color: #22c55e;
+        box-shadow: 0 8px 24px rgba(34,197,94,0.12);
+        background: linear-gradient(135deg, #f0faf5, #e8f8ef);
+    }

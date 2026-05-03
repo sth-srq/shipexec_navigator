@@ -1,0 +1,114 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="Docs/LogViewer.html" />
+    <File Path="Docs/ClientBusinessRulesTemplate.js" />
+    <File Path="Docs/getlogsrequest.json" />
+    <File Path="Docs/getlogsresponse.json" />
+    <File Path="Docs/getsecuritylogsrequest.json" />
+    <File Path="Docs/getsecuritylogsresponse.json" />
+    <File Path="Docs/UserTemplate.csv" />
+    <File Path="Docs/UserTemplateWithValues.csv" />
+    <File Path="Docs/WesbancoExport.xml" />
+  </Folder>
+  <Folder Name="/Docs/CBRAnalysis/">
+    <File Path="Docs/CBRAnalysis/address book logic.txt" />
+    <File Path="Docs/CBRAnalysis/address book lookup and population.txt" />
+    <File Path="Docs/CBRAnalysis/alerts.txt" />
+    <File Path="Docs/CBRAnalysis/auto ship.txt" />
+    <File Path="Docs/CBRAnalysis/batch lookup.txt" />
+    <File Path="Docs/CBRAnalysis/batch voiding and history operations.txt" />
+    <File Path="Docs/CBRAnalysis/camera capture.txt" />
+    <File Path="Docs/CBRAnalysis/close manifest processing.txt" />
+    <File Path="Docs/CBRAnalysis/commodity assignment.txt" />
+    <File Path="Docs/CBRAnalysis/commodity handling and international shipment preparation.txt" />
+    <File Path="Docs/CBRAnalysis/commodity mapping.txt" />
+    <File Path="Docs/CBRAnalysis/commodity splitting.txt" />
+    <File Path="Docs/CBRAnalysis/custom batch processing.txt" />
+    <File Path="Docs/CBRAnalysis/customer selection.txt" />
+    <File Path="Docs/CBRAnalysis/d2m.txt" />
+    <File Path="Docs/CBRAnalysis/debugging.txt" />
+    <File Path="Docs/CBRAnalysis/email.txt" />
+    <File Path="Docs/CBRAnalysis/event handling.txt" />
+    <File Path="Docs/CBRAnalysis/field defaulting and validation.txt" />
+    <File Path="Docs/CBRAnalysis/file upload.txt" />
+    <File Path="Docs/CBRAnalysis/history report filtering.txt" />
+    <File Path="Docs/CBRAnalysis/history report generation.txt" />
+    <File Path="Docs/CBRAnalysis/load state management.txt" />
+    <File Path="Docs/CBRAnalysis/loading.txt" />
+    <File Path="Docs/CBRAnalysis/logging.txt" />
+    <File Path="Docs/CBRAnalysis/nmfc subclass and commodity mapping.txt" />
+    <File Path="Docs/CBRAnalysis/nmfc.txt" />
+    <File Path="Docs/CBRAnalysis/notification polling and UI refresh.txt" />
+    <File Path="Docs/CBRAnalysis/notifications.txt" />
+    <File Path="Docs/CBRAnalysis/package history anonymization.txt" />
+    <File Path="Docs/CBRAnalysis/package reference propagation.txt" />
+    <File Path="Docs/CBRAnalysis/page initialization and navigation.txt" />
+    <File Path="Docs/CBRAnalysis/printing and document output.txt" />
+    <File Path="Docs/CBRAnalysis/return delivery address.txt" />
+    <File Path="Docs/CBRAnalysis/service filtering.txt" />
+    <File Path="Docs/CBRAnalysis/shipment commodity contents initialization.txt" />
+    <File Path="Docs/CBRAnalysis/shipment conversion and validation.txt" />
+    <File Path="Docs/CBRAnalysis/shipment defaults.txt" />
+    <File Path="Docs/CBRAnalysis/shipment timestamp stamping.txt" />
+    <File Path="Docs/CBRAnalysis/shipping charges defaulting and return address population.txt" />
+    <File Path="Docs/CBRAnalysis/shipping view initialization.txt" />
+    <File Path="Docs/CBRAnalysis/sorting.txt" />
+    <File Path="Docs/CBRAnalysis/thin client api request.txt" />
+    <File Path="Docs/CBRAnalysis/third party options.txt" />
+    <File Path="Docs/CBRAnalysis/ui.txt" />
+    <File Path="Docs/CBRAnalysis/user context filtering.txt" />
+    <File Path="Docs/CBRAnalysis/validation.txt" />
+    <File Path="Docs/CBRAnalysis/validation_alerts.txt" />
+  </Folder>
+  <Folder Name="/Docs/EnvironmentComparison/">
+    <File Path="Docs/EnvironmentComparison/markenllp_blackbox23_20260411_171250.xml" />
+    <File Path="Docs/EnvironmentComparison/markenllp_uat.api.managementstudio.shipexec.com_20260411_171642.xml" />
+  </Folder>
+  <Folder Name="/Docs/Logon/">
+    <File Path="Docs/Logon/loginpage.html" />
+    <File Path="Docs/Logon/passwordpage.html" />
+  </Folder>
+  <Folder Name="/Docs/SEPages/">
+    <File Path="Docs/SEPages/app.css" />
+    <File Path="Docs/SEPages/screen1.html" />
+    <File Path="Docs/SEPages/screen2.html" />
+    <File Path="Docs/SEPages/screen3.html" />
+    <File Path="Docs/SEPages/screen4.html" />
+    <File Path="Docs/SEPages/screen5.html" />
+  </Folder>
+  <Folder Name="/Downloads/">
+    <File Path="Downloads/shipexec-code_standards-se2.zip" />
+    <File Path="Downloads/ShipExecAgent.CertificateInspector.exe" />
+    <File Path="Downloads/ShipExecAgent_AllProfilesDiffViewer.html" />
+    <File Path="Downloads/ShipExecAgent_CBRHelper.js" />
+    <File Path="Downloads/ShipExecAgent_CBRHelper.min.js" />
+    <File Path="Downloads/ShipExecAgent_NavLogViewer.html" />
+    <File Path="Downloads/ShipExecAgent_ProfileDiffViewer.html" />
+    <File Path="Downloads/ShipExecAgent_ShipExecLogViewer.html" />
+    <File Path="Downloads/ShipExecAgent_ShipExecSupportClientChecker.html" />
+  </Folder>
+  <Folder Name="/RAGDocuments/" />
+  <Folder Name="/References/">
+    <File Path="References/PSI.Sox.Configuration.dll" />
+    <File Path="References/PSI.Sox.dll" />
+    <File Path="References/PSI.Sox.Wcf.dll" />
+  </Folder>
+  <Folder Name="/Tools/">
+    <Project Path="Tools/ShipExecAgent.CBRAnalyzer/ShipExecAgent.CBRAnalyzer.csproj" />
+    <Project Path="Tools/ShipExecAgent.DesktopClient/ShipExecAgent.DesktopClient.csproj" />
+    <Project Path="Tools/ShipExecAgent.RAGLoader/ShipExecAgent.RAGLoader.csproj" />
+    <Project Path="Tools/ShipExecAgent.Tools.EnvironmentMapper/ShipExecAgent.Tools.EnvironmentMapper.csproj" />
+    <Project Path="Tools/ShipExecAgent.Tools.VarianceGenerator/ShipExecAgent.Tools.VarianceGenerator.csproj" />
+  </Folder>
+  <Project Path="ShipExecAgent.AppLogic/ShipExecAgent.AppLogic.csproj" />
+  <Project Path="ShipExecAgent.Blazor/ShipExecAgent.Blazor.csproj" />
+  <Project Path="ShipExecAgent.BusinessLogic/ShipExecAgent.BusinessLogic.csproj" Id="a6c2d097-1a30-488c-b95d-91514c3d1238" />
+  <Project Path="ShipExecAgent.CBRAnalyzer/ShipExecAgent.CBRAnalyzer.csproj" />
+  <Project Path="ShipExecAgent.ClientSpecificLogic/ShipExecAgent.ClientSpecificLogic.csproj" Id="5d6f584e-cfd3-487b-bb3a-28bcd979df6d" />
+  <Project Path="ShipExecAgent.DAL/ShipExecAgent.DAL.csproj" />
+  <Project Path="ShipExecAgent.Model/ShipExecAgent.Model.csproj" Id="b899a241-66b1-47ea-be52-6556a6746c09" />
+  <Project Path="ShipExecAgent.RAGLoader/ShipExecAgent.RAGLoader.csproj" />
+  <Project Path="ShipExecAgent.Shared/ShipExecAgent.Shared.csproj" />
+  <Project Path="ShipExecAgent.SK/ShipExecAgent.SK.csproj" />
+  <Project Path="ShipExecAgent.Tests/ShipExecAgent.Tests.csproj" />
+</Solution>

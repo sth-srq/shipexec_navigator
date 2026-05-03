@@ -1,0 +1,718 @@
+@using PSI.Sox
+@using ShipExecAgent.BusinessLogic.EntityComparison
+@inject IJSRuntime JS
+@inject IShipExecService ShipExecService
+
+@if (IsVisible)
+{
+    <div class="isd-backdrop" @onclick="HandleClose">
+        <div class="isd-dlg" @onclick:stopPropagation>
+
+            <div class="isd-header">
+                <span class="isd-title">&#x1F69A; Import Shippers</span>
+                <button class="isd-close" @onclick="HandleClose" disabled="@_loading">&#x2715;</button>
+            </div>
+
+            <div class="isd-body">
+
+                @if (_stage == Stage.Pick)
+                {
+                    <InputFile id="isd-file-input" style="display:none"
+                               accept=".csv,.xlsx"
+                               OnChange="OnFileSelectedAsync" />
+
+                    <div class="isd-pick-area">
+                        <p class="isd-hint">Select a CSV or Excel (.xlsx) file containing shipper data to preview.</p>
+                        <button class="isd-btn-choose" @onclick="TriggerFilePickerAsync">
+                            &#x1F4C2; Choose File
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="isd-error">&#9888; @_error</div>
+                    }
+                }
+
+                @if (_stage == Stage.Preview)
+                {
+                    <div class="isd-preview-header">
+                        <span class="isd-file-label">&#x1F4C4; @_fileName</span>
+                        <span class="isd-row-pill">@_totalDataRows row@(_totalDataRows == 1 ? "" : "s") total</span>
+                        <button class="isd-btn-reselect" @onclick="Reset">&#x2190; Change File</button>
+                    </div>
+
+                    @if (_previewRows.Count == 0)
+                    {
+                        <div class="isd-empty">The file contains no data rows.</div>
+                    }
+                    else
+                    {
+                        <div class="isd-table-wrap">
+                            <table class="isd-table">
+                                @if (_headers.Count > 0)
+                                {
+                                    <thead>
+                                        <tr class="isd-mapping-row">
+                                            @for (int hi = 0; hi < _headers.Count; hi++)
+                                            {
+                                                var colIdx = hi;
+                                                var curVal = _columnMappings.TryGetValue(colIdx, out var cv) ? cv : string.Empty;
+                                                <th>
+                                                    <select class="isd-col-select @(string.IsNullOrEmpty(curVal) ? "" : "isd-col-select--set")"
+                                                            @onchange="@(e => OnColumnMappingChanged(colIdx, e.Value?.ToString() ?? string.Empty))">
+                                                        <option value="" selected="@(string.IsNullOrEmpty(curVal))">— map field —</option>
+                                                        @foreach (var field in AvailableFields(colIdx))
+                                                        {
+                                                            <option value="@field" selected="@(field == curVal)">@field</option>
+                                                        }
+                                                    </select>
+                                                    @if (curVal == "CustomData")
+                                                    {
+                                                        var cdKey = _customDataKeys.TryGetValue(colIdx, out var k) ? k : string.Empty;
+                                                        <input class="isd-custom-key-input"
+                                                               placeholder="custom key…"
+                                                               value="@cdKey"
+                                                               @oninput="@(e => OnCustomKeyChanged(colIdx, e.Value?.ToString() ?? string.Empty))"
+                                                               @onclick:stopPropagation />
+                                                    }
+                                                </th>
+                                            }
+                                        </tr>
+                                        <tr>
+                                            @foreach (var h in _headers)
+                                            {
+                                                <th class="isd-th-col">@h</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                }
+                                <tbody>
+                                    @foreach (var row in _previewRows)
+                                    {
+                                        <tr>
+                                            @for (int ci = 0; ci < Math.Max(row.Count, _headers.Count > 0 ? _headers.Count : 1); ci++)
+                                            {
+                                                <td>@(ci < row.Count ? row[ci] : string.Empty)</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (_totalDataRows > 3)
+                        {
+                            <p class="isd-more-hint">
+                                Showing first 3 of @_totalDataRows rows &mdash; scroll right if columns overflow.
+                            </p>
+                        }
+                    }
+                }
+
+                @if (_stage == Stage.Variances)
+                {
+                    @if (_variancesBusy)
+                    {
+                        <div class="isd-vl-loading">
+                            <span class="isd-spinner"></span> Computing variances&hellip;
+                        </div>
+                    }
+                    else if (_applying)
+                    {
+                        <div class="isd-vl-loading">
+                            <span class="isd-spinner"></span> Applying changes&hellip;
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(_varianceError))
+                    {
+                        <div class="isd-error">&#9888; @_varianceError</div>
+                    }
+                    else if (_variances.Count == 0)
+                    {
+                        <div class="isd-empty">&#x2713; No changes &mdash; all @_allDataRows.Count shipper(s) already match.</div>
+                    }
+                    else
+                    {
+                        var addCount = _variances.Count(v => v.IsAdd);
+                        var updCount = _variances.Count(v => v.IsUpdated);
+                        <div class="isd-vl-summary">
+                            @if (addCount > 0) { <span class="isd-action-badge isd-action-add">+@addCount add</span> }
+                            @if (updCount > 0) { <span class="isd-action-badge isd-action-update">~@updCount update</span> }
+                            <span class="isd-row-pill">@_variances.Count of @_allDataRows.Count rows have changes</span>
+                        </div>
+                        <div class="isd-table-wrap">
+                            <table class="isd-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:80px">Action</th>
+                                        <th>Symbol</th>
+                                        <th>Name</th>
+                                        <th>Changed Fields</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < _variances.Count; i++)
+                                    {
+                                        var idx        = i;
+                                        var v          = _variances[i];
+                                        var action     = v.IsAdd ? "Add" : "Update";
+                                        var incoming   = (Shipper)v.NewObject!;
+                                        var origJson   = SerializeShipperJson(v.OriginalObject);
+                                        var NewXML    = SerializeShipperJson(v.NewObject);
+                                        var fields     = FieldDiffHelper.BuildFieldDiff(action, origJson, NewXML);
+                                        var isExpanded = _expandedVarianceIdx.Contains(idx);
+                                        <tr class="isd-vrow @(fields.Count > 0 ? "isd-vrow--expandable" : "")"
+                                            @onclick="() => ToggleVarianceRow(idx)">
+                                            <td><span class="isd-action-badge isd-action-@action.ToLower()">@action</span></td>
+                                            <td>@incoming.Symbol</td>
+                                            <td>@incoming.Name</td>
+                                            <td class="isd-changed-fields">
+                                                @GetChangedFieldNames(v)
+                                                @if (fields.Count > 0)
+                                                {
+                                                    <span class="isd-expand-icon">@(isExpanded ? "▲" : "▼")</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                        @if (isExpanded && fields.Count > 0)
+                                        {
+                                            <tr class="isd-vrow-detail">
+                                                <td colspan="4">
+                                                    <div class="isd-field-list">
+                                                        @foreach (var f in fields)
+                                                        {
+                                                            <div class="isd-field-row">
+                                                                <span class="isd-field-name">@f.Name</span>
+                                                                <div class="isd-field-vals">
+                                                                    @if (!string.IsNullOrEmpty(f.OrigVal))
+                                                                    {
+                                                                        <span class="isd-val isd-val--orig">@f.OrigVal</span>
+                                                                    }
+                                                                    @if (!string.IsNullOrEmpty(f.OrigVal) && !string.IsNullOrEmpty(f.NewVal))
+                                                                    {
+                                                                        <span class="isd-val-arrow">&#x2192;</span>
+                                                                    }
+                                                                    @if (!string.IsNullOrEmpty(f.NewVal))
+                                                                    {
+                                                                        <span class="isd-val isd-val--new">@f.NewVal</span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+
+                @if (_stage == Stage.ApplyResults)
+                {
+                    @if (_applyError is not null)
+                    {
+                        <div class="isd-error">&#9888; @_applyError</div>
+                    }
+                    else
+                    {
+                        var successes = _applyResults.Count(r => r.Success);
+                        var failures  = _applyResults.Count(r => !r.Success);
+                        <div class="isd-vl-summary">
+                            @if (successes > 0) { <span class="isd-action-badge isd-action-add">&#x2713; @successes applied</span> }
+                            @if (failures  > 0) { <span class="isd-action-badge isd-action-remove">&#x2715; @failures failed</span> }
+                        </div>
+                        <div class="isd-table-wrap">
+                            <table class="isd-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:60px">Status</th>
+                                        <th>Entity</th>
+                                        <th>Operation</th>
+                                        <th>Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var r in _applyResults)
+                                    {
+                                        <tr>
+                                            <td><span class="isd-action-badge @(r.Success ? "isd-action-add" : "isd-action-remove")">@(r.Success ? "\u2713" : "\u2715")</span></td>
+                                            <td>@r.EntityName</td>
+                                            <td>@r.Operation</td>
+                                            <td class="isd-changed-fields">@r.Message</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+
+            </div>
+
+            <div class="isd-footer">
+                @if (_stage == Stage.Variances && !_applying)
+                {
+                    <button class="isd-btn-secondary" @onclick="@(() => _stage = Stage.Preview)" disabled="@_variancesBusy">&#x2190; Back</button>
+                }
+                @if (_stage == Stage.ApplyResults)
+                {
+                    <button class="isd-btn-secondary" @onclick="@(() => _stage = Stage.Variances)">&#x2190; Back</button>
+                }
+                @if (_stage == Stage.Preview && _columnMappings.Count > 0)
+                {
+                    <button class="isd-btn-primary" @onclick="ComputeVariancesAsync">Preview Changes</button>
+                }
+                @if (_stage == Stage.Variances && !_applying && _variances.Count > 0 && !_variancesBusy)
+                {
+                    <button class="isd-btn-secondary" @onclick="AddToVarianceListAsync">&#x1F4CB; Add to Variance List</button>
+                }
+                @if (_stage == Stage.Variances && !_applying && CanApply && _variances.Count > 0 && !_variancesBusy)
+                {
+                    <button class="isd-btn-primary" @onclick="ApplyAsync">&#x2705; Apply Changes</button>
+                }
+                <button class="isd-btn-close" @onclick="HandleClose" disabled="@_applying">Close</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public bool CanApply { get; set; }
+    [Parameter] public EventCallback<List<ApplyResultItem>> OnShippersApplied { get; set; }
+    [Parameter] public EventCallback<List<Variance>> OnAddToVarianceList { get; set; }
+
+    private enum Stage { Pick, Preview, Variances, ApplyResults }
+
+    private Stage _stage = Stage.Pick;
+    private string? _fileName;
+    private string? _error;
+    private bool _loading;
+    private List<string> _headers = [];
+    private List<List<string>> _previewRows = [];
+    private int _totalDataRows;
+    private Dictionary<int, string> _columnMappings = new();
+    private List<List<string>> _allDataRows = [];
+    private List<Variance> _variances = [];
+    private bool _variancesBusy;
+    private string? _varianceError;
+    private bool _applying;
+    private List<ApplyResultItem> _applyResults = [];
+    private string? _applyError;
+    private readonly HashSet<int> _expandedVarianceIdx = [];
+    private Dictionary<string, Guid> _sitesByName   = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<int, string>  _customDataKeys = new();
+
+    private void ToggleVarianceRow(int idx)
+    {
+        if (!_expandedVarianceIdx.Add(idx))
+            _expandedVarianceIdx.Remove(idx);
+    }
+
+    private static string SerializeShipperJson(object? obj) =>
+        obj is Shipper s ? System.Text.Json.JsonSerializer.Serialize(s) : string.Empty;
+
+    private static readonly HashSet<string> _requiredFields =
+        new(["Name", "Symbol"], StringComparer.OrdinalIgnoreCase);
+
+    private static readonly (string Group, string[] Fields)[] ShipperFieldGroups =
+    [
+        ("Core",    ["Name", "Symbol", "Code"]),
+        ("Address", ["Address1", "Address2", "Address3", "City", "StateProvince", "PostalCode", "Country"]),
+        ("Contact", ["Company", "Contact", "Phone", "Fax", "Email", "Sms"]),
+        ("Options", ["PoBox", "Residential"]),
+        ("Site",    ["SiteName"]),
+    ];
+
+    private static readonly HashSet<string> _allShipperFields =
+        new(ShipperFieldGroups.SelectMany(g => g.Fields), StringComparer.OrdinalIgnoreCase);
+
+    private static string GetChangedFieldNames(Variance v)
+    {
+        if (!v.IsUpdated || v.OriginalObject is not Shipper existing || v.NewObject is not Shipper incoming)
+            return string.Empty;
+
+        var changes = new List<string>();
+
+        void CheckStr(string field, string? a, string? b)
+        {
+            if (!string.IsNullOrEmpty(b) && !string.Equals(a ?? string.Empty, b, StringComparison.Ordinal))
+                changes.Add(field);
+        }
+
+        CheckStr("Symbol",        existing.Symbol,        incoming.Symbol);
+        CheckStr("Name",          existing.Name,          incoming.Name);
+        CheckStr("Code",          existing.Code,          incoming.Code);
+        CheckStr("Address1",      existing.Address1,      incoming.Address1);
+        CheckStr("Address2",      existing.Address2,      incoming.Address2);
+        CheckStr("Address3",      existing.Address3,      incoming.Address3);
+        CheckStr("City",          existing.City,          incoming.City);
+        CheckStr("StateProvince", existing.StateProvince, incoming.StateProvince);
+        CheckStr("PostalCode",    existing.PostalCode,    incoming.PostalCode);
+        CheckStr("Country",       existing.Country,       incoming.Country);
+        CheckStr("Company",       existing.Company,       incoming.Company);
+        CheckStr("Contact",       existing.Contact,       incoming.Contact);
+        CheckStr("Phone",         existing.Phone,         incoming.Phone);
+        CheckStr("Fax",           existing.Fax,           incoming.Fax);
+        CheckStr("Email",         existing.Email,         incoming.Email);
+        CheckStr("Sms",           existing.Sms,           incoming.Sms);
+        if (incoming.PoBox       && existing.PoBox       != incoming.PoBox)       changes.Add("PoBox");
+        if (incoming.Residential && existing.Residential != incoming.Residential) changes.Add("Residential");
+        if (incoming.SiteId.HasValue && incoming.SiteId.Value != Guid.Empty && incoming.SiteId != existing.SiteId)
+            changes.Add("SiteId");
+        if (incoming.CustomData is { Count: > 0 })
+        {
+            var existingCd = (existing.CustomData ?? [])
+                .ToDictionary(c => c.Key ?? string.Empty, c => c.Value ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+            foreach (var item in incoming.CustomData.Where(c => !string.IsNullOrEmpty(c.Key)))
+            {
+                existingCd.TryGetValue(item.Key!, out var existingVal);
+                if (!string.Equals(existingVal ?? string.Empty, item.Value ?? string.Empty, StringComparison.Ordinal))
+                    changes.Add($"CustomData[{item.Key}]");
+            }
+        }
+
+        return string.Join(", ", changes);
+    }
+
+    private async Task TriggerFilePickerAsync()
+        => await JS.InvokeVoidAsync("triggerClick", "isd-file-input");
+
+    private async Task OnFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        _loading = true;
+        try
+        {
+            var file = e.File;
+            var isCsv  = file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+            var isXlsx = file.Name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase);
+            if (!isCsv && !isXlsx)
+            {
+                _error = "Please select a .csv or .xlsx file.";
+                return;
+            }
+
+            _fileName = file.Name;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+
+            if (isXlsx)
+            {
+                // Copy to a MemoryStream so ClosedXML can seek
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                ms.Position = 0;
+                ParseExcelData(ms);
+            }
+            else
+            {
+                using var reader = new System.IO.StreamReader(stream);
+                var lines = new List<string>();
+                string? line;
+                while ((line = await reader.ReadLineAsync()) is not null)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                        lines.Add(line);
+                }
+
+                if (lines.Count == 0)
+                {
+                    _error = "The file is empty.";
+                    return;
+                }
+
+                // First row is always treated as the header
+                _headers = ParseCsvLine(lines[0]);
+                _totalDataRows = lines.Count - 1;
+                _allDataRows = lines.Skip(1).Select(ParseCsvLine).ToList();
+            }
+            _previewRows = _allDataRows.Take(3).ToList();
+
+            _columnMappings = new();
+            var allFields = ShipperFieldGroups.SelectMany(g => g.Fields).ToList();
+            for (int i = 0; i < _headers.Count; i++)
+            {
+                var match = allFields.FirstOrDefault(f => string.Equals(f, _headers[i], StringComparison.OrdinalIgnoreCase));
+                if (match is not null)
+                    _columnMappings[i] = match;
+            }
+
+            _stage = Stage.Preview;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to read file: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static List<string> ParseCsvLine(string line)
+    {
+        var result = new List<string>();
+        var sb = new System.Text.StringBuilder();
+        bool inQuotes = false;
+
+        for (int i = 0; i <= line.Length; i++)
+        {
+            char c = i < line.Length ? line[i] : '\0';
+
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        sb.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            else if (c == '"')
+            {
+                inQuotes = true;
+            }
+            else if (c == ',' || c == '\0')
+            {
+                result.Add(sb.ToString());
+                sb.Clear();
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        return result;
+    }
+
+    private void ParseExcelData(MemoryStream ms)
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook(ms);
+        var ws = workbook.Worksheets.First();
+        var usedRange = ws.RangeUsed();
+        if (usedRange is null)
+        {
+            _error = "The Excel file contains no data.";
+            return;
+        }
+
+        var rows = usedRange.RowsUsed().ToList();
+        if (rows.Count == 0)
+        {
+            _error = "The Excel file contains no data.";
+            return;
+        }
+
+        // First row = headers
+        var headerRow = rows[0];
+        _headers = headerRow.Cells().Select(c => c.GetString().Trim()).ToList();
+        var colCount = _headers.Count;
+
+        _allDataRows = rows.Skip(1)
+            .Select(row =>
+            {
+                var vals = new List<string>();
+                for (int c = 1; c <= colCount; c++)
+                    vals.Add(row.Cell(c).GetString().Trim());
+                return vals;
+            })
+            .Where(vals => vals.Any(v => !string.IsNullOrEmpty(v)))
+            .ToList();
+        _totalDataRows = _allDataRows.Count;
+    }
+
+    private void Reset()
+    {
+        _stage = Stage.Pick;
+        _headers = [];
+        _previewRows = [];
+        _allDataRows = [];
+        _columnMappings = new();
+        _variances = [];
+        _variancesBusy = false;
+        _varianceError = null;
+        _applying = false;
+        _applyResults = [];
+        _applyError = null;
+        _expandedVarianceIdx.Clear();
+        _sitesByName   = new(StringComparer.OrdinalIgnoreCase);
+        _customDataKeys = new();
+        _fileName = null;
+        _error = null;
+        _totalDataRows = 0;
+    }
+
+    private async Task ComputeVariancesAsync()
+    {
+        _variancesBusy = true;
+        _varianceError = null;
+        _variances = [];
+        _stage = Stage.Variances;
+        try
+        {
+            if (_columnMappings.Values.Any(v => v == "SiteName"))
+            {
+                var sites = await ShipExecService.GetSitesAsync();
+                _sitesByName = sites
+                    .Where(s => !string.IsNullOrEmpty(s.Name))
+                    .GroupBy(s => s.Name!, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+            }
+
+            var shippers = _allDataRows
+                .Select(row => BuildShipperFromRow(row, _columnMappings, _sitesByName, _customDataKeys))
+                .Where(s => !string.IsNullOrWhiteSpace(s.Symbol))
+                .ToList();
+            _variances = await ShipExecService.GetShipperVariancesAsync(shippers);
+        }
+        catch (Exception ex)
+        {
+            _varianceError = $"Failed: {ex.Message}";
+        }
+        finally
+        {
+            _variancesBusy = false;
+        }
+    }
+
+    private static Shipper BuildShipperFromRow(
+        List<string> row,
+        Dictionary<int, string> mappings,
+        Dictionary<string, Guid>? sitesByName = null,
+        Dictionary<int, string>? customDataKeys = null)
+    {
+        var s = new Shipper();
+        foreach (var (colIdx, field) in mappings)
+        {
+            var val = colIdx < row.Count ? row[colIdx].Trim() : string.Empty;
+            switch (field)
+            {
+                case "Name":          s.Name          = val; break;
+                case "Symbol":        s.Symbol        = val; break;
+                case "Code":          s.Code          = val; break;
+                case "Address1":      s.Address1      = val; break;
+                case "Address2":      s.Address2      = val; break;
+                case "Address3":      s.Address3      = val; break;
+                case "City":          s.City          = val; break;
+                case "StateProvince": s.StateProvince = val; break;
+                case "PostalCode":    s.PostalCode    = val; break;
+                case "Country":       s.Country       = val; break;
+                case "Company":       s.Company       = val; break;
+                case "Contact":       s.Contact       = val; break;
+                case "Phone":         s.Phone         = val; break;
+                case "Fax":           s.Fax           = val; break;
+                case "Email":         s.Email         = val; break;
+                case "Sms":           s.Sms           = val; break;
+                case "PoBox":         s.PoBox         = val is "1" or "true" or "yes"; break;
+                case "Residential":   s.Residential   = val is "1" or "true" or "yes"; break;
+                case "SiteName":
+                    if (sitesByName is not null && !string.IsNullOrEmpty(val)
+                        && sitesByName.TryGetValue(val, out var siteId))
+                        s.SiteId = siteId;
+                    break;
+                case "CustomData":
+                    if (customDataKeys is not null
+                        && customDataKeys.TryGetValue(colIdx, out var cdKey)
+                        && !string.IsNullOrWhiteSpace(cdKey)
+                        && !string.IsNullOrEmpty(val))
+                    {
+                        s.CustomData ??= [];
+                        s.CustomData.Add(new PSI.Sox.CustomData { Key = cdKey, Value = val });
+                    }
+                    break;
+            }
+        }
+        return s;
+    }
+
+    private void OnColumnMappingChanged(int colIdx, string field)
+    {
+        if (string.IsNullOrEmpty(field))
+        {
+            _columnMappings.Remove(colIdx);
+            _customDataKeys.Remove(colIdx);
+        }
+        else
+        {
+            _columnMappings[colIdx] = field;
+            if (field != "CustomData")
+                _customDataKeys.Remove(colIdx);
+        }
+    }
+
+    private void OnCustomKeyChanged(int colIdx, string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            _customDataKeys.Remove(colIdx);
+        else
+            _customDataKeys[colIdx] = key.Trim();
+    }
+
+    private IEnumerable<string> AvailableFields(int colIdx)
+    {
+        var usedElsewhere = _columnMappings
+            .Where(kv => kv.Key != colIdx)
+            .Select(kv => kv.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return ShipperFieldGroups.SelectMany(g => g.Fields)
+            .Where(f => !usedElsewhere.Contains(f))
+            .Append("CustomData"); // always available — multiple columns may map to it with different keys
+    }
+
+    private async Task AddToVarianceListAsync()
+    {
+        if (_variances.Count > 0)
+        {
+            await OnAddToVarianceList.InvokeAsync(_variances);
+            HandleClose();
+        }
+    }
+
+    private async Task ApplyAsync()
+    {
+        _applying = true;
+        _applyError = null;
+        _applyResults = [];
+        StateHasChanged();
+        try
+        {
+            var results = await ShipExecService.ApplyShipperVariancesAsync(_variances);
+            _applyResults = results;
+            _stage = Stage.ApplyResults;
+            await OnShippersApplied.InvokeAsync(results);
+        }
+        catch (Exception ex)
+        {
+            _applyError = ex.Message;
+            _stage = Stage.ApplyResults;
+        }
+        finally
+        {
+            _applying = false;
+        }
+    }
+
+    private void HandleClose()
+    {
+        Reset();
+        OnClose.InvokeAsync();
+    }
+}

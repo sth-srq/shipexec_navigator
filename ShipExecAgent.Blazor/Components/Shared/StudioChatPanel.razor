@@ -1,0 +1,777 @@
+@inject IAiChatService AiChat
+@inject IJSRuntime JS
+@inject IXmlViewerService XmlViewerService
+@using ShipExecAgent.Shared.Models
+@using ShipExecAgent.Shared.AI
+@using System.Text.Json
+
+<div class="scp-panel @(!IsVisible ? "scp-panel--hidden" : "") @(_minimized ? "scp-panel--minimized" : "")"
+     id="studio-chat-panel"
+     style="@GetPanelStyle()">
+
+    @* ── Resize handle (right edge) ── *@
+    <div class="scp-resize-handle" id="studio-chat-resize-handle" title="Drag to resize"></div>
+
+    @* ── Header bar ── *@
+    <div class="scp-header">
+        <span class="scp-header-title">&#x1F916; AI Assistant</span>
+        <div class="scp-header-actions">
+            @if (_undoIds.Count > 0)
+            {
+                <button class="scp-btn-undo" @onclick="UndoAsync" title="Undo AI DOM changes">&#x21BA; Undo</button>
+            }
+            <button class="scp-btn-minimize" @onclick="ToggleMinimize"
+                    title="@(_minimized ? "Expand chat" : "Minimise chat")">@(_minimized ? "▶" : "◀")</button>
+        </div>
+    </div>
+
+    @* ── Messages ── *@
+    <div class="scp-messages" id="scp-messages-scroll">
+        @foreach (var msg in _messages)
+        {
+            <div class="scp-bubble scp-bubble--@msg.Role">
+                <span class="scp-bubble-label">@(msg.Role == "user" ? "You" : "ShipExec Copilot")</span>
+                <div class="scp-bubble-body">@((MarkupString)FormatMessage(msg.Content))</div>
+                @if (msg.NodeLinks is { Count: > 0 })
+                {
+                    <div class="scp-node-links">
+                        @foreach (var link in msg.NodeLinks)
+                        {
+                            var captured = link;
+                            <button class="scp-node-link" @onclick="() => HandleNodeLinkClick(captured)"
+                                    title="Navigate to @captured.Category in the tree">
+                                &#x1F4C2; @captured.Label
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        @if (_thinking)
+        {
+            <div class="scp-bubble scp-bubble--assistant">
+                <span class="scp-bubble-label">ShipExec Copilot</span>
+                <div class="scp-bubble-body scp-thinking">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ── Input row ── *@
+    <div class="scp-input-row">
+        <input type="text"
+               class="scp-textarea"
+               id="scp-textarea"
+               placeholder="Ask about this configuration…"
+               @bind="_input"
+               @bind:event="oninput"
+               @onkeydown="HandleKeyDown"
+               disabled="@_thinking" />
+        <button class="scp-send-btn"
+                @onclick="SendAsync"
+                disabled="@(string.IsNullOrWhiteSpace(_input) || _thinking)"
+                title="Send">
+            &#x27A4;
+        </button>
+        <button class="scp-clear-btn"
+                @onclick="ClearChatAsync"
+                disabled="@(_messages.Count == 0 && string.IsNullOrWhiteSpace(_input))"
+                title="Clear chat and context">
+            &#x1F5D1;
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="scp-error">&#9888; @_error</div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public XmlNodeViewModel? XmlRoot { get; set; }
+    [Parameter] public EventCallback<List<ShipperDeleteItem>> OnDeleteShippers { get; set; }
+    [Parameter] public EventCallback<List<ShipperEditItem>> OnEditShippers { get; set; }
+    [Parameter] public EventCallback<ShipperAddItem> OnAddShipper { get; set; }
+    [Parameter] public string? UsersJson { get; set; }
+    [Parameter] public string? UsersMetaJson { get; set; }
+    [Parameter] public EventCallback<List<UserFindItem>> OnFindUsers { get; set; }
+    [Parameter] public EventCallback<List<UserDeleteItem>> OnDeleteUsers { get; set; }
+    [Parameter] public EventCallback<List<UserEditItem>> OnEditUsers { get; set; }
+    [Parameter] public EventCallback<UserAddItem> OnAddUser { get; set; }
+    [Parameter] public EventCallback<List<AdapterRegistrationDeleteItem>> OnDeleteAdapterRegistrations { get; set; }
+    [Parameter] public EventCallback<List<AdapterRegistrationEditItem>> OnEditAdapterRegistrations { get; set; }
+    [Parameter] public EventCallback<List<ClientDeleteItem>> OnDeleteClients { get; set; }
+    [Parameter] public EventCallback<List<ClientEditItem>> OnEditClients { get; set; }
+    [Parameter] public EventCallback<CbrEditItem> OnEditCbr { get; set; }
+    [Parameter] public string? CbrsJson { get; set; }
+    [Parameter] public string? LogsJson { get; set; }
+    [Parameter] public EventCallback<List<LogFindItem>> OnFindLogs { get; set; }
+    [Parameter] public EventCallback<List<EntityDeleteItem>> OnDeleteEntities { get; set; }
+    [Parameter] public EventCallback<List<EntityEditItem>> OnEditEntities { get; set; }
+    [Parameter] public CompanyEntityIndex? EntityIndex { get; set; }
+    [Parameter] public EventCallback<List<string>> OnExpandCategories { get; set; }
+    [Parameter] public EventCallback<EntityNodeLink> OnNavigateToEntity { get; set; }
+
+    private readonly List<ChatMessage> _messages = [];
+    private readonly List<string> _inputHistory = [];
+    private string _input = string.Empty;
+    private bool _thinking;
+    private string? _error;
+    private int _panelSize = -1;
+    private bool _minimized;
+    private readonly List<string> _undoIds = [];
+    private int _historyIndex = -1;
+    private string _historyDraft = string.Empty;
+
+    private bool _prevVisible;
+    private bool _hasRendered;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible != _prevVisible)
+        {
+            _prevVisible = IsVisible;
+            if (_hasRendered)
+                await SyncPanelCssVarsAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _hasRendered = true;
+            _prevVisible = IsVisible;
+            // Default to 35% of screen width on first load
+            if (_panelSize < 0)
+            {
+                var screenWidth = await JS.InvokeAsync<int>("eval", "(window.innerWidth || 1200)");
+                _panelSize = Math.Clamp((int)(screenWidth * 0.35), 360, 700);
+            }
+            await JS.InvokeVoidAsync("initChatPanelResize", "studio-chat-resize-handle", "studio-chat-panel", DotNetObjectReference.Create(this));
+            await SyncPanelCssVarsAsync();
+            await JS.InvokeVoidAsync("initChatInputHistory", "scp-textarea", DotNetObjectReference.Create(this));
+        }
+
+        if (_thinking)
+        {
+            await ScrollToBottomAsync();
+        }
+    }
+
+    [JSInvokable]
+    public async void SetPanelSize(int size)
+    {
+        _panelSize = Math.Clamp(size, 260, 700);
+        await SyncPanelCssVarsAsync();
+        StateHasChanged();
+    }
+
+    private async Task ToggleMinimize()
+    {
+        _minimized = !_minimized;
+        await SyncPanelCssVarsAsync();
+    }
+
+    private async Task OpenNewTabAsync()
+    {
+        await JS.InvokeVoidAsync("open", "/", "_blank");
+    }
+
+    private string GetPanelStyle()
+    {
+        if (!IsVisible || _minimized) return "";
+        var size = _panelSize > 0 ? _panelSize : 360;
+        return $"width: {size}px;";
+    }
+
+    private async Task SyncPanelCssVarsAsync()
+    {
+        var actualSize = _panelSize > 0 ? _panelSize : 360;
+        var size = (!IsVisible || _minimized) ? 0 : actualSize;
+        await JS.InvokeVoidAsync("eval",
+            $"document.documentElement.style.setProperty('--scp-panel-size','{size}px');");
+    }
+
+    private async Task SendAsync()
+    {
+        var text = _input.Trim();
+        if (string.IsNullOrEmpty(text) || _thinking) return;
+
+        _input    = string.Empty;
+        _error    = null;
+        _thinking = true;
+
+        if (_inputHistory.Count == 0 || _inputHistory[^1] != text)
+            _inputHistory.Add(text);
+        if (_inputHistory.Count > 50)
+            _inputHistory.RemoveAt(0);
+        _historyIndex = -1;
+        _historyDraft = string.Empty;
+
+        _messages.Add(new ChatMessage("user", text));
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        try
+        {
+            // Build the current entity index: prefer tree data for loaded categories,
+            // fall back to API-sourced data for categories the user hasn't expanded.
+            var currentIndex = GetCurrentEntityIndex();
+
+            // Only serialize the full XML when no entity index is available (legacy fallback)
+            string? xmlContext = null;
+            if (currentIndex is null && XmlRoot is not null)
+                xmlContext = await XmlViewerService.SerializeAsync(XmlRoot);
+
+            var response = await AiChat.SendMessageAsync(_messages.SkipLast(1).ToList(), text, xmlContext, useRag: true, usersContext: UsersJson, userMetaContext: UsersMetaJson, cbrsContext: CbrsJson, logsContext: LogsJson, entityIndex: currentIndex);
+
+            // Build clickable node links from the response
+            var nodeLinks = BuildNodeLinks(response);
+            _messages.Add(new ChatMessage("assistant", response.Message, nodeLinks));
+
+            await TryExecuteActionAsync(response.Action);
+
+            // Auto-expand tree nodes for categories the AI accessed
+            if (response.ReferencedCategories is { Count: > 0 })
+                await OnExpandCategories.InvokeAsync(response.ReferencedCategories);
+
+            // Auto-navigate to the last node link so the user sees the affected entity
+            if (nodeLinks is { Count: > 0 })
+            {
+                StateHasChanged();
+                await ScrollToBottomAsync();
+                await HandleNodeLinkClick(nodeLinks[^1]);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _thinking = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+            await JS.InvokeVoidAsync("eval", "document.getElementById('scp-textarea')?.focus()");
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await SendAsync();
+    }
+
+    [JSInvokable]
+    public string? HandleHistoryKey(string key)
+    {
+        if (key == "ArrowUp")
+        {
+            if (_inputHistory.Count == 0) return null;
+            if (_historyIndex == -1)
+            {
+                _historyDraft = _input;
+                _historyIndex = _inputHistory.Count - 1;
+            }
+            else if (_historyIndex > 0)
+            {
+                _historyIndex--;
+            }
+            else
+            {
+                return null;
+            }
+            _input = _inputHistory[_historyIndex];
+            StateHasChanged();
+            return _input;
+        }
+
+        if (key == "ArrowDown")
+        {
+            if (_historyIndex == -1) return null;
+            if (_historyIndex < _inputHistory.Count - 1)
+            {
+                _historyIndex++;
+                _input = _inputHistory[_historyIndex];
+            }
+            else
+            {
+                _historyIndex = -1;
+                _input        = _historyDraft;
+                _historyDraft = string.Empty;
+            }
+            StateHasChanged();
+            return _input;
+        }
+
+        return null;
+    }
+
+    private async Task ClearChatAsync()
+    {
+        _messages.Clear();
+        _undoIds.Clear();
+        _inputHistory.Clear();
+        _historyIndex = -1;
+        _historyDraft = string.Empty;
+        _input = string.Empty;
+        _error = null;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task ScrollToBottomAsync()
+    {
+        await JS.InvokeVoidAsync("eval",
+            "var el=document.getElementById('scp-messages-scroll');if(el)el.scrollTop=el.scrollHeight;");
+    }
+
+    private async Task UndoAsync()
+    {
+        if (_undoIds.Count == 0) return;
+        await JS.InvokeAsync<int>("undoAiScript", new object[] { _undoIds.ToArray() });
+        _undoIds.Clear();
+        StateHasChanged();
+    }
+
+    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
+    private async Task TryExecuteActionAsync(AiChatAction? action)
+    {
+        if (action is null) return;
+        try
+        {
+            switch (action.Type)
+            {
+                case "shipper-add":
+                    var addItem = action.Payload.Deserialize<ShipperAddItem>(_jsonOptions);
+                    if (addItem is not null) await OnAddShipper.InvokeAsync(addItem);
+                    break;
+                case "shipper-delete":
+                    var deleteItems = action.Payload.Deserialize<List<ShipperDeleteItem>>(_jsonOptions);
+                    if (deleteItems is { Count: > 0 }) await OnDeleteShippers.InvokeAsync(deleteItems);
+                    break;
+                case "shipper-edit":
+                    var editItems = action.Payload.Deserialize<List<ShipperEditItem>>(_jsonOptions);
+                    if (editItems is { Count: > 0 }) await OnEditShippers.InvokeAsync(editItems);
+                    break;
+                case "user-find":
+                    var findUsers = action.Payload.Deserialize<List<UserFindItem>>(_jsonOptions);
+                    if (findUsers is { Count: > 0 }) await OnFindUsers.InvokeAsync(findUsers);
+                    break;
+                case "user-add":
+                    var addUser = action.Payload.Deserialize<UserAddItem>(_jsonOptions);
+                    if (addUser is not null) await OnAddUser.InvokeAsync(addUser);
+                    break;
+                case "user-edit":
+                    var editUsers = action.Payload.Deserialize<List<UserEditItem>>(_jsonOptions);
+                    if (editUsers is { Count: > 0 }) await OnEditUsers.InvokeAsync(editUsers);
+                    break;
+                case "user-delete":
+                    var deleteUsers = action.Payload.Deserialize<List<UserDeleteItem>>(_jsonOptions);
+                    if (deleteUsers is { Count: > 0 }) await OnDeleteUsers.InvokeAsync(deleteUsers);
+                    break;
+                case "adapter-registration-delete":
+                    var deleteAdapters = action.Payload.Deserialize<List<AdapterRegistrationDeleteItem>>(_jsonOptions);
+                    if (deleteAdapters is { Count: > 0 }) await OnDeleteAdapterRegistrations.InvokeAsync(deleteAdapters);
+                    break;
+                case "adapter-registration-edit":
+                    var editAdapters = action.Payload.Deserialize<List<AdapterRegistrationEditItem>>(_jsonOptions);
+                    if (editAdapters is { Count: > 0 }) await OnEditAdapterRegistrations.InvokeAsync(editAdapters);
+                    break;
+                case "client-delete":
+                    var deleteClients = action.Payload.Deserialize<List<ClientDeleteItem>>(_jsonOptions);
+                    if (deleteClients is { Count: > 0 }) await OnDeleteClients.InvokeAsync(deleteClients);
+                    break;
+                case "client-edit":
+                    var editClients = action.Payload.Deserialize<List<ClientEditItem>>(_jsonOptions);
+                    if (editClients is { Count: > 0 }) await OnEditClients.InvokeAsync(editClients);
+                    break;
+                case "cbr-edit":
+                    var editCbr = action.Payload.Deserialize<CbrEditItem>(_jsonOptions);
+                    if (editCbr is not null) await OnEditCbr.InvokeAsync(editCbr);
+                    break;
+                case "log-find":
+                    var findLogs = action.Payload.Deserialize<List<LogFindItem>>(_jsonOptions);
+                    if (findLogs is { Count: > 0 }) await OnFindLogs.InvokeAsync(findLogs);
+                    break;
+                case "entity-delete":
+                    var deleteEntities = action.Payload.Deserialize<List<EntityDeleteItem>>(_jsonOptions);
+                    if (deleteEntities is { Count: > 0 }) await OnDeleteEntities.InvokeAsync(deleteEntities);
+                    break;
+                case "entity-edit":
+                    var editEntities = action.Payload.Deserialize<List<EntityEditItem>>(_jsonOptions);
+                    if (editEntities is { Count: > 0 }) await OnEditEntities.InvokeAsync(editEntities);
+                    break;
+                case "javascript":
+                    var jsCode = action.Payload.GetString();
+                    if (!string.IsNullOrWhiteSpace(jsCode))
+                    {
+                        var ids = await JS.InvokeAsync<string[]>("executeAiScript", jsCode);
+                        if (ids is { Length: > 0 }) _undoIds.AddRange(ids);
+                    }
+                    break;
+            }
+        }
+        catch { /* non-fatal */ }
+    }
+
+    private static string FormatMessage(string text)
+    {
+        // The AI is instructed to reply with Markdown inside the JSON "message" field.
+        // Convert the most common Markdown constructs to HTML so they render nicely
+        // inside the chat bubble.  We intentionally do NOT HTML-escape first because
+        // the AI may already produce HTML-like Markdown (tables, bold, etc.).  The
+        // content is sandboxed inside a scoped-CSS bubble, and the AI is our own
+        // system so the risk is controlled.
+
+        var s = text;
+
+        // ── Fenced code blocks (``` … ```) ──
+        s = System.Text.RegularExpressions.Regex.Replace(
+            s,
+            @"```(\w*)\r?\n([\s\S]*?)```",
+            m =>
+            {
+                var code = System.Net.WebUtility.HtmlEncode(m.Groups[2].Value.TrimEnd());
+                return $"<pre class=\"scp-code\"><code>{code}</code></pre>";
+            });
+
+        // ── Tables (| col | col | … with separator row) ──
+        s = System.Text.RegularExpressions.Regex.Replace(
+            s,
+            @"((?:^\|.+\|[ \t]*\r?\n)+)",
+            m => ConvertMarkdownTable(m.Value),
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // ── Headings (### / ## / #) ──
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^### +(.+)$", "<h4 class=\"scp-h\">$1</h4>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^## +(.+)$", "<h3 class=\"scp-h\">$1</h3>", System.Text.RegularExpressions.RegexOptions.Multiline);
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"^# +(.+)$", "<h2 class=\"scp-h\">$1</h2>", System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // ── Blockquotes (> …) ──
+        s = System.Text.RegularExpressions.Regex.Replace(
+            s,
+            @"(^> .+(?:\r?\n> .+)*)",
+            m =>
+            {
+                var inner = System.Text.RegularExpressions.Regex.Replace(m.Value, @"^> ?", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+                return $"<blockquote class=\"scp-blockquote\">{inner.Trim()}</blockquote>";
+            },
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // ── Numbered lists (1. …) ──
+        s = System.Text.RegularExpressions.Regex.Replace(
+            s,
+            @"((?:^\d+\. .+(?:\r?\n|$))+)",
+            m =>
+            {
+                var items = System.Text.RegularExpressions.Regex.Matches(m.Value, @"^\d+\. (.+)$", System.Text.RegularExpressions.RegexOptions.Multiline);
+                var lis = string.Join("", items.Select(i => $"<li>{i.Groups[1].Value.Trim()}</li>"));
+                return $"<ol class=\"scp-list\">{lis}</ol>";
+            },
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // ── Bullet lists (- …) ──
+        s = System.Text.RegularExpressions.Regex.Replace(
+            s,
+            @"((?:^- .+(?:\r?\n|$))+)",
+            m =>
+            {
+                var items = System.Text.RegularExpressions.Regex.Matches(m.Value, @"^- (.+)$", System.Text.RegularExpressions.RegexOptions.Multiline);
+                var lis = string.Join("", items.Select(i => $"<li>{i.Groups[1].Value.Trim()}</li>"));
+                return $"<ul class=\"scp-list\">{lis}</ul>";
+            },
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+
+        // ── Inline formatting ──
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"`([^`]+)`", "<code class=\"scp-inline-code\">$1</code>");
+
+        // ── Line breaks (preserve remaining newlines) ──
+        s = s.Replace("\r\n", "\n").Replace("\n", "<br />");
+
+        // Clean up double <br /> from block elements
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"(<(?:/?(?:h[234]|ol|ul|li|pre|blockquote|table|thead|tbody|tr|th|td)[^>]*>))\s*<br\s*/?>", "$1");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"<br\s*/?>\s*(<(?:h[234]|ol|ul|li|pre|blockquote|table|thead|tbody|tr|th|td)[^>]*>)", "$1");
+
+        return s;
+    }
+
+    private static string ConvertMarkdownTable(string tableText)
+    {
+        var lines = tableText.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .Where(l => l.StartsWith('|'))
+            .ToList();
+        if (lines.Count < 2) return tableText;
+
+        // Detect separator row (| --- | --- |)
+        var sepIdx = lines.FindIndex(l => System.Text.RegularExpressions.Regex.IsMatch(l, @"^\|[\s:|-]+\|$"));
+
+        var sb = new System.Text.StringBuilder("<table class=\"scp-table\">");
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (i == sepIdx) continue; // skip separator
+            var cells = lines[i].Split('|', StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => c.Trim()).ToList();
+            var tag = (sepIdx >= 0 && i < sepIdx) ? "th" : "td";
+            if (tag == "th") sb.Append("<thead>");
+            if (i == sepIdx + 1 || (sepIdx < 0 && i == 1)) sb.Append("<tbody>");
+            sb.Append("<tr>");
+            foreach (var cell in cells)
+                sb.Append($"<{tag}>{cell}</{tag}>");
+            sb.Append("</tr>");
+            if (tag == "th") sb.Append("</thead>");
+        }
+        sb.Append("</tbody></table>");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Builds the current entity index to pass to the AI.
+    /// For categories that have been loaded in the tree (user expanded them), the
+    /// index is refreshed from the current tree state so the AI sees any pending edits.
+    /// For categories that are still lazy-loaded (not expanded), the original
+    /// API-sourced data from <see cref="EntityIndex"/> is used.
+    /// </summary>
+    private CompanyEntityIndex? GetCurrentEntityIndex()
+    {
+        if (EntityIndex is null) return null;
+
+        // Ensure the company name is always set from the tree root
+        if (XmlRoot is not null && string.IsNullOrEmpty(EntityIndex.CompanyName))
+            EntityIndex.CompanyName = XmlRoot.NodeName;
+
+        if (XmlRoot is null) return EntityIndex;
+
+        // Refresh loaded categories from the in-memory tree to capture user edits
+        foreach (var catNode in XmlRoot.Children
+            .Where(c => c.IsLazyLoadable && c.IsLazyLoaded && c.Children.Count > 0))
+        {
+            EntityIndex.CategoryDetailsJson[catNode.NodeName] = SerializeCategoryFromTree(catNode);
+        }
+
+        return EntityIndex;
+    }
+
+    /// <summary>
+    /// Serializes a loaded category node from the in-memory tree to a JSON array
+    /// of scalar field dictionaries — the same format as the API-sourced index data.
+    /// </summary>
+    private static string SerializeCategoryFromTree(XmlNodeViewModel categoryNode)
+    {
+        var entities = new List<Dictionary<string, string?>>();
+        foreach (var child in categoryNode.Children)
+        {
+            var fields = new Dictionary<string, string?>();
+            foreach (var leaf in child.Children.Where(c => c.Children.Count == 0))
+            {
+                fields[leaf.NodeName] = leaf.NodeValue;
+            }
+            if (fields.Count > 0)
+                entities.Add(fields);
+        }
+        return JsonSerializer.Serialize(entities);
+    }
+
+    // ── Node link helpers ─────────────────────────────────────────────────────
+
+    /// <summary>Maps action types that target a single entity type to their category name.</summary>
+    private static readonly Dictionary<string, string> _actionCategoryMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["shipper-add"]                  = "Shippers",
+        ["shipper-delete"]               = "Shippers",
+        ["shipper-edit"]                 = "Shippers",
+        ["adapter-registration-delete"]  = "AdapterRegistrations",
+        ["adapter-registration-edit"]    = "AdapterRegistrations",
+        ["client-delete"]                = "Clients",
+        ["client-edit"]                  = "Clients",
+        ["cbr-edit"]                     = "ClientBusinessRules",
+    };
+
+    /// <summary>
+    /// Builds clickable <see cref="EntityNodeLink"/>s for the AI response.
+    /// <list type="bullet">
+    ///   <item>For mutating actions (edit/delete/add), creates a link to the affected
+    ///         entities.  If multiple entities were affected, the link goes to the
+    ///         category root with a change count summary.</item>
+    ///   <item>For read-only queries (no action), creates a link per referenced
+    ///         category so the user can explore the data the AI looked at.</item>
+    /// </list>
+    /// </summary>
+    private static List<EntityNodeLink> BuildNodeLinks(AiChatResponse response)
+    {
+        var links = new List<EntityNodeLink>();
+
+        // ── 1. Links from mutating actions ────────────────────────────────────
+        if (response.Action is { } action)
+        {
+            var actionLinks = BuildLinksFromAction(action);
+            if (actionLinks.Count > 0)
+            {
+                links.AddRange(actionLinks);
+                return links;
+            }
+        }
+
+        // ── 2. Links from referenced categories (read-only queries) ───────────
+        foreach (var cat in response.ReferencedCategories)
+        {
+            links.Add(new EntityNodeLink
+            {
+                Category = cat,
+                Label = $"View {cat}",
+            });
+        }
+
+        return links;
+    }
+
+    private static List<EntityNodeLink> BuildLinksFromAction(AiChatAction action)
+    {
+        var links = new List<EntityNodeLink>();
+
+        // entity-delete / entity-edit carry entityType per item
+        if (action.Type is "entity-delete" or "entity-edit")
+        {
+            try
+            {
+                var items = action.Payload.EnumerateArray().ToList();
+                // Group by entity type
+                var groups = items
+                    .Where(el => el.TryGetProperty("entityType", out _))
+                    .GroupBy(el => el.GetProperty("entityType").GetString() ?? "",
+                             StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                foreach (var group in groups)
+                {
+                    var entityType = group.Key;
+                    var category = _entitySingularToPluralMap.GetValueOrDefault(entityType) ?? entityType;
+                    var count = group.Count();
+                    if (count == 1)
+                    {
+                        var name = GetJsonField(group.First(), "name") ?? entityType;
+                        links.Add(new EntityNodeLink
+                        {
+                            Category = category,
+                            EntityName = name,
+                            Label = $"{(action.Type == "entity-delete" ? "Deleted" : "Edited")}: {name}",
+                        });
+                    }
+                    else
+                    {
+                        var verb = action.Type == "entity-delete" ? "Deleted" : "Edited";
+                        links.Add(new EntityNodeLink
+                        {
+                            Category = category,
+                            Label = $"{verb} {count} {category}",
+                        });
+                    }
+                }
+            }
+            catch { /* non-fatal */ }
+            return links;
+        }
+
+        // Known single-category actions (shipper-*, client-*, adapter-*, cbr-*)
+        if (_actionCategoryMap.TryGetValue(action.Type, out var cat))
+        {
+            try
+            {
+                if (action.Type.EndsWith("-add"))
+                {
+                    // Single-entity add
+                    var name = GetJsonField(action.Payload, "name") ?? GetJsonField(action.Payload, "symbol");
+                    links.Add(new EntityNodeLink
+                    {
+                        Category = cat,
+                        EntityName = name,
+                        Label = name is not null ? $"Added: {name}" : $"View {cat}",
+                    });
+                }
+                else if (action.Payload.ValueKind == JsonValueKind.Array)
+                {
+                    var items = action.Payload.EnumerateArray().ToList();
+                    var verb = action.Type.Contains("delete") ? "Deleted" : "Edited";
+                    if (items.Count == 1)
+                    {
+                        var name = GetJsonField(items[0], "name") ?? GetJsonField(items[0], "symbol") ?? cat;
+                        links.Add(new EntityNodeLink
+                        {
+                            Category = cat,
+                            EntityName = name,
+                            Label = $"{verb}: {name}",
+                        });
+                    }
+                    else if (items.Count > 1)
+                    {
+                        links.Add(new EntityNodeLink
+                        {
+                            Category = cat,
+                            Label = $"{verb} {items.Count} {cat}",
+                        });
+                    }
+                }
+                else
+                {
+                    // Single object payload (e.g. cbr-edit)
+                    var name = GetJsonField(action.Payload, "name");
+                    links.Add(new EntityNodeLink
+                    {
+                        Category = cat,
+                        EntityName = name,
+                        Label = name is not null ? $"Edited: {name}" : $"View {cat}",
+                    });
+                }
+            }
+            catch { /* non-fatal */ }
+            return links;
+        }
+
+        return links;
+    }
+
+    private static readonly Dictionary<string, string> _entitySingularToPluralMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Shipper"]                  = "Shippers",
+        ["Client"]                   = "Clients",
+        ["Profile"]                  = "Profiles",
+        ["Site"]                     = "Sites",
+        ["AdapterRegistration"]      = "AdapterRegistrations",
+        ["CarrierRoute"]             = "CarrierRoutes",
+        ["ClientBusinessRule"]       = "ClientBusinessRules",
+        ["DataConfigurationMapping"] = "DataConfigurationMappings",
+        ["DocumentConfiguration"]    = "DocumentConfigurations",
+        ["Machine"]                  = "Machines",
+        ["PrinterConfiguration"]     = "PrinterConfigurations",
+        ["PrinterDefinition"]        = "PrinterDefinitions",
+        ["ScaleConfiguration"]       = "ScaleConfigurations",
+        ["Schedule"]                 = "Schedules",
+        ["ServerBusinessRule"]       = "ServerBusinessRules",
+        ["SourceConfiguration"]      = "SourceConfigurations",
+    };
+
+    private static string? GetJsonField(JsonElement el, params string[] fieldNames)
+    {
+        foreach (var name in fieldNames)
+        {
+            if (el.TryGetProperty(name, out var prop) && prop.ValueKind == JsonValueKind.String)
+            {
+                var val = prop.GetString();
+                if (!string.IsNullOrEmpty(val)) return val;
+            }
+        }
+        return null;
+    }
+
+    private async Task HandleNodeLinkClick(EntityNodeLink link)
+    {
+        await OnNavigateToEntity.InvokeAsync(link);
+    }
+}

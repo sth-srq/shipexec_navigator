@@ -1,0 +1,882 @@
+@using PSI.Sox
+@using System.Text.Json
+@inject IShipExecService ShipExecService
+@inject IJSRuntime JS
+
+@if (IsVisible)
+{
+    <div class="cpd-backdrop" @onclick="HandleClose">
+        <div class="cpd-dlg" @onclick:stopPropagation>
+
+            <div class="cpd-header">
+                <span class="cpd-title">&#x1F4CA; Compare Profiles</span>
+                <button class="cpd-close" @onclick="HandleClose" disabled="@_loading">&#x2715;</button>
+            </div>
+
+            <div class="cpd-body">
+
+                @if (_loadError is not null)
+                {
+                    <div class="cpd-error">&#9888; @_loadError</div>
+                }
+                else if (_loading)
+                {
+                    <div class="cpd-loading">
+                        <span class="cpd-spinner"></span>
+                        Loading profiles&hellip;
+                    </div>
+                }
+                else
+                {
+                    <div class="cpd-selectors">
+                        @for (int si = 0; si < _selectedProfiles.Count; si++)
+                        {
+                            var slotIdx = si;
+                            var letter = (char)('A' + slotIdx);
+                            <div class="cpd-selector-group">
+                                <div class="cpd-selector-group-header">
+                                    <label class="cpd-label">Profile @letter</label>
+                                    @if (_selectedProfiles.Count > 2)
+                                    {
+                                        <button class="cpd-btn-remove-slot"
+                                                @onclick="() => RemoveSlot(slotIdx)"
+                                                title="Remove this profile slot"
+                                                disabled="@(_comparing || _comparingAll)">&#x2715;</button>
+                                    }
+                                </div>
+                                <select class="cpd-select" value="@_selectedProfiles[slotIdx]"
+                                        @onchange="e => _selectedProfiles[slotIdx] = e.Value?.ToString() ?? string.Empty">
+                                    <option value="">— select profile —</option>
+                                    @foreach (var name in _profileNames)
+                                    {
+                                        <option value="@name">@name</option>
+                                    }
+                                </select>
+                            </div>
+                            @if (slotIdx < _selectedProfiles.Count - 1)
+                            {
+                                <span class="cpd-vs">vs</span>
+                            }
+                        }
+
+                        <button class="cpd-btn-add-slot"
+                                @onclick="AddSlot"
+                                disabled="@(_comparing || _comparingAll || _selectedProfiles.Count >= _profileNames.Count)"
+                                title="Add another profile to compare">
+                            &#x2B; Add Profile
+                        </button>
+
+                        <button class="cpd-btn-compare"
+                                @onclick="CompareAsync"
+                                disabled="@(!CanCompare || _comparing || _comparingAll)">
+                            @if (_comparing)
+                            {
+                                <span class="cpd-spinner cpd-spinner--sm"></span>
+                            }
+                            Compare
+                        </button>
+
+                        <span class="cpd-compare-all-sep">or</span>
+
+                        <button class="cpd-btn-compare-all"
+                                @onclick="CompareAllAsync"
+                                disabled="@(_comparingAll || _comparing || _profileNames.Count < 2)"
+                                title="Compare every profile against every other and download a matrix CSV">
+                            @if (_comparingAll)
+                            {
+                                <span class="cpd-spinner cpd-spinner--sm"></span>
+                                @_compareAllStatus
+                            }
+                            else
+                            {
+                                @:&#x2B07; Compare All Profiles
+                            }
+                        </button>
+                    </div>
+
+                    @if (_compareError is not null)
+                    {
+                        <div class="cpd-error">&#9888; @_compareError</div>
+                    }
+
+                    @if (_compared)
+                    {
+                        @if (_diffRows.Count == 0 && _matrixRows.Count == 0)
+                        {
+                            <div class="cpd-no-diff">
+                                <span class="cpd-check">&#x2714;</span>
+                                All selected profiles are identical.
+                            </div>
+                        }
+                        else if (_compareProfileNames.Count == 2)
+                        {
+                            @* ── Pairwise table ── *@
+                            <div class="cpd-summary-row">
+                                <span class="cpd-pill cpd-pill--total">@_diffRows.Count difference@(_diffRows.Count == 1 ? "" : "s")</span>
+                                @if (_diffRows.Count(r => r.Kind == DiffKind.Added) > 0)
+                                {
+                                    <span class="cpd-pill cpd-pill--add">&#x2B; @_diffRows.Count(r => r.Kind == DiffKind.Added) added</span>
+                                }
+                                @if (_diffRows.Count(r => r.Kind == DiffKind.Modified) > 0)
+                                {
+                                    <span class="cpd-pill cpd-pill--mod">&#x21C4; @_diffRows.Count(r => r.Kind == DiffKind.Modified) modified</span>
+                                }
+                                @if (_diffRows.Count(r => r.Kind == DiffKind.Removed) > 0)
+                                {
+                                    <span class="cpd-pill cpd-pill--del">&#x2212; @_diffRows.Count(r => r.Kind == DiffKind.Removed) removed</span>
+                                }
+                                <button class="cpd-btn-export" @onclick="ExportDiffCsvAsync" title="Export differences as CSV">
+                                    &#x2B07; Export CSV
+                                </button>
+                            </div>
+
+                            <div class="cpd-table-wrap">
+                                <table class="cpd-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="cpd-th cpd-th--field">Path</th>
+                                            <th class="cpd-th cpd-th--change">Change</th>
+                                            <th class="cpd-th cpd-th--val">@_compareProfileNames[0]</th>
+                                            <th class="cpd-th cpd-th--val">@_compareProfileNames[1]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int ri = 0; ri < _diffRows.Count; ri++)
+                                        {
+                                            var row = _diffRows[ri];
+                                            var idx = ri;
+                                            var isExpanded = idx == _expandedRowIndex;
+                                            <tr class="cpd-row cpd-row--@row.Kind.ToString().ToLower() @(isExpanded ? "cpd-row--active" : "")"
+                                                @ondblclick="() => HandleRowDoubleClick(idx)"
+                                                title="Double-click for details">
+                                                <td class="cpd-td cpd-td--field">@row.Path</td>
+                                                <td class="cpd-td cpd-td--change">
+                                                    <span class="cpd-badge cpd-badge--@row.Kind.ToString().ToLower()">@row.Kind</span>
+                                                </td>
+                                                <td class="cpd-td cpd-td--val cpd-td--orig">
+                                                    @if (row.OrigVal is not null)
+                                                    {
+                                                        @row.OrigVal
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="cpd-absent">(not present)</span>
+                                                    }
+                                                </td>
+                                                <td class="cpd-td cpd-td--val cpd-td--new">
+                                                    @if (row.NewVal is not null)
+                                                    {
+                                                        @row.NewVal
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="cpd-absent">(not present)</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                            @if (isExpanded)
+                                            {
+                                                <tr class="cpd-detail-row">
+                                                    <td colspan="4" class="cpd-detail-cell">
+                                                        <div class="cpd-detail-panel">
+                                                            <div class="cpd-detail-header">
+                                                                <span class="cpd-detail-path">&#x1F50D; @row.Path</span>
+                                                                <div class="cpd-detail-actions">
+                                                                    @if (row.Kind != DiffKind.Added)
+                                                                    {
+                                                                        <button class="cpd-btn-goto" @onclick="() => GoToProfileAsync(_compareProfileNames[0])">
+                                                                            &#x1F5FA; @_compareProfileNames[0]
+                                                                        </button>
+                                                                    }
+                                                                    @if (row.Kind != DiffKind.Removed)
+                                                                    {
+                                                                        <button class="cpd-btn-goto" @onclick="() => GoToProfileAsync(_compareProfileNames[1])">
+                                                                            &#x1F5FA; @_compareProfileNames[1]
+                                                                        </button>
+                                                                    }
+                                                                    <button class="cpd-detail-dismiss" @onclick="() => { _expandedRowIndex = -1; _detailRows = []; }">&#x2715;</button>
+                                                                </div>
+                                                            </div>
+                                                            @if (_detailRows.Count > 0)
+                                                            {
+                                                                <table class="cpd-detail-table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th class="cpd-dth cpd-dth--field">Field</th>
+                                                                            <th class="cpd-dth">@_compareProfileNames[0]</th>
+                                                                            <th class="cpd-dth">@_compareProfileNames[1]</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach (var d in _detailRows)
+                                                                        {
+                                                                            <tr class="@(d.IsChanged ? "cpd-drow--changed" : "cpd-drow--same")">
+                                                                                <td class="cpd-dtd cpd-dtd--field">@d.Field</td>
+                                                                                <td class="cpd-dtd @(d.IsChanged ? "cpd-dtd--orig" : "")">@(d.ValA ?? "\u2014")</td>
+                                                                                <td class="cpd-dtd @(d.IsChanged ? "cpd-dtd--new" : "")">@(d.ValB ?? "\u2014")</td>
+                                                                            </tr>
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="cpd-detail-empty">No field-level detail available.</div>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            @* ── Matrix table (3+ profiles) ── *@
+                            <div class="cpd-summary-row">
+                                <span class="cpd-pill cpd-pill--total">@_matrixRows.Count differing path@(_matrixRows.Count == 1 ? "" : "s")</span>
+                                <span class="cpd-pill cpd-pill--total">@_compareProfileNames.Count profiles</span>
+                                <button class="cpd-btn-export" @onclick="ExportDiffCsvAsync" title="Export differences as CSV">
+                                    &#x2B07; Export CSV
+                                </button>
+                            </div>
+
+                            <div class="cpd-table-wrap cpd-table-wrap--matrix">
+                                <table class="cpd-table cpd-table--matrix">
+                                    <thead>
+                                        <tr>
+                                            <th class="cpd-th cpd-th--field">Path</th>
+                                            @foreach (var pn in _compareProfileNames)
+                                            {
+                                                <th class="cpd-th cpd-th--val" title="@pn">@pn</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var mr in _matrixRows)
+                                        {
+                                            <tr class="cpd-row">
+                                                <td class="cpd-td cpd-td--field">@mr.Path</td>
+                                                @for (int ci = 0; ci < _compareProfileNames.Count; ci++)
+                                                {
+                                                    var val = mr.Values[ci];
+                                                    var cls = string.IsNullOrEmpty(val) ? "cpd-td cpd-td--val cpd-absent-cell" : "cpd-td cpd-td--val";
+                                                    <td class="@cls">@(string.IsNullOrEmpty(val) ? "(absent)" : val)</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                }
+
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<string> OnGoToProfile { get; set; }
+
+    private bool _loading;
+    private string? _loadError;
+
+    private List<string> _profileNames = [];
+    private Dictionary<string, int> _profileIdByName = [];
+
+    // Slots shown in the selector row; always starts with 2 empty slots
+    private List<string> _selectedProfiles = [string.Empty, string.Empty];
+
+    // The profile names that were active when Compare was last clicked
+    private List<string> _compareProfileNames = [];
+
+    private bool _comparing;
+    private bool _compared;
+    private string? _compareError;
+
+    private bool _comparingAll;
+    private string _compareAllStatus = string.Empty;
+
+    private List<ProfileDiffRow> _diffRows = [];
+    private record MatrixRow(string Path, List<string> Values);
+    private List<MatrixRow> _matrixRows = [];
+
+    private string? _fullJsonA;
+    private string? _fullJsonB;
+    private int _expandedRowIndex = -1;
+    private List<DetailRow> _detailRows = [];
+
+    private bool CanCompare
+    {
+        get
+        {
+            var filled = _selectedProfiles.Where(p => !string.IsNullOrEmpty(p)).ToList();
+            return filled.Count >= 2 && filled.Distinct().Count() == filled.Count;
+        }
+    }
+
+    private enum DiffKind { Added, Modified, Removed }
+    private record ProfileDiffRow(string Path, DiffKind Kind, string? OrigVal, string? NewVal);
+    private record DetailRow(string Field, string? ValA, string? ValB, bool IsChanged);
+
+    private static readonly Newtonsoft.Json.JsonSerializerSettings _jsonSettings = new()
+    {
+        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+        NullValueHandling     = Newtonsoft.Json.NullValueHandling.Ignore,
+        Formatting            = Newtonsoft.Json.Formatting.None,
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible && _profileNames.Count == 0 && !_loading)
+        {
+            await LoadProfilesAsync();
+        }
+    }
+
+    private async Task LoadProfilesAsync()
+    {
+        _loading = true;
+        _loadError = null;
+        _compared = false;
+        _diffRows.Clear();
+        _matrixRows.Clear();
+        _selectedProfiles = [string.Empty, string.Empty];
+        try
+        {
+            var profiles = await ShipExecService.GetProfilesAsync();
+            _profileIdByName.Clear();
+            _profileNames.Clear();
+
+            foreach (var p in profiles)
+            {
+                var name = GetProfileName(p);
+                if (string.IsNullOrEmpty(name) || _profileIdByName.ContainsKey(name)) continue;
+                _profileNames.Add(name);
+                _profileIdByName[name] = p.Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void AddSlot() => _selectedProfiles.Add(string.Empty);
+
+    private void RemoveSlot(int idx)
+    {
+        if (_selectedProfiles.Count <= 2) return;
+        _selectedProfiles.RemoveAt(idx);
+        _compared = false;
+        _diffRows.Clear();
+        _matrixRows.Clear();
+    }
+
+    private async Task CompareAsync()
+    {
+        if (!CanCompare) return;
+
+        var profiles = _selectedProfiles.Where(p => !string.IsNullOrEmpty(p)).ToList();
+
+        _comparing = true;
+        _compared = false;
+        _compareError = null;
+        _diffRows.Clear();
+        _matrixRows.Clear();
+        _expandedRowIndex = -1;
+        _detailRows.Clear();
+        _fullJsonA = null;
+        _fullJsonB = null;
+        _compareProfileNames = [];
+
+        try
+        {
+            var tasks = profiles
+                .Select(name => ShipExecService.GetFullProfileAsync(_profileIdByName[name]))
+                .ToArray();
+            var results = await Task.WhenAll(tasks);
+            var jsons = results
+                .Select(r => Newtonsoft.Json.JsonConvert.SerializeObject(r, _jsonSettings))
+                .ToList();
+
+            _compareProfileNames = profiles;
+
+            if (profiles.Count == 2)
+            {
+                _fullJsonA = jsons[0];
+                _fullJsonB = jsons[1];
+                _diffRows = await Task.Run(() => DeepCompare(jsons[0], jsons[1]));
+            }
+            else
+            {
+                var allPathMaps = await Task.Run(() =>
+                    jsons.Select(CollectScalarPaths).ToList());
+
+                var allPaths = allPathMaps
+                    .SelectMany(m => m.Keys)
+                    .Distinct()
+                    .OrderBy(p => p)
+                    .Where(p => allPathMaps
+                        .Select(m => m.TryGetValue(p, out var v) ? v : string.Empty)
+                        .Distinct().Count() > 1)
+                    .ToList();
+
+                _matrixRows = allPaths
+                    .Select(path => new MatrixRow(path,
+                        allPathMaps.Select(m => m.TryGetValue(path, out var v) ? v : string.Empty).ToList()))
+                    .ToList();
+            }
+
+            _compared = true;
+        }
+        catch (Exception ex)
+        {
+            _compareError = ex.Message;
+        }
+        finally
+        {
+            _comparing = false;
+        }
+    }
+
+    // ── Deep recursive comparison ─────────────────────────────────────────────
+
+    private static List<ProfileDiffRow> DeepCompare(string jsonA, string jsonB)
+    {
+        var rows = new List<ProfileDiffRow>();
+        using var docA = JsonDocument.Parse(jsonA);
+        using var docB = JsonDocument.Parse(jsonB);
+        CompareObjects(string.Empty, docA.RootElement, docB.RootElement, rows);
+        return rows;
+    }
+
+    private static void CompareObjects(
+        string path, JsonElement a, JsonElement b, List<ProfileDiffRow> rows)
+    {
+        var propsA = a.ValueKind == JsonValueKind.Object
+            ? a.EnumerateObject().ToDictionary(p => p.Name, p => p.Value)
+            : [];
+        var propsB = b.ValueKind == JsonValueKind.Object
+            ? b.EnumerateObject().ToDictionary(p => p.Name, p => p.Value)
+            : [];
+
+        foreach (var key in propsA.Keys.Union(propsB.Keys).OrderBy(k => k))
+        {
+            var hasA = propsA.TryGetValue(key, out var valA);
+            var hasB = propsB.TryGetValue(key, out var valB);
+            var child = string.IsNullOrEmpty(path) ? key : $"{path} \u203a {key}";
+
+            if (hasA && hasB)
+            {
+                if (valA.ValueKind == JsonValueKind.Array && valB.ValueKind == JsonValueKind.Array)
+                    CompareArrays(child, valA, valB, rows);
+                else if (valA.ValueKind == JsonValueKind.Object && valB.ValueKind == JsonValueKind.Object)
+                    CompareObjects(child, valA, valB, rows);
+                else
+                {
+                    var sa = ScalarString(valA);
+                    var sb = ScalarString(valB);
+                    if (sa != sb)
+                        rows.Add(new ProfileDiffRow(child, DiffKind.Modified, sa, sb));
+                }
+            }
+            else if (hasA)
+            {
+                var sa = ScalarString(valA);
+                if (!string.IsNullOrEmpty(sa))
+                    rows.Add(new ProfileDiffRow(child, DiffKind.Removed, sa, null));
+            }
+            else
+            {
+                var sb = ScalarString(valB);
+                if (!string.IsNullOrEmpty(sb))
+                    rows.Add(new ProfileDiffRow(child, DiffKind.Added, null, sb));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Matches array items by key (Id / Name / Symbol / Code).
+    /// Matched pairs where all values are identical produce no rows — this satisfies
+    /// "ignore nodes with the same node type name, id, and values".
+    /// Unmatched items become Added or Removed rows.
+    /// </summary>
+    private static void CompareArrays(
+        string path, JsonElement arrA, JsonElement arrB, List<ProfileDiffRow> rows)
+    {
+        var itemsA = arrA.EnumerateArray().ToList();
+        var itemsB = arrB.EnumerateArray().ToList();
+        if (itemsA.Count == 0 && itemsB.Count == 0) return;
+
+        var matchedA = new HashSet<int>();
+        var matchedB = new HashSet<int>();
+
+        // Pass 1: match by natural key (Id / Name / Symbol / Code)
+        for (int i = 0; i < itemsA.Count; i++)
+        {
+            var keyA = ItemKey(itemsA[i]);
+            if (keyA is null) continue;
+            for (int j = 0; j < itemsB.Count; j++)
+            {
+                if (matchedB.Contains(j)) continue;
+                if (keyA == ItemKey(itemsB[j]))
+                {
+                    matchedA.Add(i);
+                    matchedB.Add(j);
+                    // Identical items produce zero rows — automatically "ignored"
+                    CompareObjects($"{path} \u203a {keyA}", itemsA[i], itemsB[j], rows);
+                    break;
+                }
+            }
+        }
+
+        // Pass 2: match keyless items positionally
+        int nextB = 0;
+        for (int i = 0; i < itemsA.Count; i++)
+        {
+            if (matchedA.Contains(i) || ItemKey(itemsA[i]) is not null) continue;
+            while (nextB < itemsB.Count && (matchedB.Contains(nextB) || ItemKey(itemsB[nextB]) is not null))
+                nextB++;
+            if (nextB < itemsB.Count)
+            {
+                matchedA.Add(i);
+                matchedB.Add(nextB);
+                CompareObjects($"{path} \u203a [{i}]", itemsA[i], itemsB[nextB++], rows);
+            }
+        }
+
+        // Unmatched in A → Removed
+        for (int i = 0; i < itemsA.Count; i++)
+            if (!matchedA.Contains(i))
+                rows.Add(new ProfileDiffRow(
+                    $"{path} \u203a {ItemKey(itemsA[i]) ?? $"[{i}]"}",
+                    DiffKind.Removed, ItemSummary(itemsA[i]), null));
+
+        // Unmatched in B → Added
+        for (int j = 0; j < itemsB.Count; j++)
+            if (!matchedB.Contains(j))
+                rows.Add(new ProfileDiffRow(
+                    $"{path} \u203a {ItemKey(itemsB[j]) ?? $"[{j}]"}",
+                    DiffKind.Added, null, ItemSummary(itemsB[j])));
+    }
+
+    private static string? ItemKey(JsonElement item)
+    {
+        if (item.ValueKind != JsonValueKind.Object) return null;
+        foreach (var prop in new[] { "Name", "Symbol", "Code", "Description", "Type", "Id" })
+            if (item.TryGetProperty(prop, out var v)
+                && v.ValueKind is not (JsonValueKind.Null or JsonValueKind.Object or JsonValueKind.Array))
+            {
+                var s = v.ToString();
+                if (!string.IsNullOrWhiteSpace(s)) return s;
+            }
+        return null;
+    }
+
+    private static string ScalarString(JsonElement e) => e.ValueKind switch
+    {
+        JsonValueKind.String => e.GetString() ?? string.Empty,
+        JsonValueKind.True   => "true",
+        JsonValueKind.False  => "false",
+        JsonValueKind.Null   => string.Empty,
+        JsonValueKind.Number => e.ToString(),
+        _                    => string.Empty,
+    };
+
+    private static readonly string[] _summaryPreferredFields = ["Name", "Description", "Symbol", "Code", "Type"];
+
+    private static string ItemSummary(JsonElement item)
+    {
+        if (item.ValueKind != JsonValueKind.Object) return ScalarString(item);
+        var parts = new List<string>();
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Preferred descriptive fields first
+        foreach (var name in _summaryPreferredFields)
+        {
+            if (item.TryGetProperty(name, out var v)
+                && v.ValueKind is not (JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.Null))
+            {
+                var val = ScalarString(v);
+                if (!string.IsNullOrEmpty(val))
+                {
+                    parts.Add($"{name}: {val}");
+                    used.Add(name);
+                    if (parts.Count == 3) break;
+                }
+            }
+        }
+
+        // Fill remaining slots from other scalar properties, skipping Id
+        if (parts.Count < 3)
+        {
+            foreach (var prop in item.EnumerateObject())
+            {
+                if (used.Contains(prop.Name)
+                    || prop.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)) continue;
+                if (prop.Value.ValueKind is JsonValueKind.Object or JsonValueKind.Array) continue;
+                var val = ScalarString(prop.Value);
+                if (!string.IsNullOrEmpty(val))
+                {
+                    parts.Add($"{prop.Name}: {val}");
+                    if (parts.Count == 3) break;
+                }
+            }
+        }
+
+        return parts.Count > 0 ? string.Join(", ", parts) : "(item)";
+    }
+
+    private void HandleRowDoubleClick(int idx)
+    {
+        if (_expandedRowIndex == idx)
+        {
+            _expandedRowIndex = -1;
+            _detailRows = [];
+        }
+        else
+        {
+            _expandedRowIndex = idx;
+            _detailRows = BuildDetailRows(_diffRows[idx]);
+        }
+    }
+
+    private List<DetailRow> BuildDetailRows(ProfileDiffRow row)
+    {
+        if (_fullJsonA is null || _fullJsonB is null) return [];
+
+        var segments = row.Path.Split(" \u203a ");
+
+        // For a Modified leaf, show the parent object's fields so the user sees full context.
+        // For Added/Removed items the path already points to the item itself.
+        string contextPath;
+        if (row.Kind == DiffKind.Modified && segments.Length > 1)
+            contextPath = string.Join(" \u203a ", segments[..^1]);
+        else if (row.Kind == DiffKind.Modified)
+            return [new DetailRow(row.Path, row.OrigVal, row.NewVal, true)];
+        else
+            contextPath = row.Path;
+
+        using var docA = JsonDocument.Parse(_fullJsonA);
+        using var docB = JsonDocument.Parse(_fullJsonB);
+
+        var propsA = GetScalarProps(ExtractAtPath(docA, contextPath));
+        var propsB = GetScalarProps(ExtractAtPath(docB, contextPath));
+
+        var result = new List<DetailRow>();
+        foreach (var key in propsA.Keys.Union(propsB.Keys).OrderBy(k => k))
+        {
+            propsA.TryGetValue(key, out var vA);
+            propsB.TryGetValue(key, out var vB);
+            if (string.IsNullOrEmpty(vA) && string.IsNullOrEmpty(vB)) continue;
+            result.Add(new DetailRow(
+                key,
+                string.IsNullOrEmpty(vA) ? null : vA,
+                string.IsNullOrEmpty(vB) ? null : vB,
+                vA != vB));
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Walks the JSON using path segments separated by " \u203a ".
+    /// Object properties are navigated directly; array items are matched by ItemKey.
+    /// </summary>
+    private static JsonElement? ExtractAtPath(JsonDocument doc, string path)
+    {
+        if (string.IsNullOrEmpty(path)) return doc.RootElement;
+        JsonElement current = doc.RootElement;
+        foreach (var seg in path.Split(" \u203a "))
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(seg, out current)) return null;
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                JsonElement? found = null;
+                foreach (var item in current.EnumerateArray())
+                    if (ItemKey(item) == seg) { found = item; break; }
+                if (found is null) return null;
+                current = found.Value;
+            }
+            else return null;
+        }
+        return current;
+    }
+
+    private static Dictionary<string, string> GetScalarProps(JsonElement? elem)
+    {
+        if (elem is null || elem.Value.ValueKind != JsonValueKind.Object) return [];
+        return elem.Value.EnumerateObject()
+            .Where(p => p.Value.ValueKind is not (JsonValueKind.Object or JsonValueKind.Array))
+            .ToDictionary(p => p.Name, p => ScalarString(p.Value));
+    }
+
+    private async Task GoToProfileAsync(string profileName)
+        => await OnGoToProfile.InvokeAsync(profileName);
+
+    private static string GetProfileName(Profile profile)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.Name)) return profile.Name;
+        if (!string.IsNullOrWhiteSpace(profile.Description)) return profile.Description;
+        return profile.Id.ToString();
+    }
+
+    private async Task ExportDiffCsvAsync()
+    {
+        if (_compareProfileNames.Count == 0) return;
+
+        var csvSb = new System.Text.StringBuilder();
+        csvSb.AppendLine($"Path,{string.Join(",", _compareProfileNames.Select(n => $"\"{EscapeCsv(n)}\""))}");
+
+        if (_compareProfileNames.Count == 2)
+        {
+            foreach (var row in _diffRows)
+            {
+                var valA = row.Kind == DiffKind.Added   ? string.Empty : (row.OrigVal ?? string.Empty);
+                var valB = row.Kind == DiffKind.Removed ? string.Empty : (row.NewVal  ?? string.Empty);
+                csvSb.AppendLine($"\"{EscapeCsv(row.Path)}\",\"{EscapeCsv(valA)}\",\"{EscapeCsv(valB)}\"");
+            }
+        }
+        else
+        {
+            foreach (var row in _matrixRows)
+            {
+                csvSb.Append($"\"{EscapeCsv(row.Path)}\"");
+                foreach (var val in row.Values)
+                    csvSb.Append($",\"{EscapeCsv(val)}\"");
+                csvSb.AppendLine();
+            }
+        }
+
+        var names = string.Join("_vs_", _compareProfileNames.Select(n =>
+            string.Concat(n.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '-'))));
+        var fileName = $"ProfileDiff_{names}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        await JS.InvokeVoidAsync("downloadFile", fileName, csvSb.ToString(), "text/csv");
+    }
+
+    private static string EscapeCsv(string value)
+        => value.Replace("\"", "\"\"");
+
+    private async Task CompareAllAsync()
+    {
+        if (_profileNames.Count < 2) return;
+        _comparingAll = true;
+        _compareAllStatus = $"Loading {_profileNames.Count} profiles\u2026";
+        _compareError = null;
+        StateHasChanged();
+        try
+        {
+            var tasks = _profileNames
+                .Select(name => ShipExecService.GetFullProfileAsync(_profileIdByName[name]))
+                .ToArray();
+            var results = await Task.WhenAll(tasks);
+
+            _compareAllStatus = "Analysing differences\u2026";
+            StateHasChanged();
+
+            var allPathMaps = await Task.Run(() =>
+                results.Select(r =>
+                    CollectScalarPaths(Newtonsoft.Json.JsonConvert.SerializeObject(r, _jsonSettings)))
+                .ToList());
+
+            var allPaths = allPathMaps
+                .SelectMany(m => m.Keys)
+                .Distinct()
+                .OrderBy(p => p)
+                .Where(p => allPathMaps
+                    .Select(m => m.TryGetValue(p, out var v) ? v : string.Empty)
+                    .Distinct().Count() > 1)
+                .ToList();
+
+            var csvSb = new System.Text.StringBuilder();
+            csvSb.AppendLine($"Path,{string.Join(",", _profileNames.Select(n => $"\"{EscapeCsv(n)}\""))}");
+            foreach (var path in allPaths)
+            {
+                csvSb.Append($"\"{EscapeCsv(path)}\"");
+                foreach (var map in allPathMaps)
+                {
+                    map.TryGetValue(path, out var val);
+                    csvSb.Append($",\"{EscapeCsv(val ?? string.Empty)}\"");
+                }
+                csvSb.AppendLine();
+            }
+
+            var fileName = $"AllProfilesDiff_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            await JS.InvokeVoidAsync("downloadFile", fileName, csvSb.ToString(), "text/csv");
+        }
+        catch (Exception ex)
+        {
+            _compareError = ex.Message;
+        }
+        finally
+        {
+            _comparingAll = false;
+            _compareAllStatus = string.Empty;
+        }
+    }
+
+    private static Dictionary<string, string> CollectScalarPaths(string json)
+    {
+        var result = new Dictionary<string, string>();
+        using var doc = JsonDocument.Parse(json);
+        CollectFrom(string.Empty, doc.RootElement, result);
+        return result;
+    }
+
+    private static void CollectFrom(string path, JsonElement el, Dictionary<string, string> result)
+    {
+        switch (el.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var prop in el.EnumerateObject())
+                {
+                    var child = string.IsNullOrEmpty(path) ? prop.Name : $"{path} \u203a {prop.Name}";
+                    CollectFrom(child, prop.Value, result);
+                }
+                break;
+            case JsonValueKind.Array:
+                var items = el.EnumerateArray().ToList();
+                for (int i = 0; i < items.Count; i++)
+                {
+                    var key = ItemKey(items[i]) ?? $"[{i}]";
+                    var child = string.IsNullOrEmpty(path) ? key : $"{path} \u203a {key}";
+                    CollectFrom(child, items[i], result);
+                }
+                break;
+            default:
+                var val = ScalarString(el);
+                if (!string.IsNullOrEmpty(val) && !string.IsNullOrEmpty(path))
+                    result[path] = val;
+                break;
+        }
+    }
+
+    private async Task HandleClose()
+    {
+        _compared = false;
+        _diffRows.Clear();
+        _matrixRows.Clear();
+        _expandedRowIndex = -1;
+        _detailRows.Clear();
+        _fullJsonA = null;
+        _fullJsonB = null;
+        _compareError = null;
+        _selectedProfiles = [string.Empty, string.Empty];
+        _compareProfileNames = [];
+        await OnClose.InvokeAsync();
+    }
+}

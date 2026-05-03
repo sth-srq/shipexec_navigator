@@ -1,0 +1,274 @@
+@using ShipExecAgent.Shared.Models
+@using ShipExecAgent.Shared.Helpers
+@inject IShipExecService ShipExecService
+@inject IJSRuntime JS
+
+@if (IsVisible)
+{
+    <div class="au-backdrop" @onclick="HandleClose">
+        <div class="au-dlg" @onclick:stopPropagation>
+
+            <div class="au-header">
+                <span class="au-title">&#x2B06; Upload Users</span>
+                <button class="au-close" @onclick="HandleClose" disabled="@_isBusy">&#x2715;</button>
+            </div>
+
+            <div class="au-body">
+
+                @if (_stage == Stage.Pick)
+                {
+                    <InputFile id="upload-file-input" style="display:none" OnChange="OnFileSelectedAsync" />
+
+                    <div class="au-upload-area">
+                        <button class="au-btn-choose" @onclick="TriggerFilePickerAsync">&#x1F4C2; Choose CSV</button>
+                        @if (_selectedFile is not null)
+                        {
+                            <div class="au-file-info">
+                                <span class="au-file-name">@_selectedFile.Name</span>
+                                <span class="au-file-size">@FormatSize(_selectedFile.Size)</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="au-file-hint">No file selected &mdash; must be .csv</span>
+                        }
+                    </div>
+
+                    <div class="au-template-row">
+                        <a href="/files/UserTemplate.csv" download class="au-template-link">&#x2B07; Download Template</a>
+                        <a href="/files/UserSampleData.csv" download class="au-template-link">&#x2B07; Download Sample Data</a>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="au-error">&#9888; @_errorMessage</div>
+                    }
+                }
+
+                @if (_stage == Stage.Preview)
+                {
+                    <div class="au-preview-summary">
+                        <span class="au-summary-valid">&#x2713; @_parsedRows.Count(r => r.IsValid) valid</span>
+                        @if (_parsedRows.Any(r => !r.IsValid))
+                        {
+                            <span class="au-summary-invalid">&#x2718; @_parsedRows.Count(r => !r.IsValid) invalid</span>
+                        }
+                        <span class="au-summary-file">@_selectedFile!.Name</span>
+                    </div>
+
+                    <div class="au-table-wrap">
+                        <table class="au-preview-table">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    <th>Email</th>
+                                    <th>Profile</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in _parsedRows)
+                                {
+                                    <tr class="@(row.IsValid ? "" : "au-row-invalid")">
+                                        <td class="au-cell-num">@row.RowNumber</td>
+                                        <td>@(string.IsNullOrEmpty(row.Email) ? "—" : row.Email)</td>
+                                        <td class="au-cell-roles">@(string.IsNullOrEmpty(row.ProfileName) ? "—" : row.ProfileName)</td>
+                                        <td>
+                                            @if (row.IsValid)
+                                            {
+                                                <span class="au-badge au-badge--ok">Valid</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="au-badge au-badge--err" title="@string.Join(" | ", row.Errors)">
+                                                    @row.Errors[0]@(row.Errors.Count > 1 ? $" (+{row.Errors.Count - 1})" : "")
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="au-error">&#9888; @_errorMessage</div>
+                    }
+                }
+
+                @if (_stage == Stage.Results)
+                {
+                    <div class="au-preview-summary">
+                        <span class="au-summary-valid">&#x2713; @_createResults.Count(r => r.Success) created</span>
+                        @if (_createResults.Any(r => !r.Success))
+                        {
+                            <span class="au-summary-invalid">&#x2718; @_createResults.Count(r => !r.Success) failed</span>
+                        }
+                    </div>
+
+                    <div class="au-table-wrap">
+                        <table class="au-preview-table">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    <th>Email</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in _createResults)
+                                {
+                                    <tr class="@(r.Success ? "" : "au-row-invalid")">
+                                        <td class="au-cell-num">@r.RowNumber</td>
+                                        <td>@r.Email</td>
+                                        <td>
+                                            @if (r.Success)
+                                            {
+                                                <span class="au-badge au-badge--ok">Created</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="au-badge au-badge--err" title="@r.Message">@r.Message</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+            </div>
+
+            <div class="au-footer">
+                @if (_stage == Stage.Pick)
+                {
+                    <button class="au-btn-secondary" @onclick="HandleClose">Cancel</button>
+                    <button class="au-btn-primary" @onclick="ValidateAsync"
+                            disabled="@(_selectedFile is null || _isBusy)">
+                        @if (_isBusy) { <span class="au-spinner"></span> }
+                        Validate
+                    </button>
+                }
+                @if (_stage == Stage.Preview)
+                {
+                    <button class="au-btn-secondary" @onclick="BackToPick" disabled="@_isBusy">&#8592; Back</button>
+                    <button class="au-btn-primary" @onclick="UploadAsync"
+                            disabled="@(!_parsedRows.Any(r => r.IsValid) || _isBusy)">
+                        @if (_isBusy) { <span class="au-spinner"></span> }
+                        Upload @_parsedRows.Count(r => r.IsValid) User@(_parsedRows.Count(r => r.IsValid) == 1 ? "" : "s")
+                    </button>
+                }
+                @if (_stage == Stage.Results)
+                {
+                    <button class="au-btn-primary" @onclick="HandleClose">Done</button>
+                }
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private enum Stage { Pick, Preview, Results }
+
+    private Stage _stage = Stage.Pick;
+    private IBrowserFile? _selectedFile;
+    private bool _isBusy;
+    private string _errorMessage = string.Empty;
+    private List<CsvUserRow> _parsedRows = [];
+    private List<CsvUserCreateResult> _createResults = [];
+
+    private async Task TriggerFilePickerAsync()
+    {
+        await JS.InvokeVoidAsync("triggerClick", "upload-file-input");
+    }
+
+    private void OnFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        _errorMessage = string.Empty;
+        var file = e.File;
+
+        if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            _errorMessage = "Only .csv files are supported.";
+            _selectedFile = null;
+            return;
+        }
+
+        _selectedFile = file;
+    }
+
+    private async Task ValidateAsync()
+    {
+        if (_selectedFile is null) return;
+
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            using var stream = _selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var reader = new System.IO.StreamReader(stream);
+            var content = await reader.ReadToEndAsync();
+
+            _parsedRows = await ShipExecService.ParseCsvAsync(content);
+            _stage = Stage.Preview;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task UploadAsync()
+    {
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            _createResults = await ShipExecService.CreateUsersFromCsvAsync(_parsedRows);
+            _stage = Stage.Results;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void BackToPick()
+    {
+        _stage = Stage.Pick;
+        _parsedRows = [];
+        _errorMessage = string.Empty;
+    }
+
+    private void HandleClose()
+    {
+        if (_isBusy) return;
+        _stage = Stage.Pick;
+        _selectedFile = null;
+        _parsedRows = [];
+        _createResults = [];
+        _errorMessage = string.Empty;
+        OnClose.InvokeAsync();
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1_024 => $"{bytes} B",
+        < 1_048_576 => $"{bytes / 1024.0:F1} KB",
+        _ => $"{bytes / 1_048_576.0:F1} MB"
+    };
+}

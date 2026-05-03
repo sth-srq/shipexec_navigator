@@ -1,0 +1,270 @@
+@using PSI.Sox
+@using ShipExecAgent.BusinessLogic.EntityComparison
+@using ShipExecAgent.Shared.Models
+@inject IShipExecService ShipExecService
+
+@if (IsVisible)
+{
+    <div class="asd-backdrop" @onclick="HandleClose">
+        <div class="asd-dlg" @onclick:stopPropagation>
+
+            <div class="asd-header">
+                <span class="asd-title">&#x2795; Add Shipper</span>
+                <button class="asd-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            <div class="asd-body">
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="asd-error">&#9888; @_error</div>
+                }
+
+                <div class="asd-section">
+                    <div class="asd-section-title">Core</div>
+                    <div class="asd-field-row">
+                        <div class="asd-field">
+                            <label class="asd-label">Symbol <span class="asd-req">*</span></label>
+                            <input class="asd-input" @bind="_symbol" @bind:event="oninput" placeholder="e.g. MAIN" />
+                        </div>
+                        <div class="asd-field">
+                            <label class="asd-label">Name <span class="asd-req">*</span></label>
+                            <input class="asd-input" @bind="_name" @bind:event="oninput" placeholder="Shipper name" />
+                        </div>
+                        <div class="asd-field">
+                            <label class="asd-label">Code</label>
+                            <input class="asd-input" @bind="_code" @bind:event="oninput" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="asd-section">
+                    <div class="asd-section-title">Address</div>
+                    <div class="asd-field-row">
+                        <div class="asd-field asd-field--wide">
+                            <label class="asd-label">Address 1</label>
+                            <input class="asd-input" @bind="_address1" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field asd-field--wide">
+                            <label class="asd-label">Address 2</label>
+                            <input class="asd-input" @bind="_address2" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field asd-field--wide">
+                            <label class="asd-label">Address 3</label>
+                            <input class="asd-input" @bind="_address3" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field">
+                            <label class="asd-label">City</label>
+                            <input class="asd-input" @bind="_city" @bind:event="oninput" />
+                        </div>
+                        <div class="asd-field">
+                            <label class="asd-label">State / Province</label>
+                            <input class="asd-input" @bind="_stateProvince" @bind:event="oninput" />
+                        </div>
+                        <div class="asd-field">
+                            <label class="asd-label">Postal Code</label>
+                            <input class="asd-input" @bind="_postalCode" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field">
+                            <label class="asd-label">Country</label>
+                            <input class="asd-input" @bind="_country" @bind:event="oninput" placeholder="e.g. US" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="asd-section">
+                    <div class="asd-section-title">Contact</div>
+                    <div class="asd-field-row">
+                        <div class="asd-field">
+                            <label class="asd-label">Company</label>
+                            <input class="asd-input" @bind="_company" @bind:event="oninput" />
+                        </div>
+                        <div class="asd-field">
+                            <label class="asd-label">Contact</label>
+                            <input class="asd-input" @bind="_contact" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field">
+                            <label class="asd-label">Phone</label>
+                            <input class="asd-input" @bind="_phone" @bind:event="oninput" />
+                        </div>
+                        <div class="asd-field">
+                            <label class="asd-label">Fax</label>
+                            <input class="asd-input" @bind="_fax" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field asd-field--wide">
+                            <label class="asd-label">Email</label>
+                            <input class="asd-input" @bind="_email" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="asd-field-row">
+                        <div class="asd-field">
+                            <label class="asd-label">SMS</label>
+                            <input class="asd-input" @bind="_sms" @bind:event="oninput" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="asd-section">
+                    <div class="asd-section-title">Options</div>
+                    <div class="asd-field-row">
+                        <label class="asd-check">
+                            <input type="checkbox" @bind="_poBox" /> PO Box
+                        </label>
+                        <label class="asd-check">
+                            <input type="checkbox" @bind="_residential" /> Residential
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="asd-footer">
+                <button class="asd-btn-secondary" @onclick="HandleClose">Cancel</button>
+                <button class="asd-btn-primary" @onclick="HandleAdd"
+                        disabled="@(string.IsNullOrWhiteSpace(_symbol) || string.IsNullOrWhiteSpace(_name))">
+                    &#x2795; Add Shipper
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public ShipperAddItem? Prefill { get; set; }
+    [Parameter] public EventCallback<Shipper> OnShipperAdded { get; set; }
+
+    private string _symbol = string.Empty;
+    private string _name = string.Empty;
+    private string _code = string.Empty;
+    private string _address1 = string.Empty;
+    private string _address2 = string.Empty;
+    private string _address3 = string.Empty;
+    private string _city = string.Empty;
+    private string _stateProvince = string.Empty;
+    private string _postalCode = string.Empty;
+    private string _country = string.Empty;
+    private string _company = string.Empty;
+    private string _contact = string.Empty;
+    private string _phone = string.Empty;
+    private string _fax = string.Empty;
+    private string _email = string.Empty;
+    private string _sms = string.Empty;
+    private bool _poBox;
+    private bool _residential;
+    private string? _error;
+
+    private bool _lastVisible;
+
+    protected override void OnParametersSet()
+    {
+        if (IsVisible && !_lastVisible)
+        {
+            // Dialog just opened — apply prefill if provided
+            if (Prefill is not null)
+            {
+                _symbol        = Prefill.Symbol;
+                _name          = Prefill.Name;
+                _code          = Prefill.Code;
+                _address1      = Prefill.Address1;
+                _address2      = Prefill.Address2;
+                _address3      = Prefill.Address3;
+                _city          = Prefill.City;
+                _stateProvince = Prefill.StateProvince;
+                _postalCode    = Prefill.PostalCode;
+                _country       = Prefill.Country;
+                _company       = Prefill.Company;
+                _contact       = Prefill.Contact;
+                _phone         = Prefill.Phone;
+                _fax           = Prefill.Fax;
+                _email         = Prefill.Email;
+                _sms           = Prefill.Sms;
+                _poBox         = Prefill.PoBox;
+                _residential   = Prefill.Residential;
+            }
+            else
+            {
+                Reset();
+            }
+        }
+        _lastVisible = IsVisible;
+    }
+
+    private async Task HandleAdd()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_symbol) || string.IsNullOrWhiteSpace(_name))
+        {
+            _error = "Symbol and Name are required.";
+            return;
+        }
+
+        var shipper = new Shipper
+        {
+            Symbol        = _symbol.Trim(),
+            Name          = _name.Trim(),
+            Code          = _code.Trim(),
+            Address1      = _address1.Trim(),
+            Address2      = _address2.Trim(),
+            Address3      = _address3.Trim(),
+            City          = _city.Trim(),
+            StateProvince = _stateProvince.Trim(),
+            PostalCode    = _postalCode.Trim(),
+            Country       = _country.Trim(),
+            Company       = _company.Trim(),
+            Contact       = _contact.Trim(),
+            Phone         = _phone.Trim(),
+            Fax           = _fax.Trim(),
+            Email         = _email.Trim(),
+            Sms           = _sms.Trim(),
+            PoBox         = _poBox,
+            Residential   = _residential,
+        };
+
+        await OnShipperAdded.InvokeAsync(shipper);
+        Reset();
+        await OnClose.InvokeAsync();
+    }
+
+    private void HandleClose()
+    {
+        Reset();
+        OnClose.InvokeAsync();
+    }
+
+    private void Reset()
+    {
+        _symbol        = string.Empty;
+        _name          = string.Empty;
+        _code          = string.Empty;
+        _address1      = string.Empty;
+        _address2      = string.Empty;
+        _address3      = string.Empty;
+        _city          = string.Empty;
+        _stateProvince = string.Empty;
+        _postalCode    = string.Empty;
+        _country       = string.Empty;
+        _company       = string.Empty;
+        _contact       = string.Empty;
+        _phone         = string.Empty;
+        _fax           = string.Empty;
+        _email         = string.Empty;
+        _sms           = string.Empty;
+        _poBox         = false;
+        _residential   = false;
+        _error         = null;
+    }
+}
