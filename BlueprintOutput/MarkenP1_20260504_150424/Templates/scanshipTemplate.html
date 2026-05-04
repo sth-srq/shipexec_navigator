@@ -1,0 +1,83 @@
+<div class="row">
+    <keyboard-event key="ENTER" on-keypress="vm.process()"></keyboard-event>
+    <keyboard-event key="F2" on-keypress="vm.newShipment()"></keyboard-event>
+    <keyboard-event key="ESC" on-keypress="vm.newShipment()"></keyboard-event>
+    <form name="scanShipForm">
+        <div class="col-sm-10 col-sm-offset-1">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <div class="row">
+                        <h5 class="custom-title-h5">{{vm.translations.ThinClient.ScanandShip}}</h5>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <field-date property="Shipdate"
+                                        caption="{{vm.translations.Common.ShipDate}}"
+                                        form-type="Horizontal"
+                                        model="vm.shipDate.value"
+                                        is-open="vm.shipDate.opened" datepicker-options="vm.startshipdateOptions"
+                                        change-function="vm.minDeliveryDate()"
+                                        open-date-picker-function="vm.openstartship()"></field-date>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="col-sm-4 no-left-right-padding"></div>
+                            <div class="col-sm-8 no-left-right-padding">
+                                <p ng-show="scanShipForm.shipDate.$error.required && !scanShipForm.shipDate.$pristine" class="text-danger">{{vm.translations.ThinClient.EnterShipDate}}</p>
+                                <p ng-show="scanShipForm.shipDate.$invalid && !scanShipForm.shipDate.$error.required" class="text-danger">{{vm.translations.ThinClient.ValidShipDate}}</p>
+                            </div>
+                            <div class="col-sm-3" ng-if="!(scanShipForm.shipDate.$error.required && !scanShipForm.shipDate.$pristine) || !(scanShipForm.shipDate.$invalid && !scanShipForm.shipDate.$error.required)">
+                                &nbsp;
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="col-md-12 no-left-right-padding">
+                                <label class="col-md-4 control-label no-left-padding">{{vm.translations.ThinClient.OrderNumber}}</label>
+                                <div class="col-sm-8 no-left-right-padding">
+                                    <div class="row">
+                                        <div class="col-sm-9 no-left-right-padding">
+                                            <input type="text" name="orderNumber" clearable required ng-model="vm.orderNumber" autofocus class="form-control" />
+                                        </div>
+                                        <div class="col-sm-3 no-right-padding">
+                                            <!-- ngIf: isOpen -->
+                                            <button type="button" ng-disabled="scanShipForm.orderNumber.$invalid || scanShipForm.shipDate.$invalid" class="btn btn-md btn-primary" ng-click="vm.process()">{{vm.translations.ThinClient.Process}}</button>
+                                            <button type="button" class="btn btn-default" ng-disabled="!vm.orderNumber" ng-click="vm.newShipment()">{{vm.translations.Common.Clear}}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="col-sm-4 no-left-right-padding"></div>
+                            <div class="col-sm-8 no-left-right-padding">
+                                <p ng-show="scanShipForm.orderNumber.$error.required && !scanShipForm.orderNumber.$pristine" class="text-danger">{{vm.translations.ThinClient.EnterOrderNumber}}</p>
+                            </div>
+                            <div class="col-sm-3" ng-if="!(scanShipForm.orderNumber.$error.required && !scanShipForm.orderNumber.$pristine)">
+                                &nbsp;
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer" ng-hide="vm.lastOrderTracked==''">
+                    <div class="row">
+                        <label class="control-label col-sm-3">{{vm.translations.ThinClient.LastTrack}}:</label>
+                        <div class="col-sm-6">
+                            <label class="control-label">{{vm.lastOrderTracked}}</label>
+                        </div>
+                        <span class="col-sm-3">
+                            <button tooltip-placement="top-left" uib-tooltip="View" type="button" class="btn btn-default" ng-click="vm.viewShipmentDetail()"><em class="glyphicon glyphicon-search"></em></button>
+                            <button tooltip-placement="top-left" uib-tooltip="RePrint" type="button" class="btn btn-default" ng-click="vm.reprint()"><em class="glyphicon glyphicon-print"></em></button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

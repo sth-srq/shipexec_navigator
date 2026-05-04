@@ -108,5 +108,21 @@
     background: #334155;
 }
 
+.debug-btn--purple {
+    background: #6d28d9;
+    color: #fff;
+}
+
+.debug-btn--purple:hover {
+    background: #7c3aed;
+}
+
+.debug-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* ── Dark-theme brand override ── */
 :global(.dark-theme) .page-brand-title { color: #c9d1d9; }

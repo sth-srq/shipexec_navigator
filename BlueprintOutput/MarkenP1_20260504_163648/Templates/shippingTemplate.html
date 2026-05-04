@@ -1,0 +1,178 @@
+<div class="shipping-template">
+    <div class="row">
+        <div class="col-md-12 toolbar">
+            <keyboard-event key="F2" on-keypress="vm.newShipment()"></keyboard-event>
+            <keyboard-event key="F7" on-keypress="vm.load()"></keyboard-event>
+            <keyboard-event key="F8" on-keypress="vm.repeatShipment()"></keyboard-event>
+            <keyboard-event key="F12" on-keypress="vm.checkShip()"></keyboard-event>
+
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.newShipment()">{{vm.translations.Common.New || 'New'}}</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.repeatShipment()">{{vm.translations.Common.Repeat || 'Repeat'}}</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.buildShipment && vm.buildShipment()" ng-hide="true">Build</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.distList && vm.distList()" ng-hide="true">DistList</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.pickup && vm.pickup()" ng-hide="vm.showPickupButton === false">Pickup</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.pending && vm.pending()" ng-hide="true">Pending</button>
+            <button type="button" class="btn btn-xs btn-default" ng-click="vm.mailRoom && vm.mailRoom()" ng-hide="true">MailRoom</button>
+
+            <div class="pull-right">
+                <span ng-hide="true">Mode: {{vm.shipMode}}</span>
+                <span ng-hide="true">Pkg: {{vm.packageIndex + 1}} of {{vm.totalPackages}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group" ng-hide="true">
+                <label>{{vm.translations.Common.Load || 'Load'}}</label>
+                <input type="text" class="form-control" ng-model="vm.loadValue" />
+            </div>
+
+            <div class="form-group" ng-hide="true">
+                <field-select property="LoadFrom" model="vm.loadFrom" options="item.Value as item.Name for item in vm.loadFromOptions" caption="{{vm.translations.Common.LoadFrom || 'Load From'}}" form-type="Horizontal"></field-select>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.Shipper.IsHidden">
+                <field-select property="Shipper" model="vm.currentShipment.PackageDefaults.Shipper" options="item.Symbol as item.Name for item in vm.profile.Shippers" caption="{{vm.profile.FieldOptions.Shipper.Caption || vm.translations.Common.Shipper || 'Shipper'}}" form-type="Horizontal"></field-select>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.ShipDate.IsHidden">
+                <field-date property="ShipDate" model="vm.startshipdate.value" caption="{{vm.profile.FieldOptions.ShipDate.Caption || vm.translations.Common.ShipDate || 'Ship Date'}}" is-open="vm.startshipdate.opened" datepicker-options="vm.dateOptions" form-type="Horizontal"></field-date>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.Terms.IsHidden">
+                <field-select property="Terms" model="vm.currentShipment.PackageDefaults.Terms" options="item.Symbol as item.Name for item in vm.profile.PaymentTerms" caption="{{vm.profile.FieldOptions.Terms.Caption || vm.translations.Common.Terms || 'Terms'}}" form-type="Horizontal"></field-select>
+            </div>
+
+            <div class="form-group" ng-hide="true">
+                <field-checkbox property="ThirdPartyBilling" model="vm.currentShipment.PackageDefaults.ThirdPartyBilling" caption="{{vm.translations.Common.ThirdPartyBilling || '3rd Party'}}"></field-checkbox>
+            </div>
+            <div class="form-group" ng-hide="true">
+                <field-checkbox property="BillConsignee" model="vm.currentShipment.PackageDefaults.BillConsignee" caption="{{vm.translations.Common.BillConsignee || 'Bill Consignee'}}"></field-checkbox>
+            </div>
+            <div class="form-group" ng-hide="true">
+                <field-checkbox property="BrokerageThirdPartyBilling" model="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBilling" caption="Brokerage"></field-checkbox>
+            </div>
+
+            <div class="address-tabs">
+                <uib-tabset active="vm.activeAddressTab">
+                    <uib-tab index="0" heading="{{vm.profile.FieldOptions.Consignee.Caption || 'Pickup From'}}" ng-hide="vm.profile.FieldOptions.Consignee.IsHidden">
+                        <name-address caption="{{vm.profile.FieldOptions.Consignee.Caption || 'Pickup From'}}" nameaddress="vm.currentShipment.PackageDefaults.Consignee" countries="vm.profile.Countries" translations="vm.translations" field-options="vm.profile.FieldOptions" address-property-name="Consignee" current-shipment="vm.currentShipment" hide-address-book-list="false" hide-checkboxes="false" hide-validate="false" hide-search="false" active-subtab-index="0" is-update-address-book-entry="vm.isUpdateAddressBookEntry" address-book-id="vm.addressBookId" disable-fields="false"></name-address>
+                    </uib-tab>
+                    <uib-tab index="1" heading="{{vm.translations.Common.ReturnAddress || 'Return Address'}}" ng-hide="vm.profile.FieldOptions.ReturnAddress.IsHidden">
+                        <name-address caption="{{vm.translations.Common.ReturnAddress || 'Return Address'}}" nameaddress="vm.currentShipment.PackageDefaults.ReturnAddress" countries="vm.profile.Countries" translations="vm.translations" field-options="vm.profile.FieldOptions" address-property-name="ReturnAddress" current-shipment="vm.currentShipment" hide-address-book-list="false" hide-checkboxes="false" hide-validate="false" hide-search="false" active-subtab-index="1" is-update-address-book-entry="vm.isUpdateAddressBookEntry" address-book-id="vm.addressBookId" disable-fields="false"></name-address>
+                    </uib-tab>
+                    <uib-tab index="2" heading="{{vm.translations.Common.Origin || 'Origin'}}" ng-hide="true"></uib-tab>
+                    <uib-tab index="3" heading="{{vm.translations.Common.ThirdPartyBilling || '3rd Party Billing'}}" ng-hide="true"></uib-tab>
+                    <uib-tab index="4" heading="{{vm.translations.Common.ConsigneeThirdParty || 'Consignee Third Party'}}" ng-hide="true"></uib-tab>
+                    <uib-tab index="5" heading="{{vm.translations.Common.BrokerageThirdParty || 'Brokerage Third Party'}}" ng-hide="true"></uib-tab>
+                </uib-tabset>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <uib-tabset active="vm.activeRightTab">
+                <uib-tab index="0" heading="{{vm.profile.FieldOptions.General.Caption || 'General'}}">
+                    <div general-tab></div>
+                </uib-tab>
+                <uib-tab index="1" heading="{{vm.profile.FieldOptions.Accessorials.Caption || 'Accessorials'}}" ng-hide="true">
+                    <div accessorial-tab></div>
+                </uib-tab>
+                <uib-tab index="2" heading="{{vm.profile.FieldOptions.Intl.Caption || 'International'}}" ng-hide="true">
+                    <div international-tab></div>
+                </uib-tab>
+                <uib-tab index="3" heading="{{vm.profile.FieldOptions.Hazmat.Caption || 'Hazmat'}}" ng-hide="true">
+                    <div hazmat-tab></div>
+                </uib-tab>
+                <uib-tab index="4" heading="{{vm.profile.FieldOptions.Reference.Caption || 'Reference'}}">
+                    <div reference-tab></div>
+                </uib-tab>
+                <uib-tab index="5" heading="{{vm.profile.FieldOptions.LTL.Caption || 'LTL'}}" ng-hide="true">
+                    <div ltl-tab></div>
+                </uib-tab>
+                <uib-tab index="6" heading="{{vm.profile.FieldOptions.Visibility.Caption || 'Visibility'}}" ng-hide="true">
+                    <div visibility-tab></div>
+                </uib-tab>
+                <uib-tab index="7" heading="{{vm.profile.FieldOptions.Goods.Caption || 'Goods'}}" ng-hide="true">
+                    <div goods-tab></div>
+                </uib-tab>
+            </uib-tabset>
+
+            <div class="row" ng-hide="vm.profile.FieldOptions.Description.IsHidden">
+                <div class="col-md-12">
+                    <field-input property="Description" model="vm.currentShipment.PackageDefaults.Description" caption="{{vm.profile.FieldOptions.Description.Caption || 'Description'}}" form-type="Horizontal"></field-input>
+                </div>
+            </div>
+
+            <div class="row" ng-hide="true">
+                <div class="col-md-12">
+                    <field-input property="AccountNumber" model="vm.currentShipment.PackageDefaults.AccountNumber" caption="Account Number" form-type="Horizontal"></field-input>
+                </div>
+            </div>
+
+            <div class="row" ng-hide="true">
+                <div class="col-md-12">
+                    <field-input property="TaxId" model="vm.currentShipment.PackageDefaults.TaxId" caption="Tax ID" form-type="Horizontal"></field-input>
+                </div>
+            </div>
+
+            <div class="row" ng-hide="true">
+                <div class="col-md-12">
+                    <field-input property="CarrierInstructions" model="vm.currentShipment.PackageDefaults.CarrierInstructions" caption="Carrier Instructions" form-type="Horizontal"></field-input>
+                </div>
+            </div>
+
+            <div class="row" ng-hide="true">
+                <div class="col-md-12">
+                    <field-input property="DeclaredValueAmount" model="vm.currentShipment.PackageDefaults.DeclaredValueAmount" caption="Declared Value Amount" form-type="Horizontal"></field-input>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <field-checkbox property="ReturnDelivery" model="vm.currentShipment.PackageDefaults.ReturnDelivery" caption="Return Delivery"></field-checkbox>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <field-checkbox property="SaturdayDelivery" model="vm.currentShipment.PackageDefaults.SaturdayDelivery" caption="Saturday Delivery"></field-checkbox>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <field-checkbox property="BiologicalSample" model="vm.currentShipment.PackageDefaults.MiscReference4" caption="Biological Sample"></field-checkbox>
+                </div>
+            </div>
+
+            <div class="row" ng-show="(vm.currentShipment.PackageDefaults.ConsigneeReference || '').toString() === 'Frozen'">
+                <div class="col-md-12">
+                    <field-input property="DryIceWeight" model="vm.currentShipment.PackageDefaults.MiscReference3" caption="Dry Ice Weight (kg)" form-type="Horizontal"></field-input>
+                </div>
+            </div>
+
+            <div class="row" ng-hide="true">
+                <div class="col-md-12">
+                    <field-select property="WeightUnit" model="vm.currentShipment.PackageDefaults.WeightUnit" options="item.Symbol as item.Name for item in vm.weightUnits" caption="Weight Unit" form-type="Horizontal"></field-select>
+                </div>
+            </div>
+
+            <div class="row actions-row">
+                <div class="col-md-12 text-right">
+                    <button type="button" class="btn btn-default" ng-click="vm.saveShipment()" ng-hide="vm.profile.ProfileSetting.DisablePendingShipment">Save</button>
+                    <button type="button" class="btn btn-default" ng-click="vm.rate()" ng-hide="true">Rate</button>
+                    <button type="button" class="btn btn-primary" ng-click="vm.checkShip()" ng-disabled="vm.profile.ProfileSetting.DisableShip">Ship</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" ng-show="vm.showLastShipmentPanel">
+        <div class="col-md-12">
+            <div class="last-shipment-panel">
+                <div ng-hide="true">{{vm.lastShipmentResponse}}</div>
+            </div>
+        </div>
+    </div>
+</div>

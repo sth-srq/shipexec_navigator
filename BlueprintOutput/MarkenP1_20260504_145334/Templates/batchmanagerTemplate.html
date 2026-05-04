@@ -1,0 +1,140 @@
+<div class="row">
+    <div class="panel panel-primary">
+        <div class="panel-heading panel-heading-padding">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h5 class="custom-title-h5">{{vm.translations.Common.BatchManager}}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div ng-class="{'ErrorMessage': vm.status.isError}" class="text-center">
+                    <img ng-show="vm.isBusy" src="Content/img/ajax_loader.gif" alt="Working" />{{vm.status.message}}
+                </div>
+            </div>
+            <load-template ng-hide="vm.profile.ProfileSetting.DisableLoadFromFile && vm.profile.ProfileSetting.DisableCustomLoad"></load-template>
+            <div class="row">
+                <div class="col-sm-3 no-left-padding">
+                    <h5><strong>{{vm.translations.ThinClient.Batches}}</strong></h5>
+                </div>
+                <div class="col-sm-9 no-right-padding" ng-show="vm.batches.length != 0">
+                    <ul class="pagination zeroMargin pull-right">
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '10')}" ng-click="vm.itemPerPageChanged(10)" href="javascript:void(0)">10</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '20')}" ng-click="vm.itemPerPageChanged(20)" href="javascript:void(0)">20</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '50')}" ng-click="vm.itemPerPageChanged(50)" href="javascript:void(0)">50</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '0')}" ng-click="vm.itemPerPageChanged(0)" href="javascript:void(0)">{{vm.translations.Common.All}}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row">
+                <table class="table table-bordered table-striped ng-table" aria-describedby="Batch">
+                    <thead>
+                        <tr>
+                            <th scope="col">&nbsp;</th>
+                            <th scope="col"  style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.ThinClient.BatchReference}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.Common.Status}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.ThinClient.ShipErrors}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.ThinClient.Shipped}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.ThinClient.Total}}</span>
+                                </div>
+                            </th>
+
+                            <!--<th ng-click="vm.orderBy('BatchStatus', vm.orderByBatchStatus, vm.enumerations.FieldType.EnumBatchStatus)">{{vm.translations.Common.Status}}</th>-->
+                            <!--<th ng-click="vm.orderBy('TotalErrors', vm.orderByTotalErrors, vm.enumerations.FieldType.Int)">{{vm.translations.ThinClient.ShipErrors}}</th>-->
+                            <!--<th ng-click="vm.orderBy('TotalShipped', vm.orderByTotalShipped, vm.enumerations.FieldType.Int)">{{vm.translations.ThinClient.Shipped}}</th>-->
+                            <!--<th ng-click="vm.orderBy('TotalItems', vm.orderByTotalItems, vm.enumerations.FieldType.Int)">{{vm.translations.ThinClient.Total}}</th>-->
+                            <th scope="col" class="text-center">&nbsp;</th>
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td><div class="form-group">&nbsp;</div></td>
+                        <td>
+                            <div class="row">
+                                <div class="input-group">
+                                    <input type="text" id="searchForBatchReference" clearable ng-model="vm.searchForBatchReference" ng-keypress="$event.keyCode == 13 ? vm.getBatches(false) : null" ng-change="vm.checkModel()" class="form-control">
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-md btn-primary" ng-disabled="((vm.searchForBatchReference == null) || (vm.searchForBatchReference == ''))" ng-click="vm.getBatches(false)"  set-focus="searchForBatchReference"><em class="glyphicon glyphicon-search"></em></button>
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><div class="form-group">&nbsp;</div></td>
+                        <td><div class="form-group">&nbsp;</div></td>
+                        <td><div class="form-group">&nbsp;</div></td>
+                        <td><div class="form-group">&nbsp;</div></td>
+                        <td><div class="form-group">&nbsp;</div></td>
+                    </tr>
+                    <tr ng-repeat="batch in vm.batches track by $index">
+                        <td>
+                            <img ng-show="batch.IsBusy()" src="Content/img/ajax_loader.gif" alt="Working"/>
+                        </td>
+                        <td><a href="" ng-click="vm.linkToDetails(batch.Info.BatchReference)">{{batch.Info.BatchReference}}</a></td>
+                        <td>{{batch.Info.BatchStatus | BatchStatus}}</td>
+                        <td>{{batch.Info.TotalErrors || 0}}</td>
+                        <td>{{batch.Info.TotalShipped || 0}}</td>
+                        <td>{{batch.Info.TotalItems || 0}}</td>
+                        <td class="text-center">
+                            <input type="button" class="btn btn-sm btn-primary" value="{{vm.translations.Common.Ship}}" ng-click="vm.shipBatch(batch)" ng-disabled="!batch.CanShip()" />
+                            <input type="button" class="btn btn-sm btn-success" value="{{vm.translations.Common.Print}}" ng-click="vm.printBatch(batch)" ng-disabled="!batch.CanPrint()" />
+                            <input type="button" class="btn btn-sm btn-warning" value="{{vm.translations.Common.Void}}" ng-click="vm.voidBatch(batch)" ng-disabled="!batch.CanVoid()" />
+                            <input type="button" class="btn btn-sm btn-danger" value="{{vm.translations.Common.Delete}}" ng-click="vm.deleteBatch(batch)" ng-disabled="!batch.CanDelete()" />
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+            <div class="row col-md-12" ng-show="vm.batches.length == 0">
+                <h5 colspan="7">{{vm.translations.ThinClient.NoBatchesFound}}</h5>
+            </div>
+            <div class="row" ng-show="vm.batches.length != 0">
+                <div class="col-md-7"><ul uib-pagination direction-links="true" class="pagination" total-items="vm.totalItems" items-per-page="vm.itemsPerPage" ng-model="vm.currentPage" ng-change="vm.pageChanged()"></ul></div>
+                <div class="col-md-1"></div>
+                <div class="col-md-4 ng-pristine ng-untouched ng-valid ng-isolate-scope pagination ng-not-empty" style="text-align:right">
+                    {{vm.translations.Common.Showing}} {{vm.skipNum+1}} {{vm.translations.Common.to}} {{vm.toRecord}} {{vm.translations.Common.Of}} {{vm.totalItems}} {{vm.translations.Common.entries}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

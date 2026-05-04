@@ -1,0 +1,39 @@
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h4>{{vm.translations.Common.ManifestDocuments}}</h4>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <shipper-carrier selected-shipper="vm.selectedShipper" selected-carrier="vm.selectedCarrier" ></shipper-carrier>
+            <div class="col-md-4 col-sm-4 col-xs-12 no-left-padding">
+                <div class="customDivRight">
+                    <div class="form-group">
+                        <label>{{vm.translations.Common.HistoryItems}}</label>
+                        <select size="10" tabindex="3" class="form-control box-size" ng-model="vm.selectedHistoryItem"
+                                ng-options="items as items.Name for items in vm.manifestFiles">
+                            <option value="" ng-if="false" ></option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12 no-left-padding">
+                <div class="manifestDiv form-group">
+                    <label>{{vm.translations.Common.ManifestDocuments}}</label>
+                    <select size="10" tabindex="3" class="form-control box-size" ng-model="vm.selectedManifestDocument"
+                            ng-options="items as items.Name for items in vm.manifestDocuments">
+                        <option value="" ng-if="false"></option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer clearfix">
+        <div class="pull-right">
+            <button type="button" class="btn btn-primary" ng-disabled="!vm.selectedHistoryItem || !vm.selectedManifestDocument || vm.selectedHistoryItem==null || vm.selectedManifestDocument==null" 
+                    ng-click="vm.getManifestDoc()" data-toggle="modal">{{vm.translations.Common.SelectPrinter}}</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,331 @@
+<div class="shipping-template">
+    <keyboard-event key="F2" on-keypress="vm.newShipment()"></keyboard-event>
+    <keyboard-event key="F7" on-keypress="vm.load()"></keyboard-event>
+    <keyboard-event key="F8" on-keypress="vm.repeatShipment()"></keyboard-event>
+    <keyboard-event key="F9" on-keypress="vm.rate()"></keyboard-event>
+    <keyboard-event key="F12" on-keypress="vm.checkShip()"></keyboard-event>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="toolbar clearfix">
+                <button class="btn btn-xs btn-default" ng-click="vm.newShipment()">New (F2)</button>
+                <button class="btn btn-xs btn-default" ng-click="vm.repeatShipment()">Repeat (F8)</button>
+                <button class="btn btn-xs btn-default" ng-click="vm.buildShipment && vm.buildShipment()" ng-if="vm.buildShipment">Build</button>
+                <button class="btn btn-xs btn-default" ng-click="vm.toggleDistributionList && vm.toggleDistributionList()" ng-if="vm.toggleDistributionList">DistList</button>
+                <button class="btn btn-xs btn-default" ng-click="vm.load()">Pickup</button>
+                <button class="btn btn-xs btn-default" ng-click="vm.load()">Pending</button>
+                <button class="btn btn-xs btn-default" ng-click="vm.load()">MailRoom</button>
+
+                <div class="pull-right" style="margin-left: 12px;">
+                    <span>Mode:</span>
+                    <span>{{vm.shipMode}}</span>
+                </div>
+                <div class="pull-right" style="margin-left: 12px;">
+                    <span>Pkg: {{vm.packageIndex + 1}} of {{vm.totalPackages}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top: 10px;">
+        <div class="col-md-4">
+            <field-select property="LoadFrom"
+                          model="vm.loadFrom"
+                          options="item.Value as item.Name for item in vm.loadFromOptions"
+                          caption="Load From"
+                          form-type="Horizontal"
+                          ng-hide="vm.profile.FieldOptions.LoadFrom && vm.profile.FieldOptions.LoadFrom.IsHidden">
+            </field-select>
+
+            <field-input property="Load"
+                         model="vm.loadValue"
+                         caption="Load"
+                         form-type="Horizontal"
+                         ng-hide="vm.profile.FieldOptions.Load && vm.profile.FieldOptions.Load.IsHidden">
+            </field-input>
+
+            <hr />
+
+            <field-select property="Shipper"
+                          model="vm.currentShipment.PackageDefaults.Shipper"
+                          options="item.Symbol as item.Name for item in vm.profile.Shippers"
+                          caption="Shipper"
+                          form-type="Horizontal"
+                          ng-hide="vm.profile.FieldOptions.Shipper && vm.profile.FieldOptions.Shipper.IsHidden">
+            </field-select>
+
+            <field-date property="ShipDate"
+                        model="vm.startshipdate.value"
+                        caption="Ship Date"
+                        is-open="vm.startshipdate.opened"
+                        datepicker-options="vm.dateOptions"
+                        form-type="Horizontal"
+                        ng-hide="vm.profile.FieldOptions.ShipDate && vm.profile.FieldOptions.ShipDate.IsHidden">
+            </field-date>
+
+            <field-select property="Terms"
+                          model="vm.currentShipment.PackageDefaults.Terms"
+                          options="item.Symbol as item.Name for item in vm.profile.PaymentTerms"
+                          caption="Terms"
+                          form-type="Horizontal"
+                          ng-hide="vm.profile.FieldOptions.Terms && vm.profile.FieldOptions.Terms.IsHidden">
+            </field-select>
+
+            <field-checkbox property="ThirdPartyBilling"
+                            model="vm.currentShipment.PackageDefaults.ThirdPartyBilling"
+                            caption="3rd Party"
+                            ng-hide="vm.profile.FieldOptions.ThirdPartyBilling && vm.profile.FieldOptions.ThirdPartyBilling.IsHidden">
+            </field-checkbox>
+
+            <field-checkbox property="BillConsignee"
+                            model="vm.currentShipment.PackageDefaults.BillConsignee"
+                            caption="Bill Consignee">
+            </field-checkbox>
+
+            <field-checkbox property="Brokerage"
+                            model="vm.currentShipment.PackageDefaults.Brokerage"
+                            caption="Brokerage"
+                            ng-hide="vm.profile.FieldOptions.BrokerageThirdPartyBilling && vm.profile.FieldOptions.BrokerageThirdPartyBilling.IsHidden">
+            </field-checkbox>
+
+            <div class="address-tabs" style="margin-top: 15px;">
+                <ul class="nav nav-tabs">
+                    <li ng-class="{active: vm.activeAddressTab === 0}" ng-click="vm.activeAddressTab = 0"><a href="">Pickup From</a></li>
+                    <li ng-class="{active: vm.activeAddressTab === 1}" ng-click="vm.activeAddressTab = 1" ng-show="vm.showDistributionList"><a href="">Distribution List</a></li>
+                    <li ng-class="{active: vm.activeAddressTab === 2}" ng-click="vm.activeAddressTab = 2" ng-hide="vm.profile.FieldOptions.ReturnAddress && vm.profile.FieldOptions.ReturnAddress.IsHidden"><a href="">Return Address</a></li>
+                    <li ng-class="{active: vm.activeAddressTab === 3}" ng-click="vm.activeAddressTab = 3" ng-hide="vm.profile.FieldOptions.OriginAddress && vm.profile.FieldOptions.OriginAddress.IsHidden"><a href="">Origin</a></li>
+                    <li ng-class="{active: vm.activeAddressTab === 4}" ng-click="vm.activeAddressTab = 4" ng-show="vm.currentShipment.PackageDefaults.ThirdPartyBilling"><a href="">3rd Party Addr</a></li>
+                    <li ng-class="{active: vm.activeAddressTab === 5}" ng-click="vm.activeAddressTab = 5" ng-show="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBilling"><a href="">Consignee 3rd</a></li>
+                    <li ng-class="{active: vm.activeAddressTab === 6}" ng-click="vm.activeAddressTab = 6" ng-show="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBilling"><a href="">Brokerage Addr</a></li>
+                </ul>
+
+                <div class="tab-content" style="padding-top: 12px;">
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 0}">
+                        <name-address caption="Pickup From"
+                                      nameaddress="vm.currentShipment.PackageDefaults.Consignee"
+                                      countries="vm.profile.Countries"
+                                      translations="vm.translations"
+                                      field-options="vm.profile.FieldOptions"
+                                      address-property-name="Consignee"
+                                      current-shipment="vm.currentShipment"
+                                      hide-address-book-list="false"
+                                      hide-checkboxes="false"
+                                      hide-validate="false"
+                                      hide-search="false"
+                                      active-subtab-index="1"
+                                      is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                      address-book-id="vm.addressBookId"
+                                      disable-fields="false">
+                        </name-address>
+
+                        <div class="form-group" style="margin-top: 10px;" ng-show="vm.currentShipment.PackageDefaults.Consignee && vm.currentShipment.PackageDefaults.Consignee.Country && vm.currentShipment.PackageDefaults.Consignee.Country !== 'CA'">
+                            <button class="btn btn-xs btn-default" ng-click="vm.pickup && vm.pickup()" ng-if="vm.pickup">Pickup</button>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 1}" ng-show="vm.showDistributionList">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                Distribution list mode is enabled.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 2}" ng-hide="vm.profile.FieldOptions.ReturnAddress && vm.profile.FieldOptions.ReturnAddress.IsHidden">
+                        <name-address caption="Return Address"
+                                      nameaddress="vm.currentShipment.PackageDefaults.ReturnAddress"
+                                      countries="vm.profile.Countries"
+                                      translations="vm.translations"
+                                      field-options="vm.profile.FieldOptions"
+                                      address-property-name="ReturnAddress"
+                                      current-shipment="vm.currentShipment"
+                                      hide-address-book-list="false"
+                                      hide-checkboxes="false"
+                                      hide-validate="false"
+                                      hide-search="false"
+                                      active-subtab-index="2"
+                                      is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                      address-book-id="vm.addressBookId"
+                                      disable-fields="false">
+                        </name-address>
+                    </div>
+
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 3}" ng-hide="vm.profile.FieldOptions.OriginAddress && vm.profile.FieldOptions.OriginAddress.IsHidden">
+                        <name-address caption="Origin"
+                                      nameaddress="vm.currentShipment.PackageDefaults.OriginAddress"
+                                      countries="vm.profile.Countries"
+                                      translations="vm.translations"
+                                      field-options="vm.profile.FieldOptions"
+                                      address-property-name="OriginAddress"
+                                      current-shipment="vm.currentShipment"
+                                      hide-address-book-list="false"
+                                      hide-checkboxes="false"
+                                      hide-validate="false"
+                                      hide-search="false"
+                                      active-subtab-index="3"
+                                      is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                      address-book-id="vm.addressBookId"
+                                      disable-fields="false">
+                        </name-address>
+                    </div>
+
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 4}" ng-show="vm.currentShipment.PackageDefaults.ThirdPartyBilling">
+                        <name-address caption="3rd Party Addr"
+                                      nameaddress="vm.currentShipment.PackageDefaults.ThirdPartyBillingAddress"
+                                      countries="vm.profile.Countries"
+                                      translations="vm.translations"
+                                      field-options="vm.profile.FieldOptions"
+                                      address-property-name="ThirdPartyBillingAddress"
+                                      current-shipment="vm.currentShipment"
+                                      hide-address-book-list="false"
+                                      hide-checkboxes="false"
+                                      hide-validate="false"
+                                      hide-search="false"
+                                      active-subtab-index="4"
+                                      is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                      address-book-id="vm.addressBookId"
+                                      disable-fields="false">
+                        </name-address>
+                    </div>
+
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 5}" ng-show="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBilling">
+                        <name-address caption="Consignee 3rd"
+                                      nameaddress="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBillingAddress"
+                                      countries="vm.profile.Countries"
+                                      translations="vm.translations"
+                                      field-options="vm.profile.FieldOptions"
+                                      address-property-name="ConsigneeThirdPartyBillingAddress"
+                                      current-shipment="vm.currentShipment"
+                                      hide-address-book-list="false"
+                                      hide-checkboxes="false"
+                                      hide-validate="false"
+                                      hide-search="false"
+                                      active-subtab-index="5"
+                                      is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                      address-book-id="vm.addressBookId"
+                                      disable-fields="false">
+                        </name-address>
+                    </div>
+
+                    <div class="tab-pane" ng-class="{active: vm.activeAddressTab === 6}" ng-show="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBilling">
+                        <name-address caption="Brokerage Addr"
+                                      nameaddress="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBillingAddress"
+                                      countries="vm.profile.Countries"
+                                      translations="vm.translations"
+                                      field-options="vm.profile.FieldOptions"
+                                      address-property-name="BrokerageThirdPartyBillingAddress"
+                                      current-shipment="vm.currentShipment"
+                                      hide-address-book-list="false"
+                                      hide-checkboxes="false"
+                                      hide-validate="false"
+                                      hide-search="false"
+                                      active-subtab-index="6"
+                                      is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                      address-book-id="vm.addressBookId"
+                                      disable-fields="false">
+                        </name-address>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <ul class="nav nav-tabs">
+                <li ng-class="{active: vm.activeTab === 0}" ng-click="vm.activeTab = 0"><a href="">General</a></li>
+                <li ng-class="{active: vm.activeTab === 1}" ng-click="vm.activeTab = 1"><a href="">Accessorials</a></li>
+                <li ng-class="{active: vm.activeTab === 2}" ng-click="vm.activeTab = 2"><a href="">Intl</a></li>
+                <li ng-class="{active: vm.activeTab === 3}" ng-click="vm.activeTab = 3"><a href="">Hazmat</a></li>
+                <li ng-class="{active: vm.activeTab === 4}" ng-click="vm.activeTab = 4"><a href="">Reference</a></li>
+                <li ng-class="{active: vm.activeTab === 5}" ng-click="vm.activeTab = 5"><a href="">LTL</a></li>
+                <li ng-class="{active: vm.activeTab === 6}" ng-click="vm.activeTab = 6"><a href="">Visibility</a></li>
+                <li ng-class="{active: vm.activeTab === 7}" ng-click="vm.activeTab = 7"><a href="">Goods</a></li>
+            </ul>
+
+            <div class="tab-content" style="padding-top: 12px;">
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 0}">
+                    <general-tab shipment-request="vm.currentShipment"
+                                 package-index="vm.packageIndex"
+                                 field-options="vm.profile.FieldOptions"
+                                 profile="vm.profile">
+                    </general-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 1}">
+                    <accessorial-tab shipment-request="vm.currentShipment"
+                                     package-index="vm.packageIndex"
+                                     field-options="vm.profile.FieldOptions"
+                                     profile="vm.profile"
+                                     hide-rate-button="true">
+                    </accessorial-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 2}">
+                    <international-tab shipment-request="vm.currentShipment"
+                                       package-index="vm.packageIndex"
+                                       field-options="vm.profile.FieldOptions"
+                                       profile="vm.profile">
+                    </international-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 3}">
+                    <hazmat-tab shipment-request="vm.currentShipment"
+                                package-index="vm.packageIndex"
+                                field-options="vm.profile.FieldOptions"
+                                profile="vm.profile">
+                    </hazmat-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 4}">
+                    <reference-tab shipment-request="vm.currentShipment"
+                                   package-index="vm.packageIndex"
+                                   field-options="vm.profile.FieldOptions"
+                                   profile="vm.profile"
+                                   reference-labels="{consigneeReference:'Temperature', shipperReference:'Study Reference Code', miscReference1:'Protocol Number', miscReference2:'Site Number', miscReference3:'Dry Ice Weight (kg)', miscReference4:'Biological Sample'}">
+                    </reference-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 5}">
+                    <ltl-tab shipment-request="vm.currentShipment"
+                             package-index="vm.packageIndex"
+                             field-options="vm.profile.FieldOptions"
+                             profile="vm.profile">
+                    </ltl-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 6}">
+                    <visibility-tab shipment-request="vm.currentShipment"
+                                    package-index="vm.packageIndex"
+                                    field-options="vm.profile.FieldOptions"
+                                    profile="vm.profile">
+                    </visibility-tab>
+                </div>
+                <div class="tab-pane" ng-class="{active: vm.activeTab === 7}">
+                    <goods-tab shipment-request="vm.currentShipment"
+                               package-index="vm.packageIndex"
+                               field-options="vm.profile.FieldOptions"
+                               profile="vm.profile">
+                    </goods-tab>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 12px;">
+                <div class="col-md-12 text-right">
+                    <button class="btn btn-sm btn-primary" ng-click="vm.saveShipment()" ng-hide="vm.profile.ProfileSetting.DisablePendingShipment">Save</button>
+                    <button class="btn btn-sm btn-warning" ng-click="vm.rate()" ng-hide="true">Rate</button>
+                    <button class="btn btn-sm btn-success" ng-click="vm.checkShip()" ng-hide="vm.profile.ProfileSetting.DisableShip">Ship</button>
+                    <button class="btn btn-sm btn-default" ng-click="vm.saveLicensePlate()" ng-show="vm.profile.ProfileSetting.EnableLicensePlate">Create License Plate</button>
+                    <button class="btn btn-sm btn-info" ng-click="vm.shipDistributionList()" ng-show="vm.showDistributionList">Ship Distribution List</button>
+                </div>
+            </div>
+
+            <div class="row" ng-show="vm.showLastShipmentPanel" style="margin-top: 12px;">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Last Shipment</div>
+                        <div class="panel-body">
+                            <div ng-if="vm.lastShipmentResponse">
+                                <div>Tracking #: {{vm.lastShipmentResponse.TrackingNumber}}</div>
+                                <div>Service: {{vm.lastShipmentResponse.ServiceName}}</div>
+                                <div>Total Charges: {{vm.lastShipmentResponse.TotalCharges}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

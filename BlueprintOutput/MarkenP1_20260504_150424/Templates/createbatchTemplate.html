@@ -1,0 +1,106 @@
+<form name="createBatchForm">
+    <keyboard-event key="ENTER" on-keypress="vm.addBatchItem(vm.batchItemReference)" ng-disabled="createBatchForm.orderNumber.$error.required"></keyboard-event>
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <div class="row">
+                        <h5 class="custom-title-h5">{{vm.translations.ThinClient.CreateaBatch}}</h5>
+                    </div>
+                </div>
+                <div class="panel-body create-batch">
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-9">
+                            <label class="radio-inline">
+                                <input type="radio" ng-model="vm.batchDiv" ng-click="vm.batchReference={};vm.batchItems=[];vm.errorMessage='';" value="N">{{vm.translations.ThinClient.NewBatch}}
+                            </label>
+                            <label class="radio-inline"><input type="radio" ng-model="vm.batchDiv" ng-click="vm.batchReference={};vm.batchItems=[];vm.errorMessage='';vm.getBatches();" value="E">{{vm.translations.ThinClient.ExistingBatches}}</label>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <label class="control-label col-sm-3 label-center">{{vm.translations.ThinClient.BatchReference}}</label>
+                        <div class="col-sm-5" ng-if="vm.batchDiv == 'N'" ng-class="{ 'has-error': createBatchForm.batchReference.$invalid && createBatchForm.batchReference.$touched}">
+                            <input type="text" required placeholder="{{vm.translations.ThinClient.NewBatch}}" class="form-control" name="batchReference" ng-model="vm.batchReference.BatchReference" ng-blur="vm.validateBatch()" ng-disabled="vm.batchItems.length>0" />
+                            <div class="text-danger" ng-if="vm.errorMessage != ''">{{vm.errorMessage}}</div>
+                            &nbsp;
+                        </div>
+                        <div class="col-sm-5" ng-if="vm.batchDiv == 'E'" ng-class="{ 'has-error': createBatchForm.batchReference.$invalid && createBatchForm.batchReference.$touched}">
+                            <select class="form-control" name="batchReference" required ng-model="vm.batchReference" ng-options="b as b.BatchReference for b in vm.batches" ng-change="vm.getBatchItems(vm.batchReference.BatchReference);">
+                            </select>
+                            &nbsp;
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="control-label col-sm-3 label-center">{{vm.translations.Common.ShipDate}}</label>
+                        <div class="col-sm-5">
+                            <div class="input-group">
+                                <input type="text" class="form-control" ng-disabled="vm.batchItems.length>0" datepicker-options="vm.dateOptions" name="shipDate" required uib-datepicker-popup="yyyy-MM-dd" ng-click="vm.popup.opened = true;" ng-model="vm.shipDate" is-open="vm.popup.opened" close-text={{vm.translations.Common.Close}} clear-text={{vm.translations.Common.Clear}} current-text={{vm.translations.Common.Today}}  ng-required="true" ng-pattern="/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/" />
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-md btn-default" ng-disabled="vm.batchItems.length>0" ng-click="vm.popup.opened = true;"><em class="glyphicon glyphicon-calendar"></em></button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-5">
+                            <p ng-show="createBatchForm.shipDate.$error.required && !createBatchForm.shipDate.$pristine" class="text-danger">{{vm.translations.ThinClient.EnterShipDate}}.</p>
+                            <p ng-show="createBatchForm.shipDate.$invalid && !createBatchForm.shipDate.$error.required" class="text-danger">{{vm.translations.ThinClient.PleaseEnterValidShipDate}}.</p>
+                        </div>
+                        <div class="col-sm-5" ng-if="!(createBatchForm.shipDate.$error.required && !createBatchForm.shipDate.$pristine) || !(createBatchForm.shipDate.$invalid && !createBatchForm.shipDate.$error.required)">
+                            &nbsp;
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="control-label col-sm-3 label-center">{{vm.translations.ThinClient.OrderNumber}}</label>
+                        <div class="col-sm-5" ng-class="{ 'has-error': createBatchForm.orderNumber.$invalid && createBatchForm.orderNumber.$touched}">
+                            <input type="text" name="orderNumber" clearable required ng-model="vm.batchItemReference" id="txtOrderNumber" class="form-control" />
+                        </div>
+                        <span class="col-sm-2">
+                            <button type="button" ng-disabled="((createBatchForm.$error.required) || (vm.errorMessage != ''))" class="btn btn-md btn-default btn-primary" set-focus="txtOrderNumber" ng-click="vm.addBatchItem(vm.batchItemReference)">{{vm.translations.Common.Add}}</button>
+                        </span>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-9">
+                            <button type="button" class="btn btn-default" ng-disabled="(vm.batchItems.length <= 0)" ng-click="vm.deleteBatch(vm.batchReference.Id)">{{vm.translations.ThinClient.ClearBatch}}</button>
+                            <button type="button" class="btn btn-primary" ng-click="vm.processBatch()" ng-disabled="vm.batchItems.length == 0">{{vm.translations.ThinClient.Process}}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <div class="row">
+                        <h5 class="custom-title-h5">{{vm.translations.ThinClient.ItemsinBatch}}</h5>
+                    </div>
+                </div>
+                <div class="panel-body scrollToTable">
+                    <h3 class="text-center text-capitalize" ng-if="vm.batchItems.length <= 0">{{vm.translations.Common.NoRecordsFound}}</h3>
+                    <div class="lastShipmentDiv">
+                        <ul class="list-group" ng-if="vm.batchItems.length > 0">
+                            <li ng-repeat="batchItem in vm.batchItems" class="list-group-item justify-content-between">
+                                {{batchItem.BatchItemReference}}
+                                <button type="button" class="btn btn-default badge" ng-click="vm.deleteBatchItem(batchItem.BatchItemReference,$index)"><em class="glyphicon glyphicon-trash"></em></button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h7 class="text-center text-capitalize">{{vm.translations.ThinClient.BatchCount}}: {{vm.batchItems.length}}</h7>
+                        </div>
+                        <div class="col-sm-9 text-danger">{{vm.errorMessageForBatchItem}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{224D870D-E634-434E-AE67-87F137FDFEBE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>PSI.Sox</RootNamespace>
+    <AssemblyName>PSI.Sox.SBR.CodeStandards</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="PSI.Sox">
+      <HintPath>References\PSI.Sox.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Wcf">
+      <HintPath>References\PSI.Sox.Wcf.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Tools">
+      <HintPath>References\PSI.Sox.Tools.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Resources">
+      <HintPath>References\PSI.Sox.Resources.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Print">
+      <HintPath>References\PSI.Sox.Print.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.ML">
+      <HintPath>References\PSI.Sox.ML.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Licensing">
+      <HintPath>References\PSI.Sox.Licensing.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Data">
+      <HintPath>References\PSI.Sox.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Configuration">
+      <HintPath>References\PSI.Sox.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CreateBatchRequest.cs" />
+    <Compile Include="DataService.cs" />
+    <Compile Include="LoadShipment.cs" />
+    <Compile Include="SoxBusinessRules.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tools.cs" />
+    <Compile Include="ReturnsShipmentManager.cs" />
+  </ItemGroup>
+<ItemGroup>
+    <Content Include="CBR\ClientBusinessRulesTemplate.js" />
+    <Content Include="CBR\SampleCBRCode.js" />
+    <Content Include="Templates\addressbookTemplate.html" />
+    <Content Include="Templates\batchdetailTemplate.html" />
+    <Content Include="Templates\batchmanagerTemplate.html" />
+    <Content Include="Templates\closeManifestTemplate.html" />
+    <Content Include="Templates\createbatchTemplate.html" />
+    <Content Include="Templates\distributionListTemplate.html" />
+    <Content Include="Templates\groupmanagerTemplate.html" />
+    <Content Include="Templates\historySearchTemplate.html" />
+    <Content Include="Templates\loadTemplate.html" />
+    <Content Include="Templates\mailRoomSearchFiltersTemplate.html" />
+    <Content Include="Templates\mailRoomSearchResultTemplate.html" />
+    <Content Include="Templates\managedataTemplate.html" />
+    <Content Include="Templates\manifestDocumentsTemplate.html" />
+    <Content Include="Templates\pendingShipmentSearchFiltersTemplate.html" />
+    <Content Include="Templates\pendingShipmentSearchResultTemplate.html" />
+    <Content Include="Templates\rateResultModal.html" />
+    <Content Include="Templates\scanshipTemplate.html" />
+    <Content Include="Templates\searchresultTemplate.html" />
+    <Content Include="Templates\shippingTemplate.html" />
+    <Content Include="Templates\transmitTemplate.html" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ItemGroup>
+    <None Include="MarkenP1.pdf" />
+    <None Include="README.md" />
+    <None Include="analysis_chat.html" />
+  </ItemGroup>
+</Project>

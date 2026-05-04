@@ -1,0 +1,54 @@
+<div class="col-md-12 scrollbarxy">
+    <table ng-table="vm.tableParamsForDetailed" class="table table-bordered table-striped table-responsive" show-filter="false" ng-hide="vm.hideSearchResult" role="presentation">
+        <tr ng-repeat="package in vm.dataWithServerSidePagination">
+            <td title="vm.actionCaption" class="row" ng-if="!vm.hideAction">
+                <a ng-click="vm.openPopupModal('view',package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;">
+                    <span class="glyphicon glyphicon-search" tooltip-placement="top" uib-tooltip={{vm.translations.Common.View}}></span>
+                </a>
+                <a ng-click="vm.runVoid(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-remove-sign" tooltip-placement="top" uib-tooltip={{vm.translations.Common.Void}}></span>
+                </a>
+                <a ng-click="vm.print(package)" class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-hide="package.Voided || package.IsImported">
+                    <span class="glyphicon glyphicon-print" tooltip-placement="top" uib-tooltip={{vm.translations.ThinClient.Reprint}}></span>
+                </a>
+            </td>
+            <td title="vm.globalMSNCaption" ng-attr-title="{{vm.translations.ThinClient.GlobalMSN}}" ng-if="!vm.hideGlobalMSN">
+                {{package.GlobalMsn}}
+            </td>
+            <td title="vm.trackingNumberCaption" ng-attr-title="{{vm.translations.ThinClient.TrackingNumber}}" ng-if="!vm.hideTrackingNumber">
+                <div ng-show="package.IsTrackable && !package.Voided">
+                    <a style="cursor: pointer;" ng-click="vm.track(package)">{{package.TrackingNumber}} </a>
+                </div>
+                <div ng-show="!package.IsTrackable && !package.Voided">
+                    {{package.TrackingNumber}}
+                </div>
+                <div ng-show="package.Voided" ng-class="{strike: package.Voided}">
+                    {{package.TrackingNumber}}
+                </div>
+            </td>
+            <td title="vm.shipperReferenceCaption" ng-attr-title="{{vm.translations.Common.ShipperReference}}"  ng-if="!vm.hideShipperReference">
+                {{package.ShipperReference}}
+            </td>
+            <td title="vm.consigneeReferenceCaption" ng-attr-title="{{vm.translations.Common.ConsigneeReference}}"  ng-if="!vm.hideConsigneeReference ">
+                {{package.ConsigneeReference}}
+            </td>
+            <td title="vm.shipDateCaption" ng-attr-title="{{vm.translations.Common.ShipDate}}"  ng-if="!vm.hideShipDate">
+                {{package.Shipdate.Year}}-{{("0"+package.Shipdate.Month).slice(-2)}}-{{("0"+package.Shipdate.Day).slice(-2)}}
+            </td>
+            <td title="vm.weightCaption" ng-attr-title="{{vm.translations.ThinClient.Weight}}"  ng-if="!vm.hideWeight">
+                {{package.Weight.Amount}} {{package.Weight.Units}}
+            </td>
+            <td title="vm.ratedWeightCaption" ng-attr-title="{{vm.translations.ThinClient.RatedWeight}}" ng-if="!vm.hideRatedWeight">
+                {{package.RatedWeight.Amount}} {{package.RatedWeight.Units}}
+            </td>
+            <td title="vm.dimensionCaption" ng-attr-title="{{vm.translations.Common.Dimension}}"  ng-if="!vm.hideDimension">
+                <div ng-show="package.Dimensions!=null" ng-class="{strike: package.Voided}">
+                    {{package.Dimensions.Length}} x {{package.Dimensions.Width}} x {{package.Dimensions.Height}} {{package.Dimensions.Units | DimensionUnits}}
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div ng-show="vm.hideSearchResult">
+        {{vm.translations.Common.NoSearchResultFound}}
+    </div>
+</div>

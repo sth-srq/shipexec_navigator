@@ -1,0 +1,75 @@
+<div class="col-md-12 scrollbarxy">
+    <script type="text/ng-template" id="checkboxheader.html">
+        <input type="checkbox" ng-model="vm.selectAll" ng-change="vm.insertArrayForDeletion()">
+    </script>
+    <div class="full-width">
+        <table ng-table="vm.tableParams" class="table table-bordered table-striped table-responsive ng-table-with-scroll max-height-70vh" show-filter="false" ng-hide="vm.hideSearchResult" aria-describedby="License Plate" role="presentation">
+            <tbody ng-repeat="licensePlate in vm.licensePlates">
+                <tr>
+                    <td data-header="'checkboxheader.html'">
+                        <input type="checkbox" ng-click="vm.insertIdsForDelete(licensePlate.Id)" ng-checked="vm.selectAll" />
+                    </td>
+                    <td>
+                        <input class="col-sm-12 col-md-12 col-lg-12 btn btn-xs btn-primary"  type="button" value="{{vm.translations.Common.Select}}" ng-click="vm.selectLicensePlate(licensePlate)" />
+                    </td>
+                    <td sortable="'ShipmentReference'" style="width: 10%" data-title="vm.translations.ThinClient.ShipmentReference">
+                        <div>{{licensePlate.ShipmentReference}}</div>
+                    </td>
+                    <td sortable="'Consignee.Company'" style="width: 10%" data-title="vm.translations.Common.Company">
+                        <div>{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.Company}}</div>
+                    </td>
+                    <td sortable="'Consignee.Contact'" style="width: 10%" data-title="vm.translations.Common.Contact">
+                        <div>{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.Contact}}</div>
+                    </td>
+                    <td sortable="'Consignee.Address1'" class="width40Per" data-title="vm.translations.Common.Address">
+                        <div>
+                            {{licensePlate.ShipmentRequest.PackageDefaults.Consignee.Address1}}<br>{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.City || ''}}{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.StateProvince && licensePlate.ShipmentRequest.PackageDefaults.Consignee.StateProvince != '' ? ',' : ''}}
+                            {{licensePlate.ShipmentRequest.PackageDefaults.Consignee.StateProvince || ''}}{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.Country && licensePlate.ShipmentRequest.PackageDefaults.Consignee.Country != ''? ',' : ''}}{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.Country || ''}}
+                            {{licensePlate.ShipmentRequest.PackageDefaults.Consignee.PostalCode && licensePlate.ShipmentRequest.PackageDefaults.Consignee.PostalCode != ''? ',' : ''}}{{licensePlate.ShipmentRequest.PackageDefaults.Consignee.PostalCode || ''}}
+
+                        </div>
+                    </td>
+                    <td sortable="'Shipper'" style="width: 10%" data-title="vm.translations.Common.Shipper">
+                        <div>{{licensePlate.ShipmentRequest.PackageDefaults.Shipper}}</div>
+                    </td>
+                    <td sortable="'Service.Name'" data-title="vm.translations.Common.Service">
+                        <div>{{licensePlate.ShipmentRequest.PackageDefaults.Service.Name}}</div>
+                    </td>
+                    <td data-title="vm.translations.ThinClient.TotalPackages">
+                        {{licensePlate.ShipmentRequest.Packages.length}}
+                    </td>
+                    <td>
+                        <span class="col-sm-1 col-md-1 col-lg-1" style="cursor: pointer;" ng-class="{'glyphicon glyphicon-menu-down':vm.expandedRateResult != $index,'glyphicon glyphicon-menu-up':vm.expandedShipmentResult == $index}" ng-click="vm.expandedShipmentResult = vm.expandedShipmentResult == $index ? -1 : $index;" expand></span>
+                    </td>
+                </tr>
+                <tr ng-show="vm.expandedShipmentResult == $index">
+                    <td colspan="12">
+                        <div class="scrollable-table">
+                            <table class="fixed-header" aria-describedby="Shipment">
+                                <tr>
+                                    <th scope="col" class="col-md-1">{{vm.translations.Common.Package}}</th>
+                                    <th scope="col" class="col-md-1">{{vm.translations.ThinClient.Weight}}</th>
+                                    <th scope="col" class="col-md-5">{{vm.translations.ThinClient.ShipperReference}}</th>
+                                    <th scope="col" class="col-md-5">{{vm.translations.Common.ConsigneeReference}}</th>
+                                </tr>
+                            </table>
+                            <div class="inner-table">
+                                <table class="table table-bordered" aria-describedby="Packages"  role="presentation">
+                                    <tr ng-repeat="package in licensePlate.ShipmentRequest.Packages">
+                                        <td class="col-md-1">#{{$index+1}}</td>
+                                        <td class="col-md-1">{{(package.Weight.Amount && package.Weight.Amount !=0 ) ? (package.Weight.Amount | number : 2):'-'}} {{(package.Weight.Amount && package.Weight.Amount !=0 ) ? (package.Weight.Units):''}} </td>
+                                        <td class="col-md-5">{{package.ShipperReference}}</td>
+                                        <td class="col-md-5">{{package.ConsigneeReference}}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div ng-show="vm.hideSearchResult">
+        {{vm.translations.Common.NoSearchResultFound}}
+    </div>
+</div>

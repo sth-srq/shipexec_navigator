@@ -1,0 +1,173 @@
+<div>
+    <field-select property="HistorySearch.Site" model="vm.site" class="row form-group-sm"
+                  options="site.Id as site.Name for site in vm.sites"
+                  caption="{{vm.translations.Common.Site}}"
+                  form-type="Horizontal" ng-hide="vm.userContext.SiteId">
+    </field-select>
+
+    <!--<div class="form-group-sm" ng-show="(vm.permissions | filter:{ Permission:'CanViewUserTextbox'})[0].IsValid">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.User}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.user">
+            </div>
+        </div>
+        <div class="form-group-sm" ng-show="(vm.permissions | filter:{ Permission:'CanViewMachineTextbox'})[0].IsValid">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.ThinClient.Machine}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.machine">
+            </div>
+        </div>-->
+
+    <field-select property="HistorySearch.Shipper" model="vm.selectedShipper" class="row form-group-sm"
+                  options="shipper as shipper.Name for shipper in vm.shippers track by shipper.Symbol"
+                  caption="{{vm.translations.Common.Shipper}}"
+                  form-type="Horizontal">
+    </field-select>
+
+    <field-select property="HistorySearch.Carrier" model="vm.selectedCarrier" class="row form-group-sm"
+                  options="carrier as carrier.Name for carrier in vm.carriers track by carrier.Symbol"
+                  caption="{{vm.translations.Common.Carrier}}"
+                  form-type="Horizontal">
+    </field-select>
+
+    <field-select property="HistorySearch.Service" model="vm.selectedService" class="row form-group-sm"
+                  options="service as service.Name for service in vm.services track by service.Symbol"
+                  caption="{{vm.translations.Common.Service}}"
+                  form-type="Horizontal">
+    </field-select>
+
+    <field-input property="HistorySearch.GlobalMSN" class="row form-group-sm" model="vm.msn"
+                 caption="{{vm.translations.ThinClient.GlobalMSN}}" form-type="Horizontal"></field-input>
+
+
+    <field-input property="HistorySearch.GlobalBundleID" class="row form-group-sm" model="vm.bundleId"
+                 caption="{{vm.translations.ThinClient.GlobalBundleID}}" form-type="Horizontal"></field-input>
+
+    <field-input property="HistorySearch.ShipId" class="row form-group-sm" model="vm.shipId"
+                 caption="{{vm.translations.ThinClient.ShipId}}" form-type="Horizontal"></field-input>
+
+    <field-input property="HistorySearch.TrackingNumber" class="row form-group-sm" model="vm.trackingNumber"
+                 caption="{{vm.translations.ThinClient.TrackingNumber}}" form-type="Horizontal"></field-input>
+
+    <field-input property="HistorySearch.BatchReference" class="row form-group-sm" model="vm.batchReference"
+                 caption="{{vm.translations.ThinClient.BatchReference}}" form-type="Horizontal"></field-input>
+
+
+    <field-input property="HistorySearch.BatchItemReference" class="row form-group-sm" model="vm.batchItemReference"
+                 caption="{{vm.translations.ThinClient.BatchItemReference}}" form-type="Horizontal"></field-input>
+
+    <field-input property="HistorySearch.ShipperReference" class="row form-group-sm" model="vm.shipperReference"
+                 caption="{{vm.translations.ThinClient.ShipperReference}}" form-type="Horizontal"></field-input>
+    <field-checkbox font-size="small" property="HistorySearch.ShipperReferenceSearchMode" model="vm.shipperReferenceMode" caption="Exact Match"></field-checkbox>
+
+    <field-input property="HistorySearch.ConsigneeReference" class="row form-group-sm" model="vm.consigneeReference"
+                 caption="{{vm.translations.Common.ConsigneeReference}}" form-type="Horizontal"></field-input>
+    <field-checkbox property="HistorySearch.ConsigneeReferenceSearchMode" model="vm.consigneeReferenceMode" caption="Exact Match"></field-checkbox>
+
+    <!--<div class="form-group-sm">
+        <label class="control-label col-sm-6 padding-left-right-zero">Package Status</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <select class="form-control srch-inputfld"
+                    ng-model="vm.voided">
+                <option value="null" selected="selected">Show All</option>
+                <option value="true">Voided</option>
+                <option value="false">Not Voided</option>
+                <option value="ServiceChange">Service Changed</option>
+            </select>
+        </div>
+    </div>-->
+    <div class="form-group-sm row">
+        <button type="button" class="panel-accordion" ng-click="vm.hideConsignee = !vm.hideConsignee" style="min-width: 100%">{{vm.translations.ThinClient.Consignee}}</button>
+    </div>
+    <div ng-hide="vm.hideConsignee">
+
+        <field-input property="HistorySearch.CompanyName" class="row form-group-sm" model="vm.companyName"
+                     caption="{{vm.translations.ThinClient.CompanyName}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.Contact" class="row form-group-sm" model="vm.contact"
+                     caption="{{vm.translations.Common.Contact}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.City" class="row form-group-sm" model="vm.city"
+                     caption="{{vm.translations.Common.City}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.StateProvince" class="row form-group-sm" model="vm.state"
+                     caption="{{vm.translations.Common.StateProvince}}" form-type="Horizontal"></field-input>
+
+        <field-select property="HistorySearch.CountryTerritory" model="vm.country" class="row form-group-sm"
+                      options="country.Iso2 as country.Name for country in vm.countries"
+                      caption="{{vm.translations.Common.Country}}"
+                      form-type="Horizontal">
+        </field-select>
+
+        <field-input property="HistorySearch.PostalCode" class="row form-group-sm" model="vm.postalCode"
+                     caption="{{vm.translations.Common.PostalCode}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.Phone" class="row form-group-sm" model="vm.phone"
+                     caption="{{vm.translations.Common.Phone}}" form-type="Horizontal"></field-input>
+    </div>
+
+    <div class="form-group-sm row">
+        <button type="button" class="panel-accordion" ng-click="vm.showReferences()" style="min-width: 100%">{{vm.showReferencesName}}</button>
+    </div>
+    <div ng-hide="vm.hideReferences">
+        <field-input property="HistorySearch.MiscReference1" class="row form-group-sm" model="vm.miscRef1"
+                     caption="{{vm.translations.ThinClient.MiscReferenceOne}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference2" class="row form-group-sm" model="vm.miscRef2"
+                     caption="{{vm.translations.ThinClient.MiscReferenceTwo}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference3" class="row form-group-sm" model="vm.miscRef3"
+                     caption="{{vm.translations.ThinClient.MiscReferenceThree}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference4" class="row form-group-sm" model="vm.miscRef4"
+                     caption="{{vm.translations.ThinClient.MiscReferenceFour}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference5" class="row form-group-sm" model="vm.miscRef5"
+                     caption="{{vm.translations.ThinClient.MiscReferenceFive}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference6" class="row form-group-sm" model="vm.miscRef6"
+                     caption="{{vm.translations.ThinClient.MiscReferenceSix}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference7" class="row form-group-sm" model="vm.miscRef7"
+                     caption="{{vm.translations.ThinClient.MiscReferenceSeven}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference8" class="row form-group-sm" model="vm.miscRef8"
+                     caption="{{vm.translations.ThinClient.MiscReferenceEight}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference9" class="row form-group-sm" model="vm.miscRef9"
+                     caption="{{vm.translations.ThinClient.MiscReferenceNine}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference10" class="row form-group-sm" model="vm.miscRef10"
+                     caption="{{vm.translations.ThinClient.MiscReferenceTen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference11" class="row form-group-sm" model="vm.miscRef11"
+                     caption="{{vm.translations.ThinClient.MiscReferenceEleven}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference12" class="row form-group-sm" model="vm.miscRef12"
+                     caption="{{vm.translations.ThinClient.MiscReferenceTwelve}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference13" class="row form-group-sm" model="vm.miscRef13"
+                     caption="{{vm.translations.ThinClient.MiscReferenceThirteen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference14" class="row form-group-sm" model="vm.miscRef14"
+                     caption="{{vm.translations.ThinClient.MiscReferenceFourteen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference15" class="row form-group-sm" model="vm.miscRef15"
+                     caption="{{vm.translations.ThinClient.MiscReferenceFifteen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference16" class="row form-group-sm" model="vm.miscRef16"
+                     caption="{{vm.translations.ThinClient.MiscReferenceSixteen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference17" class="row form-group-sm" model="vm.miscRef17"
+                     caption="{{vm.translations.ThinClient.MiscReferenceSeventeen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference18" class="row form-group-sm" model="vm.miscRef18"
+                     caption="{{vm.translations.ThinClient.MiscReferenceEighteen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference19" class="row form-group-sm" model="vm.miscRef19"
+                     caption="{{vm.translations.ThinClient.MiscReferenceNineteen}}" form-type="Horizontal"></field-input>
+
+        <field-input property="HistorySearch.MiscReference20" class="row form-group-sm" model="vm.miscRef20"
+                     caption="{{vm.translations.ThinClient.MiscReferenceTwenty}}" form-type="Horizontal"></field-input>
+    </div>
+</div>

@@ -1,0 +1,106 @@
+<div>
+    <div class="form-group-sm" ng-hide="vm.userContext.SiteId">
+        <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Site}}</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <select class="form-control srch-inputfld"
+                    ng-model="vm.site"
+                    ng-options="site.Id as site.Name for site in vm.sites">
+                <option value="" selected="selected">{{vm.translations.ThinClient.SelectSite}}...</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group-sm">
+        <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Shipper}}</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <select id="shippers" class="form-control srch-inputfld"
+                    ng-model="vm.selectedShipper"
+                    ng-options="shipper as shipper.Name for shipper in vm.shippers track by shipper.Symbol">
+                <option value="" selected="selected">{{vm.translations.ThinClient.SelectShipper}}...</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group-sm">
+        <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Carrier}}</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <select id="carriers" class="form-control srch-inputfld"
+                    ng-model="vm.selectedCarrier"
+                    ng-options="carrier as carrier.Name for carrier in vm.carriers track by carrier.Symbol">
+                <option value="" selected="selected">{{vm.translations.ThinClient.SelectCarrier}}...</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group-sm">
+        <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Service}}</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <select id="services" class="form-control srch-inputfld"
+                    ng-model="vm.selectedService"
+                    ng-options="service as service.Name for service in vm.services track by service.Symbol">
+                <option value="" selected="selected">{{vm.translations.ThinClient.SelectService}}...</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group-sm">
+        <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.ThinClient.ShipperReference}}</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <input type="text" class="form-control srch-inputfld" ng-model="vm.shipperReference">
+        </div>
+    </div>
+    <div class="form-group-sm row">
+        <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.ConsigneeReference}}</label>
+        <div class="col-sm-6 Srchfld padding-left-right-zero">
+            <input type="text" class="form-control srch-inputfld" ng-model="vm.consigneeReference">
+        </div>
+    </div>
+
+    <div class="form-group-sm row">
+        <button type="button" class="panel-accordion" style="min-width: 100%">{{vm.translations.ThinClient.Consignee}}</button>
+    </div>
+    <div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.ThinClient.CompanyName}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.companyName">
+            </div>
+        </div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Contact}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.contact">
+            </div>
+        </div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.City}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.city">
+            </div>
+        </div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.StateProvince}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.state">
+            </div>
+        </div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Country}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <select class="form-control srch-inputfld"
+                        ng-model="vm.country"
+                        ng-options="country.Iso2 as country.Name for country in vm.countries">
+                    <option value="" selected="selected">{{vm.translations.ThinClient.SelectCountry}}...</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.PostalCode}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.postalCode">
+            </div>
+        </div>
+        <div class="form-group-sm">
+            <label class="control-label col-sm-6 padding-left-right-zero">{{vm.translations.Common.Phone}}</label>
+            <div class="col-sm-6 Srchfld padding-left-right-zero">
+                <input type="text" class="form-control srch-inputfld" ng-model="vm.phone">
+            </div>
+        </div>
+    </div>
+</div>

@@ -1925,6 +1925,8 @@ public sealed class ShipExecService(
         return string.Concat(name.Select(c => invalid.Contains(c) ? '_' : c));
     }
 
+
+
     public Task<(int Total, List<LogEntry> Logs)> GetApplicationLogsAsync(DateTime startDate, DateTime endDate)
     {
         if (_appManager is null)

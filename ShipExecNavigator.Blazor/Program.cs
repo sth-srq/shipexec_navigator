@@ -49,6 +49,7 @@ builder.Services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactor
     builder.Services.AddHttpClient();
     builder.Services.AddScoped<IAiChatService, SemanticKernelChatService>();
     builder.Services.AddScoped<ICbrAnalysisService, CbrAnalysisService>();
+    builder.Services.AddScoped<IBlueprintAnalysisService, BlueprintAnalysisService>();
     builder.Services.AddSingleton<SummaryPdfService>();
 
     QuestPDF.Settings.License = LicenseType.Community;

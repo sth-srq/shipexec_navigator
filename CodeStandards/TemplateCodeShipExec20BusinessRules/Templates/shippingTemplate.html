@@ -1,0 +1,323 @@
+<div class="row">
+    <keyboard-event key="F2" on-keypress="vm.newShipment()"></keyboard-event>
+    <keyboard-event key="F7" on-keypress="vm.load()" ng-disabled="!(vm.loadValue) || vm.profile.FieldOptions.Load.IsHidden"></keyboard-event>
+    <keyboard-event key="F8" ng-disabled="vm.lastShipmentRequest == null" on-keypress="vm.repeatShipment()"></keyboard-event>
+    <keyboard-event key="F9" on-keypress="vm.rate()"></keyboard-event>
+    <keyboard-event key="F12" on-keypress="vm.checkShip()" ng-disabled="vm.profile.ProfileSetting.DisableShip"></keyboard-event>
+    <div ng-class="{ 'col-md-10': vm.showLastShipmentPanel==true , 'col-md-12': vm.showLastShipmentPanel == false  }">
+        <div class="row top-tool-bar">
+            <div class="pull-left">
+                <button class="btn btn-xs btn-primary" ng-click="vm.newShipment()" ng-hide="{{vm.profile.FieldOptions.NewShipment.IsHidden}}">{{vm.newShipmentButtonCaption}} (F2)</button>
+                <button class="btn btn-xs btn-primary" ng-disabled="vm.lastShipmentRequest == null" ng-click="vm.repeatShipment()" ng-hide="{{vm.profile.FieldOptions.RepeatShipment.IsHidden}}">{{vm.repeatShipmentButtonCaption}} (F8)</button>
+                <button class="btn btn-xs btn-primary" ng-click="vm.buildShipment()" ng-class="{'disablelink ': vm.disableShipMode}" ng-hide="{{vm.profile.FieldOptions.BuildShipment.IsHidden}}">{{vm.buildShipmentButtonCaption}}</button>
+                <button class="btn btn-xs btn-primary" ng-click="vm.getDistributionLists()" ng-hide="{{vm.profile.FieldOptions.DistributionList.IsHidden}}">{{vm.distributionListButtonCaption}}</button>
+                <button class="btn btn-xs btn-primary" ng-click="vm.createPickupRequestClick()" ng-hide="{{vm.profile.FieldOptions.PickupRequest.IsHidden}}" ng-disabled="!(vm.profile.ProfilePickupConfigurations && vm.profile.ProfilePickupConfigurations.length > 0)">{{vm.pickupRequestButtonCaption}}</button>
+                <button class="btn btn-xs btn-primary" ng-if="!vm.profile.ProfileSetting.DisablePendingShipment" ng-click="vm.showPendingShipmentModal()" ng-hide="{{vm.profile.FieldOptions.PendingShipments.IsHidden}}">{{vm.pendingShipmentsButtonCaption}}</button>
+                <button class="btn btn-xs btn-primary" ng-if="vm.profile.ProfileSetting.EnableMailRoomProcessing" ng-click="vm.showMailRoomModal()">{{vm.mailRoomButtonCaption}}</button>
+            </div>
+            <div class="pull-right cstom-margin-left">
+                <input type="button" ng-show="!vm.showLastShipmentPanel" ng-disabled="vm.lastShipmentRequest == null" class="btn btn-xs btn-primary pull-right" ng-click="vm.showLastShipmentPanel = true;" value={{vm.translations.ThinClient.ShowLastShipment}}>
+                <input type="button" ng-show="vm.showLastShipmentPanel" class="btn btn-xs btn-default pull-right" ng-click="vm.showLastShipmentPanel = false;" value={{vm.translations.ThinClient.HideLastShipment}}>
+            </div>
+
+            <div class="pull-right">
+                <label>{{vm.translations.ThinClient.ShipmentMode}}</label>&nbsp;
+                <select ng-change="vm.changeShipMode()" ng-model="vm.shipMode" ng-options="value as key for (key,value) in vm.shipModes" ng-disabled="vm.disableShipMode">
+                    <option style="display: none;"></option>
+                </select>
+
+                <button type="button" class="btn btn-xs btn-danger glyphicon glyphicon-remove" ng-click="vm.removePackage()" ng-disabled="(vm.totalPackages <= 1)"></button>
+
+                <span class="small">{{vm.translations.Common.Package}}</span>:&nbsp;
+                <span class="small">{{vm.packageIndex + 1}}</span>&nbsp;
+                <span class="small">{{vm.translations.Common.Of}}</span>&nbsp;
+                <span class="small">{{vm.totalPackages}}</span>
+
+                <span class="btn-group">
+                    <button type="button" class="btn btn-xs btn-default glyphicon glyphicon-chevron-left" data-toggle="tooltip" ng-disabled="vm.packageIndex == 0 || vm.shipMode == 1" title={{vm.translations.ThinClient.MovetoPreviousPackage}} ng-click="vm.previousPackage();"></button>
+                    <button type="button" class="btn btn-xs btn-default glyphicon glyphicon-chevron-right" data-toggle="tooltip" ng-disabled="vm.packageIndex == vm.currentShipment.Packages.length-1" title={{vm.translations.ThinClient.MovetoNextPackage}} ng-click="vm.nextPackage();"></button>
+                </span>
+                <span class="btn-group">
+                    <button class="btn btn-xs btn-success glyphicon glyphicon-plus" data-toggle="tooltip" title={{vm.translations.Common.AddPackage}} ng-click="vm.addPackage();"></button>
+                    <button class="btn btn-xs btn-default glyphicon glyphicon-duplicate" data-toggle="tooltip" title={{vm.translations.ThinClient.CopyPackage}} ng-click="vm.copyPackage();"></button>
+                </span>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <form class="form-horizontal" name="shippingForm">
+                        <div class="col-md-12 no-left-right-padding" ng-if="((vm.profile.ProfileSetting.EnableLoadFromMailRoom && (!vm.profile.ProfileSetting.DisableLoadFromBusinessRule || vm.profile.ProfileSetting.EnableLoadFromBatch) && !vm.profile.FieldOptions.Load.IsHidden) || (vm.profile.ProfileSetting.EnableLoadFromBatch && !vm.profile.FieldOptions.Load.IsHidden) || (!vm.profile.ProfileSetting.DisableLoadFromBusinessRule && (vm.profile.ProfileSetting.EnableLoadFromMailRoom || vm.profile.ProfileSetting.EnableLoadFromBatch) && !vm.profile.FieldOptions.Load.IsHidden))">
+                            <div class="col-md-6 no-left-right-padding">
+                                <field-select property="LoadFrom" model="vm.loadFrom"
+                                              caption="Load From"
+                                              options="loadFromOption.Symbol as loadFromOption.Name for loadFromOption in vm.loadFromOptions"
+                                              form-type="Horizontal">
+                                </field-select>
+                            </div>
+                            <div class="col-md-6 no-left-right-padding" ng-if="vm.loadFrom===vm.loadFromSelections.Batch">
+                                <field-select id="batchSelect" property="Batch" model="vm.selectedLoadFromBatch"
+                                  caption="Batch"
+                                  options="item.BatchReference as item.BatchReference for item in vm.batches"
+                                  form-type="Horizontal">
+                                </field-select>
+                            </div>
+                        </div>
+                        <div class="col-md-12 no-left-right-padding" ng-if="!vm.profile.FieldOptions.Load.IsHidden">
+                            <label class="col-md-4 control-label no-left-right-padding">{{vm.loadButtonCaption}}</label>
+                            <div class="col-md-8 no-left-right-padding">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" ng-model="vm.loadValue" ng-keypress="$event.keyCode == 13 ? vm.load() : null" placeholder={{vm.translations.ThinClient.LoadRequestString}} />
+                                    <span class="input-group-btn">
+                                        <input type="button" ng-disabled="!(vm.loadValue)" class="btn btn-md btn-primary" ng-click="vm.load()" value="{{vm.loadButtonCaption}} (F7)">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <field-select property="Shipper" model="vm.currentShipment.PackageDefaults.Shipper"
+                                      options="shipper.Symbol as shipper.Name for shipper in vm.profile.Shippers | orderBy:'Name'"
+                                      caption="{{vm.translations.Common.Shipper}}"
+                                      change-function="vm.shipperChange()"
+                                      form-type="Horizontal">
+                        </field-select>
+
+                        <!--Date Directive -->
+                        <field-date property="Shipdate"
+                                    caption="{{vm.translations.Common.ShipDate}}"
+                                    form-type="Horizontal"
+                                    model="vm.startshipdate.value"
+                                    is-open="vm.startshipdate.opened" datepicker-options="vm.startshipdateOptions"
+                                    change-function="vm.minDeliveryDate()"
+                                    open-date-picker-function="vm.openstartship()" ></field-date>
+
+                        <field-select property="Terms" model="vm.currentShipment.PackageDefaults.Terms"
+                                      options="paymentTerm.Symbol as paymentTerm.Name for paymentTerm in vm.profile.PaymentTerms"
+                                      caption="{{vm.translations.ThinClient.PaymentTerms}}"
+                                      form-type="Horizontal">
+                        </field-select>
+
+                    </form>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <div class="col-md-6">
+                            <field-checkbox property="ThirdPartyBilling" model="vm.currentShipment.PackageDefaults.ThirdPartyBilling" change="vm.thirdPartyBilling()" caption="{{vm.translations.ThinClient.ThirdPartyBilling}}"></field-checkbox>
+                        </div>
+                        <div class="col-md-6">
+                            <field-checkbox property="ConsigneeThirdPartyBilling" model="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBilling" change="vm.consigneeThirdPartyBilling()" caption="{{vm.translations.ThinClient.BillConsigneeThirdParty}}"></field-checkbox>
+                        </div>
+                        <div class="col-md-6">
+                            <field-checkbox property="BrokerageThirdPartyBilling" model="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBilling" change="vm.brokerageThirdPartyBilling()" caption="{{vm.profile.FieldOptions.BrokerageThirdPartyBilling.Caption || vm.translations.ThinClient.BrokerageThirdPartyBilling}}" ></field-checkbox>
+                        </div>
+                    </div>
+                    <div>
+                        <!-- ReSharper disable Html.TagNotResolved -->
+                        <uib-tabset active="vm.active">
+                            <uib-tab index="0" heading={{vm.consigneeTabCaption}} ng-hide="vm.showDistributionList || vm.profile.FieldOptions.Consignee.IsHidden">
+                                <div ng-hide="vm.profile.FieldOptions.Consignee.IsHidden">
+                                    <name-address caption="{{vm.translations.ThinClient.ConsigneeNameAddress}}"
+                                                  nameaddress="vm.currentShipment.PackageDefaults.Consignee"
+                                                  countries="vm.profile.Countries"
+                                                  hide-address-book-list="{{vm.hideSaveAddress}}"
+                                                  is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                                  translations="vm.translations"
+                                                  address-book-id="vm.addressBookId"
+                                                  active-subtab-index="1"                                                  
+                                                  address-property-name="Consignee"
+                                                  field-options="vm.profile.FieldOptions"
+                                                  current-shipment="vm.currentShipment"
+                                                  hide-search="{{vm.hideAddressSearch}}"
+                                                  hide-validate="{{vm.hideValidateAddress}}">
+                                    </name-address>
+                                </div>
+                            </uib-tab>
+                            <uib-tab index="1" heading={{vm.translations.Common.DistributionList}} ng-show="vm.showDistributionList">
+                                <div class="form-group distributionList" ng-show="vm.showDistributionList">
+                                    <div class="col-md-12">
+                                        <div class="col-md-8">
+                                            <select class="form-control " ng-model="vm.distributionList"
+                                                    ng-options="distribution as distribution.Name for distribution in vm.distributionLists" ng-change="vm.checkDistributionList()"></select>
+                                        </div>
+                                        <div class="padding-top-ten-custom">
+                                            <a class="col-md-1" title="{{vm.translations.Common.View}}"  ng-disabled="vm.distributionList == null" role="button" ng-click="vm.updateDistributionList()" ng-class="{'diasblelink ': vm.
+                                               istributionList}">
+                                                <span class="glyphicon glyphicon-search"></span>
+                                            </a>                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </uib-tab>
+                            <uib-tab index="2" heading={{vm.returnAddressTabCaption}} ng-hide="{{vm.profile.FieldOptions.ReturnAddress.IsHidden}}">
+                                <name-address caption="{{vm.translations.ThinClient.ReturnNameAddress}}"
+                                              nameaddress="vm.currentShipment.PackageDefaults.ReturnAddress"
+                                              countries="vm.profile.Countries"
+                                              hide-address-book-list="true"
+                                              translations="vm.translations"
+                                              active-subtab-index="1"                                              
+                                              address-property-name="ReturnAddress"
+                                              field-options="vm.profile.FieldOptions"
+                                              current-shipment="vm.currentShipment"
+                                              hide-search="{{vm.hideAddressSearch}}"
+                                              hide-validate="{{vm.hideValidateAddress}}">
+                                </name-address>
+                            </uib-tab>
+                            <uib-tab index="3" heading={{vm.originTabCaption}} ng-hide="{{vm.profile.FieldOptions.OriginAddress.IsHidden}}">
+                                <name-address caption="{{vm.translations.Common.OriginNameAddress}}"
+                                              nameaddress="vm.currentShipment.PackageDefaults.OriginAddress"
+                                              countries="vm.profile.Countries"
+                                              hide-checkboxes="true"
+                                              hide-address-book-list="true"
+                                              translations="vm.translations"
+                                              active-subtab-index="1"                                              
+                                              address-property-name="OriginAddress"
+                                              field-options="vm.profile.FieldOptions"
+                                              current-shipment="vm.currentShipment"
+                                              hide-search="{{vm.hideAddressSearch}}"
+                                              hide-validate="{{vm.hideValidateAddress}}">
+                                </name-address>
+                            </uib-tab>
+                            <uib-tab index="4" heading={{vm.thirdPartyBillingAddressTabCaption}} ng-show="vm.currentShipment.PackageDefaults.ThirdPartyBilling==true && !vm.profile.FieldOptions.ThirdPartyBillingAddress.IsHidden ">
+                                <name-address caption="{{vm.translations.ThinClient.ThirdPartyAddress}}"
+                                              nameaddress="vm.currentShipment.PackageDefaults.ThirdPartyBillingAddress"
+                                              countries="vm.profile.Countries"
+                                              hide-checkboxes="true"
+                                              hide-address-book-list="true"
+                                              translations="vm.translations"
+                                              active-subtab-index="1"                                              
+                                              address-property-name="ThirdPartyBillingAddress"
+                                              field-options="vm.profile.FieldOptions"
+                                              current-shipment="vm.currentShipment"
+                                              hide-search="{{vm.hideAddressSearch}}"
+                                              hide-validate="{{vm.hideValidateAddress}}">
+                                </name-address>
+                            </uib-tab>
+                            <uib-tab index="5" heading={{vm.consigneethirdPartyBillingAddressTabCaption}} ng-show="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBilling==true  && !vm.profile.FieldOptions.ConsigneeThirdPartyBillingAddress.IsHidden">
+                                <name-address caption="{{vm.translations.ThinClient.ConsigneeThirdPartyAddress}}"
+                                              nameaddress="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBillingAddress"
+                                              countries="vm.profile.Countries"
+                                              hide-checkboxes="true"
+                                              hide-address-book-list="true"
+                                              translations="vm.translations"
+                                              active-subtab-index="1"                                              
+                                              address-property-name="ConsigneeThirdPartyBillingAddress"
+                                              field-options="vm.profile.FieldOptions"
+                                              current-shipment="vm.currentShipment"
+                                              hide-search="{{vm.hideAddressSearch}}"
+                                              hide-validate="{{vm.hideValidateAddress}}">
+                                </name-address>
+                            </uib-tab>
+                            <uib-tab index="6" heading={{vm.brokerageThirdPartyBillingAddressTabCaption}} ng-show="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBilling==true  && !vm.profile.FieldOptions.BrokerageThirdPartyBillingAddress.IsHidden">
+                                <name-address caption="{{vm.translations.ThinClient.BrokerageThirdPartyBillingAddress}}"
+                                              nameaddress="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBillingAddress"
+                                              countries="vm.profile.Countries"
+                                              hide-checkboxes="true"
+                                              hide-address-book-list="true"
+                                              translations="vm.translations"
+                                              active-subtab-index="1"                                              
+                                              address-property-name="BrokerageThirdPartyBillingAddress"
+                                              field-options="vm.profile.FieldOptions"
+                                              current-shipment="vm.currentShipment"
+                                              hide-search="{{vm.hideAddressSearch}}"
+                                              hide-validate="{{vm.hideValidateAddress}}">
+                                </name-address>
+                            </uib-tab>
+                        </uib-tabset>
+                    </div>
+                    <!-- ReSharper restore Html.TagNotResolved -->
+                </div>
+            </div>
+            <div class="col-md-8 ui-tab-container">
+                <!-- ReSharper disable Html.TagNotResolved -->
+
+                <uib-tabset>
+                    <uib-tab index="0" heading={{vm.generalTabCaption}} ng-hide="{{vm.profile.FieldOptions.General.IsHidden}}"><general-tab></general-tab></uib-tab>
+                    <uib-tab index="1" heading={{vm.accessorialsTabCaption}} ng-hide="{{vm.profile.FieldOptions.Accessorials.IsHidden}}"><accessorial-tab></accessorial-tab></uib-tab>
+                    <uib-tab index="2" heading={{vm.intlTabCaption}} ng-hide="{{vm.profile.FieldOptions.Intl.IsHidden}}"><international-tab></international-tab></uib-tab>
+                    <uib-tab index="3" heading={{vm.hazmatTabCaption}} ng-hide="{{vm.profile.FieldOptions.Hazmat.IsHidden}}"><hazmat-tab></hazmat-tab></uib-tab>
+                    <uib-tab index="4" heading={{vm.referenceTabCaption}} ng-hide="{{vm.profile.FieldOptions.Reference.IsHidden}}"><reference-tab></reference-tab></uib-tab>
+                    <uib-tab index="5" heading={{vm.ltlTabCaption}} ng-hide="{{vm.profile.FieldOptions.LTL.IsHidden}}"><ltl-tab></ltl-tab></uib-tab>
+                    <uib-tab index="6" heading={{vm.visibilityTabCaption}} ng-hide="{{vm.profile.FieldOptions.Visibility.IsHidden}}"><visibility-tab></visibility-tab></uib-tab>
+                    <uib-tab index="7" heading={{vm.goodsTabCaption}} ng-hide="{{vm.profile.FieldOptions.Goods.IsHidden}}"><goods-tab></goods-tab></uib-tab>
+                </uib-tabset>
+
+                <!-- ReSharper restore Html.TagNotResolved -->
+            </div>
+        </div>
+        <div class="row">
+            <div class="pull-right shipmentMode-padding-right" ng-hide="vm.showDistributionList">
+                <input type="button" class="btn btn-xs btn-primary" value="{{vm.translations.Common.Save}}" ng-if="!vm.profile.ProfileSetting.DisablePendingShipment" ng-click="vm.saveShipment()" />
+                <input type="button" class="btn btn-xs btn-primary" value="{{vm.translations.Common.Rate}} (F9)" ng-click="vm.rate()" ng-if="vm.profile.ProfileSetting.ServiceSelectionMode==vm.serviceSelectionMode.ShipByService || vm.profile.ProfileSetting.ServiceSelectionMode==0" />
+                <input type="button" class="btn btn-xs btn-primary" value="{{vm.translations.Common.Ship}} (F12)" ng-if="!vm.profile.ProfileSetting.DisableShip" ng-click="vm.checkShip()" />
+                <input type="button" class="btn btn-xs btn-primary" value="{{vm.createLicensePlateButtonCaption}}" ng-if="vm.profile.ProfileSetting.EnableLicensePlate" ng-click="vm.saveLicensePlate()" />
+            </div>
+            <div class="pull-right shipmentMode-padding-right distributionList" ng-show="vm.showDistributionList">
+                <input type="button" class="btn btn-xs btn-primary" value="{{vm.translations.ThinClient.ShipDistributionList}}" ng-click="vm.shipDistributionList()" />
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 table-bordered padding-5" ng-show="vm.showLastShipmentPanel">
+        <div class="row top-padding">
+            <div class="col-md-3"></div>
+            <div class="col-md-2">
+                <a class="btn btn-xs btn-primary" ng-click="vm.showLastShipmentDetails();">
+                    <span class="glyphicon glyphicon-search" data-toggle="tooltip" title={{vm.translations.ThinClient.ShowLastPackageDetails}} style="cursor: pointer;"></span>
+                </a>
+
+            </div>
+            <div class="col-md-2">
+                <a class="btn btn-xs btn-primary" ng-click="vm.reprintLastShipment();" ng-disabled="vm.lastShipmentResponse.Packages[0].Voided">
+                    <span class="glyphicon glyphicon-print" data-toggle="tooltip" title={{vm.translations.ThinClient.ReprintLastPackage}} style="cursor: pointer;"></span>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a class="btn btn-xs btn-primary" ng-click="vm.voidLastShipment();">
+                    <span class="glyphicon glyphicon-remove" data-toggle="tooltip" title={{vm.translations.ThinClient.VoidLastShipment}} style="cursor: pointer;"></span><br />
+                </a>
+            </div>
+            <div class="col-md-3"></div>
+        </div>
+        <br />
+        <div class="row top-padding">
+            <div class="col-md-1"></div>
+            <div class="col-md-11">
+                <div class="table-bordered lastShipmentDiv">
+                    <label>{{vm.translations.ThinClient.TotalPackages}}:</label> <span>{{vm.lastShipmentResponse.Packages.length}}</span><br />
+                    <label>{{vm.translations.Common.Service}}:</label> <span>{{vm.lastShipmentResponse.PackageDefaults.Service.Name}}</span><br />
+                    <label>{{vm.translations.ThinClient.Base}}:</label> <span><currency currency_value="vm.lastShipmentResponse.PackageDefaults.BaseCharge.Amount" currency_symbol="vm.lastShipmentResponse.PackageDefaults.BaseCharge.Currency" ></currency></span>
+                    <br />
+                    <label>{{vm.translations.ThinClient.Discount}}:</label> <span><currency currency_value="vm.lastShipmentResponse.PackageDefaults.Discount.Amount" currency_symbol="vm.lastShipmentResponse.PackageDefaults.Discount.Currency" ></currency> </span>
+                    <br />
+                    <label>{{vm.translations.ThinClient.Special}}:</label> <span><currency currency_value="vm.lastShipmentResponse.PackageDefaults.Special.Amount" currency_symbol="vm.lastShipmentResponse.PackageDefaults.Special.Currency" ></currency></span>
+                    <br />
+                    <label>{{vm.translations.ThinClient.Total}}:</label> <span><currency currency_value="vm.lastShipmentResponse.PackageDefaults.Total.Amount" currency_symbol="vm.lastShipmentResponse.PackageDefaults.Total.Currency" ></currency></span>
+                    <br />
+                </div>
+                <br />
+                <div class="table-bordered lastShipmentDiv">
+                    <h5>{{vm.translations.ThinClient.TrackingNumber}}(s):</h5>
+                    <div ng-repeat="package in vm.lastShipmentResponse.Packages" ng-class="{strike: package.Voided}">
+                        {{package.TrackingNumber}}
+                    </div>
+                </div>
+                <br />
+                <div class="table-bordered lastShipmentDiv">
+                    <h5>{{vm.translations.ThinClient.GlobalMSN}}(s):</h5>
+                    <div ng-repeat="package in vm.lastShipmentResponse.Packages">
+
+
+
+                        {{package.GlobalMsn}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+</div>
+
+<!--<pre>{{vm.currentShipment | json}}</pre>-->

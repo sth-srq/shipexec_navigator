@@ -1,0 +1,172 @@
+<div id="addressPanel" class="row">
+    <div class="panel panel-primary">
+        <div class="panel-heading panel-heading-padding">
+            <div class="row">
+                <div class="col-sm-6">
+                    <h5 class="custom-title-h5">{{vm.translations.Common.DistributionList}}</h5>
+                </div>
+                <div class="col-sm-6">
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="row col-xs-12 col-sm-12 col-md-12 col-lg-12 no-left-right-padding" style="border: 2px solid #ddd; background: #fafafa; height: 50px; padding: 7px 0px 5px 0px; margin-bottom: 10px; ">
+                <div class="col-md-2">
+                    <label style="font-size: 13px; padding-top: 5px;">{{vm.translations.Common.SelectDistributionList}} :</label>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-control " ng-model="vm.distributionList" ng-options="distribution as distribution.Name for distribution in vm.distributionLists" ng-change="vm.getDistributionListItems()" style="height:30px;">
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-primary btn-sm pull-right" ng-click="vm.removeDistributionList(vm.distributionList.Id)" ng-disabled="(vm.distributionList | json) == '{}'" style="width: 83px; margin-left: 12px;"><span class="glyphicon glyphicon-trash" style="padding-right: 5px;"></span> {{vm.translations.Common.Delete}}</button>
+                    <button class="btn btn-primary btn-sm pull-right" ng-click="vm.updateDistributionList()" ng-disabled="(vm.distributionList | json) == '{}'" style="width: 83px; margin-left: 12px;"><span class="glyphicon glyphicon-edit" style="padding-right: 5px;"></span> {{vm.translations.Common.Edit}}</button>
+                    <button class="btn btn-primary btn-sm pull-right" ng-click="vm.addDistributionList()" style="width: 83px;"><span class="glyphicon glyphicon-plus" style="padding-right: 5px;"></span> {{vm.translations.Common.Add}}</button>
+                </div>
+            </div>
+            <div class="row col-xs-12 col-sm-12 col-md-12 col-lg-12 no-left-right-padding" style="border: 2px solid #ddd; background: #fafafa; min-height: 50px; margin-bottom: 10px;" ng-show="(vm.distributionList | json) != '{}'">
+                <div class="col-md-12 no-left-right-padding" style="padding: 10px;">
+                    <div class="col-md-9">
+                        <label style="font-size: 13px; padding-top: 5px;" ng-show="vm.distributionList.AddressBookEntries.length > 0">{{vm.translations.Common.SelectedDistributionList}} :  {{vm.distributionList.Name}}</label>
+                        <label style="font-size: 13px; padding-top: 5px;" ng-show="vm.distributionList.AddressBookEntries.length == 0">{{vm.translations.Common.NoEntriesFoundForTheSelectedDistributionList}}</label>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary btn-sm pull-right" ng-click="vm.deleteAddressesFromDistributionList()" ng-disabled="vm.distributionList.AddressBookEntries.length == 0"> <span class="glyphicon glyphicon-trash"></span> {{vm.translations.Common.RemoveAddresses}}</button>
+                        <button class="btn btn-primary btn-sm pull-right" ng-click="vm.addAddressesToDistributionList()" ng-disabled="vm.distributionList == null" style="margin-right: 15px;"> <span class="glyphicon glyphicon-plus"></span> {{vm.translations.Common.AddAddresses}}</button>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div style="display: flex; margin-bottom: 15px;" ng-show="vm.distributionList.AddressBookEntries.length > 0">
+                        <div class="no-left-right-padding" style="max-width: 30%;">
+                            <div class="btn btn-primary mini-submenu" ng-click="vm.showSearchCriteria()" ng-show="vm.isShowSearchCriteriaButton">
+                                <h5>{{vm.translations.Common.SearchCriteria}}</h5>
+                            </div>
+                            <div class="searchAddressBookDiv" style="height: 640px !important;" ng-show="vm.isShowSearchCriteria">
+                                <button style="font-size: 23px; padding-right: 8px;" type="button" class="close" ng-click="vm.showSearchCriteriaButton()">Ã</button>
+                                <div class="text-center">
+                                    <h4 style="margin-top: 0px; margin-bottom: 15px;">{{vm.translations.Common.SearchCriteria}}</h4>
+                                </div>
+                                <div class="col-sm-12 no-left-right-padding">
+                                    <name-address caption="{{vm.translations.Common.SearchCriteria}}" hide-clear="true" hide-checkboxes="true" hide-validate="true" hide-address-book-list="true" hide-search="true" nameaddress="vm.searchCriteria" countries="vm.profile.Countries" translations="vm.translations" field-options="vm.profile.FieldOptions" groups="vm.addressGroups" active-subtab-index="0" disable-Fields="false"></name-address>
+                                </div>
+                                <div class="col-sm-12 no-left-right-padding padding-top-ten-custom">
+                                    <button type="button" class="btn btn-default" ng-click="vm.clearSearchInputs()">
+                                        <span class="glyphicon glyphicon-remove"></span>{{vm.translations.Common.Clear}}
+                                    </button>
+                                    <button type="button" class="btn btn-primary" ng-click="vm.search()">
+                                        <span class="glyphicon glyphicon-search"></span>{{vm.translations.Common.Search}}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="no-right-padding" style="min-width: 70%;">
+                            <div class="col-sm-12 no-left-right-padding" ng-show="vm.dataWithServerSidePagination.length > 0 ? true : false">
+                                <div id="pagerContainer" class="ng-table-scrollcontainer" style="width: 100%">
+                                    <table ng-table="vm.tableParams" class="table table-bordered table-striped  table-responsive table-addressList" show-filter="false" aria-describedby="DistributionList" role="presentation">
+                                        <tr ng-repeat="address in vm.dataWithServerSidePagination">
+                                            <td data-title="vm.translations.Common.Group" sortable="'Group'">
+                                                {{address.Group}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.Code" sortable="'Code'">
+                                                {{address.Code}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.Company" sortable="'Company'">
+                                                {{address.Company}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.Contact" sortable="'Contact'">
+                                                {{address.Contact}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.AddressOne" sortable="'Address1'">
+                                                {{address.Address1}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.AddressTwo" sortable="'Address2'">
+                                                {{address.Address2}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.AddressThree" sortable="'Address3'">
+                                                {{address.Address3}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.City" sortable="'City'">
+                                                {{address.City}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.StateProvince" sortable="'StateProvince'">
+                                                {{address.StateProvince}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.Country" sortable="'Country'">
+                                                {{address.Country}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.PostalCode" sortable="vm.translations.Common.PostalCode">
+                                                {{address.PostalCode}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.Phone" sortable="'Phone'">
+                                                {{address.Phone}}
+                                            </td>
+                                            <td data-title="vm.translations.Common.Email" sortable="'Email'">
+                                                {{address.Email}}
+                                            </td>
+
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-sm-12" ng-show="vm.dataWithServerSidePagination.length > 0 ? false : true">
+                                <h4>{{vm.translations.Common.NoEntriesFoundForSelectedAddreessBooks}}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row col-xs-12 col-sm-12 col-md-12 col-lg-12" ng-show="(vm.distributionList | json) == '{}'">
+                <label style="font-size: 13px;">{{vm.translations.Common.NoDistributionListSelected}}</label>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .mini-submenu {
+        border-radius: 4px 0 0 4px;
+        padding: 9px;
+        width: 50px;
+        height: 180px;
+    }
+
+        .mini-submenu:hover {
+            cursor: pointer;
+        }
+
+        .mini-submenu .icon-bar {
+            border-radius: 1px;
+            display: block;
+            height: 2px;
+            width: 22px;
+            margin-top: 3px;
+        }
+
+        .mini-submenu .icon-bar {
+            background-color: #000;
+        }
+
+    #slide-submenu {
+        background: rgba(0, 0, 0, 0.45);
+        display: inline-block;
+        padding: 0 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .mini-submenu > h5 {
+        -webkit-transform: rotate(-90deg);
+        -moz-transform: rotate(-90deg);
+        -ms-transform: rotate(-90deg);
+        -o-transform: rotate(-90deg);
+        transform: rotate(-90deg);
+    }
+
+    .mini-submenu > h5 {
+        height: 24px;
+        width: 130px;
+        margin-top: 70px;
+        color: white;
+        margin-left: -45px;
+    }
+</style>

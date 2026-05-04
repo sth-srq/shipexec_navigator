@@ -1,0 +1,135 @@
+<div class="shipping-template">
+    <div class="row">
+        <div class="col-md-4">
+            <keyboard-event key="F2" on-keypress="vm.newShipment()"></keyboard-event>
+            <keyboard-event key="F7" on-keypress="vm.load()"></keyboard-event>
+            <keyboard-event key="F8" on-keypress="vm.repeatShipment()"></keyboard-event>
+            <keyboard-event key="F12" on-keypress="vm.checkShip()"></keyboard-event>
+
+            <div class="toolbar btn-toolbar" role="toolbar">
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.newShipment()">{{vm.translations.Common.New || 'New'}}</button>
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.repeatShipment()">{{vm.translations.Common.Repeat || 'Repeat'}}</button>
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.buildShipment && vm.buildShipment()" ng-if="vm.buildShipment">{{vm.translations.Common.Build || 'Build'}}</button>
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.showDistributionList = true" ng-if="vm.showDistributionList !== undefined">{{vm.translations.Common.DistList || 'DistList'}}</button>
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.openPickup && vm.openPickup()" ng-if="vm.openPickup && !(vm.currentShipment && vm.currentShipment.PackageDefaults && vm.currentShipment.PackageDefaults.Consignee && vm.currentShipment.PackageDefaults.Consignee.Country && (vm.currentShipment.PackageDefaults.Consignee.Country + '').toUpperCase() === 'CA')">{{vm.translations.Common.Pickup || 'Pickup'}}</button>
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.showPendingShipment && vm.showPendingShipment()" ng-if="vm.showPendingShipment">{{vm.translations.Common.Pending || 'Pending'}}</button>
+                <button type="button" class="btn btn-xs btn-primary" ng-click="vm.showMailRoom && vm.showMailRoom()" ng-if="vm.showMailRoom">{{vm.translations.Common.MailRoom || 'MailRoom'}}</button>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.Load && vm.profile.FieldOptions.Load.IsHidden">
+                <field-select property="LoadFrom"
+                              model="vm.loadFrom"
+                              options="item.Value as item.Name for item in vm.loadFromOptions"
+                              caption="{{vm.profile.FieldOptions.Load && vm.profile.FieldOptions.Load.Caption || vm.translations.Common.Load || 'Load'}}"
+                              change-function="vm.loadFromChanged && vm.loadFromChanged()"
+                              form-type="Horizontal">
+                </field-select>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.Load && vm.profile.FieldOptions.Load.IsHidden">
+                <field-input property="LoadValue"
+                             model="vm.loadValue"
+                             caption="{{vm.profile.FieldOptions.Load && vm.profile.FieldOptions.Load.Caption || vm.translations.Common.Load || 'Load'}}"
+                             form-type="Horizontal">
+                </field-input>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.Shipper && vm.profile.FieldOptions.Shipper.IsHidden">
+                <field-select property="Shipper"
+                              model="vm.currentShipment.PackageDefaults.Shipper"
+                              options="shipper.Symbol as shipper.Name for shipper in vm.profile.Shippers"
+                              caption="{{vm.profile.FieldOptions.Shipper && vm.profile.FieldOptions.Shipper.Caption || vm.translations.Common.Shipper || 'Shipper'}}"
+                              form-type="Horizontal">
+                </field-select>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.ShipDate && vm.profile.FieldOptions.ShipDate.IsHidden">
+                <field-date property="ShipDate"
+                            model="vm.startshipdate.value"
+                            caption="{{vm.profile.FieldOptions.ShipDate && vm.profile.FieldOptions.ShipDate.Caption || vm.translations.Common.ShipDate || 'Ship Date'}}"
+                            is-open="vm.startshipdate.opened"
+                            datepicker-options="vm.dateOptions"
+                            form-type="Horizontal">
+                </field-date>
+            </div>
+
+            <div class="form-group" ng-hide="vm.profile.FieldOptions.Terms && vm.profile.FieldOptions.Terms.IsHidden">
+                <field-select property="Terms"
+                              model="vm.currentShipment.PackageDefaults.Terms"
+                              options="term.Symbol as term.Name for term in vm.profile.PaymentTerms"
+                              caption="{{vm.profile.FieldOptions.Terms && vm.profile.FieldOptions.Terms.Caption || vm.translations.Common.Terms || 'Terms'}}"
+                              form-type="Horizontal">
+                </field-select>
+            </div>
+
+            <div class="form-group">
+                <field-checkbox property="ReturnDelivery"
+                                model="vm.currentShipment.PackageDefaults.ReturnDelivery"
+                                caption="{{vm.profile.FieldOptions.ReturnDelivery && vm.profile.FieldOptions.ReturnDelivery.Caption || 'Return Delivery'}}">
+                </field-checkbox>
+            </div>
+
+            <div class="form-group">
+                <field-checkbox property="SaturdayDelivery"
+                                model="vm.currentShipment.PackageDefaults.SaturdayDelivery"
+                                caption="{{vm.profile.FieldOptions.SaturdayDelivery && vm.profile.FieldOptions.SaturdayDelivery.Caption || 'Saturday Delivery'}}">
+                </field-checkbox>
+            </div>
+
+            <div class="form-group">
+                <field-checkbox property="BiologicalSample"
+                                model="vm.currentShipment.PackageDefaults.MiscReference4"
+                                caption="{{vm.profile.FieldOptions.MiscReference4 && vm.profile.FieldOptions.MiscReference4.Caption || 'Biological Sample'}}">
+                </field-checkbox>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="tabbable">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="javascript:void(0)">{{vm.profile.FieldOptions.Consignee && vm.profile.FieldOptions.Consignee.Caption || 'Pickup From'}}</a></li>
+                    <li ng-if="!vm.showDistributionList"><a href="javascript:void(0)">{{vm.translations.Common.ReturnAddress || 'Return Address'}}</a></li>
+                    <li ng-if="vm.profile.FieldOptions.OriginAddress && !vm.profile.FieldOptions.OriginAddress.IsHidden"><a href="javascript:void(0)">{{vm.profile.FieldOptions.OriginAddress.Caption || vm.translations.Common.Origin || 'Origin'}}</a></li>
+                    <li ng-if="vm.currentShipment.PackageDefaults.ThirdPartyBilling"><a href="javascript:void(0)">{{vm.translations.Common.ThirdPartyBilling || '3rd Party Billing'}}</a></li>
+                    <li ng-if="vm.currentShipment.PackageDefaults.ConsigneeThirdPartyBilling"><a href="javascript:void(0)">{{vm.translations.Common.ConsigneeThirdPartyBilling || 'Consignee 3rd Party'}}</a></li>
+                    <li ng-if="vm.currentShipment.PackageDefaults.BrokerageThirdPartyBilling && !(vm.profile.FieldOptions.BrokerageThirdPartyBilling && vm.profile.FieldOptions.BrokerageThirdPartyBilling.IsHidden)"><a href="javascript:void(0)">{{vm.translations.Common.BrokerageThirdPartyBilling || 'Brokerage 3rd Party'}}</a></li>
+                </ul>
+            </div>
+
+            <div class="tab-content" style="margin-top: 15px;">
+                <div class="tab-pane active">
+                    <name-address caption="{{vm.profile.FieldOptions.Consignee && vm.profile.FieldOptions.Consignee.Caption || 'Pickup From'}}"
+                                  nameaddress="vm.currentShipment.PackageDefaults.Consignee"
+                                  countries="vm.profile.Countries"
+                                  translations="vm.translations"
+                                  field-options="vm.profile.FieldOptions"
+                                  address-property-name="Consignee"
+                                  current-shipment="vm.currentShipment"
+                                  hide-address-book-list="false"
+                                  hide-checkboxes="false"
+                                  hide-validate="false"
+                                  hide-search="false"
+                                  active-subtab-index="1"
+                                  is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                  address-book-id="vm.addressBookId"
+                                  disable-fields="false">
+                    </name-address>
+                </div>
+            </div>
+
+            <div class="panel panel-default" style="margin-top: 15px;">
+                <div class="panel-heading">{{vm.translations.Common.Reference || 'Reference'}}</div>
+                <div class="panel-body">
+                    <reference-tab></reference-tab>
+                </div>
+            </div>
+
+            <div class="text-right" style="margin-top: 15px;">
+                <button type="button" class="btn btn-default" ng-click="vm.saveShipment()" ng-if="!vm.profile.ProfileSetting.DisablePendingShipment">{{vm.translations.Common.Save || 'Save'}}</button>
+                <button type="button" class="btn btn-default" ng-click="vm.checkShip()" ng-if="!vm.profile.ProfileSetting.DisableShip">{{vm.translations.Common.Ship || 'Ship'}}</button>
+                <button type="button" class="btn btn-default" ng-click="vm.saveLicensePlate()" ng-if="vm.profile.ProfileSetting.EnableLicensePlate">{{vm.translations.Common.CreateLicensePlate || 'Create License Plate'}}</button>
+                <button type="button" class="btn btn-default" ng-click="vm.shipDistributionList()" ng-if="vm.showDistributionList">{{vm.translations.Common.ShipDistributionList || 'Ship Distribution List'}}</button>
+            </div>
+        </div>
+    </div>
+</div>

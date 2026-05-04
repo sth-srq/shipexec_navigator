@@ -1,0 +1,125 @@
+<div class="row">
+    <div class="panel panel-primary">
+        <div class="panel-heading panel-heading-padding">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h5 class="custom-title-h5">{{vm.translations.Common.BatchDetails}}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="row divBatchManagerTop">
+                <div class="col-sm-12 no-left-right-padding">
+                    <a href="#!batchmanager" title="Go back to batch manager page" class="btn btn-sm btn-default"><em class="glyphicon glyphicon-arrow-left" style="margin-right:5px;"></em>{{vm.translations.Common.BatchManager}}</a>
+                </div>
+                <div class="row no-left-right-padding">
+                    <div class="col-sm-4 row no-left-right-padding">
+                        <h5>{{vm.translations.ThinClient.BatchReference}}: <a title="View batch history" href="" ng-click="vm.linkToBatchHistory(vm.batchReference)" ng-disabled="vm.isBatchBusy">{{vm.batchReference}}</a></h5>
+                        <h5 ng-diabled="vm.isBatchBusy">{{vm.translations.Common.Status}}:&nbsp;{{vm.batch.Detail.BatchStatus | BatchStatus}}</h5>
+                    </div>
+                    <div class="col-sm-4">
+
+                        <span class="sort-indicator" ng-show="vm.isBatchBusy">
+                            <h4> {{vm.currentBatchStatus}} <img src="Content/img/ajax_loader.gif" alt="Working" /></h4>
+                        </span>
+
+                    </div>
+                    <div class="col-sm-4">
+
+                    </div>
+
+                </div>
+                <div class="col-sm-6 no-left-right-padding">
+                    <input type="checkbox" ng-model="vm.showErrorsOnly" ng-change="vm.filter()" ng-disabled="vm.isBatchBusy" />{{vm.translations.ThinClient.ShowErrorsOnly}}
+                </div>
+                <div class="col-sm-6 no-left-right-padding text-right">
+                    <input title="Ship the entire batch" type="button" class="btn btn-primary" value="{{vm.translations.Common.Ship}} {{vm.translations.Common.All}}" ng-click="vm.shipBatch(vm.batch)" ng-disabled="!vm.batch.CanShipAll() || vm.isBatchBusy" />
+                    <input title="Print the entire batch" type="button" class="btn btn-success" value="{{vm.translations.Common.Print}} {{vm.translations.Common.All}}" ng-click="vm.printBatch(vm.batch)" ng-disabled="!vm.batch.CanPrintAll() || vm.isBatchBusy" />
+                    <input title="Void the entire batch" type="button" class="btn btn-warning" value="{{vm.translations.Common.Void}} {{vm.translations.Common.All}}" ng-click="vm.voidBatch(vm.batch)" ng-disabled="!vm.batch.CanVoidAll() || vm.isBatchBusy" />
+                    <input title="Delete the entire batch" type="button" class="btn btn-danger" value="{{vm.translations.Common.Delete}} {{vm.translations.Common.All}}" ng-click="vm.deleteBatch(vm.batch)" ng-disabled="!vm.batch.CanDeleteAll() || vm.isBatchBusy" />
+
+                </div>
+            </div>
+
+
+            <div class="row">
+                <div class="col-sm-3 no-left-padding">
+                    <h5><strong>{{vm.translations.Common.BatchDetails}}</strong></h5>
+                </div>
+                <div class="col-sm-9 no-right-padding">
+                    <ul class="pagination zeroMargin pull-right">
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '10')}" ng-click="vm.itemPerPageChanged(10)" href="javascript:void(0)">10</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '25')}" ng-click="vm.itemPerPageChanged(25)" href="javascript:void(0)">25</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '50')}" ng-click="vm.itemPerPageChanged(50)" href="javascript:void(0)">50</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '0')}" ng-click="vm.itemPerPageChanged(0)" href="javascript:void(0)">{{vm.translations.Common.All}}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row">
+                <table class="table table-bordered table-striped ng-table" aria-describedby="Batch">
+                    <thead>
+                        <tr>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator" ng-disabled="vm.isBatchBusy">{{vm.translations.ThinClient.BatchItemReference}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col"  style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.ThinClient.SequenceNumber}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.ThinClient.TrackingNumber}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.Common.ErrorCode}}</span>
+                                </div>
+                            </th>
+
+                            <th scope="col" style="text-align: left">
+                                <div>
+                                    <span class="sort-indicator">{{vm.translations.Common.ErrorMessage}}</span>
+                                </div>
+                            </th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+
+                    <tr ng-repeat="batchItem in vm.batchDetail">
+                        <td ng-if="batchItem.IsShipped"><a href="" ng-click="vm.linkToBatchItemHistory(batchItem)">{{batchItem.BatchItemReference}}</a></td>
+                        <td ng-if="!batchItem.IsShipped"  ng-disabled="vm.isBatchBusy">{{batchItem.BatchItemReference}}</td>
+                        <td>{{batchItem.SequenceNumber}}</td>
+                        <td ng-class="{strike:batchItem.Packages[0].Voided}">{{batchItem.Packages[0].TrackingNumber}}</td>
+                        <td>{{batchItem.ErrorCode}}</td>
+                        <td>{{batchItem.ErrorMessage}}</td>
+                        <td class="text-center">
+                            <input type="button" class="btn btn-sm btn-primary" value="{{vm.translations.Common.Ship}}" ng-click="vm.shipItem(batchItem)" ng-disabled="batchItem.IsShipped || vm.isBatchBusy" />
+                            <input type="button" class="btn btn-sm btn-success" value="{{vm.translations.Common.Print}}" ng-click="vm.printItem(batchItem)" ng-disabled="!batchItem.IsShipped || vm.isBatchBusy" />
+                            <input type="button" class="btn btn-sm btn-warning" value="{{vm.translations.Common.Void}}" ng-click="vm.voidItem(batchItem)" ng-disabled="!batchItem.IsShipped || vm.isBatchBusy" />
+                            <input type="button" class="btn btn-sm btn-danger" value="{{vm.translations.Common.Delete}}" ng-click="vm.deleteItem(batchItem)" ng-disabled="batchItem.IsShipped || vm.isBatchBusy" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="row">
+                <div class="col-md-7"><ul uib-pagination direction-links="true" class="pagination" total-items="vm.totalItems" items-per-page="vm.itemsPerPage" ng-model="vm.currentPage" ng-change="vm.pageChanged()"></ul></div>
+                <div class="col-md-1"></div>
+                <div class="col-md-4 ng-pristine ng-untouched ng-valid ng-isolate-scope pagination ng-not-empty" style="text-align:right">
+                    {{vm.translations.Common.Showing}} {{vm.skipNum+1}} {{vm.translations.Common.to}} {{vm.toRecord}} {{vm.translations.Common.Of}} {{vm.totalItems}} {{vm.translations.Common.entries}}
+                </div>
+            </div>
+
+            <div class="row" style="overflow: hidden; white-space: nowrap;" ng-class="{'ErrorMessage': vm.status.isError}">
+                <img ng-show="isBusy" src="Content/img/ajax_loader.gif" alt="Working" />{{vm.status.message}}
+            </div>
+        </div>
+    </div>
+</div>

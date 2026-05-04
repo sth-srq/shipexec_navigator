@@ -1,0 +1,155 @@
+<div id="addressPanel" class="row">
+    <div class="panel panel-primary">
+        <div class="panel-heading panel-heading-padding">
+            <div class="row">
+                <div class="col-sm-6">
+                    <h5 class="custom-title-h5">{{vm.translations.Common.AddressBooks}}</h5>
+                </div>
+                <div class="col-sm-6">
+                    <input type="button" class="btn btn-default btn-sm pull-right" value="{{vm.translations.Common.AddAddressBook}}" ng-disabled="vm.disableAddressBookButton()" ng-click="vm.addUserAddressBook()">
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-4 no-left-right-padding">
+                    <div class="addressBookDiv">
+                        <div class="col-sm-12 no-left-right-padding topMargin">
+                            <div class="row">
+                                <label>
+                                    <input type="checkbox" ng-model="vm.isSelectAllCheckboxChecked" ng-change="vm.selectAll()" ng-true-value="true" ng-false-value="false" />{{vm.translations.ThinClient.SelectAll}}
+                                </label>
+                            </div>
+                            <div class="row" style="height: 100px; background-color: white; overflow-y: auto; border: 2px solid #ddd;">
+                                <div class="row" ng-class="{'selectedAddress text-white': vm.addressBook.indexOf(addressBook.Id) !== -1}" ng-repeat="addressBook in vm.addressBooks">
+                                    <div class="col-md-4" style="cursor: pointer;" ng-click="vm.selectAddressBook($event,addressBook.Id)">
+                                        {{addressBook.Name}}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div style="cursor: pointer;" ng-click="vm.selectAddressBook($event,addressBook.Id)" ng-if="addressBook.UserId != null">{{vm.translations.Common.User}}</div>
+                                        <div style="cursor: pointer;" ng-click="vm.selectAddressBook($event,addressBook.Id)" ng-if="addressBook.SiteId != null && addressBook.UserId == null">{{vm.translations.Common.Site}}</div>
+                                        <div style="cursor: pointer;" ng-click="vm.selectAddressBook($event,addressBook.Id)" ng-if="addressBook.UserId == null && addressBook.SiteId == null">{{vm.translations.Common.Company}}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="row">
+                                            <a class="col-md-3" title="{{vm.translations.Common.UploadFile}}" ng-class="{'a-white': vm.addressBook.indexOf(addressBook.Id) !== -1}" role="button" ng-click="vm.uploadAddressBookEntries(addressBook.Id, addressBook.Name)" ng-hide="vm.hideAddressBookActionButtons(addressBook)">
+                                                <span class="glyphicon glyphicon-floppy-open"></span>
+                                            </a>
+                                            <a class="col-md-3" title="{{vm.translations.Common.Export}}" ng-class="{'a-white': vm.addressBook.indexOf(addressBook.Id) !== -1}" role="button" ng-click="vm.exportAddressBook(addressBook.Id, addressBook.Name)" ng-hide="vm.hideAddressBookActionButtons(addressBook)">
+                                                <span class="glyphicon glyphicon-download-alt"></span>
+                                            </a>
+                                            <a class="col-md-3" title="{{vm.translations.Common.Edit}}" ng-class="{'a-white': vm.addressBook.indexOf(addressBook.Id) !== -1}" role="button" ng-if="vm.allowAddressBookEditDelete(addressBook)" ng-click="vm.updateAddressBook(addressBook.Id, addressBook.Name)" ng-hide="vm.hideAddressBookActionButtons(addressBook)">
+                                                <span class="glyphicon glyphicon-edit"></span>
+                                            </a>
+                                            <a class="col-md-3" title="{{vm.translations.Common.Delete}}" ng-class="{'a-white': vm.addressBook.indexOf(addressBook.Id) !== -1}" role="button" ng-if="vm.allowAddressBookEditDelete(addressBook)" ng-click="vm.removeAddressBook(addressBook.Id)" ng-hide="vm.hideAddressBookActionButtons(addressBook)">
+                                                <span class="glyphicon glyphicon-trash"></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <name-address caption="Search Criteria"
+                                          hide-checkboxes="true"
+                                          hide-validate="true"
+                                          hide-address-book-list="true"
+                                          hide-search="true"
+                                          nameaddress="vm.searchCriteria"
+                                          countries="vm.profile.Countries"
+                                          translations="vm.translations"
+                                          field-options="vm.profile.FieldOptions"                                          
+                                          groups="vm.addressGroups"
+                                          active-subtab-index="1"
+                                          address-property-name="AddressBookFilter"
+                                          hide-clear="true"
+                                          disable-Fields="false"></name-address>
+                        </div>
+                        <div class="col-sm-12 no-left-right-padding padding-top-ten-custom">
+                            <button type="button" class="btn btn-default" ng-click="vm.clearSearchInputs()">
+                                <span class="glyphicon glyphicon-remove"></span>{{vm.translations.Common.Clear}}
+                            </button>
+                            <button type="button" class="btn btn-primary" ng-click="vm.loadAddressBookEntries()" ng-disabled="vm.addressBook.length > 0 ? false : true">
+                                <span class="glyphicon glyphicon-search"></span>{{vm.translations.Common.Search}}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8 no-right-padding">
+                    <div class="addressBookTableDiv">
+                        <div class="col-md-12 no-left-padding">
+                            <div class="col-md-6 no-left-padding padding-bottom-1per">
+                                <input type="button" class="btn btn-sm btn-default"
+                                       ng-disabled="( vm.disableCompanyAddressBookButton() && vm.disableSiteAddressBookButton() && vm.disableAddressBookButton()) || vm.disableAddressBookEntryButton()" 
+                                       value="{{vm.translations.Common.AddAddressBookEntry}}" ng-click="vm.addAddressBookEntry();" />
+                            </div>
+                            <div class="col-md-6 no-right-padding text-right">
+
+                            </div>
+                        </div>
+                        <div class="col-sm-12 no-left-right-padding" ng-show="vm.dataWithServerSidePagination.length > 0 ? true : false">
+                            <div id="pagerContainer" class="ng-table-scrollcontainer">
+                                <table ng-table="vm.tableParams" class="table table-bordered table-striped  table-responsive table-addressList" show-filter="false"  role="presentation">
+                                    <tr ng-repeat="address in vm.dataWithServerSidePagination">
+                                        <td title="vm.translations.Common.AddressBook" sortable="'AddressBook.Name'">
+                                            {{address.AddressBook.Name}}
+                                        </td>
+                                        <td data-title="vm.groupCaption" sortable="'Group'" ng-if="!vm.groupHide">
+                                            {{address.Group}}
+                                        </td>
+                                        <td data-title="vm.codeCaption" sortable="'Code'" ng-if="!vm.codeHide">
+                                            {{address.Code}}
+                                        </td>
+                                        <td data-title="vm.companyCaption" sortable="'Company'" ng-if="!vm.companyHide">
+                                            {{address.Company}}
+                                        </td>
+                                        <td data-title="vm.contactCaption" sortable="'Contact'" ng-if="!vm.contactHide">
+                                            {{address.Contact}}
+                                        </td>
+                                        <td data-title="vm.address1Caption" sortable="'Address1'" ng-if="!vm.address1Hide">
+                                            {{address.Address1}}
+                                        </td>
+                                        <td data-title="vm.address2Caption" sortable="'Address2'" ng-if="!vm.address2Hide">
+                                            {{address.Address2}}
+                                        </td>
+                                        <td data-title="vm.address3Caption" sortable="'Address3'" ng-if="!vm.address3Hide">
+                                            {{address.Address3}}
+                                        </td>
+                                        <td data-title="vm.cityCaption" sortable="'City'" ng-if="!vm.cityHide">
+                                            {{address.City}}
+                                        </td>
+                                        <td data-title="vm.stateProvinceCaption" sortable="'StateProvince'" ng-if="!vm.stateProvinceHide">
+                                            {{address.StateProvince}}
+                                        </td>
+                                        <td data-title="vm.countryCaption" sortable="'Country'" ng-if="!vm.countryHide">
+                                            {{address.Country}}
+                                        </td>
+                                        <td data-title="vm.postalCodeCaption" sortable="'PostalCode'" ng-if="!vm.postalCodeHide">
+                                            {{address.PostalCode}}
+                                        </td>
+                                        <td data-title="vm.phoneCaption" sortable="'Phone'" ng-if="!vm.phoneHide">
+                                            {{address.Phone}}
+                                        </td>
+                                        <td data-title="vm.emailCaption" sortable="'Email'" ng-if="!vm.emailHide">
+                                            {{address.Email}}
+                                        </td>
+
+                                        <td data-title="vm.translations.Common.Action" class="ng-table-fixedcolumn-Select-td" header-class="'ng-table-fixedcolumn-Select'">
+                                            <a role="button" ng-click="vm.openPopupModal('edit',address)" ng-disabled="vm.disableActionButtons(address)" ng-class="{'aLinkDisabled': vm.disableActionButtons(address)}">
+                                                <span class="glyphicon glyphicon-edit"></span>
+                                            </a>
+                                            <a role="button" ng-click="vm.openPopupModal('delete',address)" ng-disabled="vm.disableActionButtons(address)" ng-class="{'aLinkDisabled': vm.disableActionButtons(address)}">
+                                                <span class="glyphicon glyphicon-trash"></span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-sm-12" ng-show="vm.dataWithServerSidePagination.length > 0 ? false : true">
+                            <h4>{{vm.translations.Common.NoEntriesFoundForSelectedAddreessBooks}}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -90,7 +90,13 @@
   <Folder Name="/RAGDocuments/" />
   <Folder Name="/References/">
     <File Path="References/PSI.Sox.Configuration.dll" />
+    <File Path="References/PSI.Sox.Data.dll" />
     <File Path="References/PSI.Sox.dll" />
+    <File Path="References/PSI.Sox.Licensing.dll" />
+    <File Path="References/PSI.Sox.ML.dll" />
+    <File Path="References/PSI.Sox.Print.dll" />
+    <File Path="References/PSI.Sox.Resources.dll" />
+    <File Path="References/PSI.Sox.Tools.dll" />
     <File Path="References/PSI.Sox.Wcf.dll" />
   </Folder>
   <Project Path="ShipExecNavigator.AppLogic/ShipExecNavigator.AppLogic.csproj" />

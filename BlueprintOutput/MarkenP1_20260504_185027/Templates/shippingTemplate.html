@@ -1,0 +1,219 @@
+<div class="container-fluid shipping-template">
+    <keyboard-event key="F2" on-keypress="vm.newShipment()"></keyboard-event>
+    <keyboard-event key="F7" on-keypress="vm.load()"></keyboard-event>
+    <keyboard-event key="F8" on-keypress="vm.repeatShipment()"></keyboard-event>
+    <keyboard-event key="F12" on-keypress="vm.checkShip()"></keyboard-event>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="btn-toolbar" role="toolbar" aria-label="Shipping actions">
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.newShipment()">New (F2)</button>
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.repeatShipment()">Repeat (F8)</button>
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.buildShipment && vm.buildShipment()" ng-if="vm.buildShipment">Build</button>
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.openDistributionList && vm.openDistributionList()" ng-if="vm.openDistributionList">DistList</button>
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.openPickup && vm.openPickup()" ng-if="vm.openPickup">Pickup</button>
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.openPendingShipment && vm.openPendingShipment()" ng-if="vm.openPendingShipment && !vm.profile.ProfileSetting.DisablePendingShipment">Pending</button>
+                <button type="button" class="btn btn-default btn-xs" ng-click="vm.openMailRoom && vm.openMailRoom()" ng-if="vm.openMailRoom && vm.profile.ProfileSetting.EnableMailRoomProcessing">MailRoom</button>
+                <div class="pull-right text-right">
+                    <span>Mode: {{vm.shipMode}}</span>
+                    <span style="margin-left:15px;">Pkg: {{vm.packageIndex + 1}} of {{vm.totalPackages}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">Returns Shipment</div>
+                <div class="panel-body">
+                    <field-select property="LoadFrom"
+                                  model="vm.loadFrom"
+                                  options="item.Value as item.Name for item in vm.loadFromOptions"
+                                  caption="Load From"
+                                  form-type="Horizontal">
+                    </field-select>
+
+                    <field-input property="Load"
+                                 model="vm.loadValue"
+                                 caption="Load"
+                                 form-type="Horizontal">
+                    </field-input>
+
+                    <field-select property="Shipper"
+                                  model="vm.currentShipment.PackageDefaults.Shipper"
+                                  options="item.Symbol as item.Name for item in vm.profile.Shippers"
+                                  caption="Shipper"
+                                  form-type="Horizontal">
+                    </field-select>
+
+                    <field-date property="ShipDate"
+                                model="vm.startshipdate.value"
+                                caption="Ship Date"
+                                is-open="vm.startshipdate.opened"
+                                datepicker-options="vm.dateOptions"
+                                form-type="Horizontal">
+                    </field-date>
+
+                    <field-select property="Terms"
+                                  model="vm.currentShipment.PackageDefaults.Terms"
+                                  options="item.Symbol as item.Name for item in vm.profile.PaymentTerms"
+                                  caption="Terms"
+                                  form-type="Horizontal">
+                    </field-select>
+
+                    <field-checkbox property="ReturnDelivery"
+                                    model="vm.currentShipment.ReturnDelivery"
+                                    caption="Return Delivery">
+                    </field-checkbox>
+
+                    <field-checkbox property="SaturdayDelivery"
+                                    model="vm.currentShipment.SaturdayDelivery"
+                                    caption="Saturday Delivery">
+                    </field-checkbox>
+
+                    <field-checkbox property="BiologicalSample"
+                                    model="vm.currentShipment.PackageDefaults.Packages[vm.packageIndex].MiscReference4"
+                                    caption="Biological Sample">
+                    </field-checkbox>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">Pickup From</div>
+                <div class="panel-body">
+                    <name-address caption="Pickup From"
+                                  nameaddress="vm.currentShipment.PackageDefaults.Consignee"
+                                  countries="vm.profile.Countries"
+                                  translations="vm.translations"
+                                  field-options="vm.profile.FieldOptions"
+                                  address-property-name="Consignee"
+                                  current-shipment="vm.currentShipment"
+                                  hide-address-book-list="false"
+                                  hide-checkboxes="false"
+                                  hide-validate="false"
+                                  hide-search="false"
+                                  active-subtab-index="1"
+                                  is-update-address-book-entry="vm.isUpdateAddressBookEntry"
+                                  address-book-id="vm.addressBookId"
+                                  disable-fields="false">
+                    </name-address>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="active"><a href="#general" data-toggle="tab">General</a></li>
+                <li><a href="#accessorials" data-toggle="tab">Accessorials</a></li>
+                <li><a href="#intl" data-toggle="tab">Intl</a></li>
+                <li><a href="#hazmat" data-toggle="tab">Hazmat</a></li>
+                <li><a href="#reference" data-toggle="tab">Reference</a></li>
+                <li><a href="#ltl" data-toggle="tab">LTL</a></li>
+                <li><a href="#visibility" data-toggle="tab">Visibility</a></li>
+                <li><a href="#goods" data-toggle="tab">Goods</a></li>
+            </ul>
+
+            <div class="tab-content" style="padding-top:10px;">
+                <div class="tab-pane active" id="general">
+                    <general-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></general-tab>
+                </div>
+                <div class="tab-pane" id="accessorials">
+                    <accessorial-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></accessorial-tab>
+                </div>
+                <div class="tab-pane" id="intl">
+                    <international-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></international-tab>
+                </div>
+                <div class="tab-pane" id="hazmat">
+                    <hazmat-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></hazmat-tab>
+                </div>
+                <div class="tab-pane" id="reference">
+                    <reference-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></reference-tab>
+                    <div class="row" style="margin-top:10px;">
+                        <div class="col-md-6">
+                            <field-input property="ConsigneeReference"
+                                         model="vm.currentShipment.Packages[vm.packageIndex].ConsigneeReference"
+                                         caption="Temperature"
+                                         form-type="Horizontal">
+                            </field-input>
+                        </div>
+                        <div class="col-md-6">
+                            <field-input property="ShipperReference"
+                                         model="vm.currentShipment.Packages[vm.packageIndex].ShipperReference"
+                                         caption="Study Reference Guide"
+                                         form-type="Horizontal">
+                            </field-input>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <field-input property="MiscReference1"
+                                         model="vm.currentShipment.Packages[vm.packageIndex].MiscReference1"
+                                         caption="Protocol Number"
+                                         form-type="Horizontal">
+                            </field-input>
+                        </div>
+                        <div class="col-md-6">
+                            <field-input property="MiscReference2"
+                                         model="vm.currentShipment.Packages[vm.packageIndex].MiscReference2"
+                                         caption="Site Number"
+                                         form-type="Horizontal">
+                            </field-input>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <field-input property="MiscReference3"
+                                         model="vm.currentShipment.Packages[vm.packageIndex].MiscReference3"
+                                         caption="Dry Ice Weight (kg)"
+                                         form-type="Horizontal"
+                                         ng-disabled="(vm.currentShipment.Packages[vm.packageIndex].ConsigneeReference || '').toString().toLowerCase() !== 'frozen'">
+                            </field-input>
+                        </div>
+                        <div class="col-md-6">
+                            <field-checkbox property="MiscReference4"
+                                            model="vm.currentShipment.Packages[vm.packageIndex].MiscReference4"
+                                            caption="Biological Sample">
+                            </field-checkbox>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 text-muted" ng-show="(vm.currentShipment.Packages[vm.packageIndex].ConsigneeReference || '').toString().toLowerCase() !== 'frozen'">
+                            Dry Ice Weight is editable only when Temperature is Frozen.
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="ltl">
+                    <ltl-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></ltl-tab>
+                </div>
+                <div class="tab-pane" id="visibility">
+                    <visibility-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></visibility-tab>
+                </div>
+                <div class="tab-pane" id="goods">
+                    <goods-tab current-shipment="vm.currentShipment" package-index="vm.packageIndex"></goods-tab>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+        <div class="col-md-12 text-right">
+            <button type="button" class="btn btn-default" ng-click="vm.saveShipment()" ng-disabled="vm.DisablePendingShipment">Save</button>
+            <button type="button" class="btn btn-primary" ng-click="vm.checkShip()" ng-disabled="vm.DisableShip">Ship</button>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:15px;" ng-show="vm.showLastShipmentPanel">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">Last Shipment</div>
+                <div class="panel-body">
+                    <div ng-if="vm.lastShipmentResponse">
+                        <div>Service: {{vm.lastShipmentResponse.PackageDefaults.Service.Name}}</div>
+                        <div>Tracking: {{vm.lastShipmentResponse.PackageDefaults.TrackingNumber}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

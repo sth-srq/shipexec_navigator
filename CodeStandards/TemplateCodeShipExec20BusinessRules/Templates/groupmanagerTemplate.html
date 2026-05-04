@@ -1,0 +1,181 @@
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h4>{{vm.translations.Common.GroupManager}}</h4>
+    </div>
+
+    <div class="panel-body full-width">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-default col-md-12">
+                <div class="row">
+                    <form>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="pwd">{{vm.translations.Common.Carrier}}</label>
+                                <select class="form-control text-uppercase fit-content" ng-model="vm.carrier" ng-options="carrier as carrier.Name for carrier in vm.carriers" ng-change="vm.carrierChange()">
+                                    <option value="" selected="selected">{{vm.translations.ThinClient.SelectCarrier}}...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="pwd">{{vm.translations.ThinClient.GroupType}}</label>
+                                <select name="groupType" id="groupType" class="form-control fit-content"
+                                        ng-model="vm.groupType"
+                                        ng-options="filteredGroupType as filteredGroupType.Name for filteredGroupType in vm.filteredGroupTypes track by filteredGroupType.Symbol" ng-disabled="vm.isgroupTypeDisabled" ng-change="vm.groupTypeChange()">
+                                    <option value="" selected="selected">{{vm.translations.ThinClient.SelectType}}...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>{{vm.translations.ThinClient.GroupingStatus}}</label>
+                                <select name="groupStatus" id="groupStatus" class="form-control fit-content"
+                                        ng-model="vm.groupStatus"
+                                        ng-disabled="vm.isgroupStatusDisabled" ng-change="vm.groupStatusChange()">
+                                    <option value="" selected="selected">{{vm.translations.ThinClient.SelectStatus}}...</option>
+                                    <option ng-repeat="gs in vm.groupStatuses" ng-value="gs">{{gs | GroupStatus}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3 flex-item" ng-show="vm.groupType.CanCreate">
+                            <div class="form-group">
+                                <div>&nbsp;</div>
+                                <button class="btn btn-primary" ng-click="vm.createGroupClick()"><span class="glyphicon glyphicon-plus" tooltip-placement="top" uib-tooltip="{{vm.translations.ThinClient.CreateGroup}}"></span>{{vm.translations.ThinClient.CreateGroup}}</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="panel panel-default col-md-12" ng-if="vm.groupType && vm.groupType.Symbol !== vm.enumGroupTypes.TradeDirect">
+                <div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{vm.profile.shippers.length}}
+                            <div class="form-group">
+                                <label for="shipper">{{vm.translations.Common.Shipper}}</label>
+                                <select name="shipper" id="shipper" class="form-control fit-content" ng-init="(vm.profile.Shippers.length == 1) ? vm.shipper = vm.profile.Shippers[0] : false" ng-model="vm.shipper" ng-options="shipper as shipper.Name for shipper in vm.profile.Shippers">
+                                    <option value="" ng-if="vm.profile.Shippers.length > 1" selected="selected">{{vm.translations.ThinClient.SelectShipper}}...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small">{{vm.translations.Common.ShipDate}}</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control fit-content" uib-datepicker-popup="{{vm.format}}" ng-model="vm.shipDate.value" ng-click="vm.openShipDate()" is-open="vm.shipDate.opened" datepicker-options="vm.shipDateOptions" ng-required="true" close-text={{vm.translations.Common.Close}} alt-input-formats="altInputFormats" />
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-sm btn-default form-control fit-content" ng-click="vm.openShipDate()"><em class="glyphicon glyphicon-calendar"></em></button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="small">{{vm.translations.ThinClient.DocBoxTrackingNumber}}</label>
+                                <input class="form-control fit-content" type="text" ng-model="vm.docBoxTrackingNumber" />
+                            </div>
+                        </div>
+                        <div class="col-md-2 flex-item">
+                            <div class="form-group">
+                                <div>&nbsp;</div>
+                                <button class="btn btn-primary btn-sm" ng-click="vm.getGroups()">{{vm.translations.Common.Search}}</button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-1 flex-item">
+                            <div class="form-group">
+                                <div>&nbsp;</div>
+                                <button class="btn btn-default btn-sm" ng-click="vm.clearFilters()">{{vm.translations.Common.Clear}}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row padding-top-ten-custom" ng-if="vm.GroupData.length>0">
+                <div class="col-md-12 bottomMargin" ng-if="vm.totalItems > 0">
+                    <ul class="pagination zeroMargin pull-right">
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '10')}" ng-click="vm.itemPerPageChanged(10)" role="button">{{vm.translations.Common.Ten}}</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '25')}" ng-click="vm.itemPerPageChanged(25)" role="button">{{vm.translations.Common.TwentyFive}}</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '50')}" ng-click="vm.itemPerPageChanged(50)" role="button">{{vm.translations.Common.Fifty}}</a></li>
+                        <li><a ng-model="vm.itemsPerPage" ng-class="{ 'btn-active':(vm.itemsPerPage == '100')}" ng-click="vm.itemPerPageChanged(100)" role="button">{{vm.translations.Common.Hundred}}</a></li>
+                    </ul>
+                </div>
+                <div class="form-group">
+                    <label>{{vm.translations.ThinClient.Groups}}</label>
+                    <table class="table table-striped table-bordered ng-table" aria-describedby="Group Layout">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <div class="text-left">
+                                        <span class="sort-indicator">{{vm.translations.Common.Name}}</span>
+                                    </div>
+                                </th>
+
+                                <th scope="col" ng-if="vm.groupType && vm.groupType.Symbol !== vm.enumGroupTypes.TradeDirect">
+                                    <div class="text-left">
+                                        <span class="sort-indicator">{{vm.translations.ThinClient.DocBoxTrackingNumber}}</span>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="text-left">
+                                        <span class="sort-indicator">{{vm.translations.Common.Symbol}}</span>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div class="text-left">
+                                        <span class="sort-indicator">{{vm.translations.ThinClient.NoOfChildPackages}}</span>
+                                    </div>
+                                </th>
+                                <th scope="col">
+                                    <div>
+                                        <span class="sort-indicator">{{vm.translations.Common.Action}}</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr ng-repeat="group in vm.GroupData" style="cursor: pointer;">
+                                <td>{{group.Name}}</td>
+                                <td ng-if="vm.groupType && vm.groupType.Symbol !== vm.enumGroupTypes.TradeDirect">{{vm.getDocBoxTrackingNumber(group) || '-'}}</td>
+                                <td>{{group.Symbol}}</td>
+                                <td>{{group.NoOfPackages}}</td>
+                                <td class="textCenter">
+                                    <div id="flex-container">
+                                        <div ng-show="vm.groupType.CanClose && vm.groupStatus == vm.groupStatuses.Open" class="flex-item">
+                                            <a ng-click="vm.closeGroupClick(group)"><span class="glyphicon glyphicon-folder-close" tooltip-placement="top" uib-tooltip="{{vm.translations.ThinClient.CloseGroup}}"></span></a>
+                                        </div>
+                                        <div ng-show="vm.groupType.CanOpen && vm.groupStatus == vm.groupStatuses.Closed" class="flex-item">
+                                            <a ng-click="vm.openGroupClick(group)"><span class="glyphicon glyphicon-folder-open" tooltip-placement="top" uib-tooltip="{{vm.translations.ThinClient.OpenGroup}}"></span></a>
+                                        </div>
+                                        <div ng-show="vm.groupType.CanModify && vm.groupStatus == vm.groupStatuses.Open" class="flex-item">
+                                            <a ng-click="vm.modifyGroupClick(group)"><span class="glyphicon glyphicon-pencil" tooltip-placement="top" uib-tooltip="{{vm.translations.ThinClient.ModifyGroup}}"></span></a>
+                                        </div>
+                                        <div ng-show="(vm.groupStatus == vm.groupStatuses.Closed && vm.selectedGroupDocuments.length>0) || (vm.groupStatus == vm.groupStatuses.ClosedandLocked && vm.selectedGroupDocuments.length>0) " class="flex-item">
+                                            <a ng-click="vm.openDocuments(group)"><span class="glyphicon glyphicon-file" tooltip-placement="top" uib-tooltip="{{vm.translations.ThinClient.GetDocuments}}"></span></a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row" ng-if="vm.GroupData.length>0">
+                <div class="col-md-7 col-sm-7 col-xs-7"><ul uib-pagination direction-links="true" total-items="vm.totalItems" items-per-page="vm.itemsPerPage" ng-model="vm.currentPage" ng-change="vm.pageChanged()"></ul></div>
+                <div class="col-md-5 col-sm-5 col-xs-5 ng-pristine ng-untouched ng-valid ng-isolate-scope pagination ng-not-empty" style="text-align: right">
+                    {{vm.translations.Common.Showing}} {{vm.skipNum+1}} {{vm.translations.Common.to}} {{vm.toRecord}} {{vm.translations.Common.Of}} {{vm.totalItems}} {{vm.translations.Common.entries}}
+                </div>
+            </div>
+
+            <div class="row padding-top-ten-custom" ng-if="vm.GroupData.length == 0">
+                <div class="text-center">
+                    <h5>{{vm.translations.ThinClient.NoGroupsFound}}</h5>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

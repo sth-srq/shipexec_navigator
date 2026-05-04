@@ -1,0 +1,71 @@
+<div class="row divBatchManagerTop">
+    <div class="row">
+        <form>
+            <label class="radio-inline">
+                <input type="radio" ng-disabled="vm.isBusy || vm.profile.ProfileSetting.DisableCustomLoad" ng-model="vm.loadType" ng-value="vm.batchLoadTypes.CustomLoad" />{{vm.translations.ThinClient.CustomLoad}}
+            </label>
+
+            <label class="radio-inline">
+                <input type="radio" ng-disabled="vm.isBusy || vm.profile.ProfileSetting.DisableLoadFromFile" ng-model="vm.loadType" ng-value="vm.batchLoadTypes.LoadFromFile" />{{vm.translations.ThinClient.LoadfromFile}}
+            </label>
+        </form>
+    </div>
+    <div class="row no-left-right-padding" ng-show="vm.loadType == vm.batchLoadTypes.CustomLoad">
+        <form class="form-inline" style="border: 1px solid #ddd; padding: 10px;border-radius: 4px;">
+            <div class="row">
+                <div class="col-sm-6 col-md-6 col-lg-6" ng-show="vm.entryMode == 'select'">
+                    <h5><strong>{{vm.translations.ThinClient.AvailableBatches}}</strong></h5>
+                    <select ng-disabled="vm.isBusy || vm.profile.ProfileSetting.DisableCustomLoad" class="form-control" ng-model="vm.selectedBatchReference" ng-options="item.Symbol as item.Name for item in vm.batchReferences"></select>
+                </div>
+                <div class="col-sm-6 col-md-6 col-lg-6">
+                    <div ng-show="vm.entryMode == 'manual'" class="form-group">
+                        <h5><strong>{{vm.translations.ThinClient.EnterBatchReference}}</strong></h5>
+                        <input type="text" ng-disabled="vm.isBusy || vm.profile.ProfileSetting.DisableCustomLoad" ng-model="vm.selectedBatchReference" class="form-control" />
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <label>{{vm.translations.ThinClient.Stageand}}</label>
+                        <div class="checkbox" style="padding: 5px;">
+                            <label>
+                                <input type="checkbox" ng-model="vm.actions.ship" ng-disabled="vm.isBusy" />{{vm.translations.Common.Ship}}
+                            </label>
+                        </div>
+                        <div class="checkbox" style="padding: 5px;">
+                            <label>
+                                <input type="checkbox" ng-model="vm.actions.print" ng-disabled="!vm.actions.ship" />{{vm.translations.Common.Print}}
+                            </label>
+                        </div>
+                        <input type="button" ng-disabled="vm.isBusy || !vm.selectedBatchReference" ng-click="vm.process(vm.actions)" value="{{vm.translations.ThinClient.Process}}" class="btn btn-sm btn-primary" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="row" ng-show="vm.loadType == vm.batchLoadTypes.LoadFromFile">
+        <form class="form-inline" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+            <h5><strong>{{vm.translations.ThinClient.LoadBatchFile}}</strong></h5>
+            <div class="row">
+                <div class="col-lg-3 col-md-3 col-sm-4 col-xs-4">
+                    <div class="row">
+                        <label class="control-label">{{vm.translations.ThinClient.FileType}}</label>
+                        <select class="form-control" ng-model="vm.parseBatchType" ng-disabled="vm.profile.ProfileSetting.DisableLoadFromFile || vm.profile.ProfileSetting.DisableBatchFileParserType"
+                                ng-options="value as key for (key,value) in vm.fileParserTypes"></select>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-xs-4">
+                    <input class=" form-control" id="fileInputField" type="file" ng-model="vm.batchFile" ng-disabled="vm.isBusy" style="height: 30px;" />
+                </div>
+                <div class="col-lg-1 col-md-3 col-sm-4 col-xs-4">
+                    <button class=" btn btn-sm bg-primary" ng-click="vm.uploadBatchFile();">{{vm.translations.Common.UploadFile}}</button>
+                </div>
+                <div class="col-lg-4 col-md-3 col-sm-4 col-xs-4">
+                    <a target="_self" ng-href="Content/{{vm.parseBatchType | FileParserType}}.xml" download="{{vm.parseBatchType | FileParserType}}.xml" ng-if="vm.parseBatchType == vm.fileParserTypes.ShipExecXml">{{vm.translations.ThinClient.DownloadTemplateFor}} {{vm.parseBatchType | FileParserType}} {{vm.translations.ThinClient.Format}}</a>
+                    <a target="_self" ng-href="Content/{{vm.parseBatchType | FileParserType}}.json" download="{{vm.parseBatchType | FileParserType}}.json" ng-if="vm.parseBatchType == vm.fileParserTypes.ShipExecJson">{{vm.translations.ThinClient.DownloadTemplateFor}} {{vm.parseBatchType | FileParserType}} {{vm.translations.ThinClient.Format}}</a>
+                    <a target="_self" ng-href="Content/{{vm.parseBatchType | FileParserType}}.csv" download="{{vm.parseBatchType | FileParserType}}.csv" ng-if="vm.parseBatchType == vm.fileParserTypes.CompleteViewShipping">{{vm.translations.ThinClient.DownloadTemplateFor}} {{vm.parseBatchType | FileParserType}} {{vm.translations.ThinClient.Format}}</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+

@@ -1,0 +1,26 @@
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h4>{{vm.translations.Common.CloseManifest}}</h4>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <shipper-carrier selected-shipper="vm.selectedShipper" selected-carrier="vm.selectedCarrier" ></shipper-carrier>
+            <div class="col-md-4 col-sm-4 col-xs-12 no-left-padding">
+                <div class="customDivRight">
+                    <div class="form-group">
+                        <label>{{vm.translations.ThinClient.CloseManifestDate}} : {{vm.selectedCarrier.Name}} </label>
+                        <select ng-change="vm.closeManifestDateSelected()" multiple tabindex="3" ng-model="vm.SelectedManifestItems" class="form-control box-size"
+                                ng-options="items as items.Name for items in vm.ManifestItems">
+                            <option value="" ng-if="false" ></option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer clearfix">
+        <div class="pull-right">
+            <button type="button" class="btn btn-primary" ng-disabled="vm.btnDisabled" ng-click="vm.closeManifest()" data-toggle="modal">{{vm.translations.Common.CloseManifest}}</button>
+        </div>
+    </div>
+</div>

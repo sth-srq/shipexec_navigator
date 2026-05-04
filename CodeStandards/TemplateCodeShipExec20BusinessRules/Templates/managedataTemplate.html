@@ -1,0 +1,59 @@
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h4>{{vm.translations.Common.ManageData}}</h4>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group">
+                <label>
+                    <strong>{{vm.translations.ThinClient.Manage}}</strong>
+                </label>
+                <div class="checkbox-inline padding-left-zero">
+                    <input type="radio" ng-model="vm.manageItemText" value="{{vm.translations.Common.HistoryItems}}" ng-checked="true" ng-change="vm.getManageData()"> {{vm.translations.ThinClient.HistoryItems}}
+                    <input type="radio" ng-model="vm.manageItemText" value="{{vm.translations.ThinClient.TransmitItems}}" ng-change="vm.getManageData()"> {{vm.translations.ThinClient.TransmitItems}}
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <shipper-carrier selected-shipper="vm.selectedShipper" selected-carrier="vm.selectedCarrier" ></shipper-carrier>
+            <div class="col-md-4 col-sm-4 col-xs-12 no-left-padding">
+                <div class="customDivRight">
+                    <div class="form-group">
+                        <label>{{vm.manageItemText}}</label>
+                        <select ng-change="vm.manageItemsSelected()" class="form-control box-size" multiple tabindex="3" ng-model="vm.selectedManageItems"
+                                ng-options="items as items.Name for items in vm.manageItems">
+                            <option value="" ng-if="false" ></option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row margin-custom margin-bottom-zero">
+            <div class="col-md-4 col-md-offset-8">
+                <div class="form-group padding-top-five">
+                    <label><strong>{{vm.translations.ThinClient.DaystoMaintain}}</strong></label>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-4 no-left-padding padding-top-eight">
+                        <div class="slidecontainer">
+                            <input type="range" min="0" max="180" value="{{vm.daysToMaintain}}" class="slider" ng-model="vm.daysToMaintain" id="myRange">
+                        </div>
+                    </div>
+                    <div class="col-md-4 no-left-padding padding-top-eight">
+                        <div class="form-group">
+                            <input type="number" class="form-control" ng-model="vm.daysToMaintain" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4 no-left-padding">
+                        <button type="button" class="btn btn-primary btn-width-custom" ng-click="vm.filterManageItems()">{{vm.translations.Common.Filter}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer clearfix">
+        <div class="pull-right">
+            <button type="button" class="btn btn-primary btn-width-custom" ng-disabled="vm.btnDisabled" ng-click="vm.purgeManageData()" data-toggle="modal">{{vm.translations.ThinClient.Purge}}</button>
+        </div>
+    </div>
+</div>

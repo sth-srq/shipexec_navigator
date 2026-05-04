@@ -15,7 +15,7 @@
         <a class="page-tab" href="/">&#x1F916; ShipExec Copilot</a>
         <a class="page-tab" href="/studio">&#x1F5FA; Navigator</a>
         <a class="page-tab" href="/tools">&#x1F527; Tools</a>
-        <span class="page-tab page-tab--active" style="display:none">&#x1F41B; Debug</span>
+        <span class="page-tab page-tab--active">&#x1F41B; Debug</span>
     </div>
 
     <div class="debug-panel">
@@ -34,17 +34,22 @@
             <button class="debug-btn debug-btn--blue" @onclick="() => _showSave = true">
                 &#x1F4BE; Save Templates
             </button>
+            <button class="debug-btn debug-btn--purple" @onclick="() => _showBlueprint = true">
+                &#x1F4D0; Analyze Blueprint
+            </button>
         </div>
     </div>
 
 </div>
 
-<GetTemplatesDialog          IsVisible="_showGet"    OnClose="() => _showGet    = false" />
-<GetClientBusinessRulesDialog IsVisible="_showGetCbr" OnClose="() => _showGetCbr = false" />
-<SaveTemplatesDialog          IsVisible="_showSave"   OnClose="() => _showSave   = false" />
+<GetTemplatesDialog          IsVisible="_showGet"        OnClose="() => _showGet        = false" />
+<GetClientBusinessRulesDialog IsVisible="_showGetCbr"     OnClose="() => _showGetCbr     = false" />
+<SaveTemplatesDialog          IsVisible="_showSave"       OnClose="() => _showSave       = false" />
+<BlueprintAnalyzerDialog      IsVisible="_showBlueprint"  OnClose="() => _showBlueprint  = false" />
 
 @code {
     private bool _showGet;
     private bool _showGetCbr;
     private bool _showSave;
+    private bool _showBlueprint;
 }

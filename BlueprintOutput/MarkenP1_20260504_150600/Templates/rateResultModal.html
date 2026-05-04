@@ -1,0 +1,217 @@
+
+<div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="vm.cancel()">&times;</button>
+        <h4 class="modal-title">{{vm.title}} <div class="pull-right" style="padding-right: 5%;" ng-hide="vm.profile.ProfileSetting.ServiceSelectionMode === vm.serviceSelectionMode.ShipByService">{{vm.translations.Common.SortMode}} : {{vm.sortMode}}</div></h4>
+    </div>
+    <div class="modal-body inlineBlockRemoved modalHeightAsPerVh">
+        <div class="col-md-12">
+            <h5 class="col-md-6" style="font-weight:bold" ng-if="vm.rateResults.length == 0"> {{vm.translations.ThinClient.NoServicesMeetYourCriteria}}</h5>
+        </div>
+
+        <div ng-if="vm.rateResults.length > 0">
+            <table class="table" aria-describedby="Rate Results">
+                <thead>
+                    <tr>
+                        <th scope="col">{{vm.translations.Common.Service}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Base;}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Discount}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Special}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Total}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.ArrivalDateTime}}</th>
+                    </tr>
+                </thead>
+
+                <tbody ng-repeat="rateResult in vm.rateResults">
+                    <tr ng-class="{'highlightselected':rateResult.PackageDefaults.Service.Symbol == vm.selectedRow}">
+                        <td>
+                            <a href="" ng-click="vm.onSelectService(rateResult.PackageDefaults.Service,'ApplicableService')" ng-if="!vm.profile.ProfileSetting.DisableServiceChanges ">{{rateResult.PackageDefaults.Service.Name}}</a>
+                            <div ng-if="vm.profile.ProfileSetting.DisableServiceChanges ">{{rateResult.PackageDefaults.Service.Name}}</div>
+                        </td>
+                        <td><currency currency_value="rateResult.PackageDefaults.BaseCharge.Amount" currency_symbol="rateResult.PackageDefaults.BaseCharge.Currency"></currency></td>
+                        <td><currency currency_value="rateResult.PackageDefaults.Discount.Amount" currency_symbol="rateResult.PackageDefaults.Discount.Currency" ></currency></td>
+                        <td><currency currency_value="rateResult.PackageDefaults.Special.Amount" currency_symbol="rateResult.PackageDefaults.Special.Currency" ></currency></td>
+                        <td><currency currency_value="rateResult.PackageDefaults.Total.Amount" currency_symbol="rateResult.PackageDefaults.Total.Currency" ></currency></td>
+                        <td>
+                            <div ng-if="rateResult.PackageDefaults.ArriveDate == null">Not Available</div><div ng-if="rateResult.PackageDefaults.ArriveDate != null">{{rateResult.PackageDefaults.ArriveDate.Year}}-{{("0"+rateResult.PackageDefaults.ArriveDate.Month).slice(-2)}}-{{("0"+rateResult.PackageDefaults.ArriveDate.Day).slice(-2)}} {{rateResult.PackageDefaults.ArriveTime}}</div>
+                        </td>
+                        <td>
+                            <span style="cursor:pointer;" ng-class="{'glyphicon glyphicon-menu-down':vm.expandedRateResult != $index,'glyphicon glyphicon-menu-up':vm.expandedRateResult == $index}" ng-click="vm.expandedRateResult = vm.expandedRateResult == $index ? -1 : $index;" expand></span>
+                        </td>
+                    </tr>
+                    <tr ng-show="vm.expandedRateResult == $index">
+                        <td colspan="6">
+                            <div class="scrollable-table">
+                                <table class="fixed-header" aria-describedby="Shipment">
+                                    <tr>
+                                        <th scope="col">{{vm.translations.Common.Package}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Weight}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Base}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Discount}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Special}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Total}}</th>
+                                    </tr>
+                                </table>
+                                <div class="inner-table">
+                                    <table class="table table-bordered" aria-describedby="Package" role="presentation">
+                                        <tr ng-repeat="package in rateResult.Packages">
+                                            <td>#{{$index+1}}</td>
+                                            <td>{{(package.RatedWeight.Amount && package.RatedWeight.Amount !=0 ) ? (package.RatedWeight.Amount | number : 2):'0'}} {{package.RatedWeight.Units}} </td>
+                                            <td><currency currency_value="package.ApportionedBase.Amount" currency_symbol="package.ApportionedBase.Currency" ></currency></td>
+                                            <td><currency currency_value="package.ApportionedDiscount.Amount" currency_symbol="package.ApportionedDiscount.Currency" ></currency></td>
+                                            <td><currency currency_value="package.ApportionedSpecial.Amount" currency_symbol="package.ApportionedSpecial.Currency" ></currency></td>
+                                            <td><currency currency_value="package.ApportionedTotal.Amount" currency_symbol="package.ApportionedTotal.Currency" ></currency></td>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-sm-12">
+            <div class="col-sm-6" ng-if="vm.rateNAs.length > 0">
+                <label class="small">
+                    <input type="checkbox" name="rateNA" ng-model="vm.showrateNA">
+                    {{vm.translations.ThinClient.ShowNotApplicableServices}}
+                </label>
+            </div>
+            <div class="col-sm-6" ng-if="vm.errorResults.length > 0">
+                <label class="small">
+                    <input type="checkbox" name="showError" ng-model="vm.showError">
+                    {{vm.translations.Common.ShowErrors}}
+                </label>
+            </div>
+        </div>
+        <div ng-if="vm.rateNAs.length > 0">
+            <table class="table" ng-show="vm.showrateNA" aria-describedby="Package">
+                <thead>
+                    <tr>
+                        <th scope="col">{{vm.translations.Common.Service}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Base;}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Discount}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Special}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.Total}}</th>
+                        <th scope="col">{{vm.translations.ThinClient.ArrivalDateTime}}</th>
+                    </tr>
+                </thead>
+
+                <tbody ng-repeat="rateNA in vm.rateNAs">
+                    <tr ng-class="{'highlightselected':rateNA.PackageDefaults.Service.Symbol == vm.selectedRow}">
+                        <td>
+                            <a href="" ng-click="vm.onSelectService(rateNA.PackageDefaults.Service,'NotApplicableService')" ng-if="!vm.profile.ProfileSetting.DisableServiceChanges  && vm.profile.ProfileSetting.AllowNotApplicableToBeSelected ">{{rateNA.PackageDefaults.Service.Name}}</a>
+                            <div ng-if="!(!vm.profile.ProfileSetting.DisableServiceChanges  && vm.profile.ProfileSetting.AllowNotApplicableToBeSelected )">{{rateNA.PackageDefaults.Service.Name}}</div>
+                        </td>
+                        <td><currency currency_value="rateNA.PackageDefaults.BaseCharge.Amount" currency_symbol="rateNA.PackageDefaults.BaseCharge.Currency" ></currency></td>
+                        <td><currency currency_value="rateNA.PackageDefaults.Discount.Amount" currency_symbol="rateNA.PackageDefaults.Discount.Currency" ></currency></td>
+                        <td><currency currency_value="rateNA.PackageDefaults.Special.Amount" currency_symbol="rateNA.PackageDefaults.Special.Currency" ></currency></td>
+                        <td><currency currency_value="rateNA.PackageDefaults.Total.Amount" currency_symbol="rateNA.PackageDefaults.Total.Currency" ></currency></td>
+                        <td>
+                            <div ng-if="rateNA.PackageDefaults.ArriveDate == null">Not Available</div>
+                            <div ng-if="rateNA.PackageDefaults.ArriveDate != null">{{rateNA.PackageDefaults.ArriveDate.Year}}-{{("0"+rateNA.PackageDefaults.ArriveDate.Month).slice(-2)}}-{{("0"+rateNA.PackageDefaults.ArriveDate.Day).slice(-2)}} {{rateNA.PackageDefaults.ArriveTime}}</div>
+                        </td>
+                        <td>
+                            <span style="cursor: pointer;" ng-class="{'glyphicon glyphicon-menu-down':vm.expandedRateNA != $index,'glyphicon glyphicon-menu-up':vm.expandedRateNA == $index}" ng-click="vm.expandedRateNA = vm.expandedRateNA == $index ? -1 : $index;" expand></span>
+                        </td>
+                    </tr>
+                    <tr ng-show="vm.expandedRateNA == $index">
+                        <td colspan="6">
+                            <div class="scrollable-table">
+                                <table class="fixed-header" aria-describedby="Packages">
+                                    <tr>
+                                        <th scope="col">{{vm.translations.Common.Package}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Weight}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Base}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Discount}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Special}}</th>
+                                        <th scope="col">{{vm.translations.ThinClient.Total}}</th>
+                                    </tr>
+                                </table>
+                                <div class="inner-table">
+                                    <table class="table table-bordered" aria-describedby="Packages" role="presentation">
+                                        <tr ng-repeat="package in rateNA.Packages">
+                                            <td>#{{$index+1}}</td>
+                                            <td>{{(package.RatedWeight.Amount && package.RatedWeight.Amount !=0 ) ? (package.RatedWeight.Amount | number : 2):'-'}} {{package.RatedWeight.Units}} </td>
+                                            <td><currency currency_value="package.ApportionedBase.Amount" currency_symbol="package.ApportionedBase.Currency" ></currency></td>
+                                            <td><currency currency_value="package.Discount.Amount" currency_symbol="package.Discount.Currency" ></currency></td>
+                                            <td><currency currency_value="package.ApportionedSpecial.Amount" currency_symbol="package.ApportionedSpecial.Currency" ></currency></td>
+                                            <td><currency currency_value="package.ApportionedTotal.Amount" currency_symbol="package.ApportionedTotal.Currency" ></currency></td>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <div ng-if="vm.errorResults.length > 0">
+            <table class="table table-striped" ng-show="vm.showError" aria-describedby="Errors">
+                <thead>
+                    <tr>
+                        <th scope="col">{{vm.translations.Common.Service}}</th>
+                        <th scope="col" class="text-nowrap">{{vm.translations.Common.ErrorCode}}</th>
+                        <th scope="col">{{vm.translations.Common.ErrorMessage}}</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+
+                <tbody ng-repeat="errorResult in vm.errorResults">
+                    <tr>
+                        <td>{{errorResult.PackageDefaults.Service.Name}}</td>
+                        <td>{{errorResult.PackageDefaults.ErrorCode}}</td>
+                        <td>
+                            {{errorResult.PackageDefaults.ErrorMessage}}
+                        </td>
+                        <td>
+                            <span style="cursor: pointer;" ng-class="{'glyphicon glyphicon-menu-down':vm.expandedErrorResult != $index,'glyphicon glyphicon-menu-up':vm.expandedErrorResult == $index}" ng-click="vm.expandedErrorResult = vm.expandedErrorResult == $index ? -1 : $index;" expand></span>
+                        </td>
+                    </tr>
+                    <tr ng-show="vm.expandedErrorResult == $index">
+                        <td colspan="3">
+                            <div class="scrollable-table">
+                                <table class="fixed-header" aria-describedby="Errors">
+                                    <tr>
+                                        <th scope="col">{{vm.translations.Common.Package}}</th>
+                                        <th scope="col" class="text-nowrap">{{vm.translations.Common.ErrorCode}}</th>
+                                        <th scope="col">{{vm.translations.Common.ErrorMessage}}</th>
+                                    </tr>
+                                </table>
+                                <div class="inner-table">
+                                    <table class="table table-bordered" aria-describedby="Errors"  role="presentation">
+                                        <tr ng-repeat="package in errorResult.Packages">
+                                            <td>#{{$index+1}}</td>
+                                            <td>{{package.ErrorCode}}</td>
+                                            <td>{{package.ErrorMessage}}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+    <form name="reasonForUpgradeForm">
+        <div class="modal-footer">
+
+            <div class="col-md-3 form-group" ng-if="vm.justify">
+                <field-input name="reasonForUpgrade_txt" is-required="vm.justify" property="ReasonForUpgrade"
+                             model="vm.ReasonForUpgrade" message="{{vm.translations.ThinClient.ReasonForUpgradeIsRequired}}"
+                             caption="{{vm.translations.ThinClient.ReasonForUpgrade}}"
+                             form-type="Horizontal"
+                             custom-class-parent="{'has-error':reasonForUpgradeForm.reasonForUpgrade_txt.$error.required}">
+                </field-input>
+            </div>
+
+            <button ng-disabled="reasonForUpgradeForm.$invalid || vm.validationMessages.length > 0 || vm.selectService[0] == null" type="button" class="btn btn-primary" ng-click="vm.ship()" ng-hide="vm.profile.ProfileSetting.ServiceSelectionMode === vm.serviceSelectionMode.ShipByService">{{vm.shipButton}}</button>
+            <button type="button" class="btn btn-default" ng-click="vm.cancel()">{{vm.translations.Common.Close}}</button>
+
+        </div>
+    </form>
+</div>

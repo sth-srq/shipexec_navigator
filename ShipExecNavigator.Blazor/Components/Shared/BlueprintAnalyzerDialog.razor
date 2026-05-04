@@ -1,0 +1,289 @@
+@using ShipExecNavigator.Shared.Interfaces
+@using ShipExecNavigator.Shared.Models
+@using UglyToad.PdfPig
+@inject IBlueprintAnalysisService BlueprintService
+
+@if (IsVisible)
+{
+    <div class="st-backdrop" @onclick="HandleClose">
+        <div class="st-dlg" @onclick:stopPropagation>
+
+            <div class="st-header">
+                <div class="st-title">&#x1F4D0; Analyze Blueprint</div>
+                <button class="st-close" @onclick="HandleClose" disabled="@_isAnalyzing">&#x2715;</button>
+            </div>
+
+            <div class="st-body">
+
+                @if (_phase == Phase.Upload)
+                {
+                    <p class="st-hint">
+                        Upload a text file or PDF containing a company blueprint.
+                        The system will run two AI passes — one for CBR/SBR hooks, one for template changes —
+                        then produce a modified template project.
+                    </p>
+
+                    <div class="st-field">
+                        <label class="st-label">Blueprint File</label>
+                        <InputFile OnChange="OnFileSelected" accept=".txt,.pdf" class="st-input" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_fileName))
+                    {
+                        <div class="st-field">
+                            <span>&#x1F4C4; @_fileName (@FormatSize(_fileContent?.Length ?? 0))</span>
+                            <button class="st-close" @onclick="ClearFile" style="margin-left:8px;">&#x2715;</button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="st-error">&#9888; @_errorMessage</div>
+                    }
+
+                    <div class="st-footer">
+                        <button class="st-btn-secondary" @onclick="HandleClose">Cancel</button>
+                        <button class="st-btn-primary" @onclick="AnalyzeAsync"
+                                disabled="@(_fileContent is null)">
+                            Analyze
+                        </button>
+                    </div>
+                }
+                else if (_phase == Phase.Analyzing)
+                {
+                    <div class="st-saving-row">
+                        <span class="st-spinner"></span>
+                        <span>@_progressMessage</span>
+                    </div>
+                }
+                else if (_phase == Phase.Results && _result is not null)
+                {
+                    <div class="st-summary-row">
+                        @if (_result.Errors.Count == 0 && string.IsNullOrEmpty(_result.BuildErrors) && string.IsNullOrEmpty(_result.CbrValidationErrors) && string.IsNullOrEmpty(_result.HtmlValidationErrors))
+                        {
+                            <span class="st-pill st-pill--ok">&#x2714; Analysis Complete</span>
+                        }
+                        else
+                        {
+                            <span class="st-pill st-pill--warn">&#x26A0; Completed with errors</span>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_result.OutputFolder))
+                    {
+                        <div class="st-field">
+                            <label class="st-label">Output Folder</label>
+                            <code style="font-size:0.85rem; word-break:break-all;">@_result.OutputFolder</code>
+                        </div>
+                    }
+
+                    @if (_result.Errors.Count > 0)
+                    {
+                        <div class="st-field" style="border:2px solid #d32f2f; border-radius:4px; padding:0.5rem; background:#fff5f5;">
+                            <label class="st-label" style="color:#d32f2f;">&#x1F6A8; Errors (@_result.Errors.Count)</label>
+                            @foreach (var err in _result.Errors)
+                            {
+                                <div style="font-size:0.8rem; color:#d32f2f; margin:0.2rem 0;">&#9888; @err</div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_result.BuildErrors))
+                    {
+                        <div class="st-field" style="border:2px solid #d32f2f; border-radius:4px; padding:0.5rem; background:#fff5f5;">
+                            <label class="st-label" style="color:#d32f2f;">&#x1F6A8; Build Errors</label>
+                            <pre style="white-space:pre-wrap; font-size:0.78rem; margin:0; max-height:400px; overflow-y:auto; color:#d32f2f;">@_result.BuildErrors</pre>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_result.CbrValidationErrors))
+                    {
+                        <div class="st-field" style="border:2px solid #e65100; border-radius:4px; padding:0.5rem; background:#fff8e1;">
+                            <label class="st-label" style="color:#e65100;">&#x26A0; CBR (JS) Validation Errors</label>
+                            <pre style="white-space:pre-wrap; font-size:0.78rem; margin:0; max-height:300px; overflow-y:auto; color:#e65100;">@_result.CbrValidationErrors</pre>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_result.HtmlValidationErrors))
+                    {
+                        <div class="st-field" style="border:2px solid #e65100; border-radius:4px; padding:0.5rem; background:#fff8e1;">
+                            <label class="st-label" style="color:#e65100;">&#x26A0; Template/Report (HTML) Validation Errors</label>
+                            <pre style="white-space:pre-wrap; font-size:0.78rem; margin:0; max-height:300px; overflow-y:auto; color:#e65100;">@_result.HtmlValidationErrors</pre>
+                        </div>
+                    }
+
+                    @if (_result.ModifiedFiles.Count > 0)
+                    {
+                        <div class="st-field">
+                            <label class="st-label">Modified Files (@_result.ModifiedFiles.Count)</label>
+                            <ul style="font-size:0.85rem; margin:0; padding-left:1.2rem;">
+                                @foreach (var f in _result.ModifiedFiles)
+                                {
+                                    <li>@f</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_result.ValidationOutput))
+                    {
+                        <div class="st-field">
+                            <label class="st-label">Validation</label>
+                            <pre style="white-space:pre-wrap; font-size:0.82rem; margin:0;">@_result.ValidationOutput</pre>
+                        </div>
+                    }
+
+                    <details style="margin-top:0.5rem;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.85rem;">Pass 1: Hooks Analysis (raw)</summary>
+                        <pre style="white-space:pre-wrap; font-size:0.78rem; max-height:300px; overflow-y:auto; background:#f5f5f5; padding:0.5rem; border-radius:4px;">@_result.HooksAnalysis</pre>
+                    </details>
+
+                    <details style="margin-top:0.5rem;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.85rem;">Pass 2: Templates Analysis (raw)</summary>
+                        <pre style="white-space:pre-wrap; font-size:0.78rem; max-height:300px; overflow-y:auto; background:#f5f5f5; padding:0.5rem; border-radius:4px;">@_result.TemplatesAnalysis</pre>
+                    </details>
+
+                    @if (_result.AiInteractions.Count > 0)
+                    {
+                        <details style="margin-top:0.5rem;">
+                            <summary style="cursor:pointer; font-weight:600; font-size:0.85rem;">&#x1F4AC; AI Interactions (@_result.AiInteractions.Count calls)</summary>
+                            <div style="max-height:500px; overflow-y:auto;">
+                                @foreach (var (interaction, idx) in _result.AiInteractions.Select((x, i) => (x, i)))
+                                {
+                                    <details style="margin:0.3rem 0; border:1px solid #ddd; border-radius:4px; padding:0.3rem;">
+                                        <summary style="cursor:pointer; font-size:0.8rem; font-weight:500;">
+                                            #@(idx + 1) — @interaction.Step
+                                            <span style="color:#888; font-size:0.7rem; margin-left:0.5rem;">@interaction.Timestamp.ToString("HH:mm:ss")</span>
+                                        </summary>
+                                        <div style="margin-top:0.3rem;">
+                                            <label style="font-size:0.75rem; font-weight:600; color:#1565c0;">Prompt Sent:</label>
+                                            <pre style="white-space:pre-wrap; font-size:0.72rem; max-height:200px; overflow-y:auto; background:#e3f2fd; padding:0.4rem; border-radius:3px; margin:0.2rem 0;">@interaction.PromptSent</pre>
+                                            <label style="font-size:0.75rem; font-weight:600; color:#2e7d32;">Response Received:</label>
+                                            <pre style="white-space:pre-wrap; font-size:0.72rem; max-height:200px; overflow-y:auto; background:#e8f5e9; padding:0.4rem; border-radius:3px; margin:0.2rem 0;">@interaction.ResponseReceived</pre>
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        </details>
+                    }
+
+                    <div class="st-footer">
+                        <button class="st-btn-secondary" @onclick="ResetToUpload">&#x2190; Back</button>
+                        <button class="st-btn-secondary" @onclick="HandleClose">Close</button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private enum Phase { Upload, Analyzing, Results }
+    private Phase _phase = Phase.Upload;
+
+    private string? _fileName;
+    private byte[]? _fileContent;
+    private bool _isAnalyzing;
+    private string _errorMessage = string.Empty;
+    private string _progressMessage = "Starting analysis...";
+    private BlueprintAnalysisResult? _result;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        _fileName = file.Name;
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024).CopyToAsync(ms);
+        _fileContent = ms.ToArray();
+        _errorMessage = string.Empty;
+    }
+
+    private void ClearFile()
+    {
+        _fileName = null;
+        _fileContent = null;
+    }
+
+    private async Task AnalyzeAsync()
+    {
+        if (_fileContent is null) return;
+
+        _isAnalyzing = true;
+        _errorMessage = string.Empty;
+        _progressMessage = "Starting analysis...";
+        _phase = Phase.Analyzing;
+
+        try
+        {
+            string textContent;
+            if (_fileName?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                using var pdfDoc = PdfDocument.Open(_fileContent);
+                var sb = new System.Text.StringBuilder();
+                foreach (var page in pdfDoc.GetPages())
+                {
+                    sb.AppendLine(page.Text);
+                }
+                textContent = sb.ToString();
+            }
+            else
+            {
+                textContent = System.Text.Encoding.UTF8.GetString(_fileContent);
+            }
+
+
+
+            _result = await BlueprintService.AnalyzeAsync(
+                textContent,
+                _fileName ?? "blueprint.txt",
+                progress =>
+                {
+                    _progressMessage = progress;
+                    InvokeAsync(StateHasChanged);
+                });
+
+            _phase = Phase.Results;
+        }
+        catch (Exception ex)
+        {
+            if (_result == null)
+            {
+                _result = new BlueprintAnalysisResult();
+            }
+            _result.Errors.Add($"Analysis failed: {ex.Message}");
+            _phase = Phase.Results;
+        }
+        finally
+        {
+            _isAnalyzing = false;
+        }
+    }
+
+    private void ResetToUpload()
+    {
+        _result = null;
+        _phase = Phase.Upload;
+    }
+
+    private void HandleClose()
+    {
+        if (_isAnalyzing) return;
+        _phase = Phase.Upload;
+        _fileName = null;
+        _fileContent = null;
+        _errorMessage = string.Empty;
+        _result = null;
+        OnClose.InvokeAsync();
+    }
+
+    private static string FormatSize(int bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        _ => $"{bytes / (1024.0 * 1024.0):F1} MB"
+    };
+}
