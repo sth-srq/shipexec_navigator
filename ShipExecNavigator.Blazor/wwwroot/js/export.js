@@ -588,3 +588,42 @@ window.downloadAsPdf = function (url) {
     document.addEventListener('drop',    clearHover, true);
     document.addEventListener('dragend', clearHover, true);
 }());
+
+window.saveProjectZip = async function (fileName, base64) {
+    const byteChars = atob(base64);
+    const byteNums = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) {
+        byteNums[i] = byteChars.charCodeAt(i);
+    }
+    const blob = new Blob([byteNums], { type: 'application/zip' });
+
+    // Try File System Access API (folder picker) if available
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: fileName,
+                types: [{
+                    description: 'ZIP Archive',
+                    accept: { 'application/zip': ['.zip'] }
+                }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return;
+        } catch (err) {
+            if (err.name === 'AbortError') return; // user cancelled
+            // Fall through to regular download
+        }
+    }
+
+    // Fallback: regular download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};

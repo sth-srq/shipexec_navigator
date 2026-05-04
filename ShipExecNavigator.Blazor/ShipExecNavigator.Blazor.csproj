@@ -7,6 +7,7 @@
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="9.0.3" />
     <PackageReference Include="System.IO.Ports" Version="10.0.3" />
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 

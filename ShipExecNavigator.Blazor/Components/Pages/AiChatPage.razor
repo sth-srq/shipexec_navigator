@@ -4,9 +4,12 @@
 @implements IDisposable
 
 @using ShipExecNavigator.Shared.Interfaces
+@using UglyToad.PdfPig
+@using System.IO.Compression
 @inject IAiChatService AiChat
 @inject IJSRuntime JS
 @inject IShipExecService ShipExecService
+@inject IWebHostEnvironment Env
 
 <PageTitle>ShipExec Navigator</PageTitle>
 
@@ -68,7 +71,39 @@
     {
         <div class="chat-error">&#9888; @_error</div>
     }
+
+    <div class="new-company-row">
+        <button class="btn-new-company" @onclick="() => _showNewCompanyWizard = true">
+            &#x2795; New Company
+        </button>
+        <button class="btn-upload-doc" @onclick="TriggerFileUpload">
+            &#x1F4C4; Upload Document
+        </button>
+        <InputFile @ref="_fileInput" OnChange="OnDocumentSelected" accept=".txt,.pdf"
+                   style="display:none" id="home-doc-upload" />
+    </div>
+
+    @if (_uploadedFileName is not null)
+    {
+        <div class="upload-badge">
+            &#x1F4CE; @_uploadedFileName
+            <button class="upload-badge-remove" @onclick="ClearUploadedDocument">&#x2715;</button>
+        </div>
+    }
+
+    @if (_analysisComplete)
+    {
+        <div class="create-project-row">
+            <button class="btn-create-project" @onclick="CreateProjectAsync" disabled="@_thinking">
+                &#x1F4E6; Create Project
+            </button>
+        </div>
+    }
 </div>
+
+<CreateCompanyWizard IsVisible="_showNewCompanyWizard"
+                     OnClose="() => _showNewCompanyWizard = false"
+                     OnCompanyConnected="HandleNewCompanyConnected" />
 
 @code {
     private readonly List<ChatMessage> _messages = [];
@@ -79,6 +114,12 @@
     private int _historyIndex = -1;
     private string _historyDraft = string.Empty;
     private bool _suppressEnter;
+    private bool _showNewCompanyWizard;
+    private InputFile? _fileInput;
+    private string? _uploadedFileName;
+    private byte[]? _uploadedFileContent;
+    private bool _analysisComplete;
+    private string? _lastAnalysisResult;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -122,6 +163,246 @@
             StateHasChanged();
             await GreetAsync();
         });
+    }
+
+    private async Task TriggerFileUpload()
+    {
+        await JS.InvokeVoidAsync("eval", "document.getElementById('home-doc-upload').click()");
+    }
+
+    private async Task OnDocumentSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        _uploadedFileName = file.Name;
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024).CopyToAsync(ms);
+        _uploadedFileContent = ms.ToArray();
+
+        // Extract text and trigger analysis
+        var docText = ExtractText(_uploadedFileName, _uploadedFileContent);
+        if (!string.IsNullOrWhiteSpace(docText))
+            await AnalyseDocumentAsync(_uploadedFileName, docText);
+    }
+
+    private void ClearUploadedDocument()
+    {
+        _uploadedFileName = null;
+        _uploadedFileContent = null;
+    }
+
+    private string ExtractText(string fileName, byte[] content)
+    {
+        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using var pdf = PdfDocument.Open(content);
+                var sb = new System.Text.StringBuilder();
+                foreach (var page in pdf.GetPages())
+                {
+                    sb.AppendLine(page.Text);
+                }
+                return sb.ToString();
+            }
+            catch
+            {
+                return System.Text.Encoding.UTF8.GetString(content);
+            }
+        }
+        return System.Text.Encoding.UTF8.GetString(content);
+    }
+
+    private async Task AnalyseDocumentAsync(string fileName, string documentText)
+    {
+        _messages.Add(new ChatMessage("user",
+            $"I uploaded **{fileName}**. Please analyse this document for business rules " +
+            $"and map them to ShipExec CBR and SBR hooks with detailed program flow."));
+        _thinking = true;
+        _error = null;
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        try
+        {
+            // Load the hook reference
+            var hookRefPath = Path.Combine(Env.ContentRootPath, "..", "Docs", "CBR_SBR_Hook_Reference.md");
+            var hookReference = File.Exists(hookRefPath)
+                ? await File.ReadAllTextAsync(hookRefPath)
+                : "(Hook reference not available)";
+
+            var prompt =
+                $"""  
+                You are a ShipExec business rules architect with deep expertise in both
+                Client Business Rules (CBR — JavaScript, browser-side) and
+                Server Business Rules (SBR — .NET DLL, server-side).
+
+                ## Context
+                The user has uploaded a document that describes shipping business requirements.
+                Your job is to:
+                1. Identify every high-level business rule in the document.
+                2. For each rule, determine which CBR hook(s) AND/OR SBR hook(s) it maps to.
+                3. Detail the **program flow** for each rule — step-by-step execution order
+                   including branching logic (if/else conditions, loops, early returns).
+                4. Indicate whether the rule is client-side (CBR), server-side (SBR), or both,
+                   and explain why.
+
+                ## Output format
+                Respond with a structured report using this exact format:
+
+                ### Business Rules Analysis — {fileName}
+
+                ---
+
+                **Rule 1: <short name>**
+                - **Description:** <what the rule does>
+                - **Type:** CBR / SBR / Both
+                - **Hook(s):** <hook names, e.g. PreShip (CBR), PreShip (SBR)>
+                - **Program Flow:**
+                  1. <first step>
+                  2. IF <condition> THEN
+                     - <action A>
+                  3. ELSE
+                     - <action B>
+                  4. <next step>
+                  ...
+                - **Branching Logic:**
+                  - <condition 1> → <outcome>
+                  - <condition 2> → <outcome>
+                - **CBR Implementation:** <JavaScript logic/pseudocode for client-side, or "N/A">
+                - **SBR Implementation:** <.NET logic/pseudocode for server-side, or "N/A">
+
+                ---
+
+                **Rule 2: <short name>**
+                ... (repeat for each rule)
+
+                ---
+
+                ### Execution Flow Diagram
+
+                Provide a text-based flow showing the overall execution order across all rules:
+                ```
+                User Action → CBR PreShip → [validation] → Server receives request
+                    → SBR PreShip → [server validation/enrichment]
+                    → Carrier API call
+                    → SBR PostShip → [server post-processing]
+                    → Response to client
+                    → CBR PostShip → [UI updates]
+                ```
+                (Adapt this to reflect the actual rules found in the document)
+
+                ### Summary
+                - Total rules identified: <N>
+                - CBR hooks used: <list>
+                - SBR hooks used: <list>
+                - Rules requiring BOTH CBR + SBR: <list>
+                - Hooks NOT needed: <any hooks from the reference that aren't relevant>
+
+                ## Hook Reference
+                {hookReference}
+
+                ## Uploaded Document
+                {documentText}
+                """;
+
+            var reply = await AiChat.SendMessageAsync(
+                _messages.SkipLast(1).ToList(),
+                prompt,
+                useRag: false);
+
+            _messages.Add(new ChatMessage("assistant", reply.Message));
+            _lastAnalysisResult = reply.Message;
+            _analysisComplete = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _thinking = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private async Task CreateProjectAsync()
+    {
+        try
+        {
+            _thinking = true;
+            StateHasChanged();
+
+            // Load template files
+            var templateRoot = Path.Combine(Env.ContentRootPath, "..", "CodeStandards", "TemplateCodeShipExec20BusinessRules");
+            var templateFiles = new Dictionary<string, string>();
+
+            foreach (var file in Directory.GetFiles(templateRoot, "*.*", SearchOption.AllDirectories))
+            {
+                var relativePath = Path.GetRelativePath(templateRoot, file);
+                templateFiles[relativePath] = await File.ReadAllTextAsync(file);
+            }
+
+            // Build the modified SBR with analysis comments
+            var analysisComment = _lastAnalysisResult ?? "No analysis available";
+            var sbrHeader = $"/*\n * AUTO-GENERATED BUSINESS RULES PROJECT\n * Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n *\n * Analysis Results:\n * {analysisComment.Replace("\n", "\n * ").Substring(0, Math.Min(analysisComment.Length, 2000))}\n */\n\n";
+            var cbrHeader = $"/**\n * AUTO-GENERATED BUSINESS RULES PROJECT\n * Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n *\n * Analysis Results:\n * {analysisComment.Replace("\n", "\n * ").Substring(0, Math.Min(analysisComment.Length, 2000))}\n */\n\n";
+
+            // Create zip in memory
+            using var zipStream = new MemoryStream();
+            using (var archive = new System.IO.Compression.ZipArchive(zipStream, System.IO.Compression.ZipArchiveMode.Create, true))
+            {
+                foreach (var (relativePath, content) in templateFiles)
+                {
+                    var entry = archive.CreateEntry(Path.Combine("BusinessRulesProject", relativePath));
+                    using var writer = new StreamWriter(entry.Open());
+
+                    // Prepend analysis comments to the main SBR and CBR files
+                    if (relativePath.EndsWith("SoxBusinessRules.cs", StringComparison.OrdinalIgnoreCase))
+                        await writer.WriteAsync(sbrHeader + content);
+                    else if (relativePath.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+                        await writer.WriteAsync(cbrHeader + content);
+                    else
+                        await writer.WriteAsync(content);
+                }
+
+                // Add the full analysis as a separate markdown file
+                var analysisEntry = archive.CreateEntry(Path.Combine("BusinessRulesProject", "ANALYSIS_RESULTS.md"));
+                using var analysisWriter = new StreamWriter(analysisEntry.Open());
+                await analysisWriter.WriteAsync($"# Business Rules Analysis\n\nGenerated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n\n{_lastAnalysisResult}");
+            }
+
+            // Trigger download via JS File System Access API with fallback
+            var zipBytes = zipStream.ToArray();
+            var base64 = Convert.ToBase64String(zipBytes);
+            var fileName = $"BusinessRulesProject_{DateTime.Now:yyyyMMdd_HHmmss}.zip";
+
+            await JS.InvokeVoidAsync("saveProjectZip", fileName, base64);
+
+            _messages.Add(new ChatMessage("assistant", $"\u2705 Project created and downloaded as **{fileName}**. The zip contains the template business rules with your analysis results embedded as comments."));
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to create project: {ex.Message}";
+        }
+        finally
+        {
+            _thinking = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private async Task HandleNewCompanyConnected((Guid Id, string Name) company)
+    {
+        _showNewCompanyWizard = false;
+        // If the service is connected, set up the company and trigger connected flow
+        try
+        {
+            await ShipExecService.SetupCompanyAsync(company.Id, company.Name);
+        }
+        catch { /* may not be connected — that's fine */ }
+        StateHasChanged();
     }
 
     private async Task GreetAsync()

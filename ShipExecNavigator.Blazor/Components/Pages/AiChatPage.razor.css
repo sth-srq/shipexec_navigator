@@ -505,3 +505,118 @@
 
 /* ── Dark-theme overrides ── */
 :global(.dark-theme) .company-heading { color: #c9d1d9; }
+
+/* ── New Company button row ── */
+.new-company-row {
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem 0 0.25rem;
+}
+
+.btn-new-company {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #337ab7;
+    border: 1px solid #2e6da4;
+    color: #fff;
+    border-radius: 4px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-new-company:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    background: #286090;
+    border-color: #204d74;
+}
+
+.btn-upload-doc {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #5cb85c;
+    border: 1px solid #4cae4c;
+    color: #fff;
+    border-radius: 4px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-upload-doc:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    background: #449d44;
+    border-color: #398439;
+}
+
+/* ── Upload badge ── */
+.upload-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: center;
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+    color: #1e40af;
+}
+
+.upload-badge-remove {
+    background: none;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0;
+    line-height: 1;
+}
+
+.upload-badge-remove:hover {
+    color: #991b1b;
+}
+
+/* ── Create Project button ── */
+.create-project-row {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    align-self: center;
+}
+
+.btn-create-project {
+    padding: 0.5rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid #6366f1;
+    background: #6366f1;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-create-project:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(99,102,241,0.3);
+    background: #4f46e5;
+    border-color: #4338ca;
+}
+
+.btn-create-project:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}

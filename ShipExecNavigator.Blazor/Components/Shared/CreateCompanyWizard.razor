@@ -1,0 +1,375 @@
+@inject IShipExecService ShipExecService
+
+@if (IsVisible)
+{
+    <div class="wizard-backdrop" @onclick="HandleClose">
+        <div class="wizard-dlg" @onclick:stopPropagation>
+
+            <div class="dlg-header">
+                <div class="dlg-title">&#x1F3E2; New Company</div>
+                <button class="dlg-close" @onclick="HandleClose">&#x2715;</button>
+            </div>
+
+            @* ── Progress indicator ─────────────────────────────────── *@
+            <div class="wizard-progress">
+                @for (int s = 1; s <= _totalSteps; s++)
+                {
+                    var step = s;
+                    <div class="wizard-step @(step == _currentStep ? "active" : step < _currentStep ? "done" : "")">
+                        <span class="wizard-step-num">@step</span>
+                        <span class="wizard-step-label">@GetStepLabel(step)</span>
+                    </div>
+                }
+            </div>
+
+            <div class="dlg-body">
+
+                @* ── Step 1: General ──────────────────────────────────── *@
+                @if (_currentStep == 1)
+                {
+                    <h5 class="wizard-section-title">General Information</h5>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">Company Name *</label>
+                        <input class="dlg-input" @bind="_model.Name" @bind:event="oninput" placeholder="e.g. Acme Logistics" />
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">Symbol *</label>
+                        <input class="dlg-input" @bind="_model.Symbol" @bind:event="oninput" placeholder="e.g. ACME" />
+                    </div>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">License</label>
+                        <textarea class="dlg-input wizard-license" @bind="_model.License" @bind:event="oninput"
+                                  placeholder="Paste license key here..."></textarea>
+                    </div>
+                }
+
+                @* ── Step 2: Shippers (skippable) ────────────────────── *@
+                else if (_currentStep == 2)
+                {
+                    <h5 class="wizard-section-title">Shipper Import <span class="wizard-optional">(optional)</span></h5>
+                    <p class="wizard-hint">Upload a CSV document to import shippers. You can skip this step and add shippers later.</p>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">Shipper CSV File</label>
+                        <InputFile OnChange="OnShipperFileSelected" accept=".csv" class="wizard-file-input" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_model.ShipperFileName))
+                    {
+                        <div class="wizard-file-badge">
+                            &#x1F4C4; @_model.ShipperFileName
+                            <button class="wizard-file-remove" @onclick="ClearShipperFile">&#x2715;</button>
+                        </div>
+                    }
+                }
+
+                @* ── Step 3: Users (skippable) ───────────────────────── *@
+                else if (_currentStep == 3)
+                {
+                    <h5 class="wizard-section-title">User Import <span class="wizard-optional">(optional)</span></h5>
+                    <p class="wizard-hint">Upload a CSV document to import users. You can skip this step and add users later.</p>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">User CSV File</label>
+                        <InputFile OnChange="OnUserFileSelected" accept=".csv" class="wizard-file-input" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_model.UserFileName))
+                    {
+                        <div class="wizard-file-badge">
+                            &#x1F4C4; @_model.UserFileName
+                            <button class="wizard-file-remove" @onclick="ClearUserFile">&#x2715;</button>
+                        </div>
+                    }
+                }
+
+                @* ── Step 4: Blueprint (skippable) ───────────────────── *@
+                else if (_currentStep == 4)
+                {
+                    <h5 class="wizard-section-title">Blueprint <span class="wizard-optional">(optional)</span></h5>
+                    <p class="wizard-hint">Upload a text file or PDF as a company blueprint. You can skip this step.</p>
+
+                    <div class="dlg-field">
+                        <label class="dlg-label">Blueprint File</label>
+                        <InputFile OnChange="OnBlueprintFileSelected" accept=".txt,.pdf" class="wizard-file-input" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_model.BlueprintFileName))
+                    {
+                        <div class="wizard-file-badge">
+                            &#x1F4C4; @_model.BlueprintFileName
+                            <button class="wizard-file-remove" @onclick="ClearBlueprintFile">&#x2715;</button>
+                        </div>
+                    }
+                }
+
+                @* ── Step 5: Summary ─────────────────────────────────── *@
+                else if (_currentStep == 5)
+                {
+                    <h5 class="wizard-section-title">Summary</h5>
+                    <p class="wizard-hint">Review the details below before creating the company.</p>
+
+                    <table class="wizard-summary-table">
+                        <tr><td class="wizard-summary-label">Name</td><td>@_model.Name</td></tr>
+                        <tr><td class="wizard-summary-label">Symbol</td><td>@_model.Symbol</td></tr>
+                        <tr><td class="wizard-summary-label">License</td><td>@(string.IsNullOrWhiteSpace(_model.License) ? "—" : "Provided")</td></tr>
+                        <tr><td class="wizard-summary-label">Shippers</td><td>@(string.IsNullOrEmpty(_model.ShipperFileName) ? "Skipped" : _model.ShipperFileName)</td></tr>
+                        <tr><td class="wizard-summary-label">Users</td><td>@(string.IsNullOrEmpty(_model.UserFileName) ? "Skipped" : _model.UserFileName)</td></tr>
+                        <tr><td class="wizard-summary-label">Blueprint</td><td>@(string.IsNullOrEmpty(_model.BlueprintFileName) ? "Skipped" : _model.BlueprintFileName)</td></tr>
+                    </table>
+                }
+
+                @* ── Step 6: Confirmation ────────────────────────────── *@
+                else if (_currentStep == 6)
+                {
+                    <h5 class="wizard-section-title">Confirm &amp; Create</h5>
+                    <p class="wizard-hint">
+                        You are about to create company <strong>@_model.Name (@_model.Symbol)</strong>.
+                        This will push the configuration to ShipExec.
+                    </p>
+
+                    @if (!_isConnected)
+                    {
+                        <div class="wizard-credentials-notice">
+                            &#x1F512; You are not connected to ShipExec. Provide credentials below to import the company.
+                        </div>
+
+                        <div class="dlg-field">
+                            <label class="dlg-label">Admin URL *</label>
+                            <input class="dlg-input" @bind="_model.AdminUrl" @bind:event="oninput"
+                                   placeholder="https://server/ShipExecManagementStudioApi/api/AdministrationService/" />
+                        </div>
+
+                        <div class="dlg-field">
+                            <label class="dlg-label">JWT JSON *</label>
+                            <textarea class="dlg-input wizard-jwt" @bind="_model.JwtJson" @bind:event="oninput"
+                                      placeholder='{"access_token":"...","refresh_token":"...",...}'></textarea>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="connect-error">&#9888; @_errorMessage</div>
+                    }
+                }
+
+                @* ── Step 7: Result ──────────────────────────────────── *@
+                else if (_currentStep == 7)
+                {
+                    @if (_result is not null && _result.Success)
+                    {
+                        <div class="wizard-result wizard-result-success">
+                            <span class="wizard-result-icon">&#x2705;</span>
+                            <h5>Company Created Successfully</h5>
+                            <p>
+                                <strong>@_result.CompanyName</strong> has been created.
+                            </p>
+                            <p class="wizard-result-id">ID: @_result.CompanyId</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="wizard-result wizard-result-error">
+                            <span class="wizard-result-icon">&#x274C;</span>
+                            <h5>Company Creation Failed</h5>
+                            <p>@(_result?.ErrorMessage ?? "An unknown error occurred.")</p>
+                        </div>
+                    }
+                }
+
+            </div>
+
+            @* ── Footer navigation ─────────────────────────────────── *@
+            <div class="dlg-footer wizard-footer">
+                @if (_currentStep < 7)
+                {
+                    <button class="connect-btn-secondary" @onclick="HandleClose" disabled="@_isBusy">
+                        Cancel
+                    </button>
+                }
+
+                @if (_currentStep > 1 && _currentStep < 7)
+                {
+                    <button class="connect-btn-secondary" @onclick="GoBack" disabled="@_isBusy">
+                        &#x2190; Back
+                    </button>
+                }
+
+                @if (_currentStep >= 2 && _currentStep <= 4)
+                {
+                    <button class="connect-btn-secondary" @onclick="GoNext" disabled="@_isBusy">
+                        Skip &#x2192;
+                    </button>
+                }
+
+                @if (_currentStep < 5)
+                {
+                    <button class="connect-btn-primary" @onclick="GoNext"
+                            disabled="@(!CanAdvance || _isBusy)">
+                        Next &#x2192;
+                    </button>
+                }
+                else if (_currentStep == 5)
+                {
+                    <button class="connect-btn-primary" @onclick="GoNext">
+                        Proceed to Confirm &#x2192;
+                    </button>
+                }
+                else if (_currentStep == 6)
+                {
+                    <button class="connect-btn-primary" @onclick="CreateCompanyAsync" disabled="@(!CanAdvance || _isBusy)">
+                        @if (_isBusy)
+                        {
+                            <span class="connect-spinner"></span>
+                        }
+                        Create Company
+                    </button>
+                }
+                else if (_currentStep == 7)
+                {
+                    @if (_result is not null && _result.Success)
+                    {
+                        <button class="connect-btn-primary" @onclick="ConnectToCreatedCompany">
+                            Connect to @_result.CompanyName
+                        </button>
+                    }
+                    <button class="connect-btn-secondary" @onclick="HandleClose">
+                        Close
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<(Guid Id, string Name)> OnCompanyConnected { get; set; }
+
+    private const int _totalSteps = 7;
+    private int _currentStep = 1;
+    private NewCompanyModel _model = new();
+    private CreateCompanyResult? _result;
+    private bool _isBusy;
+    private string _errorMessage = string.Empty;
+
+    private bool _isConnected => ShipExecService.GetCurrentCompany() is not null;
+
+    private bool CanAdvance => _currentStep switch
+    {
+        1 => !string.IsNullOrWhiteSpace(_model.Name) && !string.IsNullOrWhiteSpace(_model.Symbol),
+        6 => _isConnected || (!string.IsNullOrWhiteSpace(_model.AdminUrl) && !string.IsNullOrWhiteSpace(_model.JwtJson)),
+        _ => true
+    };
+
+    private string GetStepLabel(int step) => step switch
+    {
+        1 => "General",
+        2 => "Shippers",
+        3 => "Users",
+        4 => "Blueprint",
+        5 => "Summary",
+        6 => "Confirm",
+        7 => "Result",
+        _ => ""
+    };
+
+    private void GoNext()
+    {
+        if (_currentStep < _totalSteps)
+            _currentStep++;
+    }
+
+    private void GoBack()
+    {
+        if (_currentStep > 1)
+            _currentStep--;
+    }
+
+    // ── File handlers ────────────────────────────────────────────────────────
+
+    private async Task OnShipperFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        _model.ShipperFileName = file.Name;
+        using var reader = new StreamReader(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
+        _model.ShipperCsvContent = await reader.ReadToEndAsync();
+    }
+
+    private void ClearShipperFile()
+    {
+        _model.ShipperFileName = null;
+        _model.ShipperCsvContent = null;
+    }
+
+    private async Task OnUserFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        _model.UserFileName = file.Name;
+        using var reader = new StreamReader(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
+        _model.UserCsvContent = await reader.ReadToEndAsync();
+    }
+
+    private void ClearUserFile()
+    {
+        _model.UserFileName = null;
+        _model.UserCsvContent = null;
+    }
+
+    private async Task OnBlueprintFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        _model.BlueprintFileName = file.Name;
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024).CopyToAsync(ms);
+        _model.BlueprintFileContent = ms.ToArray();
+    }
+
+    private void ClearBlueprintFile()
+    {
+        _model.BlueprintFileName = null;
+        _model.BlueprintFileContent = null;
+    }
+
+    // ── Create ───────────────────────────────────────────────────────────────
+
+    private async Task CreateCompanyAsync()
+    {
+        _isBusy = true;
+        _errorMessage = string.Empty;
+        try
+        {
+            _result = await ShipExecService.CreateCompanyAsync(_model);
+            _currentStep = 7;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task ConnectToCreatedCompany()
+    {
+        if (_result is { Success: true, CompanyId: not null })
+        {
+            await OnCompanyConnected.InvokeAsync((_result.CompanyId.Value, _result.CompanyName ?? _model.Name));
+        }
+    }
+
+    private void HandleClose()
+    {
+        _currentStep = 1;
+        _model = new();
+        _result = null;
+        _errorMessage = string.Empty;
+        OnClose.InvokeAsync();
+    }
+}

@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/CodeStandards/" />
+  <Folder Name="/CodeStandards/TemplateCodeShipExec20BusinessRules/">
+    <Project Path="CodeStandards/TemplateCodeShipExec20BusinessRules/TemplateCodeShipExec20BusinessRules.csproj" Id="224d870d-e634-434e-ae67-87f137fdfebe" />
+  </Folder>
   <Folder Name="/Docs/">
     <File Path="Docs/LogViewer.html" />
     <File Path="Docs/ClientBusinessRulesTemplate.js" />

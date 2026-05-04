@@ -2096,4 +2096,31 @@ public sealed class ShipExecService(
             return modifiedXml;
         }
     }
+
+    // ── Company Creation (stub) ──────────────────────────────────────────────
+
+    public Task<CreateCompanyResult> CreateCompanyAsync(NewCompanyModel model)
+    {
+        // When not connected, the model must supply its own credentials.
+        var hasModelCredentials = !string.IsNullOrWhiteSpace(model.AdminUrl)
+                               && !string.IsNullOrWhiteSpace(model.JwtJson);
+
+        if (_appManager is null && !hasModelCredentials)
+            throw new InvalidOperationException(
+                "Not connected and no credentials provided. " +
+                "Either connect first or supply Admin URL and JWT in the wizard.");
+
+        // TODO: Wire up to real API endpoint when available.
+        // For now, return a simulated success after a short delay.
+        return Task.Run(async () =>
+        {
+            await Task.Delay(1500); // simulate API call
+            return new CreateCompanyResult
+            {
+                Success = true,
+                CompanyId = Guid.NewGuid(),
+                CompanyName = model.Name
+            };
+        });
+    }
 }

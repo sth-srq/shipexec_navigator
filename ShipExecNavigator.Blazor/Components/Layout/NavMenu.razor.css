@@ -63,6 +63,12 @@
         background: rgba(255, 255, 255, 0.03);
     }
 
+.top-nav-link--disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
 .navbar-right {
     display: flex;
     align-items: center;

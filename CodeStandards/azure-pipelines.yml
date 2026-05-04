@@ -1,0 +1,104 @@
+# ASP.NET
+ 
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+ 
+# The trigger section specifies the branches that will trigger a build when changes are pushed .
+trigger:
+- 'dev'
+- 'uat'
+- 'prod'
+- 'main'
+
+variables:
+ company: 'CodeStandards'             # no spaces or non-alpha-numeric chars
+ solutionFilename: 'TemplateCodeShipExec20BusinessRules'   # Exclude the file extension
+ solutionPath: ''  # leave blank if solution is in the root folder
+ sourceFolder: 'bin/Release'        # usually 'bin/Release'
+ env: 'ShipExec Cloud'              # ShipExec 'ShipExec Cloud' or 'OnPrem'
+ NUGET_PACKAGES: '$(Pipeline.Workspace)/.nuget/packages'
+ releaseVersion: '$(Build.BuildNumber)'
+pool:
+ name: 'CustSol-AST'
+# The steps section defines the sequence of tasks to be executed in the pipeline.
+steps:
+  - task: SonarQubePrepare@5
+    inputs:
+      SonarQube: 'SonarQube'
+      scannerMode: 'MSBuild'
+      projectKey: 'DCT_Build_$(company)'
+      projectName: 'DCT_Build_$(company)'
+      projectVersion: '$(Build.BuildNumber)'
+      extraProperties: |
+       sonar.exclusions=**/*.sql, \
+       **/Scripts/**/jquery*.js, \
+       **/bootstrap*.*, \
+       **/Scripts/**/moment*.js, \
+       **/Scripts/**/i18next*.js, \
+       **/Scripts/**/modernizr*.js, \
+       **/Scripts/**/popper*.js, \
+       **/Scripts/**/daterangepicker*.js, \
+       **/Scripts/src/**/*, \
+       **/Scripts/angular*/**/*, \
+       **/uikit/**/*, \
+       **/_UIKitNavigation/**/*, \
+       **/Scripts/angular*.js, \
+       **/Scripts/i18n/*, \
+       **/Scripts/ui-bootstrap*.*
+  
+  - task: ArtifactoryToolsInstaller@1
+    displayName: Artifactory Tools Installer
+    inputs:
+      artifactoryService: JFrogArtifactory
+      cliInstallationRepo: jfrog-cli
+  
+  - task: ArtifactoryNuGet@2
+    displayName: Artifactory NuGet restore
+    inputs:
+      command: 'restore'
+      artifactoryService: 'JFrogArtifactory'
+      targetResolveRepo: 'DCT_Build_nuget_virtual'
+      solutionPath: 'TemplateCodeShipExec20BusinessRules.sln'
+      packagesDirectory: 'packages'
+      collectBuildInfo: true
+      buildName: '$(Build.DefinitionName)'
+      buildNumber: '$(Build.BuildNumber)'
+    
+  - task: VSBuild@1
+    displayName: 'Build $(company) - $(solutionFilename)'
+    inputs:
+      solution: '**\TemplateCodeShipExec20BusinessRules.sln'
+      msbuildArgs: '/p:PreBuildEvent= /p:PostBuildEvent='
+      configuration: 'Release'
+      msbuildArchitecture: 'x64'
+  
+  - task: SonarQubeAnalyze@5
+    inputs:
+      jdkversion: 'JAVA_HOME_17_X64'
+              
+  - task: ArtifactoryPublishBuildInfo@1
+    inputs:
+      artifactoryService: 'JFrogArtifactory'
+      buildName: '$(Build.DefinitionName)'
+      buildNumber: '$(Build.BuildNumber)'
+      
+  - task: ArtifactoryXrayScan@1
+    inputs:
+      artifactoryService: 'JFrogArtifactory'
+      buildName: '$(Build.DefinitionName)'
+      buildNumber: '$(Build.BuildNumber)'
+      allowFailBuild: true
+  
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: 'TemplateCodeShipExec20BusinessRules/bin/release'
+      Contents: 'PSI.Sox.SBR.$(company).dll'
+      TargetFolder: '$(build.artifactstagingdirectory)'
+      CleanTargetFolder: true
+      OverWrite: true 
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: '$(company) SBR - Env - $(env) Ver $(releaseVersion)'
+      publishLocation: 'Container'

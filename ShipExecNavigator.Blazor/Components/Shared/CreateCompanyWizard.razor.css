@@ -1,0 +1,229 @@
+/* ── Backdrop ───────────────────────────────────────────────────────────── */
+.wizard-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 960;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+.wizard-dlg {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    width: min(720px, 94vw);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+/* ── Progress bar ──────────────────────────────────────────────────────── */
+.wizard-progress {
+    display: flex;
+    gap: 0;
+    padding: 0.75rem 1.25rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    overflow-x: auto;
+}
+
+.wizard-step {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.wizard-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #dee2e6;
+    color: #6c757d;
+    flex-shrink: 0;
+}
+
+.wizard-step-label {
+    font-size: 0.72rem;
+    color: #adb5bd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wizard-step.active .wizard-step-num {
+    background: #337ab7;
+    color: #fff;
+}
+
+.wizard-step.active .wizard-step-label {
+    color: #337ab7;
+    font-weight: 600;
+}
+
+.wizard-step.done .wizard-step-num {
+    background: #28a745;
+    color: #fff;
+}
+
+.wizard-step.done .wizard-step-label {
+    color: #495057;
+}
+
+/* ── Section titles ────────────────────────────────────────────────────── */
+.wizard-section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: #212529;
+}
+
+.wizard-optional {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: #6c757d;
+}
+
+.wizard-hint {
+    font-size: 0.82rem;
+    color: #6c757d;
+    margin: 0 0 0.75rem;
+}
+
+/* ── License textarea ──────────────────────────────────────────────────── */
+.wizard-license {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.775rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ── File input ────────────────────────────────────────────────────────── */
+.wizard-file-input {
+    font-size: 0.82rem;
+}
+
+.wizard-file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+    color: #1e40af;
+}
+
+.wizard-file-remove {
+    background: none;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0;
+    line-height: 1;
+}
+
+.wizard-file-remove:hover {
+    color: #991b1b;
+}
+
+/* ── Summary table ─────────────────────────────────────────────────────── */
+.wizard-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+}
+
+.wizard-summary-table td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.wizard-summary-label {
+    font-weight: 600;
+    color: #495057;
+    width: 120px;
+}
+
+/* ── Result ─────────────────────────────────────────────────────────────── */
+.wizard-result {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    border-radius: 8px;
+}
+
+.wizard-result-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.wizard-result h5 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+}
+
+.wizard-result p {
+    margin: 0 0 0.25rem;
+    font-size: 0.85rem;
+}
+
+.wizard-result-success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #166534;
+}
+
+.wizard-result-error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+}
+
+.wizard-result-id {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* ── Footer override ───────────────────────────────────────────────────── */
+.wizard-footer {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid #e9ecef;
+    margin-top: auto;
+}
+
+/* ── Credentials notice ────────────────────────────────────────────────── */
+.wizard-credentials-notice {
+    background-color: #fff7ed;
+    border: 1px solid #fdba74;
+    border-radius: 6px;
+    color: #9a3412;
+    font-size: 0.82rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.wizard-jwt {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.775rem;
+    resize: vertical;
+    min-height: 100px;
+}

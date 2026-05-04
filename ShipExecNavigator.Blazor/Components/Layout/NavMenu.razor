@@ -10,6 +10,7 @@
         <NavLink class="top-nav-link" href="/" Match="NavLinkMatch.All">&#x1F916; ShipExec Copilot</NavLink>
         <NavLink class="top-nav-link" href="/studio">&#x1F5FA; Navigator</NavLink>
         <NavLink class="top-nav-link" href="/tools">&#x1F527; Tools</NavLink>
+        <NavLink class="@_debugNavClass" href="/debug" disabled="@_isDebugDisabled">&#x1F41B; Debug</NavLink>
     </nav>
     <div class="navbar-right">
         @{
@@ -57,6 +58,9 @@
     private bool _showConnectDialog;
     private bool _skipAutoReconnect;
     private bool _hasStoredCredentials;
+
+    private bool _isDebugDisabled => ShipExecService.GetCurrentCompany() is null;
+    private string _debugNavClass => _isDebugDisabled ? "top-nav-link top-nav-link--disabled" : "top-nav-link";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

@@ -107,4 +107,7 @@ public interface IShipExecService
 
     // ── Client Business Rules (connected company) ────────────────────────────
     Task<List<CbrInfo>> GetClientBusinessRulesAsync();
+
+    // ── Company Creation ─────────────────────────────────────────────────────
+    Task<CreateCompanyResult> CreateCompanyAsync(NewCompanyModel model);
 }

@@ -74,6 +74,9 @@
                         <button class="connect-btn-secondary" @onclick="GoBack" disabled="@_isBusy">
                             &#x2190; Back
                         </button>
+                        <button class="connect-btn-secondary" @onclick="OpenNewCompanyWizard" disabled="@_isBusy">
+                            &#x2795; New
+                        </button>
                         <button class="connect-btn-primary" @onclick="LoadCompanyAsync"
                                 disabled="@(_selectedIndex < 0 || _isBusy)">
                             @if (_isBusy)
@@ -89,6 +92,10 @@
         </div>
     </div>
 }
+
+<CreateCompanyWizard IsVisible="_showNewCompanyWizard"
+                     OnClose="CloseNewCompanyWizard"
+                     OnCompanyConnected="OnCompanyConnected" />
 
 @code {
     [Parameter] public bool IsVisible { get; set; }
@@ -114,6 +121,7 @@
     private bool _autoConnectFired;
     private bool _hasStoredJwt;
     private bool _storedJwtLoaded;
+    private bool _showNewCompanyWizard;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -241,6 +249,10 @@
         _errorMessage = string.Empty;
         _phase = Phase.Credentials;
     }
+
+    private void OpenNewCompanyWizard() => _showNewCompanyWizard = true;
+
+    private void CloseNewCompanyWizard() => _showNewCompanyWizard = false;
 
     private async Task AutoSelectCompanyAsync()
     {
