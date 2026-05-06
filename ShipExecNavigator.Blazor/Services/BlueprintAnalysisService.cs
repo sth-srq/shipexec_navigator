@@ -20,198 +20,6 @@ public sealed class BlueprintAnalysisService(
 {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
-    private const string _sbrSystemPrompt =
-        """
-        You are an expert ShipExec Server Business Rules (SBR) engineer working in C#. You have been given:
-        1. A reference document describing all ShipExec hooks, their execution order, and implementation patterns.
-        2. A company blueprint document describing custom shipping logic requirements.
-
-        ## Your task
-        Analyze the blueprint and determine which SBR (C#) hooks are needed and what code goes in each.
-        Also identify any BusinessRuleSettings keys that should be configured.
-
-        ## Required response format
-        Respond with EXACTLY ONE valid JSON object — no markdown, no code fences.
-        Use this structure:
-        {
-          "analysis": "<human-readable summary of which SBR hooks to use and why>",
-          "sbrMethods": {
-            "Load": "<complete C# method body or null> // signature: ShipmentRequest Load(string value, ShipmentRequest shipmentRequest, SerializableDictionary userParams)",
-            "PreShip": "<body or null> // signature: void PreShip(ShipmentRequest shipmentRequest, SerializableDictionary userParams)",
-            "Ship": "<body or null> // signature: ShipmentResponse Ship(ShipmentRequest shipmentRequest, Pickup pickup, bool shipWithoutTransaction, bool print, SerializableDictionary userParams)",
-            "PostShip": "<body or null> // signature: void PostShip(ShipmentRequest shipmentRequest, ShipmentResponse shipmentResponse, SerializableDictionary userParams)",
-            "PreReprocess": "<body or null> // signature: void PreReprocess(string carrier, List<long> globalMsns, SerializableDictionary userParams)",
-            "PostReprocess": "<body or null> // signature: void PostReprocess(string carrier, List<long> globalMsns, ReProcessResult reProcessResponse, SerializableDictionary userParams)",
-            "PrePrint": "<body or null> // signature: void PrePrint(DocumentRequest documentRequest, PrinterMapping printerMapping, Package package, SerializableDictionary userParams)",
-            "Print": "<body or null> // signature: DocumentResponse Print(DocumentRequest document, PrinterMapping printerMapping, Package package, SerializableDictionary userParams)",
-            "PostPrint": "<body or null> // signature: void PostPrint(DocumentRequest document, DocumentResponse documentResponse, PrinterMapping printerMapping, Package package, SerializableDictionary userParams)",
-            "ErrorLabel": "<body or null> // signature: string ErrorLabel(Package package, SerializableDictionary userParams)",
-            "PreRate": "<body or null> // signature: void PreRate(ShipmentRequest shipmentRequest, List<Service> services, SortType sortType, SerializableDictionary userParams)",
-            "Rate": "<body or null> // signature: List<ShipmentResponse> Rate(ShipmentRequest shipmentRequest, List<Service> services, SortType sortType, SerializableDictionary userParams)",
-            "PostRate": "<body or null> // signature: void PostRate(ShipmentRequest shipmentRequest, List<ShipmentResponse> shipmentResponses, List<Service> services, SortType sortType, SerializableDictionary userParams)",
-            "PreCloseManifest": "<body or null> // signature: void PreCloseManifest(string carrier, string shipper, ManifestItem manifestItem, SerializableDictionary userParams)",
-            "CloseManifest": "<body or null> // signature: CloseManifestResult CloseManifest(string carrier, string shipper, ManifestItem manifestItem, bool print, SerializableDictionary userParams)",
-            "PostCloseManifest": "<body or null> // signature: void PostCloseManifest(string carrier, string shipper, ManifestItem manifestItem, CloseManifestResult closeOutResult, List<Package> packages, SerializableDictionary userParams)",
-            "PreVoid": "<body or null> // signature: void PreVoid(Package package, SerializableDictionary userParams)",
-            "VoidPackage": "<body or null> // signature: Package VoidPackage(Package package, SerializableDictionary userParams)",
-            "PostVoid": "<body or null> // signature: void PostVoid(Package package, SerializableDictionary userParams)",
-            "PreCloseGroup": "<body or null> // signature: void PreCloseGroup(string carrier, string groupType, SerializableDictionary userParams)",
-            "PostCloseGroup": "<body or null> // signature: void PostCloseGroup(string carrier, string groupType, Group group, SerializableDictionary userParams)",
-            "PreCreateGroup": "<body or null> // signature: void PreCreateGroup(string carrier, string groupType, PackageRequest packageRequest, SerializableDictionary userParams)",
-            "PostCreateGroup": "<body or null> // signature: void PostCreateGroup(string carrier, string groupType, Group group, PackageRequest packageRequest, SerializableDictionary userParams)",
-            "PreModifyGroup": "<body or null> // signature: void PreModifyGroup(string carrier, long groupId, string groupType, PackageRequest packageRequest, SerializableDictionary userParams)",
-            "PostModifyGroup": "<body or null> // signature: void PostModifyGroup(string carrier, Group group, string groupType, SerializableDictionary userParams)",
-            "PreModifyPackageList": "<body or null> // signature: void PreModifyPackageList(string carrier, List<long> globalMsns, Package package, SerializableDictionary userParams)",
-            "PostModifyPackageList": "<body or null> // signature: void PostModifyPackageList(string carrier, ModifyPackageListResult modifyPackageListResult, Package package, SerializableDictionary userParams)",
-            "PreTransmit": "<body or null> // signature: void PreTransmit(string carrier, string shipper, List<TransmitItem> itemsToTransmit, SerializableDictionary userParams)",
-            "Transmit": "<body or null> // signature: List<TransmitItemResult> Transmit(string carrier, string shipper, List<TransmitItem> itemsToTransmit, SerializableDictionary userParams)",
-            "PostTransmit": "<body or null> // signature: void PostTransmit(string carrier, string shipper, List<TransmitItem> itemsToTransmit, SerializableDictionary userParams)",
-            "GetBatchReferences": "<body or null> // signature: List<BatchReference> GetBatchReferences(SerializableDictionary userParams)",
-            "LoadBatch": "<body or null> // signature: BatchRequest LoadBatch(string batchReference, SerializableDictionary userParams)",
-            "ParseBatchFile": "<body or null> // signature: BatchRequest ParseBatchFile(string batchReference, System.IO.Stream fileStream, SerializableDictionary userParams)",
-            "PreProcessBatch": "<body or null> // signature: void PreProcessBatch(BatchRequest batchRequest, ProcessBatchActions batchActions, SerializableDictionary userParams)",
-            "PostProcessBatch": "<body or null> // signature: void PostProcessBatch(BatchRequest batchRequest, ProcessBatchActions batchActions, ProcessBatchResult processBatchResult, SerializableDictionary userParams)",
-            "PrePackRate": "<body or null> // signature: void PrePackRate(PackingRateRequest packingRateRequest, SerializableDictionary userParams)",
-            "PostPackRate": "<body or null> // signature: void PostPackRate(PackingRateRequest packingRateRequest, PackingRateResponse packingRateResponse, SerializableDictionary userParams)",
-            "PrePack": "<body or null> // signature: void PrePack(PackingRequest packingRequest, SerializableDictionary userParams)",
-            "PostPack": "<body or null> // signature: void PostPack(PackingRequest packingRequest, PackingResponse packingResponse, SerializableDictionary userParams)",
-            "PreAddressValidation": "<body or null> // signature: void PreAddressValidation(NameAddress nameAddress, bool useSimpleNameAddress, SerializableDictionary userParams)",
-            "AddressValidation": "<body or null> // signature: List<NameAddressValidationCandidate> AddressValidation(NameAddress nameAddress, bool useSimpleNameAddress, SerializableDictionary userParams)",
-            "PostAddressValidation": "<body or null> // signature: void PostAddressValidation(NameAddress nameAddress, List<NameAddressValidationCandidate> addressValidationCandidates, SerializableDictionary userParams)",
-            "GetBoxTypes": "<body or null> // signature: List<BoxType> GetBoxTypes(List<BoxType> definedBoxTypes)",
-            "LoadDistributionList": "<body or null> // signature: List<ShipmentRequest> LoadDistributionList(string value, ShipmentRequest shipmentRequest, SerializableDictionary userParams)",
-            "UserMethod": "<body or null> // signature: object UserMethod(object userObject)",
-            "GetCommodityContents": "<body or null> // signature: List<CommodityContent> GetCommodityContents(List<CommodityContent> definedCommodityContents)",
-            "GetHazmatContents": "<body or null> // signature: List<HazmatContent> GetHazmatContents(List<HazmatContent> definedHazmatContents)"
-          },
-          "businessRuleSettings": [
-            { "key": "settingName", "value": "description of expected value" }
-          ],
-          "helperClasses": "<any additional C# helper/manager classes needed as a single string — ALL business logic goes here>"
-        }
-
-        CRITICAL RULES:
-        - The method body you provide MUST be ONLY the code that goes INSIDE the existing method braces.
-        - Do NOT include the method signature — only the body statements.
-        - The method signatures are FIXED and MUST NOT be changed under any circumstances. SoxBusinessRules implements IBusinessObject — all signatures are dictated by that interface.
-        - Use only parameter names as shown in the signature comments above.
-        - Only include methods that have actual implementation (not null/empty bodies).
-        - Omit keys with null values from sbrMethods.
-        - Create a separate Manager class (e.g. ShipmentManager, BatchManager) in helperClasses for all business logic. SoxBusinessRules methods should only instantiate the manager and delegate to it.
-        - Do NOT generate a Tools class — Tools.cs already exists in the project and is copied verbatim. You may USE the existing Tools class (e.g. call Tools.GetStringValueFromBusinessRuleSettings) but never redefine it.
-        - Example pattern for a method body: "var mgr = new ShipmentManager(Logger, BusinessObjectApi, BusinessRuleSettings); return mgr.Load(value, shipmentRequest, userParams);"
-        - ALL custom/helper/manager classes MUST include the PSI.Sox namespaces (using PSI.Sox; using PSI.Sox.Api; using PSI.Sox.Client; etc.) at the top of the file.
-        - Use the correct PSI.Sox types — Weight is an OBJECT (not a number), dimensions are objects, enums must use PSI.Sox enum types (e.g. ServiceType, PackageType, etc.).
-        - Always check the type before variable assignment — do not assign a string to a Weight property or a number to an enum property. Use the proper constructors or parse methods.
-        - THINK HARD ABOUT TYPE MATCHING: The method signatures above are the ABSOLUTE SOURCE OF TRUTH for parameter types. If a signature says PackageRequest, you MUST use PackageRequest — NOT Package, NOT PackageInfo, NOT ShipmentPackage. If it says ShipmentRequest, use ShipmentRequest — NOT Shipment, NOT ShipRequest. Cross-reference EVERY variable and parameter type against the exact signatures provided. A type mismatch (e.g. using 'Package' where 'PackageRequest' is required) will cause build failures.
-        - The helperClasses string MUST start with the appropriate using statements for the PSI.Sox namespace.
-        - COMMENTING IS CRITICAL: Include extensive, detailed comments that a junior developer can understand. For EVERY method and class:
-          * Add XML summary comments on all public methods explaining WHAT and WHY
-          * Reference the specific blueprint requirement each piece of code fulfills
-          * Include numbered process lists (// Step 1: ..., // Step 2: ...) showing the logical flow
-          * Explain HOW each hook relates to other hooks in the execution chain
-          * Comment every non-obvious line of code
-          * Add a file-level comment block explaining the class purpose, responsibilities, and how it fits in the overall architecture
-          * The code should read like a tutorial — a junior dev should understand the full picture without asking questions
-        """;
-
-    private const string _cbrSystemPrompt =
-        """
-        You are an expert ShipExec Client Business Rules (CBR) engineer working in JavaScript. You have been given:
-        1. A reference document describing all ShipExec hooks, their execution order, and implementation patterns.
-        2. A company blueprint document describing custom UI/client-side logic requirements.
-
-        ## Your task
-        Analyze the blueprint and determine which CBR (JavaScript) hooks are needed and what code goes in each.
-
-        ## Required response format
-        Respond with EXACTLY ONE valid JSON object — no markdown, no code fences.
-        Use this structure:
-        {
-          "analysis": "<human-readable summary of which CBR hooks to use and why>",
-          "cbrMethods": {
-            "PageLoaded": "<complete JS method body or null>",
-            "NewShipment": "<complete JS method body or null>",
-            "Keystroke": "<complete JS method body or null>",
-            "PreLoad": "<complete JS method body or null>",
-            "PostLoad": "<complete JS method body or null>",
-            "PreShip": "<complete JS method body or null>",
-            "PostShip": "<complete JS method body or null>",
-            "PreRate": "<complete JS method body or null>",
-            "PostRate": "<complete JS method body or null>",
-            "PreVoid": "<complete JS method body or null>",
-            "PostVoid": "<complete JS method body or null>",
-            "PrePrint": "<complete JS method body or null>",
-            "PostPrint": "<complete JS method body or null>",
-            "PreProcessBatch": "<complete JS method body or null>",
-            "PostProcessBatch": "<complete JS method body or null>",
-            "PreSearchHistory": "<complete JS method body or null>",
-            "PostSearchHistory": "<complete JS method body or null>",
-            "PreCloseManifest": "<complete JS method body or null>",
-            "PostCloseManifest": "<complete JS method body or null>",
-            "PreTransmit": "<complete JS method body or null>",
-            "PostTransmit": "<complete JS method body or null>",
-            "PreBuildShipment": "<complete JS method body or null>",
-            "PostBuildShipment": "<complete JS method body or null>",
-            "RepeatShipment": "<complete JS method body or null>",
-            "PreCreateGroup": "<complete JS method body or null>",
-            "PostCreateGroup": "<complete JS method body or null>",
-            "PreModifyGroup": "<complete JS method body or null>",
-            "PostModifyGroup": "<complete JS method body or null>",
-            "PreCloseGroup": "<complete JS method body or null>",
-            "PostCloseGroup": "<complete JS method body or null>",
-            "AddPackage": "<complete JS method body or null>",
-            "CopyPackage": "<complete JS method body or null>",
-            "RemovePackage": "<complete JS method body or null>",
-            "PostSelectAddressBook": "<complete JS method body or null>"
-          }
-        }
-
-        CRITICAL RULES:
-        - Only include methods that have actual implementation (not null/empty bodies).
-        - Omit keys with null values from cbrMethods.
-        - The method body is the JavaScript code INSIDE the function — do not include the function wrapper.
-        - The method signatures are FIXED and MUST NOT be changed under any circumstances. The CBR template defines the exact function signatures — you may only provide the body code.
-        - THINK HARD ABOUT TYPE MATCHING: The parameter names in the hook signatures are the ABSOLUTE SOURCE OF TRUTH. If a signature uses 'packageRequest', your code must use 'packageRequest' — NOT 'package', NOT 'pkg', NOT 'shipmentPackage'. Match every variable name and object property access EXACTLY to what the signatures and ViewModel provide. Mismatched names will cause runtime errors.
-        - CBR hooks interact with the ViewModel (vm) and shipmentRequest objects on the client side.
-        - COMMENTING IS CRITICAL: Include extensive, detailed comments that a junior developer can understand. For EVERY method with code:
-          * Add a block comment at the top explaining WHAT this hook does and WHY it exists
-          * Reference the specific blueprint requirement it fulfills
-          * Include a numbered process list (// Step 1: ..., // Step 2: ...) showing the logical flow
-          * Explain HOW it interacts with other hooks in the chain
-          * Comment every non-obvious line of code
-          * The code should read like a tutorial — a junior dev should understand the full picture without asking questions
-        """;
-
-    private const string _pass2SystemPrompt =
-        """
-        You are an expert ShipExec Thin Client UI engineer. You have been given:
-        1. A reference document describing all ShipExec HTML templates, their structure, AngularJS directives, and ViewModel bindings.
-        2. A company blueprint document describing custom UI/layout requirements.
-
-        ## Your task
-        Analyze the blueprint and determine which HTML templates need modifications and what changes to make.
-
-        ## Required response format
-        Respond with EXACTLY ONE valid JSON object — no markdown, no code fences.
-        Use this structure:
-        {
-          "analysis": "<human-readable summary of which templates to modify and why>",
-          "templateChanges": [
-            {
-              "file": "<template filename, e.g. shippingTemplate.html>",
-              "description": "<what is being changed>",
-              "fullContent": "<the COMPLETE modified HTML template content>"
-            }
-          ],
-          "cbrAdditions": "<any additional CBR JavaScript needed specifically for template interactions (or null)>"
-        }
-
-        Only include templates that actually need changes.
-        The fullContent must be the COMPLETE file content — not a diff or partial snippet.
-        If no template changes are needed, return an empty templateChanges array.
-        """;
-
     public async Task<BlueprintAnalysisResult> AnalyzeAsync(
         string blueprintText,
         string fileName,
@@ -230,10 +38,13 @@ public sealed class BlueprintAnalysisService(
             return result;
         }
 
-        // Load instruction files
+        // Load instruction files from AIHelpers folder
         var templateProjectPath = Path.Combine(env.ContentRootPath, "..", "CodeStandards", "TemplateCodeShipExec20BusinessRules");
-        var hooksDocPath = Path.Combine(templateProjectPath, "shipexec-hooks.md");
-        var templatesDocPath = Path.Combine(templateProjectPath, "shipexec-templates.md");
+        var aiHelpersPath = Path.Combine(env.ContentRootPath, "..", "AIHelpers");
+        var hooksDocPath = Path.Combine(aiHelpersPath, "shipexec-hooks.md");
+        var templatesDocPath = Path.Combine(aiHelpersPath, "shipexec-templates.md");
+        var typeRefPath = Path.Combine(aiHelpersPath, "PSI_Sox_Type_Reference.md");
+        var typeDefsPath = Path.Combine(aiHelpersPath, "psi-sox-type-definitions.md");
 
         if (!File.Exists(hooksDocPath))
         {
@@ -248,6 +59,16 @@ public sealed class BlueprintAnalysisService(
 
         var hooksDoc = await File.ReadAllTextAsync(hooksDocPath, ct);
         var templatesDoc = await File.ReadAllTextAsync(templatesDocPath, ct);
+        var typeRefDoc = File.Exists(typeRefPath) ? await File.ReadAllTextAsync(typeRefPath, ct) : "";
+        var typeDefsDoc = File.Exists(typeDefsPath) ? await File.ReadAllTextAsync(typeDefsPath, ct) : "";
+
+        // Load system prompts from AIHelpers folder
+        var sbrPromptPath = Path.Combine(aiHelpersPath, "sbr-system-prompt.md");
+        var cbrPromptPath = Path.Combine(aiHelpersPath, "cbr-system-prompt.md");
+        var templatePromptPath = Path.Combine(aiHelpersPath, "template-system-prompt.md");
+        var sbrSystemPrompt = File.Exists(sbrPromptPath) ? await File.ReadAllTextAsync(sbrPromptPath, ct) : throw new FileNotFoundException($"sbr-system-prompt.md not found at: {sbrPromptPath}");
+        var cbrSystemPrompt = File.Exists(cbrPromptPath) ? await File.ReadAllTextAsync(cbrPromptPath, ct) : throw new FileNotFoundException($"cbr-system-prompt.md not found at: {cbrPromptPath}");
+        var templateSystemPrompt = File.Exists(templatePromptPath) ? await File.ReadAllTextAsync(templatePromptPath, ct) : throw new FileNotFoundException($"template-system-prompt.md not found at: {templatePromptPath}");
 
         // Track all activity for context in repair passes
         var activityLog = new StringBuilder();
@@ -319,6 +140,18 @@ public sealed class BlueprintAnalysisService(
         planMessage.AppendLine("=== SHIPEXEC TEMPLATES REFERENCE ===");
         planMessage.AppendLine(templatesDoc);
         planMessage.AppendLine();
+        if (!string.IsNullOrEmpty(typeRefDoc))
+        {
+            planMessage.AppendLine("=== PSI.SOX TYPE REFERENCE ===");
+            planMessage.AppendLine(typeRefDoc);
+            planMessage.AppendLine();
+        }
+        if (!string.IsNullOrEmpty(typeDefsDoc))
+        {
+            planMessage.AppendLine("=== PSI.SOX TYPE DEFINITIONS ===");
+            planMessage.AppendLine(typeDefsDoc);
+            planMessage.AppendLine();
+        }
         planMessage.AppendLine("=== COMPANY BLUEPRINT ===");
         planMessage.AppendLine(blueprintText);
 
@@ -358,6 +191,18 @@ public sealed class BlueprintAnalysisService(
             sbrMessage.AppendLine("=== SHIPEXEC HOOKS REFERENCE ===");
             sbrMessage.AppendLine(hooksDoc);
             sbrMessage.AppendLine();
+            if (!string.IsNullOrEmpty(typeRefDoc))
+            {
+                sbrMessage.AppendLine("=== PSI.SOX TYPE REFERENCE ===");
+                sbrMessage.AppendLine(typeRefDoc);
+                sbrMessage.AppendLine();
+            }
+            if (!string.IsNullOrEmpty(typeDefsDoc))
+            {
+                sbrMessage.AppendLine("=== PSI.SOX TYPE DEFINITIONS ===");
+                sbrMessage.AppendLine(typeDefsDoc);
+                sbrMessage.AppendLine();
+            }
             sbrMessage.AppendLine("=== COMPANY BLUEPRINT ===");
             sbrMessage.AppendLine(blueprintText);
 
@@ -374,7 +219,7 @@ public sealed class BlueprintAnalysisService(
                 }
             }
 
-            sbrRaw = await CallAiAndLog("SBR Analysis", _sbrSystemPrompt, sbrMessage.ToString(), true);
+            sbrRaw = await CallAiAndLog("SBR Analysis", sbrSystemPrompt, sbrMessage.ToString(), true);
 
             if (sbrRaw.StartsWith("// ⚠️"))
             {
@@ -397,6 +242,18 @@ public sealed class BlueprintAnalysisService(
             cbrMessage.AppendLine("=== SHIPEXEC HOOKS REFERENCE ===");
             cbrMessage.AppendLine(hooksDoc);
             cbrMessage.AppendLine();
+            if (!string.IsNullOrEmpty(typeRefDoc))
+            {
+                cbrMessage.AppendLine("=== PSI.SOX TYPE REFERENCE ===");
+                cbrMessage.AppendLine(typeRefDoc);
+                cbrMessage.AppendLine();
+            }
+            if (!string.IsNullOrEmpty(typeDefsDoc))
+            {
+                cbrMessage.AppendLine("=== PSI.SOX TYPE DEFINITIONS ===");
+                cbrMessage.AppendLine(typeDefsDoc);
+                cbrMessage.AppendLine();
+            }
             cbrMessage.AppendLine("=== COMPANY BLUEPRINT ===");
             cbrMessage.AppendLine(blueprintText);
             cbrMessage.AppendLine();
@@ -410,7 +267,7 @@ public sealed class BlueprintAnalysisService(
                 cbrMessage.AppendLine(cbrRaw);
             }
 
-            cbrRaw = await CallAiAndLog("CBR Analysis", _cbrSystemPrompt, cbrMessage.ToString(), true);
+            cbrRaw = await CallAiAndLog("CBR Analysis", cbrSystemPrompt, cbrMessage.ToString(), true);
 
             if (cbrRaw.StartsWith("// ⚠️"))
             {
@@ -433,6 +290,18 @@ public sealed class BlueprintAnalysisService(
             templateMessage.AppendLine("=== SHIPEXEC TEMPLATES REFERENCE ===");
             templateMessage.AppendLine(templatesDoc);
             templateMessage.AppendLine();
+            if (!string.IsNullOrEmpty(typeRefDoc))
+            {
+                templateMessage.AppendLine("=== PSI.SOX TYPE REFERENCE ===");
+                templateMessage.AppendLine(typeRefDoc);
+                templateMessage.AppendLine();
+            }
+            if (!string.IsNullOrEmpty(typeDefsDoc))
+            {
+                templateMessage.AppendLine("=== PSI.SOX TYPE DEFINITIONS ===");
+                templateMessage.AppendLine(typeDefsDoc);
+                templateMessage.AppendLine();
+            }
             templateMessage.AppendLine("=== COMPANY BLUEPRINT ===");
             templateMessage.AppendLine(blueprintText);
             templateMessage.AppendLine();
@@ -449,7 +318,7 @@ public sealed class BlueprintAnalysisService(
                 templateMessage.AppendLine(templateRaw);
             }
 
-            templateRaw = await CallAiAndLog("Template Analysis", _pass2SystemPrompt, templateMessage.ToString(), true);
+            templateRaw = await CallAiAndLog("Template Analysis", templateSystemPrompt, templateMessage.ToString(), true);
 
             if (templateRaw.StartsWith("// ⚠️"))
             {
@@ -554,7 +423,8 @@ public sealed class BlueprintAnalysisService(
 
         // ── Copy PSI.Sox DLLs to References folder and update .csproj ───────
         onProgress?.Invoke("Setting up References folder...");
-        await CopyReferenceDlls(outputFolder, ct);
+        var workspaceRefsPath = Path.GetFullPath(Path.Combine(env.ContentRootPath, "..", "References"));
+        await CopyReferenceDlls(outputFolder, workspaceRefsPath, ct);
 
         // ── Save blueprint document to output folder ────────────────────────
         var blueprintOutputPath = Path.Combine(outputFolder, fileName);
@@ -648,6 +518,33 @@ public sealed class BlueprintAnalysisService(
                         // Add to .csproj if not already present
                         await AddCompileItemToCsproj(outputFolder, helperFileName, ct);
                     }
+
+                    // Detect the custom namespace from helper classes and add using to SoxBusinessRules.cs
+                    var nsMatch = System.Text.RegularExpressions.Regex.Match(helperText, @"namespace\s+(ShipExec\.\w+)");
+                    if (nsMatch.Success)
+                    {
+                        var customNs = nsMatch.Groups[1].Value;
+                        var sbrPath2 = Path.Combine(outputFolder, "SoxBusinessRules.cs");
+                        if (File.Exists(sbrPath2))
+                        {
+                            var sbrContent2 = await File.ReadAllTextAsync(sbrPath2, ct);
+                            var usingLine = $"using {customNs};";
+                            if (!sbrContent2.Contains(usingLine, StringComparison.Ordinal))
+                            {
+                                // Insert the using statement after the last existing using line
+                                var lastUsing = sbrContent2.LastIndexOf("using ", sbrContent2.IndexOf("namespace", StringComparison.Ordinal), StringComparison.Ordinal);
+                                if (lastUsing >= 0)
+                                {
+                                    var endOfLine = sbrContent2.IndexOf('\n', lastUsing);
+                                    if (endOfLine >= 0)
+                                    {
+                                        sbrContent2 = sbrContent2[..(endOfLine + 1)] + usingLine + "\r\n" + sbrContent2[(endOfLine + 1)..];
+                                    }
+                                }
+                                await File.WriteAllTextAsync(sbrPath2, sbrContent2, ct);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -733,8 +630,18 @@ public sealed class BlueprintAnalysisService(
             result.Errors.Add($"Pass 2 response was not valid JSON: {ex.Message}");
         }
 
-        // ── CBR Validation + Repair ─────────────────────────────────────────────
-        const int maxCbrRepairAttempts = 5;
+        // ── Add template Content references to .csproj for only the templates that were generated ──
+        await AddTemplateContentItemsToCsproj(outputFolder, ct);
+
+        // ── CBR Validation + Repair (multi-turn conversation) ────────────────
+        const int maxCbrRepairAttempts = 7;
+        var cbrRepairMessages = new List<object>
+        {
+            new { role = "system", content = "You are a JavaScript repair agent. Fix the validation errors in the CBR files. Do NOT change method signatures. Do NOT remove any existing comments — preserve ALL comments and add more if needed. Every method must have a block comment explaining its purpose, the blueprint requirement it fulfills, and numbered step comments inside the body. Return JSON: { \"fixes\": [{ \"file\": \"<relative path>\", \"fullContent\": \"<complete corrected file>\" }] }. No markdown fences." },
+            new { role = "user", content = $"Here is the blueprint context and plan for reference:\n\n=== PLAN ===\n{planRaw}\n\nI will send you validation errors and the affected files. Fix them and return the corrected files." },
+            new { role = "assistant", content = (object)"Understood. Send me the validation errors and affected CBR files, and I will return the corrected versions as JSON." }
+        };
+
         for (var cbrAttempt = 0; cbrAttempt <= maxCbrRepairAttempts; cbrAttempt++)
         {
             onProgress?.Invoke(cbrAttempt == 0
@@ -780,29 +687,46 @@ public sealed class BlueprintAnalysisService(
                 break;
             }
 
-            // Send CBR errors + history to AI for repair
+            // Build targeted user message with only errors + affected files
             activityLog.AppendLine($"=== CBR VALIDATION ATTEMPT {cbrAttempt + 1} — ERRORS ===\n{cbrValidationSb}");
-            var cbrRepairPrompt = new StringBuilder();
-            cbrRepairPrompt.AppendLine("=== ACTIVITY LOG ===");
-            cbrRepairPrompt.AppendLine(activityLog.ToString());
-            cbrRepairPrompt.AppendLine("=== CBR VALIDATION ERRORS (fix these) ===");
-            cbrRepairPrompt.AppendLine(cbrValidationSb.ToString());
-            cbrRepairPrompt.AppendLine("Fix ALL JavaScript issues. Do NOT change method signatures — only fix the body code.");
-            cbrRepairPrompt.AppendLine();
+            var cbrRepairUserMsg = new StringBuilder();
+            cbrRepairUserMsg.AppendLine("=== VALIDATION ERRORS (fix these) ===");
+            cbrRepairUserMsg.AppendLine(cbrValidationSb.ToString());
+            cbrRepairUserMsg.AppendLine("Fix ALL JavaScript issues. Do NOT change method signatures — only fix the body code.");
+            cbrRepairUserMsg.AppendLine();
 
-            // Read broken files
+            // Include only the files that have errors
             if (Directory.Exists(cbrDir2))
             {
+                var errorText = cbrValidationSb.ToString();
                 foreach (var jsFile in Directory.GetFiles(cbrDir2, "*.js"))
                 {
-                    cbrRepairPrompt.AppendLine($"=== FILE: {Path.GetFileName(jsFile)} ===");
-                    cbrRepairPrompt.AppendLine(await File.ReadAllTextAsync(jsFile, ct));
-                    cbrRepairPrompt.AppendLine();
+                    var fname = Path.GetFileName(jsFile);
+                    if (errorText.Contains(fname))
+                    {
+                        cbrRepairUserMsg.AppendLine($"=== FILE: {fname} ===");
+                        cbrRepairUserMsg.AppendLine(await File.ReadAllTextAsync(jsFile, ct));
+                        cbrRepairUserMsg.AppendLine();
+                    }
                 }
             }
 
-            var cbrRepairSystem = "You are a JavaScript repair agent. Fix the validation errors in the CBR files. Do NOT change method signatures. Return JSON: { \"fixes\": [{ \"file\": \"<relative path>\", \"fullContent\": \"<complete corrected file>\" }] }. No markdown fences.";
-            var cbrRepairRaw = await CallAiAndLog($"CBR Repair (attempt {cbrAttempt + 1})", cbrRepairSystem, cbrRepairPrompt.ToString(), true);
+            // Add to multi-turn conversation and call AI
+            cbrRepairMessages.Add(new { role = "user", content = (object)cbrRepairUserMsg.ToString() });
+
+            result.AiInteractions.Add(new AiInteractionLog
+            {
+                Step = $"CBR Repair (attempt {cbrAttempt + 1})",
+                PromptSent = $"[MULTI-TURN message #{cbrRepairMessages.Count}]\n{cbrRepairUserMsg}",
+                ResponseReceived = "(pending...)",
+                Timestamp = DateTime.Now
+            });
+
+            var cbrRepairRaw = await CallAzureOpenAiMultiTurnAsync(deployment, endpoint, apiKey, cbrRepairMessages, true, ct);
+            result.AiInteractions[^1].ResponseReceived = cbrRepairRaw;
+
+            // Add assistant response to history for next iteration
+            cbrRepairMessages.Add(new { role = "assistant", content = (object)cbrRepairRaw });
 
             if (!cbrRepairRaw.StartsWith("// ⚠️"))
             {
@@ -816,6 +740,7 @@ public sealed class BlueprintAnalysisService(
                             var file = fix.GetProperty("file").GetString();
                             var content = fix.GetProperty("fullContent").GetString();
                             if (string.IsNullOrWhiteSpace(file) || string.IsNullOrWhiteSpace(content)) continue;
+                            if (IsImmutableFile(file)) continue;
                             var fixPath = Path.Combine(outputFolder, file.Replace('/', Path.DirectorySeparatorChar));
                             Directory.CreateDirectory(Path.GetDirectoryName(fixPath)!);
                             await File.WriteAllTextAsync(fixPath, content, ct);
@@ -829,8 +754,16 @@ public sealed class BlueprintAnalysisService(
             }
         }
 
-        // ── Template/Report HTML Validation + Repair ─────────────────────────────
-        const int maxHtmlRepairAttempts = 5;
+
+        // ── Template/Report HTML Validation + Repair (multi-turn) ────────────────
+        const int maxHtmlRepairAttempts = 7;
+        var htmlRepairMessages = new List<object>
+        {
+            new { role = "system", content = "You are an HTML repair agent. Fix the validation errors in the template/report HTML files. Do NOT remove any existing HTML comments — preserve ALL comments. Return JSON: { \"fixes\": [{ \"file\": \"<relative path>\", \"fullContent\": \"<complete corrected file>\" }] }. No markdown fences." },
+            new { role = "user", content = (object)"I will send you HTML validation errors and the affected template files. Fix the tag balancing issues and return corrected files." },
+            new { role = "assistant", content = (object)"Understood. Send me the validation errors and affected HTML files, and I will return the corrected versions as JSON." }
+        };
+
         for (var htmlAttempt = 0; htmlAttempt <= maxHtmlRepairAttempts; htmlAttempt++)
         {
             onProgress?.Invoke(htmlAttempt == 0
@@ -887,28 +820,45 @@ public sealed class BlueprintAnalysisService(
                 break;
             }
 
-            // Send HTML errors + history to AI for repair
+            // Build targeted user message with only errors + affected files
             activityLog.AppendLine($"=== HTML VALIDATION ATTEMPT {htmlAttempt + 1} — ERRORS ===\n{htmlValidationSb}");
-            var htmlRepairPrompt = new StringBuilder();
-            htmlRepairPrompt.AppendLine("=== ACTIVITY LOG ===");
-            htmlRepairPrompt.AppendLine(activityLog.ToString());
-            htmlRepairPrompt.AppendLine("=== HTML VALIDATION ERRORS (fix these) ===");
-            htmlRepairPrompt.AppendLine(htmlValidationSb.ToString());
-            htmlRepairPrompt.AppendLine("Fix ALL HTML issues. Ensure all tags are properly balanced.");
-            htmlRepairPrompt.AppendLine();
+            var htmlRepairUserMsg = new StringBuilder();
+            htmlRepairUserMsg.AppendLine("=== VALIDATION ERRORS (fix these) ===");
+            htmlRepairUserMsg.AppendLine(htmlValidationSb.ToString());
+            htmlRepairUserMsg.AppendLine("Fix ALL HTML issues. Ensure all tags are properly balanced.");
+            htmlRepairUserMsg.AppendLine();
 
             if (Directory.Exists(templatesDir2))
             {
+                var errorText = htmlValidationSb.ToString();
                 foreach (var htmlFile in Directory.GetFiles(templatesDir2, "*.html"))
                 {
-                    htmlRepairPrompt.AppendLine($"=== FILE: {Path.GetFileName(htmlFile)} ===");
-                    htmlRepairPrompt.AppendLine(await File.ReadAllTextAsync(htmlFile, ct));
-                    htmlRepairPrompt.AppendLine();
+                    var fname = Path.GetFileName(htmlFile);
+                    if (errorText.Contains(fname))
+                    {
+                        htmlRepairUserMsg.AppendLine($"=== FILE: Templates/{fname} ===");
+                        htmlRepairUserMsg.AppendLine(await File.ReadAllTextAsync(htmlFile, ct));
+                        htmlRepairUserMsg.AppendLine();
+                    }
                 }
             }
 
-            var htmlRepairSystem = "You are an HTML repair agent. Fix the validation errors in the template/report HTML files. Return JSON: { \"fixes\": [{ \"file\": \"<relative path>\", \"fullContent\": \"<complete corrected file>\" }] }. No markdown fences.";
-            var htmlRepairRaw = await CallAiAndLog($"HTML Repair (attempt {htmlAttempt + 1})", htmlRepairSystem, htmlRepairPrompt.ToString(), true);
+            // Add to multi-turn conversation and call AI
+            htmlRepairMessages.Add(new { role = "user", content = (object)htmlRepairUserMsg.ToString() });
+
+            result.AiInteractions.Add(new AiInteractionLog
+            {
+                Step = $"HTML Repair (attempt {htmlAttempt + 1})",
+                PromptSent = $"[MULTI-TURN message #{htmlRepairMessages.Count}]\n{htmlRepairUserMsg}",
+                ResponseReceived = "(pending...)",
+                Timestamp = DateTime.Now
+            });
+
+            var htmlRepairRaw = await CallAzureOpenAiMultiTurnAsync(deployment, endpoint, apiKey, htmlRepairMessages, true, ct);
+            result.AiInteractions[^1].ResponseReceived = htmlRepairRaw;
+
+            // Add assistant response to history for next iteration
+            htmlRepairMessages.Add(new { role = "assistant", content = (object)htmlRepairRaw });
 
             if (!htmlRepairRaw.StartsWith("// ⚠️"))
             {
@@ -922,6 +872,7 @@ public sealed class BlueprintAnalysisService(
                             var file = fix.GetProperty("file").GetString();
                             var content = fix.GetProperty("fullContent").GetString();
                             if (string.IsNullOrWhiteSpace(file) || string.IsNullOrWhiteSpace(content)) continue;
+                            if (IsImmutableFile(file)) continue;
                             var fixPath = Path.Combine(outputFolder, file.Replace('/', Path.DirectorySeparatorChar));
                             Directory.CreateDirectory(Path.GetDirectoryName(fixPath)!);
                             await File.WriteAllTextAsync(fixPath, content, ct);
@@ -935,8 +886,43 @@ public sealed class BlueprintAnalysisService(
             }
         }
 
-        // ── Project Validation + Repair Loop: iterate until project builds or max attempts ──
-        const int maxRepairAttempts = 5;
+        // ── Project Validation + Repair Loop (multi-turn conversation) ──────────
+        const int maxRepairAttempts = 7;
+        var projectRepairSystemPrompt =
+            """
+            You are a code repair agent. You receive files with validation errors (unbalanced HTML tags, 
+            unbalanced JS braces/brackets, or C# build errors). 
+
+            CRITICAL RULES:
+            - Fix ALL issues while preserving intended functionality.
+            - NEVER remove existing comments — preserve ALL comments in C#, JS, and HTML files. If a fix changes code, UPDATE the associated comments to match but NEVER delete them.
+            - NEVER remove any existing using statements from any C# file. Only ADD using statements if needed — never delete them.
+            - NEVER alter these template files — they must remain unchanged: CreateBatchRequest.cs, DataService.cs, LoadShipment.cs, Tools.cs. If a fix references them, skip them.
+            - If a method has no comments, ADD comments explaining the business logic, program flow, and blueprint requirement.
+            - NEVER change C# method signatures in SoxBusinessRules.cs — they implement IBusinessObject and are immutable.
+            - All business logic belongs in a separate Manager class. SoxBusinessRules only delegates to it.
+            - Ensure all HTML tags are properly balanced (every <div> has </div>, etc.)
+            - Ensure all JS braces {}, parentheses (), and brackets [] are balanced.
+            - For C# build errors, fix the code so it compiles. Use correct types and parameter names.
+            - THINK HARD ABOUT TYPE MATCHING: The method signatures are the SOURCE OF TRUTH for types. If a signature says PackageRequest, use PackageRequest — NOT Package, NOT PackageInfo. If it says ShipmentRequest, use ShipmentRequest — NOT Shipment. Cross-reference EVERY type against the actual signatures.
+            - Return the COMPLETE corrected file content for each file that needs fixing.
+
+            Return ONLY valid JSON with this structure:
+            {
+              "fixes": [
+                { "file": "<relative path>", "fullContent": "<complete corrected file content>" }
+              ]
+            }
+            Do NOT include markdown fences. Return ONLY the JSON object.
+            """;
+
+        var projectRepairMessages = new List<object>
+        {
+            new { role = "system", content = projectRepairSystemPrompt },
+            new { role = "user", content = (object)$"Here is the project context:\n\n=== PLAN ===\n{planRaw}\n\nI will send you build/validation errors and the affected files. Fix them and return the corrected files." },
+            new { role = "assistant", content = (object)"Understood. Send me the validation errors and affected files, and I will return the corrected versions as JSON." }
+        };
+
         for (var attempt = 0; attempt <= maxRepairAttempts; attempt++)
         {
             onProgress?.Invoke(attempt == 0
@@ -1013,6 +999,7 @@ public sealed class BlueprintAnalysisService(
             }
 
             // Validate C# - attempt dotnet build if .csproj exists
+            string buildOutput = string.Empty;
             var csprojFiles = Directory.GetFiles(outputFolder, "*.csproj");
             if (csprojFiles.Length > 0)
             {
@@ -1035,7 +1022,7 @@ public sealed class BlueprintAnalysisService(
 
                         if (proc.ExitCode != 0)
                         {
-                            var buildOutput = stderr.Length > 0 ? stderr : stdout;
+                            buildOutput = stderr.Length > 0 ? stderr : stdout;
                             validationSb.AppendLine("⚠️ C# build failed:");
                             validationSb.AppendLine(buildOutput);
                             result.BuildErrors = buildOutput;
@@ -1085,107 +1072,85 @@ public sealed class BlueprintAnalysisService(
                 break;
             }
 
-            // ── Repair: send issues + broken files + full history to AI ─────────
+            // ── Repair: send only errors + targeted files via multi-turn ─────────
             onProgress?.Invoke($"Repair pass {attempt + 1}/{maxRepairAttempts}: fixing validation issues...");
 
             activityLog.AppendLine($"=== REPAIR ATTEMPT {attempt + 1} — ERRORS FOUND ===");
             activityLog.AppendLine(validationSb.ToString());
             activityLog.AppendLine();
 
-            var repairPrompt = new StringBuilder();
-            repairPrompt.AppendLine("=== ACTIVITY LOG (what has happened so far) ===");
-            repairPrompt.AppendLine(activityLog.ToString());
-            repairPrompt.AppendLine();
-            repairPrompt.AppendLine("=== CURRENT VALIDATION ISSUES (you MUST fix these) ===");
-            repairPrompt.AppendLine(validationSb.ToString());
-            repairPrompt.AppendLine();
-            repairPrompt.AppendLine("You MUST fix ALL issues. The project MUST build and all HTML/JS must be syntactically valid.");
-            repairPrompt.AppendLine("Do NOT change method signatures in C# files — only fix the method bodies and ensure braces/syntax are correct.");
-            repairPrompt.AppendLine();
+            var repairUserMsg = new StringBuilder();
+            repairUserMsg.AppendLine("=== VALIDATION ERRORS (fix these) ===");
+            repairUserMsg.AppendLine(validationSb.ToString());
+            repairUserMsg.AppendLine();
+            repairUserMsg.AppendLine("You MUST fix ALL issues. The project MUST build and all HTML/JS must be syntactically valid.");
+            repairUserMsg.AppendLine("Do NOT change method signatures in C# files — only fix the method bodies and ensure braces/syntax are correct.");
+            repairUserMsg.AppendLine();
 
-            var filesWithIssues = new Dictionary<string, string>();
+            // For C# build failures, use ExtractFilesFromBuildOutput to target only affected files
+            var erroredCsFiles = !string.IsNullOrEmpty(buildOutput)
+                ? ExtractFilesFromBuildOutput(buildOutput)
+                : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             if (Directory.Exists(templatesDir))
             {
+                var errorText = validationSb.ToString();
                 foreach (var htmlFile in Directory.GetFiles(templatesDir, "*.html"))
                 {
                     var fname = Path.GetFileName(htmlFile);
-                    if (validationSb.ToString().Contains(fname))
+                    if (errorText.Contains(fname))
                     {
-                        var content = await File.ReadAllTextAsync(htmlFile, ct);
-                        filesWithIssues[$"Templates/{fname}"] = content;
+                        repairUserMsg.AppendLine($"=== FILE: Templates/{fname} ===");
+                        repairUserMsg.AppendLine(await File.ReadAllTextAsync(htmlFile, ct));
+                        repairUserMsg.AppendLine();
                     }
                 }
             }
 
             if (Directory.Exists(cbrDir))
             {
+                var errorText = validationSb.ToString();
                 foreach (var jsFile in Directory.GetFiles(cbrDir, "*.js"))
                 {
                     var fname = Path.GetFileName(jsFile);
-                    if (validationSb.ToString().Contains(fname))
+                    if (errorText.Contains(fname))
                     {
-                        var content = await File.ReadAllTextAsync(jsFile, ct);
-                        filesWithIssues[$"CBR/{fname}"] = content;
+                        repairUserMsg.AppendLine($"=== FILE: CBR/{fname} ===");
+                        repairUserMsg.AppendLine(await File.ReadAllTextAsync(jsFile, ct));
+                        repairUserMsg.AppendLine();
                     }
                 }
             }
 
-            // For C# build failures, include ALL .cs files so the AI has full context
-            if (validationSb.ToString().Contains("C# build failed"))
+            // Include only C# files referenced in build errors (or all if none parsed)
+            foreach (var csFile in Directory.GetFiles(outputFolder, "*.cs"))
             {
-                foreach (var csFile in Directory.GetFiles(outputFolder, "*.cs"))
+                var fname = Path.GetFileName(csFile);
+                if (erroredCsFiles.Count == 0 || erroredCsFiles.Contains(fname))
                 {
-                    var fname = Path.GetFileName(csFile);
                     var content = await File.ReadAllTextAsync(csFile, ct);
-                    filesWithIssues[fname] = content;
+                    repairUserMsg.AppendLine($"=== FILE: {fname} ===");
+                    repairUserMsg.AppendLine(content);
+                    repairUserMsg.AppendLine();
                 }
             }
-            else
+
+            // Add to multi-turn conversation and call AI
+            projectRepairMessages.Add(new { role = "user", content = (object)repairUserMsg.ToString() });
+
+            result.AiInteractions.Add(new AiInteractionLog
             {
-                foreach (var csFile in Directory.GetFiles(outputFolder, "*.cs"))
-                {
-                    var fname = Path.GetFileName(csFile);
-                    if (validationSb.ToString().Contains(fname))
-                    {
-                        var content = await File.ReadAllTextAsync(csFile, ct);
-                        filesWithIssues[fname] = content;
-                    }
-                }
-            }
+                Step = $"Project Repair (attempt {attempt + 1})",
+                PromptSent = $"[MULTI-TURN message #{projectRepairMessages.Count}]\n{repairUserMsg}",
+                ResponseReceived = "(pending...)",
+                Timestamp = DateTime.Now
+            });
 
-            foreach (var kvp in filesWithIssues)
-            {
-                repairPrompt.AppendLine($"=== FILE: {kvp.Key} ===");
-                repairPrompt.AppendLine(kvp.Value);
-                repairPrompt.AppendLine();
-            }
+            var repairRaw = await CallAzureOpenAiMultiTurnAsync(deployment, endpoint, apiKey, projectRepairMessages, true, ct);
+            result.AiInteractions[^1].ResponseReceived = repairRaw;
 
-            var repairSystemPrompt =
-                """
-                You are a code repair agent. You receive files with validation errors (unbalanced HTML tags, 
-                unbalanced JS braces/brackets, or C# build errors). 
-
-                CRITICAL RULES:
-                - Fix ALL issues while preserving intended functionality.
-                - NEVER change C# method signatures in SoxBusinessRules.cs — they implement IBusinessObject and are immutable.
-                - All business logic belongs in a separate Manager class. SoxBusinessRules only delegates to it.
-                - Ensure all HTML tags are properly balanced (every <div> has </div>, etc.)
-                - Ensure all JS braces {}, parentheses (), and brackets [] are balanced.
-                - For C# build errors, fix the code so it compiles. Use correct types and parameter names.
-                - THINK HARD ABOUT TYPE MATCHING: The method signatures are the SOURCE OF TRUTH for types. If a signature says PackageRequest, use PackageRequest — NOT Package, NOT PackageInfo. If it says ShipmentRequest, use ShipmentRequest — NOT Shipment. Cross-reference EVERY type against the actual signatures.
-                - Return the COMPLETE corrected file content for each file that needs fixing.
-
-                Return ONLY valid JSON with this structure:
-                {
-                  "fixes": [
-                    { "file": "<relative path>", "fullContent": "<complete corrected file content>" }
-                  ]
-                }
-                Do NOT include markdown fences. Return ONLY the JSON object.
-                """;
-
-            var repairRaw = await CallAiAndLog($"Project Repair (attempt {attempt + 1})", repairSystemPrompt, repairPrompt.ToString(), true);
+            // Add assistant response to history for next iteration
+            projectRepairMessages.Add(new { role = "assistant", content = (object)repairRaw });
 
             if (!repairRaw.StartsWith("// ⚠️"))
             {
@@ -1199,6 +1164,8 @@ public sealed class BlueprintAnalysisService(
                             var file = fix.GetProperty("file").GetString();
                             var content = fix.GetProperty("fullContent").GetString();
                             if (string.IsNullOrWhiteSpace(file) || string.IsNullOrWhiteSpace(content))
+                                continue;
+                            if (IsImmutableFile(file))
                                 continue;
 
                             var fixPath = Path.Combine(outputFolder, file.Replace('/', Path.DirectorySeparatorChar));
@@ -1419,6 +1386,21 @@ public sealed class BlueprintAnalysisService(
         return count;
     }
 
+    /// <summary>
+    /// Parses MSBuild error output to extract the set of file names referenced in errors/warnings.
+    /// MSBuild format: FileName.cs(line,col): error CS####: message
+    /// </summary>
+    private static HashSet<string> ExtractFilesFromBuildOutput(string buildOutput)
+    {
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (System.Text.RegularExpressions.Match m in
+            System.Text.RegularExpressions.Regex.Matches(buildOutput, @"([\w.-]+\.cs)\(\d+,\d+\)"))
+        {
+            files.Add(m.Groups[1].Value);
+        }
+        return files;
+    }
+
     private static void CopyDirectory(string source, string destination, bool skipTemplates = false)
     {
         var dir = new DirectoryInfo(source);
@@ -1448,8 +1430,25 @@ public sealed class BlueprintAnalysisService(
             if (skipTemplates && subDir.Name.Equals("Templates", StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            // Skip CustomTemplates and CustomDocuments folders — not needed in output
+            if (subDir.Name.Equals("CustomTemplates", StringComparison.OrdinalIgnoreCase) ||
+                subDir.Name.Equals("CustomDocuments", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             CopyDirectory(subDir.FullName, Path.Combine(destination, subDir.Name));
         }
+    }
+
+    /// <summary>
+    /// Returns true if the file is one of the immutable template files that must never be altered.
+    /// </summary>
+    private static bool IsImmutableFile(string filePath)
+    {
+        var fileName = Path.GetFileName(filePath);
+        return fileName.Equals("CreateBatchRequest.cs", StringComparison.OrdinalIgnoreCase) ||
+               fileName.Equals("DataService.cs", StringComparison.OrdinalIgnoreCase) ||
+               fileName.Equals("LoadShipment.cs", StringComparison.OrdinalIgnoreCase) ||
+               fileName.Equals("Tools.cs", StringComparison.OrdinalIgnoreCase);
     }
 
     // ── Validate JS file using Node.js --check if available ─────────────────
@@ -1498,6 +1497,18 @@ public sealed class BlueprintAnalysisService(
             new { role = "user", content = userMessage }
         };
 
+        return await CallAzureOpenAiMultiTurnAsync(deployment, endpoint, apiKey, messages, responseFormatJson, ct);
+    }
+
+    // ── Azure OpenAI multi-turn call ─────────────────────────────────────────
+    private async Task<string> CallAzureOpenAiMultiTurnAsync(
+        string deployment,
+        string endpoint,
+        string apiKey,
+        IReadOnlyList<object> messages,
+        bool responseFormatJson,
+        CancellationToken ct)
+    {
         object body = responseFormatJson
             ? new { model = deployment, messages, response_format = new { type = "json_object" } }
             : new { model = deployment, messages };
@@ -1700,16 +1711,27 @@ public sealed class BlueprintAnalysisService(
     }
 
     // ── Copy PSI.Sox DLLs to References folder and update HintPaths ──────────
-    private static async Task CopyReferenceDlls(string outputFolder, CancellationToken ct)
+    private static async Task CopyReferenceDlls(string outputFolder, string refsSourcePath, CancellationToken ct)
     {
-        const string soxCorePath = @"C:\Program Files\UPS Professional Services Inc\ShipExec\Core";
-        if (!Directory.Exists(soxCorePath)) return;
+        // Primary source: workspace-root References folder (same DLLs this project uses)
+        string? soxSourcePath = null;
+        if (Directory.Exists(refsSourcePath) && Directory.GetFiles(refsSourcePath, "PSI.Sox*.dll").Length > 0)
+            soxSourcePath = refsSourcePath;
+        else
+        {
+            // Fallback: ShipExec Core install path
+            const string soxCorePath = @"C:\Program Files\UPS Professional Services Inc\ShipExec\Core";
+            if (Directory.Exists(soxCorePath))
+                soxSourcePath = soxCorePath;
+        }
+
+        if (soxSourcePath is null) return;
 
         var refsFolder = Path.Combine(outputFolder, "References");
         Directory.CreateDirectory(refsFolder);
 
         // Copy all PSI.Sox DLLs
-        foreach (var dll in Directory.GetFiles(soxCorePath, "PSI.Sox*.dll"))
+        foreach (var dll in Directory.GetFiles(soxSourcePath, "PSI.Sox*.dll"))
         {
             var destPath = Path.Combine(refsFolder, Path.GetFileName(dll));
             File.Copy(dll, destPath, overwrite: true);
@@ -1722,29 +1744,30 @@ public sealed class BlueprintAnalysisService(
         var csprojPath = csprojFiles[0];
         var csprojContent = await File.ReadAllTextAsync(csprojPath, ct);
 
-        // Replace existing PSI.Sox HintPath and ensure Private=true for copy to output
+        // Replace existing PSI.Sox HintPath (base DLL only) and update to local References folder
         csprojContent = System.Text.RegularExpressions.Regex.Replace(
             csprojContent,
-            @"<HintPath>[^<]*PSI\.Sox[^<]*</HintPath>",
+            @"<HintPath>[^<]*PSI\.Sox\.dll</HintPath>",
             @"<HintPath>References\PSI.Sox.dll</HintPath>");
 
-        // Ensure all PSI.Sox references have <Private>true</Private> so they copy to output
+        // Ensure the base PSI.Sox reference has <Private>true</Private> so it copies to output
         csprojContent = System.Text.RegularExpressions.Regex.Replace(
             csprojContent,
-            @"(<Reference Include=""PSI\.Sox[^""]*"">\s*<HintPath>[^<]+</HintPath>)\s*</Reference>",
-            @"$1" + "\r\n      <Private>true</Private>\r\n    </Reference>");
+            @"(<Reference Include=""PSI\.Sox"">\s*<HintPath>[^<]+</HintPath>)\s*</Reference>",
+            @"$1" + "\r\n      <Private>true</Private>\r\n    </Reference>",
+            System.Text.RegularExpressions.RegexOptions.Singleline);
 
-        // Add references for other PSI.Sox DLLs if not already present
+        // Add references for ALL PSI.Sox DLLs copied to the References folder
         var dllFiles = Directory.GetFiles(refsFolder, "PSI.Sox*.dll");
         foreach (var dll in dllFiles)
         {
             var assemblyName = Path.GetFileNameWithoutExtension(dll);
-            if (assemblyName == "PSI.Sox") continue; // already referenced
             if (csprojContent.Contains($"Include=\"{assemblyName}\"", StringComparison.OrdinalIgnoreCase)) continue;
 
             // Insert after existing PSI.Sox reference
             var marker = "</Reference>";
-            var psiRef = csprojContent.IndexOf("PSI.Sox", StringComparison.OrdinalIgnoreCase);
+            var psiRef = csprojContent.IndexOf("\"PSI.Sox\"", StringComparison.OrdinalIgnoreCase);
+            if (psiRef < 0) psiRef = csprojContent.IndexOf("PSI.Sox", StringComparison.OrdinalIgnoreCase);
             if (psiRef >= 0)
             {
                 var afterRef = csprojContent.IndexOf(marker, psiRef, StringComparison.OrdinalIgnoreCase);
@@ -1879,11 +1902,78 @@ public sealed class BlueprintAnalysisService(
             "",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
+        // Remove the Content Include for SampleCBRCode.js (not copied to output)
+        content = System.Text.RegularExpressions.Regex.Replace(
+            content,
+            @"\s*<Content Include=""CBR\\SampleCBRCode\.js""\s*/?>[\s\S]*?(?:</Content>)?\s*",
+            "",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        // Remove ALL Templates\*.html Content references (only changed templates will be re-added)
+        content = System.Text.RegularExpressions.Regex.Replace(
+            content,
+            @"\s*<Content Include=""Templates\\[^""]+\.html""\s*/?>[\s\S]*?(?:</Content>)?\s*",
+            "",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
         // Clean up any empty ItemGroups left behind
         content = System.Text.RegularExpressions.Regex.Replace(
             content,
             @"\s*<ItemGroup>\s*</ItemGroup>\s*",
             "\r\n");
+
+        await File.WriteAllTextAsync(csprojPath, content, ct);
+    }
+
+    /// <summary>
+    /// Adds Content references to the .csproj for all .html files present in the Templates folder.
+    /// </summary>
+    private static async Task AddTemplateContentItemsToCsproj(string outputFolder, CancellationToken ct)
+    {
+        var templatesDir = Path.Combine(outputFolder, "Templates");
+        if (!Directory.Exists(templatesDir)) return;
+
+        var htmlFiles = Directory.GetFiles(templatesDir, "*.html");
+        if (htmlFiles.Length == 0) return;
+
+        var csprojFiles = Directory.GetFiles(outputFolder, "*.csproj");
+        if (csprojFiles.Length == 0) return;
+
+        var csprojPath = csprojFiles[0];
+        var content = await File.ReadAllTextAsync(csprojPath, ct);
+
+        var newItems = new StringBuilder();
+        foreach (var htmlFile in htmlFiles)
+        {
+            var relativePath = $"Templates\\{Path.GetFileName(htmlFile)}";
+            if (content.Contains($"Include=\"{relativePath}\"", StringComparison.OrdinalIgnoreCase))
+                continue;
+            newItems.AppendLine($"    <Content Include=\"{relativePath}\" />");
+        }
+
+        if (newItems.Length == 0) return;
+
+        // Insert into existing Content ItemGroup or create one
+        var contentMarker = "<Content Include=\"CBR\\ClientBusinessRulesTemplate.js\"";
+        var markerPos = content.IndexOf(contentMarker, StringComparison.OrdinalIgnoreCase);
+        if (markerPos >= 0)
+        {
+            var insertAt = content.IndexOf('\n', markerPos);
+            if (insertAt >= 0)
+            {
+                content = content[..(insertAt + 1)] + newItems.ToString() + content[(insertAt + 1)..];
+            }
+        }
+        else
+        {
+            // Fallback: insert before </Project>
+            var projectEnd = content.LastIndexOf("</Project>", StringComparison.OrdinalIgnoreCase);
+            if (projectEnd >= 0)
+            {
+                var itemGroup = $"  <ItemGroup>\r\n{newItems}  </ItemGroup>\r\n";
+                content = content[..projectEnd] + itemGroup + content[projectEnd..];
+            }
+        }
 
         await File.WriteAllTextAsync(csprojPath, content, ct);
     }

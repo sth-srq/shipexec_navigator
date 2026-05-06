@@ -2311,6 +2311,46 @@
         background: #21262d;
     }
 
+/* Minimize button */
+.cbr-btn-minimize {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid #30363d;
+    border-radius: 5px;
+    cursor: pointer;
+    background: transparent;
+    color: #c9d1d9;
+    transition: background 0.15s;
+}
+
+    .cbr-btn-minimize:hover {
+        background: #21262d;
+    }
+
+/* Minimized pill in lower-left */
+.cbr-analysis-minimized-pill {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 1.25rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #161b22, #1f2937);
+    border: 1px solid #388bfd;
+    border-radius: 8px;
+    color: #58a6ff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 9999;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+    .cbr-analysis-minimized-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(56,139,253,0.3);
+    }
+
 .cbr-analysis-loading {
     display: flex;
     align-items: center;

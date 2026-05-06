@@ -661,7 +661,7 @@
                                                 </button>
                                                 <button class="cbr-btn-analyze"
                                                         @onclick="RunCbrAnalysisAsync"
-                                                        disabled="@(_cbrAnalyzing || string.IsNullOrWhiteSpace(_cbrEditedScript))">
+                                                        disabled="@(_cbrAnalyzing || _cbrRepairCount >= 5 || string.IsNullOrWhiteSpace(_cbrEditedScript))">
                                                     @if (_cbrAnalyzing)
                                                     {
                                                         <span class="cbr-analyze-spinner"></span>
@@ -680,6 +680,14 @@
                                             </div>
                                             @if (_cbrAnalysisVisible)
                                             {
+                                                @if (_cbrAnalysisMinimized)
+                                                {
+                                                    <div class="cbr-analysis-minimized-pill" @onclick="RestoreCbrAnalysis" title="Click to restore AI Analysis">
+                                                        &#x1F9E0; AI Analysis@(_cbrAnalyzing ? " (analyzing…)" : "")
+                                                    </div>
+                                                }
+                                                else
+                                                {
                                                 <div class="cbr-analysis-panel">
                                                     <div class="cbr-analysis-header">
                                                         <span class="cbr-analysis-title">&#x1F9E0; AI Analysis — @_selectedCbr.Name</span>
@@ -690,6 +698,9 @@
                                                                     &#x2714; Accept &amp; Replace
                                                                 </button>
                                                             }
+                                                            <button class="cbr-btn-minimize" @onclick="MinimizeCbrAnalysis" title="Minimize">
+                                                                &#x2015;
+                                                            </button>
                                                             <button class="cbr-btn-dismiss" @onclick="DismissCbrAnalysis">
                                                                 &#x2715; Dismiss
                                                             </button>
@@ -711,6 +722,7 @@
                                                         <div id="cbrAnalysisDisplay" class="cbr-analysis-display"></div>
                                                     }
                                                 </div>
+                                                }
                                             }
                                             @* ── CBR Chat Panel (#2-4) ── *@
                                             @if (_cbrChatVisible)
@@ -1604,6 +1616,8 @@
     private bool          _cbrAnalyzing;
     private string?       _cbrAnalysisError;
     private bool          _cbrAnalysisVisible;
+    private bool          _cbrAnalysisMinimized;
+    private int           _cbrRepairCount;
     private bool          _cbrDark      = false;
     private bool          _cbrMaximized = false;
     private bool          _cbrEditing;  // true = textarea mode, false = syntax-highlighted view
@@ -1721,6 +1735,8 @@
         _cbrAnalysisResult     = null;
         _cbrAnalysisError      = null;
         _cbrAnalysisVisible    = false;
+        _cbrAnalysisMinimized  = false;
+        _cbrRepairCount        = 0;
         _cbrAnalyzing          = false;
         _cbrMaximized          = false;
         _cbrEditing            = false;
@@ -1765,6 +1781,9 @@
     private async Task RunCbrAnalysisAsync()
     {
         if (_selectedCbr is null || _cbrAnalyzing) return;
+        if (_cbrRepairCount >= 5) return;
+
+        _cbrRepairCount++;
 
         _cbrAnalyzing          = true;
         _cbrAnalysisError      = null;
@@ -1812,8 +1831,19 @@
     private void DismissCbrAnalysis()
     {
         _cbrAnalysisVisible = false;
+        _cbrAnalysisMinimized = false;
         _cbrAnalysisResult  = null;
         _cbrAnalysisError   = null;
+    }
+
+    private void MinimizeCbrAnalysis()
+    {
+        _cbrAnalysisMinimized = true;
+    }
+
+    private void RestoreCbrAnalysis()
+    {
+        _cbrAnalysisMinimized = false;
     }
 
     /// <summary>Call JS to render the main CBR code display with line numbers + syntax highlighting.</summary>

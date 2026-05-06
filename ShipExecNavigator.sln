@@ -16,6 +16,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2412D630-9F8C-4C49-9DD1-9666821C0767}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		CodeStandards\psi-sox-type-definitions.md = CodeStandards\psi-sox-type-definitions.md
+		CodeStandards\shipexec-hooks.md = CodeStandards\shipexec-hooks.md
+		CodeStandards\shipexec-templates.md = CodeStandards\shipexec-templates.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShipExecNavigator.SK", "ShipExecNavigator.SK\ShipExecNavigator.SK.csproj", "{38B13BC8-8707-4247-A12D-0CE7AF8F4252}"

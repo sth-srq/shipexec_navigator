@@ -34,8 +34,41 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="PSI.Sox">
-      <HintPath>C:\Program Files\UPS Professional Services Inc\ShipExec\Core\PSI.Sox.dll</HintPath>
+    <Reference Include="PSI.Sox, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Configuration, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Data, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Licensing, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Licensing.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.ML, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.ML.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Print, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Print.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Resources, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Resources.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Tools, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Tools.dll</HintPath>
+    </Reference>
+    <Reference Include="PSI.Sox.Wcf, Version=2.3.24256.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\PSI.Sox.Wcf.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,12 +88,17 @@
     <Compile Include="Tools.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shipexec-hooks.md" />
-    <None Include="shipexec-templates.md" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="CBR\ClientBusinessRulesTemplate.js" />
     <Content Include="CBR\SampleCBRCode.js" />
+    <Content Include="References\PSI.Sox.Configuration.dll" />
+    <Content Include="References\PSI.Sox.Data.dll" />
+    <Content Include="References\PSI.Sox.dll" />
+    <Content Include="References\PSI.Sox.Licensing.dll" />
+    <Content Include="References\PSI.Sox.ML.dll" />
+    <Content Include="References\PSI.Sox.Print.dll" />
+    <Content Include="References\PSI.Sox.Resources.dll" />
+    <Content Include="References\PSI.Sox.Tools.dll" />
+    <Content Include="References\PSI.Sox.Wcf.dll" />
     <Content Include="Templates\addressbookTemplate.html" />
     <Content Include="Templates\batchdetailTemplate.html" />
     <Content Include="Templates\batchmanagerTemplate.html" />
